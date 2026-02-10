@@ -1,0 +1,327 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/SuperAdmin/Layout.cshtml";
+}
+
+<div class="dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="dashboard-title">Super Admin Dashboard</h1>
+            <p class="dashboard-subtitle">Manage and monitor your entire system</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-ocean">
+                <i class="fas fa-download"></i>
+                Export Report
+            </button>
+            <button class="btn btn-outline-ocean">
+                <i class="fas fa-sync"></i>
+                Refresh Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">1,234</div>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> 12% from last month
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">456</div>
+                <div class="stat-label">Active Projects</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> 8% from last month
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">89%</div>
+                <div class="stat-label">System Health</div>
+                <div class="stat-change neutral">
+                    <i class="fas fa-minus"></i> No change
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon danger">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">23</div>
+                <div class="stat-label">Critical Issues</div>
+                <div class="stat-change negative">
+                    <i class="fas fa-arrow-up"></i> 3 new today
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-row">
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>User Growth</h3>
+                <div class="chart-actions">
+                    <select class="form-select form-select-sm">
+                        <option>Last 7 days</option>
+                        <option>Last 30 days</option>
+                        <option>Last 90 days</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="userGrowthChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Project Status</h3>
+                <div class="chart-actions">
+                    <button class="btn btn-sm btn-outline-ocean">View All</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="projectStatusChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity and Recent Items -->
+    <div class="content-row">
+        <div class="activity-panel">
+            <div class="panel-header">
+                <h3>Recent Activity</h3>
+                <button class="btn btn-sm btn-link">View All</button>
+            </div>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon user">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">New user registered</div>
+                        <div class="activity-description">John Doe joined the platform</div>
+                        <div class="activity-time">2 minutes ago</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon project">
+                        <i class="fas fa-folder-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Project created</div>
+                        <div class="activity-description">Mobile App Development started</div>
+                        <div class="activity-time">15 minutes ago</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon system">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">System update</div>
+                        <div class="activity-description">Database backup completed</div>
+                        <div class="activity-time">1 hour ago</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon security">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Security alert</div>
+                        <div class="activity-description">Failed login attempt detected</div>
+                        <div class="activity-time">2 hours ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-actions-panel">
+            <div class="panel-header">
+                <h3>Quick Actions</h3>
+            </div>
+            <div class="quick-actions-grid">
+                <button class="quick-action-btn">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Add User</span>
+                </button>
+                <button class="quick-action-btn">
+                    <i class="fas fa-folder-plus"></i>
+                    <span>New Project</span>
+                </button>
+                <button class="quick-action-btn">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Generate Report</span>
+                </button>
+                <button class="quick-action-btn">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+                <button class="quick-action-btn">
+                    <i class="fas fa-backup"></i>
+                    <span>Backup</span>
+                </button>
+                <button class="quick-action-btn">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="system-status-panel">
+        <div class="panel-header">
+            <h3>System Status</h3>
+            <div class="status-indicator online">
+                <span class="status-dot"></span>
+                All Systems Operational
+            </div>
+        </div>
+        <div class="status-grid">
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">Database</div>
+                    <div class="status-value">99.9% Uptime</div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-progress" style="width: 99.9%"></div>
+                </div>
+            </div>
+
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">API Server</div>
+                    <div class="status-value">98.5% Uptime</div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-progress" style="width: 98.5%"></div>
+                </div>
+            </div>
+
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">Storage</div>
+                    <div class="status-value">67% Used</div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-progress" style="width: 67%"></div>
+                </div>
+            </div>
+
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">Memory</div>
+                    <div class="status-value">45% Used</div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-progress" style="width: 45%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // User Growth Chart
+        const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+        new Chart(userGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'New Users',
+                    data: [12, 19, 15, 25, 22, 30, 28],
+                    borderColor: '#4CA3DD',
+                    backgroundColor: 'rgba(76, 163, 221, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Project Status Chart
+        const projectStatusCtx = document.getElementById('projectStatusChart').getContext('2d');
+        new Chart(projectStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'In Progress', 'Planning', 'On Hold'],
+                datasets: [{
+                    data: [45, 30, 15, 10],
+                    backgroundColor: [
+                        '#006994',
+                        '#4CA3DD',
+                        '#94D3FF',
+                        '#E8F4F8'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Auto-refresh data
+        setInterval(function() {
+            // Simulate data refresh
+            console.log('Refreshing dashboard data...');
+        }, 30000);
+    </script>
+}

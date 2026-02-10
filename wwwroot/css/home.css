@@ -1,0 +1,109 @@
+/* Ocean Blue Theme Palette */
+/* Ocean Blue Theme Palette - Variables now in site.css */
+/* :root variables are inherited */
+
+body {
+    background-color: #F0F4F8;
+    /* Very light blue/gray background */
+}
+
+/* Hero Section */
+.hero-section {
+    background: var(--ocean-gradient);
+    color: var(--ocean-white);
+    padding: 6rem 1rem;
+    /* Increased padding */
+    border-radius: 0 0 50% 50% / 100px;
+    /* More pronounced curve */
+    text-align: center;
+    margin-bottom: 4rem;
+    box-shadow: 0 10px 30px rgba(0, 105, 148, 0.2);
+
+    /* Break out of container */
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    margin-top: -1rem;
+    /* Counteract main padding if needed, though usually main has padding */
+}
+
+/* Ensure no horizontal scroll from full-width hack */
+body {
+    overflow-x: hidden;
+}
+
+.hero-title {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-size: 3rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-ocean {
+    background-color: var(--ocean-white);
+    color: var(--ocean-deep);
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-ocean:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    background-color: #f8f9fa;
+    color: var(--ocean-deep);
+}
+
+/* Features Section */
+.features-section {
+    padding: 2rem 0;
+}
+
+.feature-card {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 105, 148, 0.15);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: var(--ocean-deep);
+    margin-bottom: 1.5rem;
+}
+
+.feature-title {
+    color: var(--ocean-deep);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.feature-text {
+    color: #666;
+}
+
+/* Override container for full width feel if necessary, or just style the container content */

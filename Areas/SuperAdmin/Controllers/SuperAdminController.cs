@@ -1,0 +1,16 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using project_lifecycle.Constants;
+
+namespace project_lifecycle.Areas.SuperAdmin.Controllers
+{
+    [Area("SuperAdmin")]
+    [Authorize(Roles = "SuperAdmin")]
+    public class SuperAdminController : Controller
+    {
+        public IActionResult Index()
+        {
+            return View("~/Areas/SuperAdmin/Views/Dashboard/Index.cshtml");
+        }
+    }
+}

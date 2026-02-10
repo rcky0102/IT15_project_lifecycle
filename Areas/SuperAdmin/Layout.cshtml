@@ -1,0 +1,383 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Super Admin Dashboard</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="admin-body">
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <div class="brand-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <path d="M16 2L20 8L27 7L24 14L28 20L21 19L16 24L11 19L4 20L8 14L5 7L12 8L16 2Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+                            <circle cx="16" cy="14" r="6" fill="white"/>
+                            <path d="M13 12L15 14L19 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="brand-text">Super Admin</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="@Url.Action("Index", "Dashboard", new { area = "SuperAdmin" })" class="nav-link">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("Index", "User", new { area = "SuperAdmin" })" class="nav-link">
+                            <i class="fas fa-users"></i>
+                            <span class="nav-text">User Management</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link collapsible-toggle" data-target="managementSubmenu">
+                            <i class="fas fa-tasks"></i>
+                            <span class="nav-text">Management</span>
+                            <i class="fas fa-chevron-down nav-arrow"></i>
+                        </a>
+                        <ul class="nav-submenu" id="managementSubmenu">
+                            <li class="nav-subitem">
+                                <a href="@Url.Action("Index", "Department", new { area = "SuperAdmin" })" class="nav-sublink">
+                                    <i class="fas fa-building"></i> Departments
+                                </a>
+                            </li>
+                            <li class="nav-subitem">
+                                <a href="@Url.Action("Index", "Position", new { area = "SuperAdmin" })" class="nav-sublink">
+                                    <i class="fas fa-briefcase"></i> Positions
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-project-diagram"></i>
+                            <span class="nav-text">Projects</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span class="nav-text">Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-shield-alt"></i>
+                            <span class="nav-text">Security</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <span>SA</span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">Super Admin</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                    <button class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <!-- Top Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">Dashboard</span>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button class="action-btn notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge">3</span>
+                        </button>
+                        <button class="action-btn search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button class="action-btn theme-toggle">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="admin-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Sidebar Toggle
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+            const sidebar = document.getElementById('adminSidebar');
+            const icon = this.querySelector('i');
+            
+            // Toggle collapsed state
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            
+            // Update icon
+            icon.className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-bars';
+            
+            // Update tooltip
+            this.setAttribute('title', isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar');
+            
+            // Save state
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+            
+            console.log('Sidebar toggled:', isCollapsed ? 'collapsed' : 'expanded');
+        });
+
+        // Restore sidebar state on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('adminSidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const icon = toggle?.querySelector('i');
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            
+            if (isCollapsed && sidebar && toggle && icon) {
+                sidebar.classList.add('collapsed');
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-chevron-right');
+                toggle.setAttribute('title', 'Expand Sidebar');
+            }
+        });
+
+        document.getElementById('mobileSidebarToggle')?.addEventListener('click', function() {
+            document.getElementById('adminSidebar').classList.toggle('mobile-open');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('adminSidebar');
+            const toggle = document.getElementById('mobileSidebarToggle');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(e.target) && 
+                !toggle.contains(e.target) &&
+                sidebar.classList.contains('mobile-open')) {
+                sidebar.classList.remove('mobile-open');
+            }
+        });
+
+        // Active nav link handling
+        document.querySelectorAll('.sidebar-nav .nav-link, .nav-sublink').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Remove active classes from all links
+                document.querySelectorAll('.sidebar-nav .nav-link, .nav-sublink').forEach(l => l.classList.remove('active'));
+                // Add active class to clicked link
+                this.classList.add('active');
+                
+                // Handle submenu expansion for sublinks
+                if (this.classList.contains('nav-sublink')) {
+                    const parentSubmenu = this.closest('.nav-submenu');
+                    if (parentSubmenu) {
+                        const parentId = parentSubmenu.getAttribute('id');
+                        const parentToggle = document.querySelector(`[data-target="${parentId}"]`);
+                        if (parentToggle) {
+                            parentToggle.classList.add('expanded');
+                            parentSubmenu.classList.add('expanded');
+                        }
+                    }
+                }
+            });
+        });
+
+        // Set active nav link based on current URL
+        function setActiveNavLink() {
+            const currentPath = window.location.pathname.toLowerCase();
+            console.log('Current path:', currentPath); // Debug log
+            const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+            const subLinks = document.querySelectorAll('.nav-sublink');
+            
+            // Remove active classes from all links and submenus
+            navLinks.forEach(link => link.classList.remove('active'));
+            subLinks.forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('.collapsible-toggle').forEach(toggle => {
+                toggle.classList.remove('expanded');
+            });
+            document.querySelectorAll('.nav-submenu').forEach(submenu => {
+                submenu.classList.remove('expanded');
+            });
+            
+            // Check sub links first (they have priority)
+            let subLinkActive = false;
+            subLinks.forEach(link => {
+                const href = (link.getAttribute('href') || '').toLowerCase();
+                console.log('Sub link href:', href); // Debug log
+                if (href && href !== '#') {
+                    // Extract controller name from href
+                    const hrefParts = href.split('/').filter(part => part !== '');
+                    const controllerName = hrefParts[hrefParts.length - 1];
+                    console.log('Sub link controller name:', controllerName); // Debug log
+                    
+                    // Check if current path contains the controller name
+                    if (currentPath.includes(controllerName)) {
+                        console.log('Match found for sub link:', controllerName); // Debug log
+                        link.classList.add('active');
+                        subLinkActive = true;
+                        
+                        // Expand parent submenu
+                        const parentSubmenu = link.closest('.nav-submenu');
+                        if (parentSubmenu) {
+                            const parentId = parentSubmenu.getAttribute('id');
+                            const parentToggle = document.querySelector(`[data-target="${parentId}"]`);
+                            if (parentToggle) {
+                                parentToggle.classList.add('expanded');
+                                parentSubmenu.classList.add('expanded');
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Check main nav links (only if no sublink is active)
+            if (!subLinkActive) {
+                let anyMatchFound = false;
+                navLinks.forEach(link => {
+                    const href = (link.getAttribute('href') || '').toLowerCase();
+                    console.log('Main nav href:', href); // Debug log
+                    if (href && href !== '#') {
+                        // Extract controller name from href
+                        const hrefParts = href.split('/').filter(part => part !== '');
+                        const controllerName = hrefParts[hrefParts.length - 1];
+                        console.log('Main nav controller name:', controllerName); // Debug log
+                        
+                        // Dashboard special handling
+                        if (controllerName === 'dashboard') {
+                            if (currentPath.includes('dashboard') || 
+                                currentPath === '/superadmin' || 
+                                currentPath === '/' ||
+                                currentPath.includes('/superadmin/dashboard')) {
+                                console.log('Dashboard match found'); // Debug log
+                                link.classList.add('active');
+                                anyMatchFound = true;
+                            }
+                        }
+                        // User Management
+                        else if (controllerName === 'user') {
+                            if (currentPath.includes('user')) {
+                                console.log('User match found'); // Debug log
+                                link.classList.add('active');
+                                anyMatchFound = true;
+                            }
+                        }
+                        // Other controllers
+                        else if (currentPath.includes(controllerName)) {
+                            console.log('Match found for main nav:', controllerName); // Debug log
+                            link.classList.add('active');
+                            anyMatchFound = true;
+                        }
+                    }
+                });
+                
+                // Fallback: if no match found, highlight Dashboard
+                if (!anyMatchFound) {
+                    console.log('No match found, defaulting to Dashboard'); // Debug log
+                    navLinks.forEach(link => {
+                        const href = (link.getAttribute('href') || '').toLowerCase();
+                        if (href && href.includes('dashboard')) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            }
+        }
+
+        // Set active link on page load
+        setActiveNavLink();
+        
+        // Set active link when navigation occurs
+        window.addEventListener('popstate', setActiveNavLink);
+
+        // Collapsible submenu handling
+        document.querySelectorAll('.collapsible-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('data-target');
+                const submenu = document.getElementById(targetId);
+                const isExpanded = this.classList.contains('expanded');
+                
+                // Toggle current submenu
+                if (submenu) {
+                    if (isExpanded) {
+                        this.classList.remove('expanded');
+                        submenu.classList.remove('expanded');
+                    } else {
+                        this.classList.add('expanded');
+                        submenu.classList.add('expanded');
+                    }
+                }
+                
+                // Close other submenus
+                document.querySelectorAll('.collapsible-toggle').forEach(otherToggle => {
+                    if (otherToggle !== this) {
+                        const otherTargetId = otherToggle.getAttribute('data-target');
+                        const otherSubmenu = document.getElementById(otherTargetId);
+                        if (otherSubmenu) {
+                            otherToggle.classList.remove('expanded');
+                            otherSubmenu.classList.remove('expanded');
+                        }
+                    }
+                });
+            });
+        });
+
+        // Handle submenu link clicks
+        document.querySelectorAll('.nav-sublink').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Remove active class from all nav links and sublinks
+                document.querySelectorAll('.nav-link, .nav-sublink').forEach(l => l.classList.remove('active'));
+                // Add active class to clicked sublink
+                this.classList.add('active');
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
