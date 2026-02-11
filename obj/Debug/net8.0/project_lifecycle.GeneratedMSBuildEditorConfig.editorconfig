@@ -130,8 +130,8 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU3VwZXJBZG1pblxWaWV3c1xNYW5hZ2VtZW50XERlcGFydG1lbnRcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/SuperAdmin/Views/Management/Position/Views/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU3VwZXJBZG1pblxWaWV3c1xNYW5hZ2VtZW50XFBvc2l0aW9uXFZpZXdzXEluZGV4LmNzaHRtbA==
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/SuperAdmin/Views/Management/Position/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU3VwZXJBZG1pblxWaWV3c1xNYW5hZ2VtZW50XFBvc2l0aW9uXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/SuperAdmin/Views/User/Index.cshtml]

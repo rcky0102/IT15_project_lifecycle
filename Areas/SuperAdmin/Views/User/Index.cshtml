@@ -8,7 +8,12 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <h2 class="mb-4">User Management</h2>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>User Management</h2>
+                <button type="button" class="btn btn-ocean" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                    <i class="fas fa-user-plus"></i> Add User
+                </button>
+            </div>
             
             @if (TempData["Success"] != null)
             {
@@ -19,7 +24,7 @@
             }
 
             <!-- Existing Users Table -->
-            <div class="card mb-4">
+            <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">Existing Users</h5>
                 </div>
@@ -87,134 +92,143 @@
                     }
                     else
                     {
-                        <div class="text-center py-4">
-                            <p class="text-muted mb-0">No users found. Create your first user below.</p>
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No users found</h5>
+                            <p class="text-muted">Create your first user to get started.</p>
+                            <button type="button" class="btn btn-ocean" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                                <i class="fas fa-user-plus"></i> Add User
+                            </button>
                         </div>
                     }
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Create New User Form -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Create New User</h5>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Create" method="post" id="createUserForm">
-                        @Html.AntiForgeryToken()
-                        
-                        <div class="row">
-                            <!-- User Account Information -->
-                            <div class="col-md-6">
-                                <h6 class="text-primary mb-3">Account Information</h6>
-                                
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.Email" class="form-label"></label>
-                                    <input asp-for="CreateUserViewModel.Email" class="form-control" placeholder="Enter email address" />
-                                    <span asp-validation-for="CreateUserViewModel.Email" class="text-danger"></span>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.Password" class="form-label"></label>
-                                    <input asp-for="CreateUserViewModel.Password" type="password" class="form-control" placeholder="Enter password" />
-                                    <span asp-validation-for="CreateUserViewModel.Password" class="text-danger"></span>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.ConfirmPassword" class="form-label"></label>
-                                    <input asp-for="CreateUserViewModel.ConfirmPassword" type="password" class="form-control" placeholder="Confirm password" />
-                                    <span asp-validation-for="CreateUserViewModel.ConfirmPassword" class="text-danger"></span>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.Role" class="form-label"></label>
-                                    <select asp-for="CreateUserViewModel.Role" class="form-select" id="roleSelect">
-                                        <option value="">Select Role</option>
-                                        <option value="HumanResource">Human Resource</option>
-                                        <option value="DepartmentHead">Department Head</option>
-                                        <option value="Executive">Executive</option>
-                                        <option value="ProjectManager">Project Manager</option>
-                                        <option value="Employee">Employee</option>
-                                    </select>
-                                    <span asp-validation-for="CreateUserViewModel.Role" class="text-danger"></span>
-                                </div>
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createUserModalLabel">
+                    <i class="fas fa-user-plus"></i> Create New User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="row">
+                        <!-- User Account Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Account Information</h6>
+                            
+                            <div class="mb-3">
+                                <label asp-for="CreateUserViewModel.Email" class="form-label"></label>
+                                <input asp-for="CreateUserViewModel.Email" class="form-control" id="userEmail" placeholder="Enter email address" />
+                                <span asp-validation-for="CreateUserViewModel.Email" class="text-danger"></span>
                             </div>
 
-                            <!-- Role-specific Information (shown only for roles that need additional details) -->
-                            <div class="col-md-6" id="roleSpecificFields" style="display: none;">
-                                <h6 class="text-info mb-3" id="roleFieldsTitle">Role Information</h6>
-                                
-                                <div class="mb-3" id="employeeNumberField" style="display: none;">
-                                    <label asp-for="CreateUserViewModel.EmployeeNumber" class="form-label"></label>
-                                    <input asp-for="CreateUserViewModel.EmployeeNumber" class="form-control" placeholder="Enter employee number" readonly />
-                                    <span asp-validation-for="CreateUserViewModel.EmployeeNumber" class="text-danger"></span>
-                                </div>
+                            <div class="mb-3">
+                                <label asp-for="CreateUserViewModel.Password" class="form-label"></label>
+                                <input asp-for="CreateUserViewModel.Password" type="password" class="form-control" id="userPassword" placeholder="Enter password" />
+                                <span asp-validation-for="CreateUserViewModel.Password" class="text-danger"></span>
+                            </div>
 
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label asp-for="CreateUserViewModel.FirstName" class="form-label"></label>
-                                            <input asp-for="CreateUserViewModel.FirstName" class="form-control" placeholder="Enter first name" />
-                                            <span asp-validation-for="CreateUserViewModel.FirstName" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label asp-for="CreateUserViewModel.MiddleName" class="form-label"></label>
-                                            <input asp-for="CreateUserViewModel.MiddleName" class="form-control" placeholder="Enter middle name (optional)" />
-                                            <span asp-validation-for="CreateUserViewModel.MiddleName" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label asp-for="CreateUserViewModel.LastName" class="form-label"></label>
-                                            <input asp-for="CreateUserViewModel.LastName" class="form-control" placeholder="Enter last name" />
-                                            <span asp-validation-for="CreateUserViewModel.LastName" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="mb-3">
+                                <label asp-for="CreateUserViewModel.ConfirmPassword" class="form-label"></label>
+                                <input asp-for="CreateUserViewModel.ConfirmPassword" type="password" class="form-control" id="userConfirmPassword" placeholder="Confirm password" />
+                                <span asp-validation-for="CreateUserViewModel.ConfirmPassword" class="text-danger"></span>
+                            </div>
 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label asp-for="CreateUserViewModel.DepartmentId" class="form-label"></label>
-                                            <select asp-for="CreateUserViewModel.DepartmentId" class="form-select" asp-items="@(new SelectList(Model.CreateUserViewModel.Departments, "Id", "Name"))">
-                                                <option value="">Select Department</option>
-                                            </select>
-                                            <span asp-validation-for="CreateUserViewModel.DepartmentId" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label asp-for="CreateUserViewModel.PositionId" class="form-label"></label>
-                                            <select asp-for="CreateUserViewModel.PositionId" class="form-select" asp-items="@(new SelectList(Model.CreateUserViewModel.Positions, "Id", "Name"))">
-                                                <option value="">Select Position</option>
-                                            </select>
-                                            <span asp-validation-for="CreateUserViewModel.PositionId" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.DateHired" class="form-label"></label>
-                                    <input asp-for="CreateUserViewModel.DateHired" type="date" class="form-control" />
-                                    <span asp-validation-for="CreateUserViewModel.DateHired" class="text-danger"></span>
-                                </div>
+                            <div class="mb-3">
+                                <label asp-for="CreateUserViewModel.Role" class="form-label"></label>
+                                <select asp-for="CreateUserViewModel.Role" class="form-select" id="roleSelect">
+                                    <option value="">Select Role</option>
+                                    <option value="HumanResource">Human Resource</option>
+                                    <option value="DepartmentHead">Department Head</option>
+                                    <option value="Executive">Executive</option>
+                                    <option value="ProjectManager">Project Manager</option>
+                                    <option value="Employee">Employee</option>
+                                </select>
+                                <span asp-validation-for="CreateUserViewModel.Role" class="text-danger"></span>
                             </div>
                         </div>
 
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-ocean">
-                                    <i class="fas fa-user-plus"></i> Create User
-                                </button>
-                                <button type="reset" class="btn btn-outline-ocean ms-2">
-                                    <i class="fas fa-redo"></i> Reset Form
-                                </button>
+                        <!-- Role-specific Information (shown only for roles that need additional details) -->
+                        <div class="col-md-6" id="roleSpecificFields" style="display: none;">
+                            <h6 class="text-info mb-3" id="roleFieldsTitle">Role Information</h6>
+                            
+                            <div class="mb-3" id="employeeNumberField" style="display: none;">
+                                <label asp-for="CreateUserViewModel.EmployeeNumber" class="form-label"></label>
+                                <input asp-for="CreateUserViewModel.EmployeeNumber" class="form-control" id="userEmployeeNumber" placeholder="Enter employee number" readonly />
+                                <span asp-validation-for="CreateUserViewModel.EmployeeNumber" class="text-danger"></span>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label asp-for="CreateUserViewModel.FirstName" class="form-label"></label>
+                                        <input asp-for="CreateUserViewModel.FirstName" class="form-control" id="userFirstName" placeholder="Enter first name" />
+                                        <span asp-validation-for="CreateUserViewModel.FirstName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label asp-for="CreateUserViewModel.MiddleName" class="form-label"></label>
+                                        <input asp-for="CreateUserViewModel.MiddleName" class="form-control" id="userMiddleName" placeholder="Enter middle name (optional)" />
+                                        <span asp-validation-for="CreateUserViewModel.MiddleName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label asp-for="CreateUserViewModel.LastName" class="form-label"></label>
+                                        <input asp-for="CreateUserViewModel.LastName" class="form-control" id="userLastName" placeholder="Enter last name" />
+                                        <span asp-validation-for="CreateUserViewModel.LastName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="CreateUserViewModel.DepartmentId" class="form-label"></label>
+                                        <select asp-for="CreateUserViewModel.DepartmentId" class="form-select" id="userDepartmentId" asp-items="@(new SelectList(Model.CreateUserViewModel.Departments, "Id", "Name"))">
+                                            <option value="">Select Department</option>
+                                        </select>
+                                        <span asp-validation-for="CreateUserViewModel.DepartmentId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="CreateUserViewModel.PositionId" class="form-label"></label>
+                                        <select asp-for="CreateUserViewModel.PositionId" class="form-select" id="userPositionId" asp-items="@(new SelectList(Model.CreateUserViewModel.Positions, "Id", "Name"))">
+                                            <option value="">Select Position</option>
+                                        </select>
+                                        <span asp-validation-for="CreateUserViewModel.PositionId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="CreateUserViewModel.DateHired" class="form-label"></label>
+                                <input asp-for="CreateUserViewModel.DateHired" type="date" class="form-control" id="userDateHired" />
+                                <span asp-validation-for="CreateUserViewModel.DateHired" class="text-danger"></span>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-ocean" id="saveUserBtn">
+                    <i class="fas fa-user-plus"></i> Create User
+                </button>
             </div>
         </div>
     </div>
@@ -237,60 +251,221 @@
                     $roleFieldsTitle.text('Employee Information');
                     $roleFields.slideDown();
                     // Make employee fields required (but employee number is auto-generated)
-                    $('#CreateUserViewModel_FirstName').prop('required', true);
-                    $('#CreateUserViewModel_LastName').prop('required', true);
-                    $('#CreateUserViewModel_DepartmentId').prop('required', true);
-                    $('#CreateUserViewModel_PositionId').prop('required', true);
-                    $('#CreateUserViewModel_DateHired').prop('required', true);
+                    $('#userFirstName').prop('required', true);
+                    $('#userLastName').prop('required', true);
+                    $('#userDepartmentId').prop('required', true);
+                    $('#userPositionId').prop('required', true);
+                    $('#userDateHired').prop('required', true);
                     // Hide employee number field as it will be auto-generated
                     $('#employeeNumberField').hide();
                 } else if (selectedRole === 'DepartmentHead' || selectedRole === 'ProjectManager') {
                     $roleFieldsTitle.text(selectedRole === 'DepartmentHead' ? 'Department Head Information' : 'Project Manager Information');
                     $roleFields.slideDown();
                     // Make basic fields required, but not employee-specific ones
-                    $('#CreateUserViewModel_FirstName').prop('required', true);
-                    $('#CreateUserViewModel_LastName').prop('required', true);
-                    $('#CreateUserViewModel_DepartmentId').prop('required', true);
+                    $('#userFirstName').prop('required', true);
+                    $('#userLastName').prop('required', true);
+                    $('#userDepartmentId').prop('required', true);
                     // Hide employee number field
                     $('#employeeNumberField').hide();
                     // Remove required from employee-specific fields
-                    $('#CreateUserViewModel_EmployeeNumber').prop('required', false);
-                    $('#CreateUserViewModel_PositionId').prop('required', false);
-                    $('#CreateUserViewModel_DateHired').prop('required', false);
+                    $('#userEmployeeNumber').prop('required', false);
+                    $('#userPositionId').prop('required', false);
+                    $('#userDateHired').prop('required', false);
                 } else if (selectedRole === 'HumanResource' || selectedRole === 'Executive') {
                     $roleFieldsTitle.text(selectedRole === 'HumanResource' ? 'Human Resource Information' : 'Executive Information');
                     $roleFields.slideDown();
                     // Make basic fields required
-                    $('#CreateUserViewModel_FirstName').prop('required', true);
-                    $('#CreateUserViewModel_LastName').prop('required', true);
+                    $('#userFirstName').prop('required', true);
+                    $('#userLastName').prop('required', true);
                     // Hide employee number field
                     $('#employeeNumberField').hide();
                     // Remove required from employee and department-specific fields
-                    $('#CreateUserViewModel_EmployeeNumber').prop('required', false);
-                    $('#CreateUserViewModel_DepartmentId').prop('required', false);
-                    $('#CreateUserViewModel_PositionId').prop('required', false);
-                    $('#CreateUserViewModel_DateHired').prop('required', false);
+                    $('#userEmployeeNumber').prop('required', false);
+                    $('#userDepartmentId').prop('required', false);
+                    $('#userPositionId').prop('required', false);
+                    $('#userDateHired').prop('required', false);
                 } else {
                     // Hide employee number field
                     $('#employeeNumberField').hide();
                     // Remove required from all fields
-                    $('#CreateUserViewModel_EmployeeNumber').prop('required', false);
-                    $('#CreateUserViewModel_FirstName').prop('required', false);
-                    $('#CreateUserViewModel_LastName').prop('required', false);
-                    $('#CreateUserViewModel_DepartmentId').prop('required', false);
-                    $('#CreateUserViewModel_PositionId').prop('required', false);
-                    $('#CreateUserViewModel_DateHired').prop('required', false);
+                    $('#userEmployeeNumber').prop('required', false);
+                    $('#userFirstName').prop('required', false);
+                    $('#userLastName').prop('required', false);
+                    $('#userDepartmentId').prop('required', false);
+                    $('#userPositionId').prop('required', false);
+                    $('#userDateHired').prop('required', false);
                 }
             });
 
-            // Reset form handler
-            $('button[type="reset"]').click(function(e) {
-                e.preventDefault();
+            // Generate employee number for Employee role
+            $('#roleSelect').change(function() {
+                const selectedRole = $(this).val();
+                if (selectedRole === 'Employee') {
+                    // Generate employee number (EMP + current year + random 4 digits)
+                    const year = new Date().getFullYear();
+                    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+                    const employeeNumber = `EMP${year}${random}`;
+                    $('#userEmployeeNumber').val(employeeNumber);
+                    $('#employeeNumberField').show();
+                } else {
+                    $('#employeeNumberField').hide();
+                }
+            });
+
+            // Create user button click
+            $('#saveUserBtn').click(function() {
+                var form = $('#createUserForm');
+                
+                // Add validation attributes dynamically
+                $('#userEmail').attr('data-val', 'true');
+                $('#userEmail').attr('data-val-required', 'The Email field is required.');
+                $('#userEmail').attr('data-val-email', 'The Email field is not a valid e-mail address.');
+                
+                $('#userPassword').attr('data-val', 'true');
+                $('#userPassword').attr('data-val-required', 'The Password field is required.');
+                
+                $('#userConfirmPassword').attr('data-val', 'true');
+                $('#userConfirmPassword').attr('data-val-required', 'The Confirm password field is required.');
+                $('#userConfirmPassword').attr('data-val-equalto', 'The password and confirmation password do not match.');
+                $('#userConfirmPassword').attr('data-val-equalto-other', 'userPassword');
+                
+                $('#roleSelect').attr('data-val', 'true');
+                $('#roleSelect').attr('data-val-required', 'The User Role field is required.');
+                
+                var formData = {
+                    __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
+                    Email: $('#userEmail').val().trim(),
+                    Password: $('#userPassword').val(),
+                    ConfirmPassword: $('#userConfirmPassword').val(),
+                    Role: $('#roleSelect').val(),
+                    EmployeeNumber: $('#userEmployeeNumber').val(),
+                    FirstName: $('#userFirstName').val().trim(),
+                    MiddleName: $('#userMiddleName').val().trim(),
+                    LastName: $('#userLastName').val().trim(),
+                    DepartmentId: $('#userDepartmentId').val() ? parseInt($('#userDepartmentId').val()) : 0,
+                    PositionId: $('#userPositionId').val() ? parseInt($('#userPositionId').val()) : 0,
+                    DateHired: $('#userDateHired').val()
+                };
+                
+                // Clear previous validation messages
+                $('.text-danger').text('');
+                
+                // Basic client-side validation
+                if (!formData.Email) {
+                    $('#userEmail').siblings('.text-danger').text('The Email field is required.');
+                    return;
+                }
+                
+                if (!formData.Password) {
+                    $('#userPassword').siblings('.text-danger').text('The Password field is required.');
+                    return;
+                }
+                
+                if (!formData.ConfirmPassword) {
+                    $('#userConfirmPassword').siblings('.text-danger').text('The Confirm password field is required.');
+                    return;
+                }
+                
+                if (formData.Password !== formData.ConfirmPassword) {
+                    $('#userConfirmPassword').siblings('.text-danger').text('The password and confirmation password do not match.');
+                    return;
+                }
+                
+                if (!formData.Role) {
+                    $('#roleSelect').siblings('.text-danger').text('The User Role field is required.');
+                    return;
+                }
+                
+                // Role-specific validation
+                if (formData.Role === 'Employee') {
+                    if (!formData.FirstName) {
+                        $('#userFirstName').siblings('.text-danger').text('The First Name field is required.');
+                        return;
+                    }
+                    if (!formData.LastName) {
+                        $('#userLastName').siblings('.text-danger').text('The Last Name field is required.');
+                        return;
+                    }
+                    if (!formData.DepartmentId) {
+                        $('#userDepartmentId').siblings('.text-danger').text('The Department field is required.');
+                        return;
+                    }
+                    if (!formData.PositionId) {
+                        $('#userPositionId').siblings('.text-danger').text('The Position field is required.');
+                        return;
+                    }
+                    if (!formData.DateHired) {
+                        $('#userDateHired').siblings('.text-danger').text('The Date Hired field is required.');
+                        return;
+                    }
+                }
+                
+                // Disable button and show loading
+                $('#saveUserBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
+                
+                $.ajax({
+                    url: '@Url.Action("Create", "User")',
+                    type: 'POST',
+                    data: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Close modal
+                            $('#createUserModal').modal('hide');
+                            
+                            // Show success message
+                            var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                                response.message +
+                                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                                '</div>';
+                            $('.container-fluid .row .col-12').prepend(alertHtml);
+                            
+                            // Reset form
+                            form[0].reset();
+                            $('#roleSpecificFields').slideUp();
+                            
+                            // Reload page after a short delay to show updated list
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            // Show error message
+                            if (response.errors) {
+                                for (var key in response.errors) {
+                                    var fieldId = key.replace('CreateUserViewModel.', '').toLowerCase();
+                                    $('#' + fieldId).siblings('.text-danger').text(response.errors[key][0]);
+                                }
+                            } else {
+                                // General error
+                                var generalError = response.errors && response.errors[''] ? response.errors[''][0] : 'An error occurred while creating the user.';
+                                $('.modal-body').prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                                    generalError +
+                                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                                    '</div>');
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('.modal-body').prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                            'An error occurred while creating the user. Please try again.' +
+                            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                            '</div>');
+                    },
+                    complete: function() {
+                        // Re-enable button
+                        $('#saveUserBtn').prop('disabled', false).html('<i class="fas fa-user-plus"></i> Create User');
+                    }
+                });
+            });
+            
+            // Reset form when modal is hidden
+            $('#createUserModal').on('hidden.bs.modal', function () {
                 $('#createUserForm')[0].reset();
                 $('#roleSpecificFields').slideUp();
-                // Clear validation messages
                 $('.text-danger').text('');
-                $('.form-control, .form-select').removeClass('is-invalid');
+                $('.alert').remove();
             });
         });
     </script>

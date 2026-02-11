@@ -96,6 +96,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 model.Departments = await _context.Departments.ToListAsync();
                 model.Positions = await _context.Positions.ToListAsync();
                 
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                    return Json(new { success = false, errors = errors });
+                }
+                
                 var viewModel = new UserListViewModel
                 {
                     CreateUserViewModel = model,
@@ -112,6 +121,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 ModelState.AddModelError("Email", "Email already exists");
                 model.Departments = await _context.Departments.ToListAsync();
                 model.Positions = await _context.Positions.ToListAsync();
+                
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                    return Json(new { success = false, errors = errors });
+                }
                 
                 var viewModel = new UserListViewModel
                 {
@@ -141,6 +159,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 
                 model.Departments = await _context.Departments.ToListAsync();
                 model.Positions = await _context.Positions.ToListAsync();
+                
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                    return Json(new { success = false, errors = errors });
+                }
                 
                 var viewModel = new UserListViewModel
                 {
@@ -176,6 +203,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                 _context.Employees.Add(employee);
                 await _context.SaveChangesAsync();
+            }
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, message = "User created successfully!" });
             }
 
             TempData["Success"] = "User created successfully!";

@@ -33,6 +33,25 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             return View("~/Areas/SuperAdmin/Views/Management/Department/Create.cshtml");
         }
 
+        // GET: /SuperAdmin/Department/GetDepartmentById/5
+        [HttpGet]
+        public async Task<IActionResult> GetDepartmentById(int id)
+        {
+            var department = await _context.Departments.FindAsync(id);
+            if (department == null)
+            {
+                return Json(new { success = false, message = "Department not found." });
+            }
+            
+            return Json(new { 
+                success = true, 
+                id = department.Id,
+                name = department.Name,
+                description = department.Description,
+                dateCreated = department.DateCreated.ToString("MM/dd/yyyy HH:mm:ss")
+            });
+        }
+
         // POST: /SuperAdmin/Department/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -46,11 +65,26 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     _context.Add(department);
                     await _context.SaveChangesAsync();
                     
+                    // Check if request is AJAX
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = true, message = "Department created successfully!" });
+                    }
+                    
                     TempData["Success"] = "Department created successfully!";
                     return RedirectToAction(nameof(Index));
                 }
                 
                 // If model state is invalid, return the view with validation errors
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                    return Json(new { success = false, errors = errors });
+                }
+                
                 return View("~/Areas/SuperAdmin/Views/Management/Department/Create.cshtml", department);
             }
             catch (Exception ex)
@@ -58,6 +92,16 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 // Log the error (you can use proper logging here)
                 Console.WriteLine($"Error creating department: {ex.Message}");
                 ModelState.AddModelError("", "Unable to create department. Please try again.");
+                
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                    return Json(new { success = false, errors = errors, message = "Unable to create department. Please try again." });
+                }
+                
                 return View("~/Areas/SuperAdmin/Views/Management/Department/Create.cshtml", department);
             }
         }
@@ -86,6 +130,10 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         {
             if (id != department.Id)
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "Department not found." });
+                }
                 return NotFound();
             }
 
@@ -96,12 +144,21 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     _context.Update(department);
                     await _context.SaveChangesAsync();
                     
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = true, message = "Department updated successfully!" });
+                    }
+                    
                     TempData["Success"] = "Department updated successfully!";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!DepartmentExists(department.Id))
                     {
+                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        {
+                            return Json(new { success = false, message = "Department not found." });
+                        }
                         return NotFound();
                     }
                     else
@@ -110,6 +167,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     }
                 }
                 return RedirectToAction(nameof(Index));
+            }
+            
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+                return Json(new { success = false, errors = errors });
             }
             
             return View("~/Areas/SuperAdmin/Views/Management/Department/Edit.cshtml", department);
@@ -144,7 +210,20 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 _context.Departments.Remove(department);
                 await _context.SaveChangesAsync();
                 
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = true, message = "Department deleted successfully!" });
+                }
+                
                 TempData["Success"] = "Department deleted successfully!";
+            }
+            else
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "Department not found." });
+                }
+                return NotFound();
             }
             
             return RedirectToAction(nameof(Index));

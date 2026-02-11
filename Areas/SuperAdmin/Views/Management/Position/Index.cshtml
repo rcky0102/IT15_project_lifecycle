@@ -1,6 +1,6 @@
-@model IEnumerable<project_lifecycle.Models.Department>
+﻿@model IEnumerable<project_lifecycle.Models.Position>
 @{
-    ViewData["Title"] = "Department Management";
+    ViewData["Title"] = "Position Management";
     Layout = "~/Areas/SuperAdmin/Layout.cshtml";
 }
 
@@ -8,9 +8,9 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Department Management</h2>
-                <button type="button" class="btn btn-ocean" data-bs-toggle="modal" data-bs-target="#createDepartmentModal">
-                    <i class="fas fa-plus"></i> Add Department
+                <h2>Position Management</h2>
+                <button type="button" class="btn btn-ocean" data-bs-toggle="modal" data-bs-target="#createPositionModal">
+                    <i class="fas fa-plus"></i> Add Position
                 </button>
             </div>
             
@@ -24,7 +24,7 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Departments</h5>
+                    <h5 class="mb-0">Positions</h5>
                 </div>
                 <div class="card-body">
                     @if (Model.Any())
@@ -59,7 +59,7 @@
                                             <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
                                             <td class="text-center">
                                                 <div class="btn-group" role="group">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editDepartment(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editPosition(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')">
                                                         <i class="fas fa-edit"></i> Edit
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')">
@@ -76,11 +76,11 @@
                     else
                     {
                         <div class="text-center py-5">
-                            <i class="fas fa-building fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No departments found</h5>
-                            <p class="text-muted">Create your first department to get started.</p>
-                            <button type="button" class="btn btn-ocean" data-bs-toggle="modal" data-bs-target="#createDepartmentModal">
-                                <i class="fas fa-plus"></i> Add Department
+                            <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No positions found</h5>
+                            <p class="text-muted">Create your first position to get started.</p>
+                            <button type="button" class="btn btn-ocean" data-bs-toggle="modal" data-bs-target="#createPositionModal">
+                                <i class="fas fa-plus"></i> Add Position
                             </button>
                         </div>
                     }
@@ -90,24 +90,24 @@
     </div>
 </div>
 
-<!-- Create Department Modal -->
-<div class="modal fade" id="createDepartmentModal" tabindex="-1" aria-labelledby="createDepartmentModalLabel" aria-hidden="true">
+<!-- Create Position Modal -->
+<div class="modal fade" id="createPositionModal" tabindex="-1" aria-labelledby="createPositionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createDepartmentModalLabel">
-                    <i class="fas fa-building"></i> Create New Department
+                <h5 class="modal-title" id="createPositionModalLabel">
+                    <i class="fas fa-briefcase"></i> Create New Position
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="createDepartmentForm">
+                <form id="createPositionForm">
                     @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label asp-for="Name" class="form-label">Department Name</label>
-                                <input asp-for="Name" class="form-control" id="departmentName" placeholder="Enter department name" />
+                                <label asp-for="Name" class="form-label">Position Name</label>
+                                <input asp-for="Name" class="form-control" id="positionName" placeholder="Enter position name" />
                                 <span asp-validation-for="Name" class="text-danger"></span>
                             </div>
                         </div>
@@ -115,7 +115,7 @@
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label asp-for="Description" class="form-label">Description</label>
-                                <textarea asp-for="Description" class="form-control" id="departmentDescription" rows="4" placeholder="Enter department description (optional)"></textarea>
+                                <textarea asp-for="Description" class="form-control" id="positionDescription" rows="4" placeholder="Enter position description (optional)"></textarea>
                                 <span asp-validation-for="Description" class="text-danger"></span>
                             </div>
                         </div>
@@ -126,34 +126,34 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button type="button" class="btn btn-primary" id="saveDepartmentBtn">
-                    <i class="fas fa-save"></i> Create Department
+                <button type="button" class="btn btn-primary" id="savePositionBtn">
+                    <i class="fas fa-save"></i> Create Position
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Edit Department Modal -->
-<div class="modal fade" id="editDepartmentModal" tabindex="-1" aria-labelledby="editDepartmentModalLabel" aria-hidden="true">
+<!-- Edit Position Modal -->
+<div class="modal fade" id="editPositionModal" tabindex="-1" aria-labelledby="editPositionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editDepartmentModalLabel">
-                    <i class="fas fa-edit"></i> Edit Department
+                <h5 class="modal-title" id="editPositionModalLabel">
+                    <i class="fas fa-edit"></i> Edit Position
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="editDepartmentForm">
+                <form id="editPositionForm">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" id="editDepartmentId" />
+                    <input type="hidden" id="editPositionId" />
                     <input type="hidden" id="editDateCreated" />
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label asp-for="Name" class="form-label">Department Name</label>
-                                <input asp-for="Name" class="form-control" id="editDepartmentName" placeholder="Enter department name" />
+                                <label asp-for="Name" class="form-label">Position Name</label>
+                                <input asp-for="Name" class="form-control" id="editPositionName" placeholder="Enter position name" />
                                 <span asp-validation-for="Name" class="text-danger"></span>
                             </div>
                         </div>
@@ -161,7 +161,7 @@
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label asp-for="Description" class="form-label">Description</label>
-                                <textarea asp-for="Description" class="form-control" id="editDepartmentDescription" rows="4" placeholder="Enter department description (optional)"></textarea>
+                                <textarea asp-for="Description" class="form-control" id="editPositionDescription" rows="4" placeholder="Enter position description (optional)"></textarea>
                                 <span asp-validation-for="Description" class="text-danger"></span>
                             </div>
                         </div>
@@ -172,8 +172,8 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button type="button" class="btn btn-primary" id="updateDepartmentBtn">
-                    <i class="fas fa-save"></i> Update Department
+                <button type="button" class="btn btn-primary" id="updatePositionBtn">
+                    <i class="fas fa-save"></i> Update Position
                 </button>
             </div>
         </div>
@@ -181,11 +181,11 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteDepartmentModal" tabindex="-1" aria-labelledby="deleteDepartmentModalLabel" aria-hidden="true">
+<div class="modal fade" id="deletePositionModal" tabindex="-1" aria-labelledby="deletePositionModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title" id="deleteDepartmentModalLabel">
+                <h5 class="modal-title" id="deletePositionModalLabel">
                     <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -193,16 +193,16 @@
             <div class="modal-body">
                 <div class="alert alert-danger" role="alert">
                     <i class="fas fa-exclamation-circle"></i>
-                    <strong>Warning:</strong> Are you sure you want to delete this department? This action cannot be undone.
+                    <strong>Warning:</strong> Are you sure you want to delete this position? This action cannot be undone.
                 </div>
                 
                 <div class="mb-3">
-                    <strong>Department Name:</strong> <span id="deleteDepartmentName"></span>
+                    <strong>Position Name:</strong> <span id="deletePositionName"></span>
                 </div>
                 
-                <form id="deleteDepartmentForm">
+                <form id="deletePositionForm">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" id="deleteDepartmentId" />
+                    <input type="hidden" id="deletePositionId" />
                 </form>
             </div>
             <div class="modal-footer">
@@ -210,7 +210,7 @@
                     <i class="fas fa-times"></i> Cancel
                 </button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="fas fa-trash"></i> Delete Department
+                    <i class="fas fa-trash"></i> Delete Position
                 </button>
             </div>
         </div>
@@ -221,18 +221,18 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         $(document).ready(function() {
-            $('#saveDepartmentBtn').click(function() {
-                var form = $('#createDepartmentForm');
+            // Create position button click
+            $('#savePositionBtn').click(function() {
+                var form = $('#createPositionForm');
                 
                 // Add validation attributes dynamically
-                $('#departmentName').attr('data-val', 'true');
-                $('#departmentName').attr('data-val-required', 'The Name field is required.');
+                $('#positionName').attr('data-val', 'true');
+                $('#positionName').attr('data-val-required', 'The Name field is required.');
                 
-                // Parse and validate form
                 var formData = {
                     __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
-                    Name: $('#departmentName').val().trim(),
-                    Description: $('#departmentDescription').val().trim()
+                    Name: $('#positionName').val().trim(),
+                    Description: $('#positionDescription').val().trim()
                 };
                 
                 // Clear previous validation messages
@@ -240,15 +240,15 @@
                 
                 // Basic client-side validation
                 if (!formData.Name) {
-                    $('#departmentName').siblings('.text-danger').text('The Name field is required.');
+                    $('#positionName').siblings('.text-danger').text('The Name field is required.');
                     return;
                 }
                 
                 // Disable button and show loading
-                $('#saveDepartmentBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
+                $('#savePositionBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
                 
                 $.ajax({
-                    url: '@Url.Action("Create", "Department")',
+                    url: '@Url.Action("Create", "Position")',
                     type: 'POST',
                     data: formData,
                     headers: {
@@ -257,7 +257,7 @@
                     success: function(response) {
                         if (response.success) {
                             // Close modal
-                            $('#createDepartmentModal').modal('hide');
+                            $('#createPositionModal').modal('hide');
                             
                             // Show success message
                             var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
@@ -280,81 +280,81 @@
                                     $('#' + key.toLowerCase() + 'Error').text(response.errors[key][0]);
                                 }
                             } else {
-                                $('#departmentName').siblings('.text-danger').text(response.message || 'An error occurred while creating the department.');
+                                $('#positionName').siblings('.text-danger').text(response.message || 'An error occurred while creating the position.');
                             }
                         }
                     },
                     error: function(xhr, status, error) {
-                        $('#departmentName').siblings('.text-danger').text('An error occurred while creating the department. Please try again.');
+                        $('#positionName').siblings('.text-danger').text('An error occurred while creating the position. Please try again.');
                     },
                     complete: function() {
                         // Re-enable button
-                        $('#saveDepartmentBtn').prop('disabled', false).html('<i class="fas fa-save"></i> Create Department');
+                        $('#savePositionBtn').prop('disabled', false).html('<i class="fas fa-save"></i> Create Position');
                     }
                 });
             });
             
             // Reset form when modal is hidden
-            $('#createDepartmentModal').on('hidden.bs.modal', function () {
-                $('#createDepartmentForm')[0].reset();
+            $('#createPositionModal').on('hidden.bs.modal', function () {
+                $('#createPositionForm')[0].reset();
                 $('.text-danger').text('');
             });
             
-            // Edit department function
-            window.editDepartment = function(id, name, description) {
-                // Fetch complete department data including DateCreated
+            // Edit position function
+            window.editPosition = function(id, name, description) {
+                // Fetch complete position data including DateCreated
                 $.ajax({
-                    url: '@Url.Action("GetDepartmentById", "Department")',
+                    url: '@Url.Action("GetPositionById", "Position")',
                     type: 'GET',
                     data: { id: id },
-                    success: function(department) {
-                        $('#editDepartmentId').val(department.id);
-                        $('#editDepartmentName').val(department.name);
-                        $('#editDepartmentDescription').val(department.description || '');
-                        $('#editDateCreated').val(department.dateCreated);
-                        $('#editDepartmentModal').modal('show');
+                    success: function(position) {
+                        $('#editPositionId').val(position.id);
+                        $('#editPositionName').val(position.name);
+                        $('#editPositionDescription').val(position.description || '');
+                        $('#editDateCreated').val(position.dateCreated);
+                        $('#editPositionModal').modal('show');
                     },
                     error: function() {
                         // Fallback to basic data if AJAX fails
-                        $('#editDepartmentId').val(id);
-                        $('#editDepartmentName').val(name);
-                        $('#editDepartmentDescription').val(description);
+                        $('#editPositionId').val(id);
+                        $('#editPositionName').val(name);
+                        $('#editPositionDescription').val(description);
                         $('#editDateCreated').val(new Date().toISOString());
-                        $('#editDepartmentModal').modal('show');
+                        $('#editPositionModal').modal('show');
                     }
                 });
             };
             
-            // Update department button click
-            $('#updateDepartmentBtn').click(function() {
-                var form = $('#editDepartmentForm');
+            // Update position button click
+            $('#updatePositionBtn').click(function() {
+                var form = $('#editPositionForm');
                 
                 // Add validation attributes dynamically
-                $('#editDepartmentName').attr('data-val', 'true');
-                $('#editDepartmentName').attr('data-val-required', 'The Name field is required.');
+                $('#editPositionName').attr('data-val', 'true');
+                $('#editPositionName').attr('data-val-required', 'The Name field is required.');
                 
                 var formData = {
                     __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
-                    Id: $('#editDepartmentId').val(),
-                    Name: $('#editDepartmentName').val().trim(),
-                    Description: $('#editDepartmentDescription').val().trim(),
+                    Id: $('#editPositionId').val(),
+                    Name: $('#editPositionName').val().trim(),
+                    Description: $('#editPositionDescription').val().trim(),
                     DateCreated: $('#editDateCreated').val()
                 };
                 
                 // Clear previous validation messages
-                $('#editDepartmentModal .text-danger').text('');
+                $('#editPositionModal .text-danger').text('');
                 
                 // Basic client-side validation
                 if (!formData.Name) {
-                    $('#editDepartmentName').siblings('.text-danger').text('The Name field is required.');
+                    $('#editPositionName').siblings('.text-danger').text('The Name field is required.');
                     return;
                 }
                 
                 // Disable button and show loading
-                $('#updateDepartmentBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
+                $('#updatePositionBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
                 
                 $.ajax({
-                    url: '@Url.Action("Edit", "Department")',
+                    url: '@Url.Action("Edit", "Position")',
                     type: 'POST',
                     data: formData,
                     headers: {
@@ -363,7 +363,7 @@
                     success: function(response) {
                         if (response.success) {
                             // Close modal
-                            $('#editDepartmentModal').modal('hide');
+                            $('#editPositionModal').modal('hide');
                             
                             // Show success message
                             var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
@@ -383,49 +383,49 @@
                             // Show error message
                             if (response.errors) {
                                 for (var key in response.errors) {
-                                    $('#editDepartmentModal #' + key.toLowerCase() + 'Error').text(response.errors[key][0]);
+                                    $('#editPositionModal #' + key.toLowerCase() + 'Error').text(response.errors[key][0]);
                                 }
                             } else {
-                                $('#editDepartmentName').siblings('.text-danger').text(response.message || 'An error occurred while updating the department.');
+                                $('#editPositionName').siblings('.text-danger').text(response.message || 'An error occurred while updating the position.');
                             }
                         }
                     },
                     error: function(xhr, status, error) {
-                        $('#editDepartmentName').siblings('.text-danger').text('An error occurred while updating the department. Please try again.');
+                        $('#editPositionName').siblings('.text-danger').text('An error occurred while updating the position. Please try again.');
                     },
                     complete: function() {
                         // Re-enable button
-                        $('#updateDepartmentBtn').prop('disabled', false).html('<i class="fas fa-save"></i> Update Department');
+                        $('#updatePositionBtn').prop('disabled', false).html('<i class="fas fa-save"></i> Update Position');
                     }
                 });
             });
             
             // Reset edit form when modal is hidden
-            $('#editDepartmentModal').on('hidden.bs.modal', function () {
-                $('#editDepartmentForm')[0].reset();
-                $('#editDepartmentModal .text-danger').text('');
+            $('#editPositionModal').on('hidden.bs.modal', function () {
+                $('#editPositionForm')[0].reset();
+                $('#editPositionModal .text-danger').text('');
             });
             
             // Confirm delete function
             window.confirmDelete = function(id, name) {
-                $('#deleteDepartmentId').val(id);
-                $('#deleteDepartmentName').text(name);
-                $('#deleteDepartmentModal').modal('show');
+                $('#deletePositionId').val(id);
+                $('#deletePositionName').text(name);
+                $('#deletePositionModal').modal('show');
             };
             
             // Confirm delete button click
             $('#confirmDeleteBtn').click(function() {
-                var form = $('#deleteDepartmentForm');
+                var form = $('#deletePositionForm');
                 var formData = {
                     __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
-                    id: $('#deleteDepartmentId').val()
+                    id: $('#deletePositionId').val()
                 };
                 
                 // Disable button and show loading
                 $('#confirmDeleteBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
                 
                 $.ajax({
-                    url: '@Url.Action("Delete", "Department")',
+                    url: '@Url.Action("Delete", "Position")',
                     type: 'POST',
                     data: formData,
                     headers: {
@@ -434,7 +434,7 @@
                     success: function(response) {
                         if (response.success) {
                             // Close modal
-                            $('#deleteDepartmentModal').modal('hide');
+                            $('#deletePositionModal').modal('hide');
                             
                             // Show success message
                             var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
@@ -453,35 +453,35 @@
                         } else {
                             // Show error message
                             var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-                                (response.message || 'An error occurred while deleting the department.') +
+                                (response.message || 'An error occurred while deleting the position.') +
                                 '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
                                 '</div>';
                             $('.container-fluid .row .col-12').prepend(alertHtml);
                             
                             // Close modal
-                            $('#deleteDepartmentModal').modal('hide');
+                            $('#deletePositionModal').modal('hide');
                         }
                     },
                     error: function(xhr, status, error) {
                         var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-                            'An error occurred while deleting the department. Please try again.' +
+                            'An error occurred while deleting the position. Please try again.' +
                             '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
                             '</div>';
                         $('.container-fluid .row .col-12').prepend(alertHtml);
                         
                         // Close modal
-                        $('#deleteDepartmentModal').modal('hide');
+                        $('#deletePositionModal').modal('hide');
                     },
                     complete: function() {
                         // Re-enable button
-                        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fas fa-trash"></i> Delete Department');
+                        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fas fa-trash"></i> Delete Position');
                     }
                 });
             });
             
             // Reset delete form when modal is hidden
-            $('#deleteDepartmentModal').on('hidden.bs.modal', function () {
-                $('#deleteDepartmentForm')[0].reset();
+            $('#deletePositionModal').on('hidden.bs.modal', function () {
+                $('#deletePositionForm')[0].reset();
             });
         });
     </script>
