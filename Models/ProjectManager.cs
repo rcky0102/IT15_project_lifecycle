@@ -31,5 +31,9 @@ namespace project_lifecycle.Models
 
         [Required]
         public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        public int? PositionId { get; set; }
+
+        public Position? Position { get; set; }
     }
 }

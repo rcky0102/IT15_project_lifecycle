@@ -5,6 +5,21 @@
     Layout = "~/Areas/SuperAdmin/Layout.cshtml";
 }
 
+@* Debug: Show data counts *@
+<div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc;">
+    <strong>Debug Info:</strong><br>
+    Departments Count: @Model.CreateUserViewModel.Departments.Count<br>
+    Positions Count: @Model.CreateUserViewModel.Positions.Count<br>
+    @if (Model.CreateUserViewModel.Departments.Any())
+    {
+        <text>Departments: @string.Join(", ", Model.CreateUserViewModel.Departments.Select(d => d.Name))</text><br>
+    }
+    @if (Model.CreateUserViewModel.Positions.Any())
+    {
+        <text>Positions: @string.Join(", ", Model.CreateUserViewModel.Positions.Select(p => p.Name))</text>
+    }
+</div>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -192,12 +207,22 @@
                                 </div>
                             </div>
 
+                            <div class="mb-3">
+                                <label asp-for="CreateUserViewModel.Contact" class="form-label"></label>
+                                <input asp-for="CreateUserViewModel.Contact" class="form-control" id="userContact" placeholder="Enter contact number" />
+                                <span asp-validation-for="CreateUserViewModel.Contact" class="text-danger"></span>
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label asp-for="CreateUserViewModel.DepartmentId" class="form-label"></label>
-                                        <select asp-for="CreateUserViewModel.DepartmentId" class="form-select" id="userDepartmentId" asp-items="@(new SelectList(Model.CreateUserViewModel.Departments, "Id", "Name"))">
+                                        <select asp-for="CreateUserViewModel.DepartmentId" class="form-select" id="userDepartmentId">
                                             <option value="">Select Department</option>
+                                            @foreach (var dept in Model.CreateUserViewModel.Departments)
+                                            {
+                                                <option value="@dept.Id">@dept.Name</option>
+                                            }
                                         </select>
                                         <span asp-validation-for="CreateUserViewModel.DepartmentId" class="text-danger"></span>
                                     </div>
@@ -205,8 +230,12 @@
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label asp-for="CreateUserViewModel.PositionId" class="form-label"></label>
-                                        <select asp-for="CreateUserViewModel.PositionId" class="form-select" id="userPositionId" asp-items="@(new SelectList(Model.CreateUserViewModel.Positions, "Id", "Name"))">
+                                        <select asp-for="CreateUserViewModel.PositionId" class="form-select" id="userPositionId">
                                             <option value="">Select Position</option>
+                                            @foreach (var pos in Model.CreateUserViewModel.Positions)
+                                            {
+                                                <option value="@pos.Id">@pos.Name</option>
+                                            }
                                         </select>
                                         <span asp-validation-for="CreateUserViewModel.PositionId" class="text-danger"></span>
                                     </div>
@@ -243,9 +272,6 @@
                 const selectedRole = $(this).val();
                 const $roleFields = $('#roleSpecificFields');
                 const $roleFieldsTitle = $('#roleFieldsTitle');
-                
-                // Hide all role-specific fields first
-                $roleFields.slideUp();
                 
                 if (selectedRole === 'Employee') {
                     $roleFieldsTitle.text('Employee Information');
@@ -294,6 +320,7 @@
                     $('#userDepartmentId').prop('required', false);
                     $('#userPositionId').prop('required', false);
                     $('#userDateHired').prop('required', false);
+                    $roleFields.slideUp();
                 }
             });
 
@@ -342,6 +369,7 @@
                     FirstName: $('#userFirstName').val().trim(),
                     MiddleName: $('#userMiddleName').val().trim(),
                     LastName: $('#userLastName').val().trim(),
+                    Contact: $('#userContact').val().trim(),
                     DepartmentId: $('#userDepartmentId').val() ? parseInt($('#userDepartmentId').val()) : 0,
                     PositionId: $('#userPositionId').val() ? parseInt($('#userPositionId').val()) : 0,
                     DateHired: $('#userDateHired').val()

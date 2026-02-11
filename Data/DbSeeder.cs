@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Constants;
+using project_lifecycle.Models;
 
 namespace project_lifecycle.Data
 {
@@ -10,6 +12,7 @@ namespace project_lifecycle.Data
             // Seed Roles
             var userManager = service.GetService<UserManager<IdentityUser>>();
             var roleManager = service.GetService<RoleManager<IdentityRole>>();
+            var context = service.GetService<ApplicationDbContext>();
 
             if (!await roleManager.RoleExistsAsync(Roles.HumanResource.ToString()))
                 await roleManager.CreateAsync(new IdentityRole(Roles.HumanResource.ToString()));
@@ -25,6 +28,44 @@ namespace project_lifecycle.Data
             
             if (!await roleManager.RoleExistsAsync(Roles.Employee.ToString()))
                 await roleManager.CreateAsync(new IdentityRole(Roles.Employee.ToString()));
+
+            if (!await roleManager.RoleExistsAsync(Roles.ProjectManager.ToString()))
+                await roleManager.CreateAsync(new IdentityRole(Roles.ProjectManager.ToString()));
+
+            // Seed Departments
+            if (!await context.Departments.AnyAsync())
+            {
+                var departments = new List<Department>
+                {
+                    new Department { Name = "Information Technology", Description = "IT and software development" },
+                    new Department { Name = "Human Resources", Description = "HR and personnel management" },
+                    new Department { Name = "Finance", Description = "Financial planning and accounting" },
+                    new Department { Name = "Marketing", Description = "Marketing and sales" },
+                    new Department { Name = "Operations", Description = "Business operations and logistics" }
+                };
+                await context.Departments.AddRangeAsync(departments);
+                await context.SaveChangesAsync();
+            }
+
+            // Seed Positions
+            if (!await context.Positions.AnyAsync())
+            {
+                var positions = new List<Position>
+                {
+                    new Position { Name = "Software Developer", Description = "Develops software applications" },
+                    new Position { Name = "Project Manager", Description = "Manages projects and teams" },
+                    new Position { Name = "HR Manager", Description = "Manages human resources functions" },
+                    new Position { Name = "Financial Analyst", Description = "Analyzes financial data" },
+                    new Position { Name = "Marketing Specialist", Description = "Handles marketing activities" },
+                    new Position { Name = "Operations Manager", Description = "Manages business operations" },
+                    new Position { Name = "IT Director", Description = "Leads IT department" },
+                    new Position { Name = "CEO", Description = "Chief Executive Officer" },
+                    new Position { Name = "CTO", Description = "Chief Technology Officer" },
+                    new Position { Name = "CFO", Description = "Chief Financial Officer" }
+                };
+                await context.Positions.AddRangeAsync(positions);
+                await context.SaveChangesAsync();
+            }
 
             // Seed SuperAdmin User
             var superAdmin = new IdentityUser

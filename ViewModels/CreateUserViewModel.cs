@@ -54,6 +54,9 @@ namespace project_lifecycle.ViewModels
         [Display(Name = "Date Hired")]
         public DateTime DateHired { get; set; } = DateTime.Today;
 
+        [Display(Name = "Contact")]
+        public string? Contact { get; set; }
+
         // Lists for dropdowns
         public List<Department> Departments { get; set; } = new();
         public List<Position> Positions { get; set; } = new();

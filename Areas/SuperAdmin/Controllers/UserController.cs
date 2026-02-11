@@ -52,21 +52,84 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         Role = roles.FirstOrDefault() ?? "No Role"
                     };
 
-                    // Get employee details if exists
-                    var employee = await _context.Employees
-                        .Include(e => e.Department)
-                        .Include(e => e.Position)
-                        .FirstOrDefaultAsync(e => e.UserId == user.Id);
-
-                    if (employee != null)
+                    // Get role-specific details
+                    if (roles.Contains(Roles.Employee.ToString()))
                     {
-                        userDetail.EmployeeNumber = employee.EmployeeNumber;
-                        userDetail.FirstName = employee.FirstName;
-                        userDetail.MiddleName = employee.MiddleName;
-                        userDetail.LastName = employee.LastName;
-                        userDetail.DepartmentName = employee.Department?.Name;
-                        userDetail.PositionName = employee.Position?.Name;
-                        userDetail.DateHired = employee.DateHired;
+                        var employee = await _context.Employees
+                            .Include(e => e.Department)
+                            .Include(e => e.Position)
+                            .FirstOrDefaultAsync(e => e.UserId == user.Id);
+
+                        if (employee != null)
+                        {
+                            userDetail.EmployeeNumber = employee.EmployeeNumber;
+                            userDetail.FirstName = employee.FirstName;
+                            userDetail.MiddleName = employee.MiddleName;
+                            userDetail.LastName = employee.LastName;
+                            userDetail.DepartmentName = employee.Department?.Name;
+                            userDetail.PositionName = employee.Position?.Name;
+                            userDetail.DateHired = employee.DateHired;
+                        }
+                    }
+                    else if (roles.Contains(Roles.HumanResource.ToString()))
+                    {
+                        var humanResource = await _context.HumanResources
+                            .Include(hr => hr.Position)
+                            .FirstOrDefaultAsync(hr => hr.UserId == user.Id);
+
+                        if (humanResource != null)
+                        {
+                            userDetail.FirstName = humanResource.FirstName;
+                            userDetail.MiddleName = humanResource.MiddleName;
+                            userDetail.LastName = humanResource.LastName;
+                            userDetail.PositionName = humanResource.Position?.Name;
+                        }
+                    }
+                    else if (roles.Contains(Roles.DepartmentHead.ToString()))
+                    {
+                        var departmentHead = await _context.DepartmentHeads
+                            .Include(dh => dh.Department)
+                            .Include(dh => dh.Position)
+                            .FirstOrDefaultAsync(dh => dh.UserId == user.Id);
+
+                        if (departmentHead != null)
+                        {
+                            userDetail.FirstName = departmentHead.FirstName;
+                            userDetail.MiddleName = departmentHead.MiddleName;
+                            userDetail.LastName = departmentHead.LastName;
+                            userDetail.DepartmentName = departmentHead.Department?.Name;
+                            userDetail.PositionName = departmentHead.Position?.Name;
+                        }
+                    }
+                    else if (roles.Contains(Roles.Executive.ToString()))
+                    {
+                        var executive = await _context.Executives
+                            .Include(e => e.Position)
+                            .FirstOrDefaultAsync(e => e.UserId == user.Id);
+
+                        if (executive != null)
+                        {
+                            userDetail.FirstName = executive.FirstName;
+                            userDetail.MiddleName = executive.MiddleName;
+                            userDetail.LastName = executive.LastName;
+                            userDetail.PositionName = executive.Position?.Name;
+                        }
+                    }
+                    else if (roles.Contains(Roles.ProjectManager.ToString()))
+                    {
+                        var projectManager = await _context.ProjectManagers
+                            .Include(pm => pm.Department)
+                            .Include(pm => pm.Position)
+                            .FirstOrDefaultAsync(pm => pm.UserId == user.Id);
+
+                        if (projectManager != null)
+                        {
+                            userDetail.FirstName = projectManager.FirstName;
+                            userDetail.MiddleName = projectManager.MiddleName;
+                            userDetail.LastName = projectManager.LastName;
+                            userDetail.DepartmentName = projectManager.Department?.Name;
+                            userDetail.PositionName = projectManager.Position?.Name;
+                        }
                     }
 
                     userDetails.Add(userDetail);
@@ -76,10 +139,17 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             viewModel.Users = userDetails;
             
             // Prepare create user form
+            var departments = await _context.Departments.ToListAsync();
+            var positions = await _context.Positions.ToListAsync();
+            
+            // Debug: Log counts
+            Console.WriteLine($"Departments count: {departments.Count}");
+            Console.WriteLine($"Positions count: {positions.Count}");
+            
             viewModel.CreateUserViewModel = new CreateUserViewModel
             {
-                Departments = await _context.Departments.ToListAsync(),
-                Positions = await _context.Positions.ToListAsync()
+                Departments = departments,
+                Positions = positions
             };
 
             return View(viewModel);
@@ -202,6 +272,76 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 };
 
                 _context.Employees.Add(employee);
+            }
+            // Create human resource record if role is HumanResource
+            else if (model.Role == Roles.HumanResource.ToString())
+            {
+                var humanResource = new HumanResource
+                {
+                    UserId = user.Id,
+                    FirstName = model.FirstName,
+                    MiddleName = model.MiddleName,
+                    LastName = model.LastName,
+                    Contact = model.Contact ?? "",
+                    PositionId = model.PositionId
+                };
+
+                _context.HumanResources.Add(humanResource);
+            }
+            // Create department head record if role is DepartmentHead
+            else if (model.Role == Roles.DepartmentHead.ToString())
+            {
+                var departmentHead = new DepartmentHead
+                {
+                    UserId = user.Id,
+                    FirstName = model.FirstName,
+                    MiddleName = model.MiddleName,
+                    LastName = model.LastName,
+                    Contact = model.Contact ?? "",
+                    DepartmentId = model.DepartmentId,
+                    PositionId = model.PositionId
+                };
+
+                _context.DepartmentHeads.Add(departmentHead);
+            }
+            // Create executive record if role is Executive
+            else if (model.Role == Roles.Executive.ToString())
+            {
+                var executive = new Executive
+                {
+                    UserId = user.Id,
+                    FirstName = model.FirstName,
+                    MiddleName = model.MiddleName,
+                    LastName = model.LastName,
+                    Contact = model.Contact ?? "",
+                    PositionId = model.PositionId
+                };
+
+                _context.Executives.Add(executive);
+            }
+            // Create project manager record if role is ProjectManager
+            else if (model.Role == Roles.ProjectManager.ToString())
+            {
+                var projectManager = new ProjectManager
+                {
+                    UserId = user.Id,
+                    FirstName = model.FirstName,
+                    MiddleName = model.MiddleName,
+                    LastName = model.LastName,
+                    Contact = model.Contact ?? "",
+                    DepartmentId = model.DepartmentId,
+                    PositionId = model.PositionId
+                };
+
+                _context.ProjectManagers.Add(projectManager);
+            }
+
+            if (model.Role == Roles.Employee.ToString() || 
+                model.Role == Roles.HumanResource.ToString() || 
+                model.Role == Roles.DepartmentHead.ToString() || 
+                model.Role == Roles.Executive.ToString() || 
+                model.Role == Roles.ProjectManager.ToString())
+            {
                 await _context.SaveChangesAsync();
             }
 
@@ -235,20 +375,84 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         Role = roles.FirstOrDefault() ?? "No Role"
                     };
 
-                    var employee = await _context.Employees
-                        .Include(e => e.Department)
-                        .Include(e => e.Position)
-                        .FirstOrDefaultAsync(e => e.UserId == user.Id);
-
-                    if (employee != null)
+                    // Get role-specific details
+                    if (roles.Contains(Roles.Employee.ToString()))
                     {
-                        userDetail.EmployeeNumber = employee.EmployeeNumber;
-                        userDetail.FirstName = employee.FirstName;
-                        userDetail.MiddleName = employee.MiddleName;
-                        userDetail.LastName = employee.LastName;
-                        userDetail.DepartmentName = employee.Department?.Name;
-                        userDetail.PositionName = employee.Position?.Name;
-                        userDetail.DateHired = employee.DateHired;
+                        var employee = await _context.Employees
+                            .Include(e => e.Department)
+                            .Include(e => e.Position)
+                            .FirstOrDefaultAsync(e => e.UserId == user.Id);
+
+                        if (employee != null)
+                        {
+                            userDetail.EmployeeNumber = employee.EmployeeNumber;
+                            userDetail.FirstName = employee.FirstName;
+                            userDetail.MiddleName = employee.MiddleName;
+                            userDetail.LastName = employee.LastName;
+                            userDetail.DepartmentName = employee.Department?.Name;
+                            userDetail.PositionName = employee.Position?.Name;
+                            userDetail.DateHired = employee.DateHired;
+                        }
+                    }
+                    else if (roles.Contains(Roles.HumanResource.ToString()))
+                    {
+                        var humanResource = await _context.HumanResources
+                            .Include(hr => hr.Position)
+                            .FirstOrDefaultAsync(hr => hr.UserId == user.Id);
+
+                        if (humanResource != null)
+                        {
+                            userDetail.FirstName = humanResource.FirstName;
+                            userDetail.MiddleName = humanResource.MiddleName;
+                            userDetail.LastName = humanResource.LastName;
+                            userDetail.PositionName = humanResource.Position?.Name;
+                        }
+                    }
+                    else if (roles.Contains(Roles.DepartmentHead.ToString()))
+                    {
+                        var departmentHead = await _context.DepartmentHeads
+                            .Include(dh => dh.Department)
+                            .Include(dh => dh.Position)
+                            .FirstOrDefaultAsync(dh => dh.UserId == user.Id);
+
+                        if (departmentHead != null)
+                        {
+                            userDetail.FirstName = departmentHead.FirstName;
+                            userDetail.MiddleName = departmentHead.MiddleName;
+                            userDetail.LastName = departmentHead.LastName;
+                            userDetail.DepartmentName = departmentHead.Department?.Name;
+                            userDetail.PositionName = departmentHead.Position?.Name;
+                        }
+                    }
+                    else if (roles.Contains(Roles.Executive.ToString()))
+                    {
+                        var executive = await _context.Executives
+                            .Include(e => e.Position)
+                            .FirstOrDefaultAsync(e => e.UserId == user.Id);
+
+                        if (executive != null)
+                        {
+                            userDetail.FirstName = executive.FirstName;
+                            userDetail.MiddleName = executive.MiddleName;
+                            userDetail.LastName = executive.LastName;
+                            userDetail.PositionName = executive.Position?.Name;
+                        }
+                    }
+                    else if (roles.Contains(Roles.ProjectManager.ToString()))
+                    {
+                        var projectManager = await _context.ProjectManagers
+                            .Include(pm => pm.Department)
+                            .Include(pm => pm.Position)
+                            .FirstOrDefaultAsync(pm => pm.UserId == user.Id);
+
+                        if (projectManager != null)
+                        {
+                            userDetail.FirstName = projectManager.FirstName;
+                            userDetail.MiddleName = projectManager.MiddleName;
+                            userDetail.LastName = projectManager.LastName;
+                            userDetail.DepartmentName = projectManager.Department?.Name;
+                            userDetail.PositionName = projectManager.Position?.Name;
+                        }
                     }
 
                     userDetails.Add(userDetail);
