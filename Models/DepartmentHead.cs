@@ -10,6 +10,10 @@ namespace project_lifecycle.Models
         public string UserId { get; set; }
 
         [Required]
+        [StringLength(20)]
+        public string EmployeeNumber { get; set; } = string.Empty;
+
+        [Required]
         [StringLength(50)]
         public string FirstName { get; set; }
 
@@ -23,6 +27,7 @@ namespace project_lifecycle.Models
         [Required]
         public int DepartmentId { get; set; }
 
+        [Required]
         public Department Department { get; set; }
 
         [Required]
@@ -33,7 +38,6 @@ namespace project_lifecycle.Models
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         public int? PositionId { get; set; }
-
         public Position? Position { get; set; }
     }
 }

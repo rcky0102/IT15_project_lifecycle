@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using project_lifecycle.Data;
 
@@ -11,9 +12,11 @@ using project_lifecycle.Data;
 namespace project_lifecycle.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260211112258_AddedEmployeeNumber")]
+    partial class AddedEmployeeNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -365,9 +368,6 @@ namespace project_lifecycle.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("EmployeeNumber")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -396,8 +396,6 @@ namespace project_lifecycle.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("PositionId");
 
@@ -420,9 +418,6 @@ namespace project_lifecycle.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("EmployeeNumber")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -451,8 +446,6 @@ namespace project_lifecycle.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("PositionId");
 
@@ -634,30 +627,18 @@ namespace project_lifecycle.Data.Migrations
 
             modelBuilder.Entity("project_lifecycle.Models.Executive", b =>
                 {
-                    b.HasOne("project_lifecycle.Models.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId");
-
                     b.HasOne("project_lifecycle.Models.Position", "Position")
                         .WithMany()
                         .HasForeignKey("PositionId");
-
-                    b.Navigation("Department");
 
                     b.Navigation("Position");
                 });
 
             modelBuilder.Entity("project_lifecycle.Models.HumanResource", b =>
                 {
-                    b.HasOne("project_lifecycle.Models.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId");
-
                     b.HasOne("project_lifecycle.Models.Position", "Position")
                         .WithMany()
                         .HasForeignKey("PositionId");
-
-                    b.Navigation("Department");
 
                     b.Navigation("Position");
                 });

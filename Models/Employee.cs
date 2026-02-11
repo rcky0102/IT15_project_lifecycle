@@ -25,10 +25,12 @@ namespace project_lifecycle.Models
         [Required]
         public string LastName { get; set; } = string.Empty;
 
+        [Required]
         public int DepartmentId { get; set; }
         [ForeignKey("DepartmentId")]
         public Department? Department { get; set; }
 
+        [Required]
         public int PositionId { get; set; }
         [ForeignKey("PositionId")]
         public Position? Position { get; set; }

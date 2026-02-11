@@ -5,21 +5,6 @@
     Layout = "~/Areas/SuperAdmin/Layout.cshtml";
 }
 
-@* Debug: Show data counts *@
-<div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc;">
-    <strong>Debug Info:</strong><br>
-    Departments Count: @Model.CreateUserViewModel.Departments.Count<br>
-    Positions Count: @Model.CreateUserViewModel.Positions.Count<br>
-    @if (Model.CreateUserViewModel.Departments.Any())
-    {
-        <text>Departments: @string.Join(", ", Model.CreateUserViewModel.Departments.Select(d => d.Name))</text><br>
-    }
-    @if (Model.CreateUserViewModel.Positions.Any())
-    {
-        <text>Positions: @string.Join(", ", Model.CreateUserViewModel.Positions.Select(p => p.Name))</text>
-    }
-</div>
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -133,129 +118,206 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Stepper Navigation -->
+                <div class="stepper-wrapper">
+                    <div class="stepper-item completed" data-step="1">
+                        <div class="step-counter">1</div>
+                        <div class="step-name">Role Selection</div>
+                    </div>
+                    <div class="stepper-item" data-step="2">
+                        <div class="step-counter">2</div>
+                        <div class="step-name">Account Info</div>
+                    </div>
+                    <div class="stepper-item" data-step="3">
+                        <div class="step-counter">3</div>
+                        <div class="step-name">Personal Details</div>
+                    </div>
+                    <div class="stepper-item" data-step="4">
+                        <div class="step-counter">4</div>
+                        <div class="step-name">Review & Create</div>
+                    </div>
+                </div>
+
                 <form id="createUserForm">
                     @Html.AntiForgeryToken()
                     
-                    <div class="row">
-                        <!-- User Account Information -->
-                        <div class="col-md-6">
-                            <h6 class="text-primary mb-3">Account Information</h6>
-                            
-                            <div class="mb-3">
-                                <label asp-for="CreateUserViewModel.Email" class="form-label"></label>
-                                <input asp-for="CreateUserViewModel.Email" class="form-control" id="userEmail" placeholder="Enter email address" />
-                                <span asp-validation-for="CreateUserViewModel.Email" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="CreateUserViewModel.Password" class="form-label"></label>
-                                <input asp-for="CreateUserViewModel.Password" type="password" class="form-control" id="userPassword" placeholder="Enter password" />
-                                <span asp-validation-for="CreateUserViewModel.Password" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="CreateUserViewModel.ConfirmPassword" class="form-label"></label>
-                                <input asp-for="CreateUserViewModel.ConfirmPassword" type="password" class="form-control" id="userConfirmPassword" placeholder="Confirm password" />
-                                <span asp-validation-for="CreateUserViewModel.ConfirmPassword" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="CreateUserViewModel.Role" class="form-label"></label>
-                                <select asp-for="CreateUserViewModel.Role" class="form-select" id="roleSelect">
-                                    <option value="">Select Role</option>
-                                    <option value="HumanResource">Human Resource</option>
-                                    <option value="DepartmentHead">Department Head</option>
-                                    <option value="Executive">Executive</option>
-                                    <option value="ProjectManager">Project Manager</option>
-                                    <option value="Employee">Employee</option>
-                                </select>
-                                <span asp-validation-for="CreateUserViewModel.Role" class="text-danger"></span>
+                    <!-- Step 1: Role Selection -->
+                    <div class="step-content" id="step1">
+                        <h6 class="text-primary mb-3">Role Selection</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.Role" class="form-label"></label>
+                                    <select asp-for="CreateUserViewModel.Role" class="form-select" id="roleSelect">
+                                        <option value="">Select Role</option>
+                                        <option value="HumanResource">Human Resource</option>
+                                        <option value="DepartmentHead">Department Head</option>
+                                        <option value="Executive">Executive</option>
+                                        <option value="ProjectManager">Project Manager</option>
+                                        <option value="Employee">Employee</option>
+                                    </select>
+                                    <span asp-validation-for="CreateUserViewModel.Role" class="text-danger"></span>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Role-specific Information (shown only for roles that need additional details) -->
-                        <div class="col-md-6" id="roleSpecificFields" style="display: none;">
-                            <h6 class="text-info mb-3" id="roleFieldsTitle">Role Information</h6>
-                            
-                            <div class="mb-3" id="employeeNumberField" style="display: none;">
-                                <label asp-for="CreateUserViewModel.EmployeeNumber" class="form-label"></label>
-                                <input asp-for="CreateUserViewModel.EmployeeNumber" class="form-control" id="userEmployeeNumber" placeholder="Enter employee number" readonly />
-                                <span asp-validation-for="CreateUserViewModel.EmployeeNumber" class="text-danger"></span>
+                        <div class="role-description mt-3" id="roleDescription" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> <span id="roleDescriptionText"></span>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label asp-for="CreateUserViewModel.FirstName" class="form-label"></label>
-                                        <input asp-for="CreateUserViewModel.FirstName" class="form-control" id="userFirstName" placeholder="Enter first name" />
-                                        <span asp-validation-for="CreateUserViewModel.FirstName" class="text-danger"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label asp-for="CreateUserViewModel.MiddleName" class="form-label"></label>
-                                        <input asp-for="CreateUserViewModel.MiddleName" class="form-control" id="userMiddleName" placeholder="Enter middle name (optional)" />
-                                        <span asp-validation-for="CreateUserViewModel.MiddleName" class="text-danger"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label asp-for="CreateUserViewModel.LastName" class="form-label"></label>
-                                        <input asp-for="CreateUserViewModel.LastName" class="form-control" id="userLastName" placeholder="Enter last name" />
-                                        <span asp-validation-for="CreateUserViewModel.LastName" class="text-danger"></span>
-                                    </div>
+                    <!-- Step 2: Account Information -->
+                    <div class="step-content" id="step2" style="display: none;">
+                        <h6 class="text-primary mb-3">Account Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.Email" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.Email" class="form-control" id="userEmail" placeholder="Enter email address" />
+                                    <span asp-validation-for="CreateUserViewModel.Email" class="text-danger"></span>
                                 </div>
                             </div>
-
-                            <div class="mb-3">
-                                <label asp-for="CreateUserViewModel.Contact" class="form-label"></label>
-                                <input asp-for="CreateUserViewModel.Contact" class="form-control" id="userContact" placeholder="Enter contact number" />
-                                <span asp-validation-for="CreateUserViewModel.Contact" class="text-danger"></span>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label asp-for="CreateUserViewModel.DepartmentId" class="form-label"></label>
-                                        <select asp-for="CreateUserViewModel.DepartmentId" class="form-select" id="userDepartmentId">
-                                            <option value="">Select Department</option>
-                                            @foreach (var dept in Model.CreateUserViewModel.Departments)
-                                            {
-                                                <option value="@dept.Id">@dept.Name</option>
-                                            }
-                                        </select>
-                                        <span asp-validation-for="CreateUserViewModel.DepartmentId" class="text-danger"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label asp-for="CreateUserViewModel.PositionId" class="form-label"></label>
-                                        <select asp-for="CreateUserViewModel.PositionId" class="form-select" id="userPositionId">
-                                            <option value="">Select Position</option>
-                                            @foreach (var pos in Model.CreateUserViewModel.Positions)
-                                            {
-                                                <option value="@pos.Id">@pos.Name</option>
-                                            }
-                                        </select>
-                                        <span asp-validation-for="CreateUserViewModel.PositionId" class="text-danger"></span>
-                                    </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.Password" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.Password" type="password" class="form-control" id="userPassword" placeholder="Enter password" />
+                                    <span asp-validation-for="CreateUserViewModel.Password" class="text-danger"></span>
                                 </div>
                             </div>
-
-                            <div class="mb-3">
-                                <label asp-for="CreateUserViewModel.DateHired" class="form-label"></label>
-                                <input asp-for="CreateUserViewModel.DateHired" type="date" class="form-control" id="userDateHired" />
-                                <span asp-validation-for="CreateUserViewModel.DateHired" class="text-danger"></span>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.ConfirmPassword" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.ConfirmPassword" type="password" class="form-control" id="userConfirmPassword" placeholder="Confirm password" />
+                                    <span asp-validation-for="CreateUserViewModel.ConfirmPassword" class="text-danger"></span>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Personal Details -->
+                    <div class="step-content" id="step3" style="display: none;">
+                        <h6 class="text-primary mb-3" id="personalDetailsTitle">Personal Details</h6>
+                        <div class="row" id="personalFieldsContainer" style="display: none;">
+                            <div class="col-md-4">
+                                <div class="mb-3" id="employeeNumberField" style="display: none;">
+                                    <label asp-for="CreateUserViewModel.EmployeeNumber" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.EmployeeNumber" class="form-control" id="userEmployeeNumber" placeholder="Enter employee number" readonly />
+                                    <span asp-validation-for="CreateUserViewModel.EmployeeNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="nameFieldsContainer" style="display: none;">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.FirstName" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.FirstName" class="form-control" id="userFirstName" placeholder="Enter first name" />
+                                    <span asp-validation-for="CreateUserViewModel.FirstName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.MiddleName" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.MiddleName" class="form-control" id="userMiddleName" placeholder="Enter middle name (optional)" />
+                                    <span asp-validation-for="CreateUserViewModel.MiddleName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.LastName" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.LastName" class="form-control" id="userLastName" placeholder="Enter last name" />
+                                    <span asp-validation-for="CreateUserViewModel.LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="contactFieldsContainer" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.Contact" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.Contact" class="form-control" id="userContact" placeholder="Enter contact number" />
+                                    <span asp-validation-for="CreateUserViewModel.Contact" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="employmentFieldsContainer" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.DepartmentId" class="form-label"></label>
+                                    <select asp-for="CreateUserViewModel.DepartmentId" class="form-select" id="userDepartmentId">
+                                        <option value="">Select Department</option>
+                                        @foreach (var dept in Model.CreateUserViewModel.Departments)
+                                        {
+                                            <option value="@dept.Id">@dept.Name</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="CreateUserViewModel.DepartmentId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CreateUserViewModel.PositionId" class="form-label"></label>
+                                    <select asp-for="CreateUserViewModel.PositionId" class="form-select" id="userPositionId">
+                                        <option value="">Select Position</option>
+                                        @foreach (var pos in Model.CreateUserViewModel.Positions)
+                                        {
+                                            <option value="@pos.Id">@pos.Name</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="CreateUserViewModel.PositionId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Hidden date field for automatic date setting -->
+                        <input type="hidden" asp-for="CreateUserViewModel.DateHired" id="userDateHired" />
+                    </div>
+
+                    <!-- Step 4: Review & Create -->
+                    <div class="step-content" id="step4" style="display: none;">
+                        <h6 class="text-primary mb-3">Review User Information</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-secondary">Account Information</h6>
+                                        <p><strong>Email:</strong> <span id="reviewEmail">-</span></p>
+                                        <p><strong>Role:</strong> <span id="reviewRole">-</span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-secondary">Personal Information</h6>
+                                        <p><strong>Name:</strong> <span id="reviewName">-</span></p>
+                                        <p><strong>Contact:</strong> <span id="reviewContact">-</span></p>
+                                    </div>
+                                </div>
+                                <div class="row mt-3" id="reviewEmploymentInfo" style="display: none;">
+                                    <div class="col-md-6">
+                                        <h6 class="text-secondary">Employment Information</h6>
+                                        <p><strong>Employee Number:</strong> <span id="reviewEmployeeNumber">-</span></p>
+                                        <p><strong>Department:</strong> <span id="reviewDepartment">-</span></p>
+                                        <p><strong>Position:</strong> <span id="reviewPosition">-</span></p>
+                                        <p><strong>Date Hired:</strong> <span id="reviewDateHired">-</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle"></i> Please review all information before creating the user. This action cannot be undone.
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelBtn">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button type="button" class="btn btn-ocean" id="saveUserBtn">
+                <button type="button" class="btn btn-outline-secondary" id="prevBtn" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button type="button" class="btn btn-ocean" id="nextBtn">
+                    <i class="fas fa-arrow-right"></i> Next
+                </button>
+                <button type="button" class="btn btn-success" id="saveUserBtn" style="display: none;">
                     <i class="fas fa-user-plus"></i> Create User
                 </button>
             </div>
@@ -265,83 +327,409 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <style>
+        .stepper-wrapper {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .stepper-wrapper::before {
+            content: "";
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+        
+        .stepper-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            z-index: 2;
+        }
+        
+        .step-counter {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .step-name {
+            font-size: 12px;
+            text-align: center;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .stepper-item.completed .step-counter {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .stepper-item.active .step-counter {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        
+        .stepper-item.completed::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 20px;
+            width: 100%;
+            height: 2px;
+            background: #28a745;
+            z-index: -1;
+        }
+        
+        .stepper-item:first-child::after {
+            display: none;
+        }
+        
+        .step-content {
+            min-height: 300px;
+        }
+        
+        .role-description {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
     <script>
         $(document).ready(function() {
-            // Show/hide role-specific fields based on role selection
+            let currentStep = 1;
+            const totalSteps = 4;
+
+            // Role descriptions
+            const roleDescriptions = {
+                'HumanResource': 'Manages employee records, payroll, and HR-related tasks.',
+                'DepartmentHead': 'Oversees department operations and team members.',
+                'Executive': 'Senior management with strategic decision-making authority.',
+                'ProjectManager': 'Manages projects, timelines, and project teams.',
+                'Employee': 'Regular team member with assigned tasks and responsibilities.'
+            };
+
+            // Initialize stepper
+            function initStepper() {
+                // Set today's date as the default date hired
+                const today = new Date().toISOString().split('T')[0];
+                $('#userDateHired').val(today);
+                
+                updateStepperUI();
+                showStep(1);
+            }
+
+            // Update stepper UI
+            function updateStepperUI() {
+                $('.stepper-item').removeClass('active completed');
+                
+                for (let i = 1; i <= totalSteps; i++) {
+                    const $stepItem = $('.stepper-item[data-step="' + i + '"]');
+                    if (i < currentStep) {
+                        $stepItem.addClass('completed');
+                    } else if (i === currentStep) {
+                        $stepItem.addClass('active');
+                    }
+                }
+            }
+
+            // Show specific step
+            function showStep(step) {
+                $('.step-content').hide();
+                $('#step' + step).show();
+                currentStep = step;
+                updateStepperUI();
+                updateButtons();
+                
+                // Update review data when reaching step 4
+                if (step === 4) {
+                    updateReviewData();
+                }
+            }
+
+            // Update button visibility and text
+            function updateButtons() {
+                const $prevBtn = $('#prevBtn');
+                const $nextBtn = $('#nextBtn');
+                const $saveBtn = $('#saveUserBtn');
+
+                if (currentStep === 1) {
+                    $prevBtn.hide();
+                    $nextBtn.show().html('<i class="fas fa-arrow-right"></i> Next');
+                    $saveBtn.hide();
+                } else if (currentStep === totalSteps) {
+                    $prevBtn.show();
+                    $nextBtn.hide();
+                    $saveBtn.show();
+                } else {
+                    $prevBtn.show();
+                    $nextBtn.show();
+                    $saveBtn.hide();
+                    
+                    if (currentStep === 3) {
+                        $nextBtn.html('<i class="fas fa-arrow-right"></i> Review');
+                    } else {
+                        $nextBtn.html('<i class="fas fa-arrow-right"></i> Next');
+                    }
+                }
+            }
+
+            // Validate current step
+            function validateStep(step) {
+                let isValid = true;
+                $('.text-danger').text('');
+
+                if (step === 1) {
+                    // Validate role selection
+                    const role = $('#roleSelect').val();
+                    if (!role) {
+                        $('#roleSelect').siblings('.text-danger').text('The User Role field is required.');
+                        isValid = false;
+                    }
+                } else if (step === 2) {
+                    // Validate account information
+                    const email = $('#userEmail').val().trim();
+                    const password = $('#userPassword').val();
+                    const confirmPassword = $('#userConfirmPassword').val();
+
+                    if (!email) {
+                        $('#userEmail').siblings('.text-danger').text('The Email field is required.');
+                        isValid = false;
+                    } else if (!isValidEmail(email)) {
+                        $('#userEmail').siblings('.text-danger').text('The Email field is not a valid e-mail address.');
+                        isValid = false;
+                    }
+
+                    if (!password) {
+                        $('#userPassword').siblings('.text-danger').text('The Password field is required.');
+                        isValid = false;
+                    }
+
+                    if (!confirmPassword) {
+                        $('#userConfirmPassword').siblings('.text-danger').text('The Confirm password field is required.');
+                        isValid = false;
+                    } else if (password !== confirmPassword) {
+                        $('#userConfirmPassword').siblings('.text-danger').text('The password and confirmation password do not match.');
+                        isValid = false;
+                    }
+                } else if (step === 3) {
+                    // Validate personal details based on role
+                    const role = $('#roleSelect').val();
+                    const firstName = $('#userFirstName').val().trim();
+                    const lastName = $('#userLastName').val().trim();
+
+                    if (role && (firstName || lastName || $('#userContact').val() || $('#userDepartmentId').val())) {
+                        if (!firstName) {
+                            $('#userFirstName').siblings('.text-danger').text('The First Name field is required.');
+                            isValid = false;
+                        }
+                        if (!lastName) {
+                            $('#userLastName').siblings('.text-danger').text('The Last Name field is required.');
+                            isValid = false;
+                        }
+                    }
+
+                    // Role-specific validation
+                    if (role === 'Employee') {
+                        // Employee: Department required, Position required
+                        if (!$('#userDepartmentId').val()) {
+                            $('#userDepartmentId').siblings('.text-danger').text('The Department field is required.');
+                            isValid = false;
+                        }
+                        if (!$('#userPositionId').val()) {
+                            $('#userPositionId').siblings('.text-danger').text('The Position field is required.');
+                            isValid = false;
+                        }
+                    } else if (role === 'DepartmentHead') {
+                        // DepartmentHead: Department required, Position optional
+                        if (!$('#userDepartmentId').val()) {
+                            $('#userDepartmentId').siblings('.text-danger').text('The Department field is required.');
+                            isValid = false;
+                        }
+                    } else if (role === 'ProjectManager') {
+                        // ProjectManager: Department required, Position optional
+                        if (!$('#userDepartmentId').val()) {
+                            $('#userDepartmentId').siblings('.text-danger').text('The Department field is required.');
+                            isValid = false;
+                        }
+                    }
+                    // HumanResource and Executive: Department optional, Position optional - no validation needed
+                }
+
+                return isValid;
+            }
+
+            // Email validation helper
+            function isValidEmail(email) {
+                return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email);
+            }
+
+            // Update review data
+            function updateReviewData() {
+                const email = $('#userEmail').val() || '-';
+                const role = $('#roleSelect').val();
+                const roleText = $('#roleSelect option:selected').text() || '-';
+                const firstName = $('#userFirstName').val() || '';
+                const middleName = $('#userMiddleName').val() || '';
+                const lastName = $('#userLastName').val() || '';
+                const contact = $('#userContact').val() || '-';
+                const employeeNumber = $('#userEmployeeNumber').val() || '-';
+                const department = $('#userDepartmentId option:selected').text() || '-';
+                const position = $('#userPositionId option:selected').text() || '-';
+                const dateHired = $('#userDateHired').val() || '-';
+
+                $('#reviewEmail').text(email);
+                $('#reviewRole').text(roleText);
+                $('#reviewName').text((firstName + ' ' + middleName + ' ' + lastName).trim() || '-');
+                $('#reviewContact').text(contact);
+
+                // Show employment info only if relevant
+                if (role === 'Employee' || employeeNumber !== '-' || department !== '-' || position !== '-' || dateHired !== '-') {
+                    $('#reviewEmploymentInfo').show();
+                    $('#reviewEmployeeNumber').text(employeeNumber);
+                    $('#reviewDepartment').text(department);
+                    $('#reviewPosition').text(position);
+                    $('#reviewDateHired').text(dateHired ? new Date(dateHired).toLocaleDateString() : '-');
+                } else {
+                    $('#reviewEmploymentInfo').hide();
+                }
+            }
+
+            // Role selection change handler
             $('#roleSelect').change(function() {
                 const selectedRole = $(this).val();
-                const $roleFields = $('#roleSpecificFields');
-                const $roleFieldsTitle = $('#roleFieldsTitle');
-                
-                if (selectedRole === 'Employee') {
-                    $roleFieldsTitle.text('Employee Information');
-                    $roleFields.slideDown();
-                    // Make employee fields required (but employee number is auto-generated)
-                    $('#userFirstName').prop('required', true);
-                    $('#userLastName').prop('required', true);
-                    $('#userDepartmentId').prop('required', true);
-                    $('#userPositionId').prop('required', true);
-                    $('#userDateHired').prop('required', true);
-                    // Hide employee number field as it will be auto-generated
-                    $('#employeeNumberField').hide();
-                } else if (selectedRole === 'DepartmentHead' || selectedRole === 'ProjectManager') {
-                    $roleFieldsTitle.text(selectedRole === 'DepartmentHead' ? 'Department Head Information' : 'Project Manager Information');
-                    $roleFields.slideDown();
-                    // Make basic fields required, but not employee-specific ones
-                    $('#userFirstName').prop('required', true);
-                    $('#userLastName').prop('required', true);
-                    $('#userDepartmentId').prop('required', true);
-                    // Hide employee number field
-                    $('#employeeNumberField').hide();
-                    // Remove required from employee-specific fields
-                    $('#userEmployeeNumber').prop('required', false);
-                    $('#userPositionId').prop('required', false);
-                    $('#userDateHired').prop('required', false);
-                } else if (selectedRole === 'HumanResource' || selectedRole === 'Executive') {
-                    $roleFieldsTitle.text(selectedRole === 'HumanResource' ? 'Human Resource Information' : 'Executive Information');
-                    $roleFields.slideDown();
-                    // Make basic fields required
-                    $('#userFirstName').prop('required', true);
-                    $('#userLastName').prop('required', true);
-                    // Hide employee number field
-                    $('#employeeNumberField').hide();
-                    // Remove required from employee and department-specific fields
-                    $('#userEmployeeNumber').prop('required', false);
-                    $('#userDepartmentId').prop('required', false);
-                    $('#userPositionId').prop('required', false);
-                    $('#userDateHired').prop('required', false);
+                const $roleDescription = $('#roleDescription');
+                const $roleDescriptionText = $('#roleDescriptionText');
+                const $personalFieldsContainer = $('#personalFieldsContainer');
+                const $nameFieldsContainer = $('#nameFieldsContainer');
+                const $contactFieldsContainer = $('#contactFieldsContainer');
+                const $employmentFieldsContainer = $('#employmentFieldsContainer');
+                const $personalDetailsTitle = $('#personalDetailsTitle');
+
+                // Show/hide role description
+                if (selectedRole && roleDescriptions[selectedRole]) {
+                    $roleDescriptionText.text(roleDescriptions[selectedRole]);
+                    $roleDescription.show();
                 } else {
-                    // Hide employee number field
-                    $('#employeeNumberField').hide();
-                    // Remove required from all fields
-                    $('#userEmployeeNumber').prop('required', false);
-                    $('#userFirstName').prop('required', false);
-                    $('#userLastName').prop('required', false);
-                    $('#userDepartmentId').prop('required', false);
-                    $('#userPositionId').prop('required', false);
-                    $('#userDateHired').prop('required', false);
-                    $roleFields.slideUp();
+                    $roleDescription.hide();
+                }
+
+                // Show personal fields for any role
+                if (selectedRole) {
+                    $personalFieldsContainer.show();
+                    $nameFieldsContainer.show();
+                    $contactFieldsContainer.show();
+                    $personalDetailsTitle.text(selectedRole === 'Employee' ? 'Employee Information' : 
+                                                  selectedRole === 'DepartmentHead' ? 'Department Head Information' :
+                                                  selectedRole === 'ProjectManager' ? 'Project Manager Information' :
+                                                  selectedRole === 'HumanResource' ? 'Human Resource Information' :
+                                                  selectedRole === 'Executive' ? 'Executive Information' : 'Personal Details');
+
+                    // Set required fields based on role
+                    $('#userFirstName').prop('required', true);
+                    $('#userLastName').prop('required', true);
+
+                    // Generate employee number for all roles
+                    const year = new Date().getFullYear();
+                    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+                    let employeeNumber = '';
+                    
+                    if (selectedRole === 'Employee') {
+                        employeeNumber = 'EMP' + year + random;
+                    } else if (selectedRole === 'DepartmentHead') {
+                        employeeNumber = 'DH' + year + random;
+                    } else if (selectedRole === 'ProjectManager') {
+                        employeeNumber = 'PM' + year + random;
+                    } else if (selectedRole === 'HumanResource') {
+                        employeeNumber = 'HR' + year + random;
+                    } else if (selectedRole === 'Executive') {
+                        employeeNumber = 'EX' + year + random;
+                    }
+                    
+                    $('#userEmployeeNumber').val(employeeNumber);
+                    $('#employeeNumberField').show();
+
+                    // Show employment fields based on role requirements
+                    if (selectedRole === 'Employee') {
+                        // Employee: Department required, Position required
+                        $employmentFieldsContainer.show();
+                        $('#userDepartmentId').prop('required', true);
+                        $('#userPositionId').prop('required', true);
+                    } else if (selectedRole === 'DepartmentHead') {
+                        // DepartmentHead: Department required, Position optional
+                        $employmentFieldsContainer.show();
+                        $('#userDepartmentId').prop('required', true);
+                        $('#userPositionId').prop('required', false);
+                    } else if (selectedRole === 'ProjectManager') {
+                        // ProjectManager: Department required, Position optional
+                        $employmentFieldsContainer.show();
+                        $('#userDepartmentId').prop('required', true);
+                        $('#userPositionId').prop('required', false);
+                    } else if (selectedRole === 'HumanResource') {
+                        // HumanResource: Department optional, Position optional
+                        $employmentFieldsContainer.show();
+                        $('#userDepartmentId').prop('required', false);
+                        $('#userPositionId').prop('required', false);
+                    } else if (selectedRole === 'Executive') {
+                        // Executive: Department optional, Position optional
+                        $employmentFieldsContainer.show();
+                        $('#userDepartmentId').prop('required', false);
+                        $('#userPositionId').prop('required', false);
+                    }
+                } else {
+                    $personalFieldsContainer.hide();
+                    $nameFieldsContainer.hide();
+                    $contactFieldsContainer.hide();
+                    $employmentFieldsContainer.hide();
+                    $employeeNumberField.hide();
+                    $roleDescription.hide();
                 }
             });
 
-            // Generate employee number for Employee role
-            $('#roleSelect').change(function() {
-                const selectedRole = $(this).val();
-                if (selectedRole === 'Employee') {
-                    // Generate employee number (EMP + current year + random 4 digits)
-                    const year = new Date().getFullYear();
-                    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-                    const employeeNumber = `EMP${year}${random}`;
-                    $('#userEmployeeNumber').val(employeeNumber);
-                    $('#employeeNumberField').show();
-                } else {
-                    $('#employeeNumberField').hide();
+            // Next button click
+            $('#nextBtn').click(function() {
+                if (validateStep(currentStep)) {
+                    if (currentStep < totalSteps) {
+                        showStep(currentStep + 1);
+                    }
+                }
+            });
+
+            // Previous button click
+            $('#prevBtn').click(function() {
+                if (currentStep > 1) {
+                    showStep(currentStep - 1);
                 }
             });
 
             // Create user button click
             $('#saveUserBtn').click(function() {
-                var form = $('#createUserForm');
+                if (!validateStep(currentStep)) {
+                    return;
+                }
+
+                const form = $('#createUserForm');
                 
                 // Add validation attributes dynamically
                 $('#userEmail').attr('data-val', 'true');
@@ -359,7 +747,7 @@
                 $('#roleSelect').attr('data-val', 'true');
                 $('#roleSelect').attr('data-val-required', 'The User Role field is required.');
                 
-                var formData = {
+                const formData = {
                     __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
                     Email: $('#userEmail').val().trim(),
                     Password: $('#userPassword').val(),
@@ -374,59 +762,6 @@
                     PositionId: $('#userPositionId').val() ? parseInt($('#userPositionId').val()) : 0,
                     DateHired: $('#userDateHired').val()
                 };
-                
-                // Clear previous validation messages
-                $('.text-danger').text('');
-                
-                // Basic client-side validation
-                if (!formData.Email) {
-                    $('#userEmail').siblings('.text-danger').text('The Email field is required.');
-                    return;
-                }
-                
-                if (!formData.Password) {
-                    $('#userPassword').siblings('.text-danger').text('The Password field is required.');
-                    return;
-                }
-                
-                if (!formData.ConfirmPassword) {
-                    $('#userConfirmPassword').siblings('.text-danger').text('The Confirm password field is required.');
-                    return;
-                }
-                
-                if (formData.Password !== formData.ConfirmPassword) {
-                    $('#userConfirmPassword').siblings('.text-danger').text('The password and confirmation password do not match.');
-                    return;
-                }
-                
-                if (!formData.Role) {
-                    $('#roleSelect').siblings('.text-danger').text('The User Role field is required.');
-                    return;
-                }
-                
-                // Role-specific validation
-                if (formData.Role === 'Employee') {
-                    if (!formData.FirstName) {
-                        $('#userFirstName').siblings('.text-danger').text('The First Name field is required.');
-                        return;
-                    }
-                    if (!formData.LastName) {
-                        $('#userLastName').siblings('.text-danger').text('The Last Name field is required.');
-                        return;
-                    }
-                    if (!formData.DepartmentId) {
-                        $('#userDepartmentId').siblings('.text-danger').text('The Department field is required.');
-                        return;
-                    }
-                    if (!formData.PositionId) {
-                        $('#userPositionId').siblings('.text-danger').text('The Position field is required.');
-                        return;
-                    }
-                    if (!formData.DateHired) {
-                        $('#userDateHired').siblings('.text-danger').text('The Date Hired field is required.');
-                        return;
-                    }
-                }
                 
                 // Disable button and show loading
                 $('#saveUserBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
@@ -444,7 +779,7 @@
                             $('#createUserModal').modal('hide');
                             
                             // Show success message
-                            var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                            const alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
                                 response.message +
                                 '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
                                 '</div>';
@@ -452,7 +787,9 @@
                             
                             // Reset form
                             form[0].reset();
-                            $('#roleSpecificFields').slideUp();
+                            $('.step-content').hide();
+                            $('.role-description').hide();
+                            $('.text-danger').text('');
                             
                             // Reload page after a short delay to show updated list
                             setTimeout(function() {
@@ -461,13 +798,13 @@
                         } else {
                             // Show error message
                             if (response.errors) {
-                                for (var key in response.errors) {
-                                    var fieldId = key.replace('CreateUserViewModel.', '').toLowerCase();
+                                for (const key in response.errors) {
+                                    const fieldId = key.replace('CreateUserViewModel.', '').toLowerCase();
                                     $('#' + fieldId).siblings('.text-danger').text(response.errors[key][0]);
                                 }
                             } else {
                                 // General error
-                                var generalError = response.errors && response.errors[''] ? response.errors[''][0] : 'An error occurred while creating the user.';
+                                const generalError = response.errors && response.errors[''] ? response.errors[''][0] : 'An error occurred while creating the user.';
                                 $('.modal-body').prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
                                     generalError +
                                     '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
@@ -491,10 +828,16 @@
             // Reset form when modal is hidden
             $('#createUserModal').on('hidden.bs.modal', function () {
                 $('#createUserForm')[0].reset();
-                $('#roleSpecificFields').slideUp();
+                $('.step-content').hide();
+                $('.role-description').hide();
                 $('.text-danger').text('');
                 $('.alert').remove();
+                currentStep = 1;
+                initStepper();
             });
+
+            // Initialize stepper on load
+            initStepper();
         });
     </script>
 }
