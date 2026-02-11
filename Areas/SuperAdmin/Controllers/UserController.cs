@@ -544,5 +544,119 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
             return userDetails;
         }
+
+        // POST: /SuperAdmin/User/Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(string id)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "User ID is required" });
+                    }
+                    TempData["Error"] = "User ID is required";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "User not found" });
+                    }
+                    TempData["Error"] = "User not found";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Get user roles to determine which role-specific record to delete
+                var roles = await _userManager.GetRolesAsync(user);
+                
+                // Delete role-specific records
+                if (roles.Contains(Roles.Employee.ToString()))
+                {
+                    var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == id);
+                    if (employee != null)
+                    {
+                        _context.Employees.Remove(employee);
+                    }
+                }
+                else if (roles.Contains(Roles.HumanResource.ToString()))
+                {
+                    var humanResource = await _context.HumanResources.FirstOrDefaultAsync(hr => hr.UserId == id);
+                    if (humanResource != null)
+                    {
+                        _context.HumanResources.Remove(humanResource);
+                    }
+                }
+                else if (roles.Contains(Roles.DepartmentHead.ToString()))
+                {
+                    var departmentHead = await _context.DepartmentHeads.FirstOrDefaultAsync(dh => dh.UserId == id);
+                    if (departmentHead != null)
+                    {
+                        _context.DepartmentHeads.Remove(departmentHead);
+                    }
+                }
+                else if (roles.Contains(Roles.Executive.ToString()))
+                {
+                    var executive = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == id);
+                    if (executive != null)
+                    {
+                        _context.Executives.Remove(executive);
+                    }
+                }
+                else if (roles.Contains(Roles.ProjectManager.ToString()))
+                {
+                    var projectManager = await _context.ProjectManagers.FirstOrDefaultAsync(pm => pm.UserId == id);
+                    if (projectManager != null)
+                    {
+                        _context.ProjectManagers.Remove(projectManager);
+                    }
+                }
+
+                // Save changes to delete role-specific records first
+                await _context.SaveChangesAsync();
+
+                // Delete the user from Identity
+                var result = await _userManager.DeleteAsync(user);
+                
+                if (!result.Succeeded)
+                {
+                    var errorMessages = string.Join(", ", result.Errors.Select(e => e.Description));
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = $"Failed to delete user: {errorMessages}" });
+                    }
+                    TempData["Error"] = $"Failed to delete user: {errorMessages}";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = true, message = "User deleted successfully!" });
+                }
+
+                TempData["Success"] = "User deleted successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error deleting user: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "An error occurred while deleting the user. Please try again." });
+                }
+                
+                TempData["Error"] = "An error occurred while deleting the user. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
     }
 }
