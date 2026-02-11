@@ -160,20 +160,272 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateUserViewModel model)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                // Reload dropdown data
-                model.Departments = await _context.Departments.ToListAsync();
-                model.Positions = await _context.Positions.ToListAsync();
+                if (!ModelState.IsValid)
+                {
+                    // Reload dropdown data
+                    model.Departments = await _context.Departments.ToListAsync();
+                    model.Positions = await _context.Positions.ToListAsync();
+                    
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        var errors = ModelState.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                        );
+                        return Json(new { success = false, errors = errors });
+                    }
+                    
+                    var viewModel = new UserListViewModel
+                    {
+                        CreateUserViewModel = model,
+                        Users = await GetUserListAsync()
+                    };
+                    
+                    return View("Index", viewModel);
+                }
+
+                // Check if email already exists
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Email", "Email already exists");
+                    model.Departments = await _context.Departments.ToListAsync();
+                    model.Positions = await _context.Positions.ToListAsync();
+                    
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        var errors = ModelState.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                        );
+                        return Json(new { success = false, errors = errors });
+                    }
+                    
+                    var viewModel = new UserListViewModel
+                    {
+                        CreateUserViewModel = model,
+                        Users = await GetUserListAsync()
+                    };
+                    
+                    return View("Index", viewModel);
+                }
+
+                // Create user
+                var user = new IdentityUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    EmailConfirmed = true
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
                 
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    
+                    model.Departments = await _context.Departments.ToListAsync();
+                    model.Positions = await _context.Positions.ToListAsync();
+                    
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        var errors = ModelState.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                        );
+                        return Json(new { success = false, errors = errors });
+                    }
+                    
+                    var viewModel = new UserListViewModel
+                    {
+                        CreateUserViewModel = model,
+                        Users = await GetUserListAsync()
+                    };
+                    
+                    return View("Index", viewModel);
+                }
+
+                // Add role to user
+                if (!await _roleManager.RoleExistsAsync(model.Role))
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(model.Role));
+                }
+
+                await _userManager.AddToRoleAsync(user, model.Role);
+
+                // Create role-specific record using more robust comparison
+                if (model.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
+                {
+                    var employee = new Employee
+                    {
+                        UserId = user.Id,
+                        EmployeeNumber = model.EmployeeNumber,
+                        FirstName = model.FirstName,
+                        MiddleName = model.MiddleName,
+                        LastName = model.LastName,
+                        DepartmentId = model.DepartmentId ?? 0,
+                        PositionId = model.PositionId ?? 0,
+                        DateHired = model.DateHired
+                    };
+
+                    _context.Employees.Add(employee);
+                }
+                else if (model.Role.Equals("HumanResource", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var humanResource = new HumanResource
+                        {
+                            UserId = user.Id,
+                            EmployeeNumber = model.EmployeeNumber,
+                            FirstName = model.FirstName,
+                            MiddleName = model.MiddleName,
+                            LastName = model.LastName,
+                            Contact = model.Contact ?? "",
+                            PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null
+                        };
+
+                        _context.HumanResources.Add(humanResource);
+                    }
+                    catch (Exception ex)
+                    {
+                        ModelState.AddModelError("", $"Error creating human resource: {ex.Message}");
+                    }
+                }
+                else if (model.Role.Equals("Executive", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var executive = new Executive
+                        {
+                            UserId = user.Id,
+                            EmployeeNumber = model.EmployeeNumber,
+                            FirstName = model.FirstName,
+                            MiddleName = model.MiddleName,
+                            LastName = model.LastName,
+                            Contact = model.Contact ?? "",
+                            DepartmentId = model.DepartmentId.HasValue ? model.DepartmentId.Value : 0,
+                            PositionId = model.PositionId.HasValue ? model.PositionId.Value : (int?)null
+                        };
+
+                        _context.Executives.Add(executive);
+                    }
+                    catch (Exception ex)
+                    {
+                        ModelState.AddModelError("", $"Error creating executive: {ex.Message}");
+                    }
+                }
+                else if (model.Role.Equals("DepartmentHead", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var departmentHead = new DepartmentHead
+                        {
+                            UserId = user.Id,
+                            EmployeeNumber = model.EmployeeNumber,
+                            FirstName = model.FirstName,
+                            MiddleName = model.MiddleName,
+                            LastName = model.LastName,
+                            Contact = model.Contact ?? "",
+                            DepartmentId = model.DepartmentId.HasValue ? model.DepartmentId.Value : 0,
+                            PositionId = model.PositionId.HasValue ? model.PositionId.Value : (int?)null
+                        };
+
+                        _context.DepartmentHeads.Add(departmentHead);
+                    }
+                    catch (Exception ex)
+                    {
+                        ModelState.AddModelError("", $"Error creating department head: {ex.Message}");
+                    }
+                }
+                else if (model.Role.Equals("ProjectManager", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var projectManager = new ProjectManager
+                        {
+                            UserId = user.Id,
+                            EmployeeNumber = model.EmployeeNumber,
+                            FirstName = model.FirstName,
+                            MiddleName = model.MiddleName,
+                            LastName = model.LastName,
+                            Contact = model.Contact ?? "",
+                            DepartmentId = model.DepartmentId.HasValue ? model.DepartmentId.Value : 0,
+                            PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null
+                        };
+
+                        _context.ProjectManagers.Add(projectManager);
+                    }
+                    catch (Exception ex)
+                    {
+                        ModelState.AddModelError("", $"Error creating project manager: {ex.Message}");
+                    }
+                }
+
+                if (model.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase) || 
+                    model.Role.Equals("HumanResource", StringComparison.OrdinalIgnoreCase) || 
+                    model.Role.Equals("DepartmentHead", StringComparison.OrdinalIgnoreCase) || 
+                    model.Role.Equals("Executive", StringComparison.OrdinalIgnoreCase) || 
+                    model.Role.Equals("ProjectManager", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _context.SaveChangesAsync();
+                }
+
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
-                    var errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    );
-                    return Json(new { success = false, errors = errors });
+                    return Json(new { success = true, message = "User created successfully!" });
                 }
+
+                TempData["Success"] = "User created successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                // Log the exception details
+                Console.WriteLine($"Error creating user: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                    Console.WriteLine($"Inner exception stack trace: {ex.InnerException.StackTrace}");
+                }
+
+                // Build detailed error message
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage = $"{ex.Message} - {ex.InnerException.Message}";
+                    // Check for database errors
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        errorMessage = $"{errorMessage} - {ex.InnerException.InnerException.Message}";
+                    }
+                }
+
+                // Handle AJAX requests with error response
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var errorDict = new Dictionary<string, string[]>
+                    {
+                        { "General", new[] { errorMessage } }
+                    };
+                    return Json(new { 
+                        success = false, 
+                        message = "Error creating user",
+                        detailedMessage = errorMessage,
+                        errors = errorDict
+                    });
+                }
+
+                // For non-AJAX requests, add error to ModelState and return the view
+                ModelState.AddModelError("", $"An error occurred: {errorMessage}");
+                model.Departments = await _context.Departments.ToListAsync();
+                model.Positions = await _context.Positions.ToListAsync();
                 
                 var viewModel = new UserListViewModel
                 {
@@ -183,175 +435,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 
                 return View("Index", viewModel);
             }
-
-            // Check if email already exists
-            var existingUser = await _userManager.FindByEmailAsync(model.Email);
-            if (existingUser != null)
-            {
-                ModelState.AddModelError("Email", "Email already exists");
-                model.Departments = await _context.Departments.ToListAsync();
-                model.Positions = await _context.Positions.ToListAsync();
-                
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                {
-                    var errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    );
-                    return Json(new { success = false, errors = errors });
-                }
-                
-                var viewModel = new UserListViewModel
-                {
-                    CreateUserViewModel = model,
-                    Users = await GetUserListAsync()
-                };
-                
-                return View("Index", viewModel);
-            }
-
-            // Create user
-            var user = new IdentityUser
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                EmailConfirmed = true
-            };
-
-            var result = await _userManager.CreateAsync(user, model.Password);
-            
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                
-                model.Departments = await _context.Departments.ToListAsync();
-                model.Positions = await _context.Positions.ToListAsync();
-                
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                {
-                    var errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    );
-                    return Json(new { success = false, errors = errors });
-                }
-                
-                var viewModel = new UserListViewModel
-                {
-                    CreateUserViewModel = model,
-                    Users = await GetUserListAsync()
-                };
-                
-                return View("Index", viewModel);
-            }
-
-            // Add role to user
-            if (!await _roleManager.RoleExistsAsync(model.Role))
-            {
-                await _roleManager.CreateAsync(new IdentityRole(model.Role));
-            }
-
-            await _userManager.AddToRoleAsync(user, model.Role);
-
-            // Create employee record if role is Employee
-            if (model.Role == Roles.Employee.ToString())
-            {
-                var employee = new Employee
-                {
-                    UserId = user.Id,
-                    EmployeeNumber = model.EmployeeNumber,
-                    FirstName = model.FirstName,
-                    MiddleName = model.MiddleName,
-                    LastName = model.LastName,
-                    DepartmentId = model.DepartmentId,
-                    PositionId = model.PositionId,
-                    DateHired = model.DateHired
-                };
-
-                _context.Employees.Add(employee);
-            }
-            // Create human resource record if role is HumanResource
-            else if (model.Role == Roles.HumanResource.ToString())
-            {
-                var humanResource = new HumanResource
-                {
-                    UserId = user.Id,
-                    FirstName = model.FirstName,
-                    MiddleName = model.MiddleName,
-                    LastName = model.LastName,
-                    Contact = model.Contact ?? "",
-                    PositionId = model.PositionId
-                };
-
-                _context.HumanResources.Add(humanResource);
-            }
-            // Create department head record if role is DepartmentHead
-            else if (model.Role == Roles.DepartmentHead.ToString())
-            {
-                var departmentHead = new DepartmentHead
-                {
-                    UserId = user.Id,
-                    FirstName = model.FirstName,
-                    MiddleName = model.MiddleName,
-                    LastName = model.LastName,
-                    Contact = model.Contact ?? "",
-                    DepartmentId = model.DepartmentId,
-                    PositionId = model.PositionId
-                };
-
-                _context.DepartmentHeads.Add(departmentHead);
-            }
-            // Create executive record if role is Executive
-            else if (model.Role == Roles.Executive.ToString())
-            {
-                var executive = new Executive
-                {
-                    UserId = user.Id,
-                    FirstName = model.FirstName,
-                    MiddleName = model.MiddleName,
-                    LastName = model.LastName,
-                    Contact = model.Contact ?? "",
-                    PositionId = model.PositionId
-                };
-
-                _context.Executives.Add(executive);
-            }
-            // Create project manager record if role is ProjectManager
-            else if (model.Role == Roles.ProjectManager.ToString())
-            {
-                var projectManager = new ProjectManager
-                {
-                    UserId = user.Id,
-                    FirstName = model.FirstName,
-                    MiddleName = model.MiddleName,
-                    LastName = model.LastName,
-                    Contact = model.Contact ?? "",
-                    DepartmentId = model.DepartmentId,
-                    PositionId = model.PositionId
-                };
-
-                _context.ProjectManagers.Add(projectManager);
-            }
-
-            if (model.Role == Roles.Employee.ToString() || 
-                model.Role == Roles.HumanResource.ToString() || 
-                model.Role == Roles.DepartmentHead.ToString() || 
-                model.Role == Roles.Executive.ToString() || 
-                model.Role == Roles.ProjectManager.ToString())
-            {
-                await _context.SaveChangesAsync();
-            }
-
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            {
-                return Json(new { success = true, message = "User created successfully!" });
-            }
-
-            TempData["Success"] = "User created successfully!";
-            return RedirectToAction(nameof(Index));
         }
 
         private async Task<List<UserDetailsViewModel>> GetUserListAsync()

@@ -42,15 +42,12 @@ namespace project_lifecycle.ViewModels
         [Display(Name = "Last Name")]
         public string LastName { get; set; } = string.Empty;
 
-        [Required]
         [Display(Name = "Department")]
-        public int DepartmentId { get; set; }
+        public int? DepartmentId { get; set; }
 
-        [Required]
         [Display(Name = "Position")]
-        public int PositionId { get; set; }
+        public int? PositionId { get; set; }
 
-        [Required]
         [Display(Name = "Date Hired")]
         public DateTime DateHired { get; set; } = DateTime.Today;
 

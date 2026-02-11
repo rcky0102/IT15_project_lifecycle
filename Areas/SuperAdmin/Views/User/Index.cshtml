@@ -767,9 +767,10 @@
                 $('#saveUserBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
                 
                 $.ajax({
-                    url: '@Url.Action("Create", "User")',
+                    url: '@Url.Action("Create", "User", new { area = "SuperAdmin" })',
                     type: 'POST',
                     data: formData,
+                    timeout: 30000, // 30 second timeout
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     },
@@ -796,27 +797,161 @@
                                 location.reload();
                             }, 1500);
                         } else {
-                            // Show error message
-                            if (response.errors) {
-                                for (const key in response.errors) {
-                                    const fieldId = key.replace('CreateUserViewModel.', '').toLowerCase();
-                                    $('#' + fieldId).siblings('.text-danger').text(response.errors[key][0]);
-                                }
-                            } else {
-                                // General error
-                                const generalError = response.errors && response.errors[''] ? response.errors[''][0] : 'An error occurred while creating the user.';
-                                $('.modal-body').prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-                                    generalError +
-                                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                                    '</div>');
+                            // Show detailed error message
+                            let errorHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert" style="max-height: 400px; overflow-y: auto;">' +
+                                '<strong><i class="fas fa-exclamation-circle"></i> Error Creating User:</strong><br>';
+                            
+                            // Show the detailed message if available
+                            if (response.detailedMessage) {
+                                errorHtml += '<code style="color: #721c24; background-color: #f8d7da; padding: 8px; border-radius: 4px; display: block; margin: 10px 0; white-space: pre-wrap; word-wrap: break-word;">' +
+                                    response.detailedMessage +
+                                    '</code>';
+                            } else if (response.message) {
+                                errorHtml += '<p>' + response.message + '</p>';
                             }
+                            
+                            // Show validation errors if present
+                            if (response.errors) {
+                                let hasErrors = false;
+                                for (const key in response.errors) {
+                                    if (response.errors[key] && response.errors[key].length > 0) {
+                                        hasErrors = true;
+                                        const errorMessages = response.errors[key];
+                                        for (let i = 0; i < errorMessages.length; i++) {
+                                            errorHtml += '<div style="margin: 5px 0;"><i class="fas fa-times-circle"></i> ' + errorMessages[i] + '</div>';
+                                        }
+                                        // Also add to field validation
+                                        const fieldId = key.replace('CreateUserViewModel.', '').toLowerCase();
+                                        const $field = $('#' + fieldId);
+                                        if ($field.length) {
+                                            $field.siblings('.text-danger').text(response.errors[key][0]);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            errorHtml += '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                                '</div>';
+                            
+                            // Remove any existing error alerts first
+                            $('.modal-body .alert-danger').remove();
+                            // Add the new error alert at the top of modal body
+                            $('.modal-body').prepend(errorHtml);
+                            
+                            // Scroll to top of modal
+                            $('.modal-body').scrollTop(0);
                         }
                     },
                     error: function(xhr, status, error) {
-                        $('.modal-body').prepend('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-                            'An error occurred while creating the user. Please try again.' +
+                        let errorMessage = 'An error occurred while creating user.';
+                        let detailedInfo = '';
+                        
+                        // Handle timeout specifically
+                        if (status === 'timeout') {
+                            errorMessage = 'Request timed out. The server is taking too long to respond. Please try again.';
+                            detailedInfo = 'The request exceeded the 30-second timeout limit.';
+                        } else if (status === 'abort') {
+                            errorMessage = 'Request was cancelled.';
+                        } else if (status === 'parsererror') {
+                            errorMessage = 'Invalid server response format.';
+                            detailedInfo = 'The server returned an unexpected response format.';
+                        }
+                        
+                        // Try to extract specific error message from response
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.detailedMessage) {
+                                detailedInfo = xhr.responseJSON.detailedMessage;
+                            } else if (xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } 
+                            
+                            if (xhr.responseJSON.errors) {
+                                // Handle validation errors
+                                const errors = xhr.responseJSON.errors;
+                                if (typeof errors === 'object') {
+                                    for (const key in errors) {
+                                        if (Array.isArray(errors[key]) && errors[key].length > 0) {
+                                            errorMessage = errors[key][0];
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (xhr.responseText) {
+                            try {
+                                const responseText = JSON.parse(xhr.responseText);
+                                if (responseText.detailedMessage) {
+                                    detailedInfo = responseText.detailedMessage;
+                                } else if (responseText.message) {
+                                    errorMessage = responseText.message;
+                                }
+                            } catch (e) {
+                                // If JSON parsing fails, try to extract text
+                                if (xhr.statusText) {
+                                    detailedInfo = xhr.responseText.substring(0, 500);
+                                }
+                            }
+                        }
+                        
+                        // Add specific error context based on status code
+                        let statusInfo = '';
+                        if (xhr.status === 400) {
+                            statusInfo = 'Validation error: The data you submitted is invalid.';
+                        } else if (xhr.status === 401) {
+                            statusInfo = 'Unauthorized: You do not have permission to create users.';
+                        } else if (xhr.status === 403) {
+                            statusInfo = 'Forbidden: Access denied while creating user.';
+                        } else if (xhr.status === 409) {
+                            statusInfo = 'Conflict: User with this email already exists.';
+                        } else if (xhr.status === 500) {
+                            statusInfo = 'Server error: An unexpected error occurred on the server.';
+                        } else if (xhr.status === 0) {
+                            statusInfo = 'Network error: Unable to connect to the server. Check your internet connection.';
+                        }
+                        
+                        // Build comprehensive error display
+                        let errorHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert" style="max-height: 500px; overflow-y: auto;">' +
+                            '<strong><i class="fas fa-exclamation-triangle"></i> Error Creating User</strong><br>';
+                        
+                        if (errorMessage) {
+                            errorHtml += '<div style="margin: 10px 0;"><strong>Error:</strong> <code style="background-color: #f8d7da; padding: 4px 6px; border-radius: 3px;">' + 
+                                errorMessage + '</code></div>';
+                        }
+                        
+                        if (detailedInfo) {
+                            errorHtml += '<div style="margin: 10px 0;"><strong>Details:</strong><br>' +
+                                '<code style="background-color: #f8d7da; padding: 8px; border-radius: 3px; display: block; white-space: pre-wrap; word-wrap: break-word; margin-top: 5px;">' +
+                                detailedInfo + '</code></div>';
+                        }
+                        
+                        if (statusInfo) {
+                            errorHtml += '<div style="margin: 10px 0;"><strong>Status:</strong> ' + statusInfo + '</div>';
+                        }
+                        
+                        if (xhr.status) {
+                            errorHtml += '<div style="margin: 10px 0; font-size: 0.9em; color: #666;">' +
+                                'HTTP Status: ' + xhr.status + ' ' + (xhr.statusText || 'Unknown') + '</div>';
+                        }
+                        
+                        errorHtml += '<div style="margin-top: 10px; font-size: 0.85em; color: #666;">' +
+                            '<strong>Tip:</strong> If the error persists, check the browser console (F12) or application logs for more details.' +
+                            '</div>' +
                             '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                            '</div>');
+                            '</div>';
+                        
+                        // Remove any existing error alerts first
+                        $('.modal-body .alert-danger').remove();
+                        $('.modal-body').prepend(errorHtml);
+                        
+                        // Log full error to console for debugging
+                        console.error('AJAX Error Details:', {
+                            status: status,
+                            statusCode: xhr.status,
+                            statusText: xhr.statusText,
+                            responseText: xhr.responseText,
+                            responseJSON: xhr.responseJSON,
+                            error: error
+                        });
                     },
                     complete: function() {
                         // Re-enable button

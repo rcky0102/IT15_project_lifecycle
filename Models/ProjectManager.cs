@@ -10,7 +10,6 @@ namespace project_lifecycle.Models
         public string UserId { get; set; }
 
         [Required]
-        [StringLength(20)]
         public string EmployeeNumber { get; set; } = string.Empty;
 
         [Required]
