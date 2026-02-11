@@ -309,8 +309,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             MiddleName = model.MiddleName,
                             LastName = model.LastName,
                             Contact = model.Contact ?? "",
-                            DepartmentId = model.DepartmentId.HasValue ? model.DepartmentId.Value : 0,
-                            PositionId = model.PositionId.HasValue ? model.PositionId.Value : (int?)null
+                            DepartmentId = (model.DepartmentId.HasValue && model.DepartmentId.Value > 0) ? model.DepartmentId.Value : (int?)null,
+                            PositionId = (model.PositionId.HasValue && model.PositionId.Value > 0) ? model.PositionId.Value : (int?)null
                         };
 
                         _context.Executives.Add(executive);
@@ -332,8 +332,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             MiddleName = model.MiddleName,
                             LastName = model.LastName,
                             Contact = model.Contact ?? "",
-                            DepartmentId = model.DepartmentId.HasValue ? model.DepartmentId.Value : 0,
-                            PositionId = model.PositionId.HasValue ? model.PositionId.Value : (int?)null
+                            DepartmentId = (model.DepartmentId.HasValue && model.DepartmentId.Value > 0) ? model.DepartmentId.Value : 0,
+                            PositionId = (model.PositionId.HasValue && model.PositionId.Value > 0) ? model.PositionId.Value : (int?)null
                         };
 
                         _context.DepartmentHeads.Add(departmentHead);
@@ -355,7 +355,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             MiddleName = model.MiddleName,
                             LastName = model.LastName,
                             Contact = model.Contact ?? "",
-                            DepartmentId = model.DepartmentId.HasValue ? model.DepartmentId.Value : 0,
+                            DepartmentId = (model.DepartmentId.HasValue && model.DepartmentId.Value > 0) ? model.DepartmentId.Value : 0,
                             PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null
                         };
 
