@@ -1,0 +1,269 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/Employee/Layout.cshtml";
+}
+
+<div class="dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="dashboard-title">Employee Dashboard</h1>
+            <p class="dashboard-subtitle">Your work overview and quick actions</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-ocean">
+                <i class="fas fa-plus"></i>
+                New Task
+            </button>
+            <button class="btn btn-outline-ocean">
+                <i class="fas fa-sync"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="fas fa-list-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Open Tasks</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> 2 new today
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fas fa-folder-open"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Active Projects</div>
+                <div class="stat-change neutral">
+                    <i class="fas fa-minus"></i> No change
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">4h</div>
+                <div class="stat-label">Today Logged</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> +30m
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon danger">
+                <i class="fas fa-triangle-exclamation"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Blocked</div>
+                <div class="stat-change negative">
+                    <i class="fas fa-arrow-up"></i> Needs attention
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-row">
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Weekly Productivity</h3>
+                <div class="chart-actions">
+                    <select class="form-select form-select-sm">
+                        <option>Last 7 days</option>
+                        <option>Last 30 days</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="productivityChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Task Status</h3>
+                <div class="chart-actions">
+                    <button class="btn btn-sm btn-outline-ocean">View All</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="taskStatusChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity and Quick Actions -->
+    <div class="content-row">
+        <div class="activity-panel">
+            <div class="panel-header">
+                <h3>Recent Activity</h3>
+                <button class="btn btn-sm btn-link">View All</button>
+            </div>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon user">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Task completed</div>
+                        <div class="activity-description">Updated project documentation</div>
+                        <div class="activity-time">10 minutes ago</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon project">
+                        <i class="fas fa-folder-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Joined project</div>
+                        <div class="activity-description">UX Improvements initiative</div>
+                        <div class="activity-time">1 hour ago</div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon system">
+                        <i class="fas fa-comment"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">New comment</div>
+                        <div class="activity-description">Feedback on wireframes</div>
+                        <div class="activity-time">2 hours ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-actions-panel">
+            <div class="panel-header">
+                <h3>Quick Actions</h3>
+            </div>
+            <div class="quick-actions-grid">
+                <button class="quick-action-btn">
+                    <i class="fas fa-list-check"></i>
+                    <span>Create Task</span>
+                </button>
+                <button class="quick-action-btn">
+                    <i class="fas fa-clock"></i>
+                    <span>Log Time</span>
+                </button>
+                <button class="quick-action-btn">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Submit Report</span>
+                </button>
+                <button class="quick-action-btn">
+                    <i class="fas fa-comment"></i>
+                    <span>Send Update</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workload Status -->
+    <div class="system-status-panel">
+        <div class="panel-header">
+            <h3>Workload</h3>
+            <div class="status-indicator online">
+                <span class="status-dot"></span>
+                Balanced
+            </div>
+        </div>
+        <div class="status-grid">
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">Tasks</div>
+                    <div class="status-value">75% Completed</div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-progress" style="width: 75%"></div>
+                </div>
+            </div>
+
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">Meetings</div>
+                    <div class="status-value">2 Scheduled</div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-progress" style="width: 40%"></div>
+                </div>
+            </div>
+
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">Documents</div>
+                    <div class="status-value">3 Pending Review</div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-progress" style="width: 60%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Productivity Chart
+        const prodCtx = document.getElementById('productivityChart').getContext('2d');
+        new Chart(prodCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Hours Logged',
+                    data: [4, 6, 5, 7, 6, 3, 2],
+                    borderColor: '#4CA3DD',
+                    backgroundColor: 'rgba(76, 163, 221, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Task Status Chart
+        const statusCtx = document.getElementById('taskStatusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'In Progress', 'Pending', 'Blocked'],
+                datasets: [{
+                    data: [60, 25, 10, 5],
+                    backgroundColor: ['#006994', '#4CA3DD', '#94D3FF', '#E8F4F8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    </script>
+}

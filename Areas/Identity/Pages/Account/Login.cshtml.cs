@@ -127,6 +127,11 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                         return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
                     }
 
+                    if (await _userManager.IsInRoleAsync(user, "Employee"))
+                    {
+                        return RedirectToAction("Index", "Dashboard", new { area = "Employee" });
+                    }
+
                     _logger.LogInformation("User logged in.");
                     return LocalRedirect(returnUrl);
                 }
