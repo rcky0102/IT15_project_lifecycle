@@ -9,17 +9,18 @@
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/layout.css" />
 </head>
 <body>
-    <header class="modern-header">
+    <header class="modern-header" id="header">
         <nav class="navbar navbar-expand-lg navbar-modern">
             <div class="container">
                 <a class="navbar-brand modern-brand" asp-area="" asp-controller="Home" asp-action="Index">
                     <div class="brand-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
-                            <path d="M8 16L12 20L24 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M8 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                     <span class="brand-text">Project Lifecycle</span>
@@ -36,9 +37,9 @@
                         <li class="nav-item">
                             <a class="nav-link modern-nav-link" asp-area="" asp-controller="Home" asp-action="Index">
                                 <span class="nav-icon">
-                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                                        <path d="M3 9L9 15L15 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M9 3V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M3 9l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M9 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                     </svg>
                                 </span>
                                 Home
@@ -47,9 +48,9 @@
                         <li class="nav-item">
                             <a class="nav-link modern-nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">
                                 <span class="nav-icon">
-                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                                        <path d="M9 1C4.58 1 1 4.58 1 9s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8z" stroke="currentColor" stroke-width="1.5"/>
-                                        <path d="M9 5v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M10 6v4l2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                     </svg>
                                 </span>
                                 Privacy
@@ -74,9 +75,9 @@
             <div class="footer-content">
                 <div class="footer-brand">
                     <div class="brand-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                            <path d="M8 12L10 14L16 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+                            <path d="M6 10l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                     <span class="brand-text">Project Lifecycle</span>
@@ -114,6 +115,33 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
