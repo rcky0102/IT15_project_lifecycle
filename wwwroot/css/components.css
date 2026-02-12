@@ -1043,6 +1043,14 @@
   visibility: hidden;
 }
 
+.logout-form {
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  position: relative;
+  z-index: 10;
+}
+
 .logout-btn {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -1051,6 +1059,13 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  pointer-events: auto;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logout-btn:hover {
