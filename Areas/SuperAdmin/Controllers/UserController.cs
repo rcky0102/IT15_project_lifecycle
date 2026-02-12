@@ -74,15 +74,19 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     else if (roles.Contains(Roles.HumanResource.ToString()))
                     {
                         var humanResource = await _context.HumanResources
+                            .Include(hr => hr.Department)
                             .Include(hr => hr.Position)
                             .FirstOrDefaultAsync(hr => hr.UserId == user.Id);
 
                         if (humanResource != null)
                         {
+                            userDetail.EmployeeNumber = humanResource.EmployeeNumber;
                             userDetail.FirstName = humanResource.FirstName;
                             userDetail.MiddleName = humanResource.MiddleName;
                             userDetail.LastName = humanResource.LastName;
+                            userDetail.DepartmentName = humanResource.Department?.Name;
                             userDetail.PositionName = humanResource.Position?.Name;
+                            userDetail.DateHired = humanResource.CreatedDate;
                         }
                     }
                     else if (roles.Contains(Roles.DepartmentHead.ToString()))
@@ -94,25 +98,31 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                         if (departmentHead != null)
                         {
+                            userDetail.EmployeeNumber = departmentHead.EmployeeNumber;
                             userDetail.FirstName = departmentHead.FirstName;
                             userDetail.MiddleName = departmentHead.MiddleName;
                             userDetail.LastName = departmentHead.LastName;
                             userDetail.DepartmentName = departmentHead.Department?.Name;
                             userDetail.PositionName = departmentHead.Position?.Name;
+                            userDetail.DateHired = departmentHead.CreatedDate;
                         }
                     }
                     else if (roles.Contains(Roles.Executive.ToString()))
                     {
                         var executive = await _context.Executives
+                            .Include(e => e.Department)
                             .Include(e => e.Position)
                             .FirstOrDefaultAsync(e => e.UserId == user.Id);
 
                         if (executive != null)
                         {
+                            userDetail.EmployeeNumber = executive.EmployeeNumber;
                             userDetail.FirstName = executive.FirstName;
                             userDetail.MiddleName = executive.MiddleName;
                             userDetail.LastName = executive.LastName;
+                            userDetail.DepartmentName = executive.Department?.Name;
                             userDetail.PositionName = executive.Position?.Name;
+                            userDetail.DateHired = executive.CreatedDate;
                         }
                     }
                     else if (roles.Contains(Roles.ProjectManager.ToString()))
@@ -124,11 +134,13 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                         if (projectManager != null)
                         {
+                            userDetail.EmployeeNumber = projectManager.EmployeeNumber;
                             userDetail.FirstName = projectManager.FirstName;
                             userDetail.MiddleName = projectManager.MiddleName;
                             userDetail.LastName = projectManager.LastName;
                             userDetail.DepartmentName = projectManager.Department?.Name;
                             userDetail.PositionName = projectManager.Position?.Name;
+                            userDetail.DateHired = projectManager.CreatedDate;
                         }
                     }
 
