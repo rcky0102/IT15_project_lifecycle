@@ -1,13 +1,15 @@
 /* Modern Layout Styles */
 
 :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --ocean-deep: #006994;
+    --ocean-light: #4CA3DD;
+    --ocean-accent: #00A8CC;
+    --ocean-gradient: linear-gradient(135deg, var(--ocean-deep) 0%, var(--ocean-light) 100%);
+    --ocean-gradient-reverse: linear-gradient(135deg, var(--ocean-light) 0%, var(--ocean-deep) 100%);
     --text-primary: #1a202c;
     --text-secondary: #4a5568;
     --text-light: #718096;
-    --bg-light: #f7fafc;
+    --bg-light: #F0F4F8;
     --bg-white: #ffffff;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
@@ -39,15 +41,16 @@ body {
     left: 0;
     right: 0;
     z-index: 1000;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(240, 244, 248, 0.95);
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 105, 148, 0.1);
     transition: var(--transition);
 }
 
 .modern-header.scrolled {
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(240, 244, 248, 0.98);
     box-shadow: var(--shadow-md);
+    border-bottom: 1px solid rgba(0, 105, 148, 0.15);
 }
 
 .navbar-modern {
@@ -61,20 +64,20 @@ body {
     gap: 0.75rem;
     font-weight: 700;
     font-size: 1.25rem;
-    color: var(--text-primary);
+    color: var(--ocean-deep);
     text-decoration: none;
     transition: var(--transition);
 }
 
 .modern-brand:hover {
-    color: #667eea;
+    color: var(--ocean-deep);
     transform: translateY(-2px);
 }
 
 .brand-icon {
     width: 40px;
     height: 40px;
-    background: var(--primary-gradient);
+    background: var(--ocean-gradient);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -89,21 +92,21 @@ body {
 
 .modern-toggler {
     border: none;
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(0, 105, 148, 0.08);
     border-radius: 8px;
     padding: 0.5rem;
     transition: var(--transition);
 }
 
 .modern-toggler:hover {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(0, 105, 148, 0.15);
 }
 
 .toggler-icon {
     display: block;
     width: 25px;
     height: 3px;
-    background: var(--primary-gradient);
+    background: var(--ocean-gradient);
     border-radius: 3px;
     margin: 5px 0;
     transition: var(--transition);
@@ -122,14 +125,14 @@ body {
 }
 
 .modern-nav-link:hover {
-    color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
+    color: var(--ocean-deep);
+    background: rgba(0, 105, 148, 0.08);
     transform: translateY(-2px);
 }
 
 .modern-nav-link.active {
-    color: #667eea;
-    background: rgba(102, 126, 234, 0.15);
+    color: var(--ocean-deep);
+    background: rgba(0, 105, 148, 0.12);
 }
 
 .nav-icon {
@@ -157,7 +160,7 @@ body {
 
 /* Modern Footer */
 .modern-footer {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--ocean-gradient);
     color: white;
     padding: 3rem 0 2rem;
     position: relative;
@@ -204,9 +207,9 @@ body {
 .footer-brand .brand-icon {
     width: 35px;
     height: 35px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .footer-links {
@@ -246,9 +249,9 @@ body {
 .social-link {
     width: 40px;
     height: 40px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -259,9 +262,9 @@ body {
 }
 
 .social-link:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 25px rgba(0, 105, 148, 0.3);
 }
 
 /* Login Partial Styles */
@@ -274,8 +277,8 @@ body {
 }
 
 .navbar-nav .nav-link:hover {
-    color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
+    color: var(--ocean-deep);
+    background: rgba(0, 105, 148, 0.08);
 }
 
 /* Responsive Design */
@@ -314,10 +317,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--ocean-gradient);
     border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: var(--ocean-gradient-reverse);
 }
