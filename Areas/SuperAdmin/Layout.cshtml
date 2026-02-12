@@ -105,8 +105,9 @@
                         <div class="user-name">Super Admin</div>
                         <div class="user-role">Administrator</div>
                     </div>
-                    <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post" class="logout-form" id="logoutForm">
+                    <form action="/Identity/Account/Logout" method="post" class="logout-form" id="logoutForm">
                         @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="/" />
                         <button type="submit" class="logout-btn" title="Logout" onclick="return confirmLogout();">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
