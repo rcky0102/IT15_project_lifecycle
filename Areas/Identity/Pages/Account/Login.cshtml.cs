@@ -132,6 +132,26 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                         return RedirectToAction("Index", "Dashboard", new { area = "Employee" });
                     }
 
+                    if (await _userManager.IsInRoleAsync(user, "HumanResource"))
+                    {
+                        return RedirectToAction("Index", "Dashboard", new { area = "HumanResource" });
+                    }
+
+                    if (await _userManager.IsInRoleAsync(user, "DepartmentHead"))
+                    {
+                        return RedirectToAction("Index", "Dashboard", new { area = "DepartmentHead" });
+                    }
+
+                    if (await _userManager.IsInRoleAsync(user, "Executive"))
+                    {
+                        return RedirectToAction("Index", "Dashboard", new { area = "Executive" });
+                    }
+
+                    if (await _userManager.IsInRoleAsync(user, "ProjectManager"))
+                    {
+                        return RedirectToAction("Index", "Dashboard", new { area = "ProjectManager" });
+                    }
+
                     _logger.LogInformation("User logged in.");
                     return LocalRedirect(returnUrl);
                 }

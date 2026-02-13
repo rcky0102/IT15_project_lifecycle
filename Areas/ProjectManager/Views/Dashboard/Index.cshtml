@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/ProjectManager/Layout.cshtml";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="dashboard-title">Project Manager Dashboard</h1>
+            <p class="dashboard-subtitle">Track projects and team progress</p>
+        </div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon primary"><i class="fas fa-tasks"></i></div><div class="stat-content"><div class="stat-number">12</div><div class="stat-label">Open Tasks</div></div></div>
+        <div class="stat-card"><div class="stat-icon success"><i class="fas fa-folder-open"></i></div><div class="stat-content"><div class="stat-number">5</div><div class="stat-label">Active Projects</div></div></div>
+        <div class="stat-card"><div class="stat-icon warning"><i class="fas fa-calendar-alt"></i></div><div class="stat-content"><div class="stat-number">3</div><div class="stat-label">Upcoming Deadlines</div></div></div>
+    </div>
+</div>

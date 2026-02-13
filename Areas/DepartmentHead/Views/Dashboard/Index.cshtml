@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/DepartmentHead/Layout.cshtml";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="dashboard-title">Department Head Dashboard</h1>
+            <p class="dashboard-subtitle">Manage departments and team performance</p>
+        </div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon primary"><i class="fas fa-building"></i></div><div class="stat-content"><div class="stat-number">4</div><div class="stat-label">Departments</div></div></div>
+        <div class="stat-card"><div class="stat-icon success"><i class="fas fa-users"></i></div><div class="stat-content"><div class="stat-number">28</div><div class="stat-label">Team Members</div></div></div>
+        <div class="stat-card"><div class="stat-icon warning"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-number">85%</div><div class="stat-label">Goal Progress</div></div></div>
+    </div>
+</div>

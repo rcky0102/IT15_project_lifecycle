@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/Executive/Layout.cshtml";
+}
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="dashboard-title">Executive Dashboard</h1>
+            <p class="dashboard-subtitle">High-level system overview and KPIs</p>
+        </div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon primary"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-number">89%</div><div class="stat-label">System Health</div></div></div>
+        <div class="stat-card"><div class="stat-icon success"><i class="fas fa-project-diagram"></i></div><div class="stat-content"><div class="stat-number">456</div><div class="stat-label">Active Projects</div></div></div>
+        <div class="stat-card"><div class="stat-icon warning"><i class="fas fa-users"></i></div><div class="stat-content"><div class="stat-number">1,234</div><div class="stat-label">Total Users</div></div></div>
+    </div>
+</div>
