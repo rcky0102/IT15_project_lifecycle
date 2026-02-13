@@ -670,5 +670,212 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
+
+        // POST: /SuperAdmin/User/Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(CreateUserViewModel model)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(model.UserId))
+                {
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "UserId is required" });
+                    }
+                    TempData["Error"] = "UserId is required";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var user = await _userManager.FindByIdAsync(model.UserId);
+                if (user == null)
+                {
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "User not found" });
+                    }
+                    TempData["Error"] = "User not found";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Update email if changed
+                if (!string.IsNullOrEmpty(model.Email) && !string.Equals(user.Email, model.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.Email = model.Email;
+                    user.UserName = model.Email;
+                    await _userManager.UpdateAsync(user);
+                }
+
+                // Update role if necessary
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (!currentRoles.Contains(model.Role))
+                {
+                    // Remove all and add the new role
+                    if (currentRoles.Any())
+                    {
+                        await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                    }
+                    if (!await _roleManager.RoleExistsAsync(model.Role))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(model.Role));
+                    }
+                    await _userManager.AddToRoleAsync(user, model.Role);
+                }
+
+                // Update role-specific records: update if exists, create if missing
+                // Employee
+                if (model.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
+                {
+                    var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
+                    if (employee == null)
+                    {
+                        employee = new Employee { UserId = user.Id };
+                        _context.Employees.Add(employee);
+                    }
+
+                    employee.EmployeeNumber = model.EmployeeNumber;
+                    employee.FirstName = model.FirstName;
+                    employee.MiddleName = model.MiddleName;
+                    employee.LastName = model.LastName;
+                    employee.DepartmentId = model.DepartmentId ?? 0;
+                    employee.PositionId = model.PositionId ?? 0;
+                    employee.DateHired = model.DateHired;
+                }
+                else
+                {
+                    // Remove employee record if role changed away from Employee
+                    var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
+                    if (employee != null)
+                    {
+                        _context.Employees.Remove(employee);
+                    }
+                }
+
+                // HumanResource
+                if (model.Role.Equals("HumanResource", StringComparison.OrdinalIgnoreCase))
+                {
+                    var hr = await _context.HumanResources.FirstOrDefaultAsync(h => h.UserId == user.Id);
+                    if (hr == null)
+                    {
+                        hr = new HumanResource { UserId = user.Id };
+                        _context.HumanResources.Add(hr);
+                    }
+                    hr.EmployeeNumber = model.EmployeeNumber;
+                    hr.FirstName = model.FirstName;
+                    hr.MiddleName = model.MiddleName;
+                    hr.LastName = model.LastName;
+                    hr.Contact = model.Contact ?? string.Empty;
+                    hr.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
+                }
+                else
+                {
+                    var hr = await _context.HumanResources.FirstOrDefaultAsync(h => h.UserId == user.Id);
+                    if (hr != null)
+                    {
+                        _context.HumanResources.Remove(hr);
+                    }
+                }
+
+                // DepartmentHead
+                if (model.Role.Equals("DepartmentHead", StringComparison.OrdinalIgnoreCase))
+                {
+                    var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == user.Id);
+                    if (dh == null)
+                    {
+                        dh = new DepartmentHead { UserId = user.Id };
+                        _context.DepartmentHeads.Add(dh);
+                    }
+                    dh.EmployeeNumber = model.EmployeeNumber;
+                    dh.FirstName = model.FirstName;
+                    dh.MiddleName = model.MiddleName;
+                    dh.LastName = model.LastName;
+                    dh.Contact = model.Contact ?? string.Empty;
+                    dh.DepartmentId = model.DepartmentId ?? 0;
+                    dh.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
+                }
+                else
+                {
+                    var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == user.Id);
+                    if (dh != null)
+                    {
+                        _context.DepartmentHeads.Remove(dh);
+                    }
+                }
+
+                // Executive
+                if (model.Role.Equals("Executive", StringComparison.OrdinalIgnoreCase))
+                {
+                    var ex = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == user.Id);
+                    if (ex == null)
+                    {
+                        ex = new Executive { UserId = user.Id };
+                        _context.Executives.Add(ex);
+                    }
+                    ex.EmployeeNumber = model.EmployeeNumber;
+                    ex.FirstName = model.FirstName;
+                    ex.MiddleName = model.MiddleName;
+                    ex.LastName = model.LastName;
+                    ex.Contact = model.Contact ?? string.Empty;
+                    ex.DepartmentId = model.DepartmentId.HasValue && model.DepartmentId.Value > 0 ? model.DepartmentId.Value : (int?)null;
+                    ex.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
+                }
+                else
+                {
+                    var ex = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == user.Id);
+                    if (ex != null)
+                    {
+                        _context.Executives.Remove(ex);
+                    }
+                }
+
+                // ProjectManager
+                if (model.Role.Equals("ProjectManager", StringComparison.OrdinalIgnoreCase))
+                {
+                    var pm = await _context.ProjectManagers.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                    if (pm == null)
+                    {
+                        pm = new ProjectManager { UserId = user.Id };
+                        _context.ProjectManagers.Add(pm);
+                    }
+                    pm.EmployeeNumber = model.EmployeeNumber;
+                    pm.FirstName = model.FirstName;
+                    pm.MiddleName = model.MiddleName;
+                    pm.LastName = model.LastName;
+                    pm.Contact = model.Contact ?? string.Empty;
+                    pm.DepartmentId = model.DepartmentId ?? 0;
+                    pm.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
+                }
+                else
+                {
+                    var pm = await _context.ProjectManagers.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                    if (pm != null)
+                    {
+                        _context.ProjectManagers.Remove(pm);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = true, message = "User updated successfully!" });
+                }
+
+                TempData["Success"] = "User updated successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating user: {ex.Message}");
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "An error occurred while updating the user.", detailedMessage = ex.Message });
+                }
+
+                TempData["Error"] = "An error occurred while updating the user.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
     }
 }

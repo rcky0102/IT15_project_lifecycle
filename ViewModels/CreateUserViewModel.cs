@@ -6,6 +6,10 @@ namespace project_lifecycle.ViewModels
 {
     public class CreateUserViewModel
     {
+        // When editing an existing user, this holds the user's Identity Id
+        [Display(Name = "User Id")]
+        public string? UserId { get; set; }
+
         [Required]
         [EmailAddress]
         [Display(Name = "Email")]

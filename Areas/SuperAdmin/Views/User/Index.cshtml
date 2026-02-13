@@ -153,6 +153,7 @@
 
                 <form id="createUserForm">
                     @Html.AntiForgeryToken()
+                    <input type="hidden" id="editingUserId" name="UserId" />
                     
                     <!-- Step 1: Role Selection -->
                     <div class="step-content" id="step1">
@@ -375,8 +376,7 @@
     </div>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+@section Styles {
     <style>
         /* Ocean Blue Theme - Color Constants */
         :root {
@@ -956,6 +956,10 @@
             color: white;
         }
     </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
         $(document).ready(function() {
             let currentStep = 1;
@@ -1289,6 +1293,7 @@
                 
                 const formData = {
                     __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
+                    UserId: $('#editingUserId').val() || null,
                     Email: $('#userEmail').val().trim(),
                     Password: $('#userPassword').val(),
                     ConfirmPassword: $('#userConfirmPassword').val(),
@@ -1306,8 +1311,11 @@
                 // Disable button and show loading
                 $('#saveUserBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
                 
+                const isEditing = $('#editingUserId').val();
+                const ajaxUrl = isEditing ? '@Url.Action("Update", "User", new { area = "SuperAdmin" })' : '@Url.Action("Create", "User", new { area = "SuperAdmin" })';
+
                 $.ajax({
-                    url: '@Url.Action("Create", "User", new { area = "SuperAdmin" })',
+                    url: ajaxUrl,
                     type: 'POST',
                     data: formData,
                     timeout: 30000, // 30 second timeout
@@ -1508,6 +1516,9 @@
                 $('.text-danger').text('');
                 $('.alert').remove();
                 currentStep = 1;
+                // Clear editing state and reset buttons
+                $('#editingUserId').val('');
+                $('#saveUserBtn').html('<i class="fas fa-user-plus"></i> Create User').hide();
                 initStepper();
             });
 
@@ -1516,6 +1527,42 @@
                 $('#deleteUserId').val(id);
                 $('#deleteUserEmail').text(email);
                 $('#deleteUserModal').modal('show');
+            };
+
+            // Edit user function - populate the create modal for editing
+            window.editUser = function(id, email, role, firstName, middleName, lastName, employeeNumber, departmentName, positionName) {
+                // Reset form state
+                $('#createUserForm')[0].reset();
+                $('.text-danger').text('');
+                $('.modal-body .alert-danger').remove();
+
+                // Populate fields
+                $('#editingUserId').val(id);
+                $('#userEmail').val(email);
+                $('#roleSelect').val(role).trigger('change');
+                $('#userEmployeeNumber').val(employeeNumber);
+                $('#userFirstName').val(firstName);
+                $('#userMiddleName').val(middleName);
+                $('#userLastName').val(lastName);
+
+                // Try to select department and position by text if provided
+                if (departmentName) {
+                    $('#userDepartmentId option').filter(function() { return $(this).text() === departmentName; }).prop('selected', true);
+                }
+                if (positionName) {
+                    $('#userPositionId option').filter(function() { return $(this).text() === positionName; }).prop('selected', true);
+                }
+
+                // We do not prefill password fields for security; leave empty to keep existing password
+                $('#userPassword').val('');
+                $('#userConfirmPassword').val('');
+
+                // Show modal and go to Review step (or step 2 to allow changes)
+                $('#createUserModal').modal('show');
+                showStep(2);
+
+                // Update buttons/UI to editing mode
+                $('#saveUserBtn').show().html('<i class="fas fa-save"></i> Update User');
             };
             
             // Confirm delete user button click
@@ -1530,7 +1577,7 @@
                 $('#confirmDeleteUserBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
                 
                 $.ajax({
-                    url: '@Url.Action("Delete", "User")',
+                    url: '@Url.Action("Delete", "User", new { area = "SuperAdmin" })',
                     type: 'POST',
                     data: formData,
                     headers: {
