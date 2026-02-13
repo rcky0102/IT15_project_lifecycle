@@ -633,6 +633,7 @@
             align-items: center;
             flex: 1;
             z-index: 2;
+            cursor: pointer;
         }
 
         .step-counter {
@@ -649,6 +650,7 @@
             margin-bottom: 10px;
             transition: all 0.3s ease;
             color: var(--text-muted);
+            cursor: pointer;
         }
 
         .step-name {
@@ -1638,6 +1640,17 @@
 
             // Initialize stepper on load
             initStepper();
+
+            // Allow clicking the stepper circles to jump to that step
+            $('.stepper-item').on('click', function() {
+                const step = $(this).data('step');
+                if (!step) return;
+                // If modal is not open, open it first
+                if (!$('#createUserModal').hasClass('show')) {
+                    $('#createUserModal').modal('show');
+                }
+                showStep(parseInt(step));
+            });
         });
     </script>
 }
