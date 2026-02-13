@@ -3,122 +3,87 @@
 
 @{
     ViewData["Title"] = "Welcome Back";
+    Layout = "/Views/Shared/_Layout.cshtml";
 }
 
-<div class="auth-ocean-container">
-    <div class="auth-ocean-header">
-        <h1 class="auth-ocean-title">@ViewData["Title"]</h1>
-        <p class="auth-ocean-subtitle">Sign in to access your account and continue your journey</p>
-    </div>
-    
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <div class="auth-ocean-card">
-                    <div class="auth-ocean-body">
-                        <form id="account" method="post" class="auth-ocean-form">
-                            <div asp-validation-summary="ModelOnly" class="auth-ocean-error" role="alert"></div>
-                            
-                            <div class="form-group-ocean">
-                                <label asp-for="Input.Email" class="form-label-ocean">Email address</label>
-                                <input asp-for="Input.Email" class="form-control-ocean" autocomplete="username" aria-required="true" placeholder="Enter your email" />
-                                <span asp-validation-for="Input.Email" class="field-error-ocean"></span>
-                            </div>
-                            
-                            <div class="form-group-ocean">
-                                <label asp-for="Input.Password" class="form-label-ocean">Password</label>
-                                <div class="password-input-wrapper">
-                                    <input asp-for="Input.Password" class="form-control-ocean" autocomplete="current-password" aria-required="true" placeholder="Enter your password" type="password" />
-                                    <button type="button" class="password-toggle-ocean" onclick="togglePassword(this)">
-                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 18 18" fill="none">
-                                            <path d="M1 9s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z" stroke="currentColor" stroke-width="1.5"/>
-                                            <circle cx="9" cy="9" r="2" stroke="currentColor" stroke-width="1.5"/>
-                                        </svg>
-                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 18 18" fill="none" style="display: none;">
-                                            <path d="M1 9s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z" stroke="currentColor" stroke-width="1.5"/>
-                                            <circle cx="9" cy="9" r="2" stroke="currentColor" stroke-width="1.5"/>
-                                            <path d="M2 2L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                                <span asp-validation-for="Input.Password" class="field-error-ocean"></span>
-                            </div>
+<link rel="stylesheet" href="~/css/home.css" />
 
-                            <div class="form-options-ocean">
-                                <label class="checkbox-ocean">
-                                    <input asp-for="Input.RememberMe" class="checkbox-input-ocean" />
-                                    <span class="checkbox-checkmark-ocean"></span>
-                                    @Html.DisplayNameFor(m => m.Input.RememberMe)
-                                </label>
-                            </div>
-
-                            <button id="login-submit" type="submit" class="btn-ocean btn-ocean-lg btn-ocean-block">
-                                Sign In
-                            </button>
-                            
-                            <div class="auth-links-ocean">
-                                <a id="forgot-password" asp-page="./ForgotPassword" class="link-ocean">Forgot your password?</a>
-                                <div class="register-link-ocean">
-                                    <span>Don't have an account?</span>
-                                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Sign up here</a>
-                                </div>
-                            </div>
-                        </form>
-
-                        @if ((Model.ExternalLogins?.Count ?? 0) > 0)
-                        {
-                            <div class="divider-ocean">
-                                <span>OR</span>
-                            </div>
-                            
-                            <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="external-login-ocean">
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn-external-ocean" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
-                                        @if (provider.DisplayName?.ToLower() == "google")
-                                        {
-                                            <svg width="20" height="20" viewBox="0 0 20 20">
-                                                <path d="M19.6 10.23c0-.82-.07-1.42-.2-2.05H10v3.72h5.5c-.11.93-.72 2.33-2.07 3.27v2.4h3.34c1.96-1.8 3.03-4.45 3.03-7.34z" fill="#4285F4"/>
-                                                <path d="M10 20c2.8 0 5.15-.92 6.87-2.5l-3.34-2.4c-.92.62-2.1.98-3.53.98-2.7 0-4.98-1.82-5.8-4.27H.74v2.48C2.44 17.5 5.97 20 10 20z" fill="#34A853"/>
-                                                <path d="M4.2 11.8c-.22-.65-.22-1.35-.22-2.05s.07-1.4.22-2.05V5.22H.74C.07 6.5 0 7.87 0 9.25s.07 2.75.74 4.03l3.46-2.48z" fill="#FBBC05"/>
-                                                <path d="M10 3.98c1.53 0 2.9.53 3.98 1.55l2.96-2.96C15.15.92 12.8 0 10 0 5.97 0 2.44 2.5.74 6.22l3.46 2.48C5.02 6.25 7.3 3.98 10 3.98z" fill="#EA4335"/>
-                                            </svg>
-                                        }
-                                        else
-                                        {
-                                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                                                <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
-                                            </svg>
-                                        }
-                                        Continue with @provider.DisplayName
-                                    </button>
-                                }
-                            </form>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="animated-bg">
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
     </div>
 </div>
 
-<script>
-function togglePassword(button) {
-    const input = button.previousElementSibling;
-    const eyeOpen = button.querySelector('.eye-open');
-    const eyeClosed = button.querySelector('.eye-closed');
-    
-    if (input.type === 'password') {
-        input.type = 'text';
-        eyeOpen.style.display = 'none';
-        eyeClosed.style.display = 'block';
-    } else {
-        input.type = 'password';
-        eyeOpen.style.display = 'block';
-        eyeClosed.style.display = 'none';
-    }
-}
+<section class="hero-section">
+    <div class="hero-content">
+        <div>
+            <h1 class="hero-title">
+                <span class="title-gradient">Welcome Back</span><br />
+                <span class="title-highlight">Project Lifecycle</span>
+            </h1>
+            <p class="hero-subtitle">
+                Sign in to continue managing your projects with the same modern experience as the home page.
+            </p>
+            <div class="hero-actions">
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-outline-light btn-lg">
+                    Back to Home
+                </a>
+            </div>
+        </div>
 
+        <div class="feature-card">
+            <h2 class="feature-title">Sign In</h2>
+
+            <form id="account" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label fw-semibold">Email address</label>
+                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="Enter your email" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Password" class="form-label fw-semibold">Password</label>
+                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="Input.RememberMe" class="form-check-input" />
+                    <label asp-for="Input.RememberMe" class="form-check-label">@Html.DisplayNameFor(m => m.Input.RememberMe)</label>
+                </div>
+
+                <button id="login-submit" type="submit" class="btn btn-primary btn-lg w-100">Sign In</button>
+
+                <div class="mt-4 d-flex flex-column gap-2">
+                    <a id="forgot-password" asp-page="./ForgotPassword" class="feature-link">Forgot your password?</a>
+                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="feature-link">Register as a new user</a>
+                </div>
+            </form>
+
+            @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+            {
+                <hr class="my-4" />
+
+                <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="d-grid gap-2">
+                    @foreach (var provider in Model.ExternalLogins!)
+                    {
+                        <button type="submit" class="btn btn-outline-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
+                            Continue with @provider.DisplayName
+                        </button>
+                    }
+                </form>
+            }
+        </div>
+    </div>
+</section>
+
+<script>
 document.getElementById('account').addEventListener('submit', function() {
     const submitBtn = document.getElementById('login-submit');
     submitBtn.disabled = true;
