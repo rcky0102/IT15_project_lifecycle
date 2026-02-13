@@ -74,6 +74,16 @@ body {
     transform: translateY(-2px);
 }
 
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 105, 148, 0.2);
+    background: #ffffff;
+    transition: var(--transition);
+}
+
 .brand-icon {
     width: 40px;
     height: 40px;
@@ -88,6 +98,10 @@ body {
 
 .modern-brand:hover .brand-icon {
     transform: rotate(5deg) scale(1.1);
+}
+
+.modern-brand:hover .brand-logo {
+    transform: rotate(5deg) scale(1.05);
 }
 
 .modern-toggler {
@@ -210,6 +224,12 @@ body {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.footer-brand-logo {
+    width: 36px;
+    height: 36px;
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .footer-links {
