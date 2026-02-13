@@ -44,6 +44,12 @@
                             <span class="nav-text">Dashboard</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("Index", "Proposal", new { area = "Employee" })" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Proposal" ? "active" : "")">
+                            <i class="fas fa-file-lines"></i>
+                            <span class="nav-text">Proposals</span>
+                        </a>
+                    </li>
                 </ul>
             </nav>
             
@@ -86,7 +92,7 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="breadcrumb">
-                        <span class="breadcrumb-item">Dashboard</span>
+                        <span class="breadcrumb-item">@(ViewData["Title"] ?? "Dashboard")</span>
                     </div>
                 </div>
                 

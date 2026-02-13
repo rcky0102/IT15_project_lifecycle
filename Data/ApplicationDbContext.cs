@@ -13,6 +13,7 @@ namespace project_lifecycle.Data
         public DbSet<DepartmentHead> DepartmentHeads { get; set; }
         public DbSet<ProjectManager> ProjectManagers { get; set; }
         public DbSet<Executive> Executives { get; set; }
+        public DbSet<ProjectProposal> ProjectProposals { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
