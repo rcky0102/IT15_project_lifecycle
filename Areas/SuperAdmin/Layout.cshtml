@@ -246,104 +246,66 @@
             });
         });
 
-        // Set active nav link based on current URL
+        // Set active nav link based on current URL - robust controller extraction
         function setActiveNavLink() {
-            const currentPath = window.location.pathname.toLowerCase();
-            console.log('Current path:', currentPath); // Debug log
-            const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
-            const subLinks = document.querySelectorAll('.nav-sublink');
-            
-            // Remove active classes from all links and submenus
-            navLinks.forEach(link => link.classList.remove('active'));
-            subLinks.forEach(link => link.classList.remove('active'));
-            document.querySelectorAll('.collapsible-toggle').forEach(toggle => {
-                toggle.classList.remove('expanded');
-            });
-            document.querySelectorAll('.nav-submenu').forEach(submenu => {
-                submenu.classList.remove('expanded');
-            });
-            
-            // Check sub links first (they have priority)
-            let subLinkActive = false;
-            subLinks.forEach(link => {
+            const currentPath = (window.location.pathname || '').toLowerCase();
+
+            function extractControllerFromPath(path) {
+                if (!path) return '';
+                const parts = path.split('/').filter(p => p && p.trim() !== '');
+                // If URL contains area segment like 'superadmin', controller should be the next segment
+                const areaIndex = parts.indexOf('superadmin');
+                if (areaIndex !== -1 && parts.length > areaIndex + 1) {
+                    return parts[areaIndex + 1];
+                }
+                // Otherwise, use first segment (root-level app)
+                return parts.length > 0 ? parts[0] : '';
+            }
+
+            const targetController = extractControllerFromPath(currentPath) || 'dashboard';
+
+            // Clear existing active/expanded states
+            document.querySelectorAll('.sidebar-nav .nav-link, .nav-sublink').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.collapsible-toggle').forEach(t => t.classList.remove('expanded'));
+            document.querySelectorAll('.nav-submenu').forEach(s => s.classList.remove('expanded'));
+
+            // Try to match sublinks first (higher priority)
+            let matched = false;
+            document.querySelectorAll('.nav-sublink').forEach(link => {
                 const href = (link.getAttribute('href') || '').toLowerCase();
-                console.log('Sub link href:', href); // Debug log
-                if (href && href !== '#') {
-                    // Extract controller name from href
-                    const hrefParts = href.split('/').filter(part => part !== '');
-                    const controllerName = hrefParts[hrefParts.length - 1];
-                    console.log('Sub link controller name:', controllerName); // Debug log
-                    
-                    // Check if current path contains the controller name
-                    if (currentPath.includes(controllerName)) {
-                        console.log('Match found for sub link:', controllerName); // Debug log
-                        link.classList.add('active');
-                        subLinkActive = true;
-                        
-                        // Expand parent submenu
-                        const parentSubmenu = link.closest('.nav-submenu');
-                        if (parentSubmenu) {
-                            const parentId = parentSubmenu.getAttribute('id');
-                            const parentToggle = document.querySelector(`[data-target="${parentId}"]`);
-                            if (parentToggle) {
-                                parentToggle.classList.add('expanded');
-                                parentSubmenu.classList.add('expanded');
-                            }
-                        }
+                if (!href || href === '#') return;
+                const linkController = extractControllerFromPath(href);
+                if (linkController === targetController) {
+                    link.classList.add('active');
+                    matched = true;
+                    const parentSubmenu = link.closest('.nav-submenu');
+                    if (parentSubmenu) {
+                        parentSubmenu.classList.add('expanded');
+                        const parentToggle = document.querySelector(`[data-target="${parentSubmenu.id}"]`);
+                        if (parentToggle) parentToggle.classList.add('expanded');
                     }
                 }
             });
-            
-            // Check main nav links (only if no sublink is active)
-            if (!subLinkActive) {
-                let anyMatchFound = false;
-                navLinks.forEach(link => {
+
+            if (!matched) {
+                // Match main nav links
+                document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
                     const href = (link.getAttribute('href') || '').toLowerCase();
-                    console.log('Main nav href:', href); // Debug log
-                    if (href && href !== '#') {
-                        // Extract controller name from href
-                        const hrefParts = href.split('/').filter(part => part !== '');
-                        const controllerName = hrefParts[hrefParts.length - 1];
-                        console.log('Main nav controller name:', controllerName); // Debug log
-                        
-                        // Dashboard special handling
-                        if (controllerName === 'dashboard') {
-                            if (currentPath.includes('dashboard') || 
-                                currentPath === '/superadmin' || 
-                                currentPath === '/' ||
-                                currentPath.includes('/superadmin/dashboard')) {
-                                console.log('Dashboard match found'); // Debug log
-                                link.classList.add('active');
-                                anyMatchFound = true;
-                            }
-                        }
-                        // User Management
-                        else if (controllerName === 'user') {
-                            if (currentPath.includes('user')) {
-                                console.log('User match found'); // Debug log
-                                link.classList.add('active');
-                                anyMatchFound = true;
-                            }
-                        }
-                        // Other controllers
-                        else if (currentPath.includes(controllerName)) {
-                            console.log('Match found for main nav:', controllerName); // Debug log
-                            link.classList.add('active');
-                            anyMatchFound = true;
-                        }
+                    if (!href || href === '#') return;
+                    const linkController = extractControllerFromPath(href);
+                    if (linkController === targetController) {
+                        link.classList.add('active');
+                        matched = true;
                     }
                 });
-                
-                // Fallback: if no match found, highlight Dashboard
-                if (!anyMatchFound) {
-                    console.log('No match found, defaulting to Dashboard'); // Debug log
-                    navLinks.forEach(link => {
-                        const href = (link.getAttribute('href') || '').toLowerCase();
-                        if (href && href.includes('dashboard')) {
-                            link.classList.add('active');
-                        }
-                    });
-                }
+            }
+
+            // Fallback: highlight Dashboard
+            if (!matched) {
+                document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+                    const href = (link.getAttribute('href') || '').toLowerCase();
+                    if (href && href.includes('dashboard')) link.classList.add('active');
+                });
             }
         }
 
