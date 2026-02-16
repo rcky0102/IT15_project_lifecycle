@@ -63,5 +63,51 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             return View(proposal);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Review(int id, string actionType, string? note)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (dh == null) return Forbid();
+
+            var proposal = await _context.ProjectProposals
+                .Include(p => p.Employee)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (proposal == null) return NotFound();
+
+            if (proposal.Employee == null || proposal.Employee.DepartmentId != dh.DepartmentId)
+                return Forbid();
+
+            // Map actionType to allowed statuses
+            string newStatus = proposal.Status;
+            if (string.Equals(actionType, "Approve", StringComparison.OrdinalIgnoreCase))
+            {
+                newStatus = "Approved";
+            }
+            else if (string.Equals(actionType, "Reject", StringComparison.OrdinalIgnoreCase))
+            {
+                newStatus = "Rejected";
+            }
+            else if (string.Equals(actionType, "ReturnForRevision", StringComparison.OrdinalIgnoreCase))
+            {
+                newStatus = "Requires Revision";
+            }
+
+            // Save note and department head assignment
+            proposal.Note = note;
+            proposal.DepartmentHeadId = dh.Id;
+            proposal.Status = newStatus;
+
+            _context.Update(proposal);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Proposal updated.";
+            return RedirectToAction(nameof(Details), new { id = proposal.Id });
+        }
     }
 }
