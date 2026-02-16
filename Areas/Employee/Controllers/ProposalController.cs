@@ -65,6 +65,13 @@ namespace project_lifecycle.EmployeeArea.Controllers
             }
         }
 
+        [HttpGet]
+        public IActionResult Create()
+        {
+            ViewData["Title"] = "New Proposal";
+            return View();
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProjectProposal proposal, IFormFile? fileAttachment)

@@ -1,0 +1,73 @@
+@*
+    Create Proposal Page
+*@
+@using project_lifecycle.Models
+@{
+    ViewData["Title"] = "New Proposal";
+}
+
+<div class="dashboard-container py-4">
+
+    <!-- ===== Page Header ===== -->
+    <div class="proposal-page-header">
+        <h1><i class="fas fa-pen-to-square"></i>&nbsp; Create New Proposal</h1>
+        <p class="proposal-subtitle">Fill in the details below to submit a new project proposal</p>
+    </div>
+
+    <!-- ===== Alerts ===== -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="proposal-alert error">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    <!-- ===== Proposal Form ===== -->
+    <div class="proposal-form-card">
+        <div class="form-section-title">
+            <i class="fas fa-lightbulb"></i> Proposal Details
+        </div>
+
+        <form asp-area="Employee" asp-controller="Proposal" asp-action="Create" method="post" enctype="multipart/form-data" class="auth-ocean-form">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group-ocean">
+                <label for="Title" class="form-label-ocean">Project Title</label>
+                <input type="text" id="Title" name="Title" class="form-control-ocean" placeholder="Enter a descriptive title…" required maxlength="200" />
+            </div>
+
+            <div class="form-group-ocean">
+                <label for="Description" class="form-label-ocean">Description</label>
+                <textarea id="Description" name="Description" rows="5" class="form-control-ocean" placeholder="Describe the goals, scope and expected outcomes…" required></textarea>
+            </div>
+
+            <div class="proposal-date-row">
+                <div class="form-group-ocean">
+                    <label for="StartDate" class="form-label-ocean">Planned Start</label>
+                    <input type="date" id="StartDate" name="StartDate" class="form-control-ocean" />
+                </div>
+                <div class="form-group-ocean">
+                    <label for="EndDate" class="form-label-ocean">Planned End</label>
+                    <input type="date" id="EndDate" name="EndDate" class="form-control-ocean" />
+                </div>
+            </div>
+
+            <div class="form-group-ocean">
+                <label class="form-label-ocean">File Attachment</label>
+                <div class="proposal-file-upload">
+                    <input type="file" id="fileAttachment" name="fileAttachment" />
+                    <div class="upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+                    <div class="upload-text"><span>Click to browse</span> or drag &amp; drop</div>
+                    <div class="upload-hint">PDF, DOCX, XLSX — max 10 MB</div>
+                </div>
+            </div>
+
+            <div class="proposal-actions">
+                <button type="submit" class="btn btn-ocean"><i class="fas fa-paper-plane"></i> Submit Proposal</button>
+                <button type="reset" class="btn-reset"><i class="fas fa-rotate-left"></i> Reset</button>
+                <a asp-area="Employee" asp-controller="Proposal" asp-action="Index" class="btn btn-outline-ocean" style="margin-left:auto;"><i class="fas fa-arrow-left"></i> Back to Proposals</a>
+            </div>
+        </form>
+    </div>
+</div>

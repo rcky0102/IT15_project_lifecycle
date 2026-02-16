@@ -10,8 +10,8 @@
 
     <!-- ===== Page Header ===== -->
     <div class="proposal-page-header">
-        <h1><i class="fas fa-lightbulb"></i>&nbsp; @(ViewData["Title"] ?? "Submit Project Proposal")</h1>
-        <p class="proposal-subtitle">Create and track project proposals for your team</p>
+        <h1><i class="fas fa-lightbulb"></i>&nbsp; @(ViewData["Title"] ?? "Proposals")</h1>
+        <p class="proposal-subtitle">View and manage your project proposals</p>
     </div>
 
     <!-- ===== Alerts ===== -->
@@ -39,53 +39,6 @@
         </div>
     }
 
-    <!-- ===== Proposal Form ===== -->
-    <div class="proposal-form-card">
-        <div class="form-section-title">
-            <i class="fas fa-pen-to-square"></i> New Proposal
-        </div>
-
-        <form asp-area="Employee" asp-controller="Proposal" asp-action="Create" method="post" enctype="multipart/form-data" class="auth-ocean-form">
-            @Html.AntiForgeryToken()
-
-            <div class="form-group-ocean">
-                <label for="Title" class="form-label-ocean">Project Title</label>
-                <input type="text" id="Title" name="Title" class="form-control-ocean" placeholder="Enter a descriptive title…" required maxlength="200" />
-            </div>
-
-            <div class="form-group-ocean">
-                <label for="Description" class="form-label-ocean">Description</label>
-                <textarea id="Description" name="Description" rows="5" class="form-control-ocean" placeholder="Describe the goals, scope and expected outcomes…" required></textarea>
-            </div>
-
-            <div class="proposal-date-row">
-                <div class="form-group-ocean">
-                    <label for="StartDate" class="form-label-ocean">Planned Start</label>
-                    <input type="date" id="StartDate" name="StartDate" class="form-control-ocean" />
-                </div>
-                <div class="form-group-ocean">
-                    <label for="EndDate" class="form-label-ocean">Planned End</label>
-                    <input type="date" id="EndDate" name="EndDate" class="form-control-ocean" />
-                </div>
-            </div>
-
-            <div class="form-group-ocean">
-                <label class="form-label-ocean">File Attachment</label>
-                <div class="proposal-file-upload">
-                    <input type="file" id="fileAttachment" name="fileAttachment" />
-                    <div class="upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
-                    <div class="upload-text"><span>Click to browse</span> or drag &amp; drop</div>
-                    <div class="upload-hint">PDF, DOCX, XLSX — max 10 MB</div>
-                </div>
-            </div>
-
-            <div class="proposal-actions">
-                <button type="submit" class="btn btn-ocean"><i class="fas fa-paper-plane"></i> Submit Proposal</button>
-                <button type="reset" class="btn-reset"><i class="fas fa-rotate-left"></i> Reset</button>
-            </div>
-        </form>
-    </div>
-
     <!-- ===== Proposals Table ===== -->
     <div class="proposal-table-section">
         <div class="proposal-table-header">
@@ -93,6 +46,9 @@
                 <i class="fas fa-folder-open"></i> My Proposals
                 <span class="proposal-count-badge">@Model.Count</span>
             </h3>
+            <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="btn btn-ocean">
+                <i class="fas fa-plus"></i> New Proposal
+            </a>
         </div>
 
         <div class="proposal-table-card">
@@ -144,7 +100,10 @@
                 <div class="proposal-empty-state">
                     <div class="empty-icon"><i class="fas fa-inbox"></i></div>
                     <div class="empty-title">No proposals yet</div>
-                    <div class="empty-text">Submit your first proposal using the form above.</div>
+                    <div class="empty-text">Get started by creating your first proposal.</div>
+                    <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="btn btn-ocean" style="margin-top:1rem;">
+                        <i class="fas fa-plus"></i> Create Proposal
+                    </a>
                 </div>
             }
         </div>
