@@ -39,7 +39,7 @@
 
             <div class="form-group-ocean">
                 <label for="Input" class="form-label-ocean">Input</label>
-                <textarea id="Input" name="Input" rows="5" class="form-control-ocean" placeholder="Enter the proposal input details…" required></textarea>
+                <textarea id="Input" name="Input" rows="5" class="form-control-ocean" placeholder="Enter the proposal input details…"></textarea>
                 <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
                     <button type="button" id="insertRichFileBtn" class="btn btn-outline-ocean" style="padding:6px 12px;">
                         <i class="fas fa-paperclip"></i> Add file/image to input
@@ -62,6 +62,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const editorSelector = '#Input';
         const uploadEndpoint = '@Url.Action("UploadRichText", "Proposal", new { area = "Employee" })';
+        const formElement = document.querySelector('form.auth-ocean-form');
         let editorInstance = null;
 
         const scriptCdnCandidates = [
@@ -248,6 +249,39 @@
                 });
         }
 
+        function hasMeaningfulContent(html) {
+            if (!html) return false;
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const text = (doc.body.textContent || '').replace(/\u00A0/g, ' ').trim();
+            const media = doc.body.querySelector('img,table,video,audio,iframe,embed,object');
+
+            return text.length > 0 || !!media;
+        }
+
+        function wireFormValidation() {
+            if (!formElement) return;
+
+            formElement.addEventListener('submit', function (event) {
+                const inputElement = document.querySelector(editorSelector);
+                const html = editorInstance ? editorInstance.getData() : (inputElement ? inputElement.value : '');
+
+                if (inputElement) {
+                    inputElement.value = html;
+                }
+
+                if (!hasMeaningfulContent(html)) {
+                    event.preventDefault();
+                    alert('Input is required. Please enter proposal details before submitting.');
+
+                    if (editorInstance) {
+                        editorInstance.editing.view.focus();
+                    }
+                }
+            });
+        }
+
         function loadScriptSequentially(index) {
             if (window.CKEDITOR && window.CKEDITOR.ClassicEditor) {
                 initEditor();
@@ -302,6 +336,7 @@
             document.head.appendChild(style);
         }
 
+        wireFormValidation();
         loadStyleSequentially(0);
     });
 </script>
