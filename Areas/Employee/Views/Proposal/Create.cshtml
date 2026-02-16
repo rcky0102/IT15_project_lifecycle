@@ -85,9 +85,14 @@
         const uploadEndpoint = '@Url.Action("UploadRichText", "Proposal", new { area = "Employee" })';
         let editorInstance = null;
 
-        const cdnCandidates = [
-            'https://cdn.jsdelivr.net/npm/%40ckeditor/ckeditor5-build-classic@41.4.2/build/ckeditor.js',
-            'https://unpkg.com/%40ckeditor/ckeditor5-build-classic@41.4.2/build/ckeditor.js'
+        const scriptCdnCandidates = [
+            'https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js',
+            'https://unpkg.com/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js'
+        ];
+
+        const styleCdnCandidates = [
+            'https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/ckeditor5.css',
+            'https://unpkg.com/ckeditor5@47.1.0/dist/ckeditor5.css'
         ];
 
         class ProposalUploadAdapter {
@@ -170,13 +175,56 @@
         }
 
         function initEditor() {
-            if (!window.ClassicEditor) {
-                console.error('CKEditor Classic build was not loaded from available CDNs.');
+            if (!window.CKEDITOR || !window.CKEDITOR.ClassicEditor) {
+                console.error('CKEditor UMD bundle was not loaded from available CDNs.');
                 return;
             }
 
-            window.ClassicEditor
+            const {
+                ClassicEditor,
+                Essentials,
+                Paragraph,
+                Heading,
+                Bold,
+                Italic,
+                Link,
+                List,
+                Indent,
+                BlockQuote,
+                Table,
+                TableToolbar,
+                Image,
+                ImageCaption,
+                ImageStyle,
+                ImageToolbar,
+                ImageUpload,
+                MediaEmbed,
+                Alignment
+            } = window.CKEDITOR;
+
+            ClassicEditor
                 .create(document.querySelector(editorSelector), {
+                    licenseKey: 'GPL',
+                    plugins: [
+                        Essentials,
+                        Paragraph,
+                        Heading,
+                        Bold,
+                        Italic,
+                        Link,
+                        List,
+                        Indent,
+                        BlockQuote,
+                        Table,
+                        TableToolbar,
+                        Image,
+                        ImageCaption,
+                        ImageStyle,
+                        ImageToolbar,
+                        ImageUpload,
+                        MediaEmbed,
+                        Alignment
+                    ],
                     extraPlugins: [ProposalUploadAdapterPlugin],
                     toolbar: {
                         items: [
@@ -185,6 +233,8 @@
                             'heading',
                             '|',
                             'bold', 'italic', 'link',
+                            '|',
+                            'alignment',
                             '|',
                             'bulletedList', 'numberedList',
                             '|',
@@ -203,6 +253,9 @@
                             'imageStyle:side'
                         ]
                     },
+                    alignment: {
+                        options: ['left', 'center', 'right', 'justify']
+                    },
                     table: {
                         contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
                     }
@@ -217,18 +270,18 @@
         }
 
         function loadScriptSequentially(index) {
-            if (window.ClassicEditor) {
+            if (window.CKEDITOR && window.CKEDITOR.ClassicEditor) {
                 initEditor();
                 return;
             }
 
-            if (index >= cdnCandidates.length) {
+            if (index >= scriptCdnCandidates.length) {
                 initEditor();
                 return;
             }
 
             const script = document.createElement('script');
-            script.src = cdnCandidates[index];
+            script.src = scriptCdnCandidates[index];
             script.async = true;
 
             script.onload = function () {
@@ -242,6 +295,34 @@
             document.head.appendChild(script);
         }
 
-        loadScriptSequentially(0);
+        function loadStyleSequentially(index) {
+            if (document.querySelector('link[data-ckeditor-style="true"]')) {
+                loadScriptSequentially(0);
+                return;
+            }
+
+            if (index >= styleCdnCandidates.length) {
+                loadScriptSequentially(0);
+                return;
+            }
+
+            const style = document.createElement('link');
+            style.rel = 'stylesheet';
+            style.href = styleCdnCandidates[index];
+            style.setAttribute('data-ckeditor-style', 'true');
+
+            style.onload = function () {
+                loadScriptSequentially(0);
+            };
+
+            style.onerror = function () {
+                style.remove();
+                loadStyleSequentially(index + 1);
+            };
+
+            document.head.appendChild(style);
+        }
+
+        loadStyleSequentially(0);
     });
 </script>
