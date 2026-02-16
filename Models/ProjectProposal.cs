@@ -18,14 +18,8 @@ namespace project_lifecycle.Models
         public string Title { get; set; } = string.Empty;
 
         [Required]
+        [Column(TypeName = "nvarchar(max)")]
         public string Description { get; set; } = string.Empty;
-
-        public DateTime? StartDate { get; set; }
-
-        public DateTime? EndDate { get; set; }
-
-        [StringLength(255)]
-        public string? FileAttachment { get; set; }
 
         [Required]
         [StringLength(50)]

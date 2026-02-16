@@ -74,7 +74,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ProjectProposal proposal, IFormFile? fileAttachment)
+        public async Task<IActionResult> Create(ProjectProposal proposal)
         {
             try
             {
@@ -125,46 +125,6 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 }
 
                 _logger.LogInformation($"Proposal validation passed. Title: {proposal.Title}");
-
-                // Handle file upload
-                if (fileAttachment != null && fileAttachment.Length > 0)
-                {
-                    try
-                    {
-                        _logger.LogInformation($"Processing file upload: {fileAttachment.FileName}");
-
-                        // Create uploads directory if it doesn't exist
-                        var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "proposals");
-                        _logger.LogInformation($"Uploads directory: {uploadsDir}");
-
-                        if (!Directory.Exists(uploadsDir))
-                        {
-                            Directory.CreateDirectory(uploadsDir);
-                            _logger.LogInformation("Created uploads directory");
-                        }
-
-                        // Generate unique filename
-                        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(fileAttachment.FileName)}";
-                        var filePath = Path.Combine(uploadsDir, fileName);
-                        _logger.LogInformation($"Saving file to: {filePath}");
-
-                        // Save file
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await fileAttachment.CopyToAsync(stream);
-                        }
-
-                        // Store relative path for web access
-                        proposal.FileAttachment = $"/uploads/proposals/{fileName}";
-                        _logger.LogInformation($"File saved successfully. URL: {proposal.FileAttachment}");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, $"Error uploading file: {fileAttachment.FileName}");
-                        TempData["ErrorMessage"] = $"Error uploading file: {ex.Message}";
-                        return RedirectToAction("Index");
-                    }
-                }
 
                 proposal.EmployeeId = employee.Id;
                 proposal.DateCreated = DateTime.Now;

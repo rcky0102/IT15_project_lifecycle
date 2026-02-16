@@ -61,8 +61,6 @@
                                 <th>Title</th>
                                 <th>Category</th>
                                 <th>Owner / Team</th>
-                                <th>Start</th>
-                                <th>End</th>
                                 <th>Budget</th>
                                 <th>Status</th>
                                 <th style="width:50px;"></th>
@@ -75,8 +73,6 @@
                                     <td class="proposal-title-cell">@proposal.Title</td>
                                     <td>—</td>
                                     <td>—</td>
-                                    <td class="proposal-date">@proposal.StartDate?.ToString("yyyy-MM-dd")</td>
-                                    <td class="proposal-date">@proposal.EndDate?.ToString("yyyy-MM-dd")</td>
                                     <td>—</td>
                                     <td>
                                         <span class="proposal-status @GetStatusClass(proposal.Status)">
