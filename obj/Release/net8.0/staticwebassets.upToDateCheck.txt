@@ -3,7 +3,7 @@ wwwroot\css\components.css
 wwwroot\css\home.css
 wwwroot\css\layout.css
 wwwroot\css\login.css
-wwwroot\css\site.css
+wwwroot\css\Images\LOGO (final).png
 wwwroot\favicon.ico
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
@@ -63,3 +63,6 @@ wwwroot\lib\jquery\dist\jquery.js
 wwwroot\lib\jquery\dist\jquery.min.js
 wwwroot\lib\jquery\dist\jquery.min.map
 wwwroot\lib\jquery\LICENSE.txt
+wwwroot\css\site.css
+wwwroot\css\superadmin-responsive.css
+wwwroot\css\user-management.css
