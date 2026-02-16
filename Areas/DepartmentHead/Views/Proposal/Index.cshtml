@@ -1,5 +1,5 @@
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+﻿@*
+    DepartmentHead proposals list — shows proposals from employees in the same department.
 *@
 @model List<ProjectProposal>
 @using project_lifecycle.Models
@@ -10,8 +10,8 @@
 
     <!-- ===== Page Header ===== -->
     <div class="proposal-page-header">
-        <h1><i class="fas fa-lightbulb"></i>&nbsp; @(ViewData["Title"] ?? "Proposals")</h1>
-        <p class="proposal-subtitle">View and manage your project proposals</p>
+        <h1><i class="fas fa-lightbulb"></i>&nbsp; @(ViewData["Title"] ?? "Team Proposals")</h1>
+        <p class="proposal-subtitle">Proposals submitted by members of your department</p>
     </div>
 
 
@@ -106,69 +106,55 @@
 
 <!-- ===== Proposals Table ===== -->
 <div class="proposal-table-section">
-        <div class="proposal-table-header">
-            <h3>
-                <i class="fas fa-folder-open"></i> My Proposals
-                <span class="proposal-count-badge">@Model.Count</span>
-            </h3>
-            <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="btn btn-ocean">
-                <i class="fas fa-plus"></i> New Proposal
-            </a>
-        </div>
-
-        <div class="proposal-table-card">
-            @if (Model.Any())
-            {
-                <div class="proposal-table-responsive">
-                    <table class="proposal-table">
-                        <thead>
+    <div class="proposal-table-card">
+        @if (Model.Any())
+        {
+            <div class="proposal-table-responsive">
+                <table class="proposal-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Input Preview</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th style="width:50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var proposal in Model)
+                        {
                             <tr>
-                                <th>Title</th>
-                                <th>Input Preview</th>
-                                <th>Submitted</th>
-                                <th>Status</th>
-                                <th style="width:50px;"></th>
+                                <td class="proposal-title-cell">
+                                    @proposal.Title
+                                    <div class="proposal-input-content" style="display:none">@Html.Raw(proposal.Input)</div>
+                                </td>
+                                <td>@GetInputPreview(proposal.Input)</td>
+                                <td class="proposal-date">@proposal.DateCreated.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <span class="proposal-status @GetStatusClass(proposal.Status)">
+                                        <span class="status-dot"></span>
+                                        @proposal.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="#" class="proposal-view-btn" title="View details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var proposal in Model)
-                            {
-                                <tr>
-                                    <td class="proposal-title-cell">
-                                        @proposal.Title
-                                        <div class="proposal-input-content" style="display:none">@Html.Raw(proposal.Input)</div>
-                                    </td>
-                                    <td>@GetInputPreview(proposal.Input)</td>
-                                    <td class="proposal-date">@proposal.DateCreated.ToString("yyyy-MM-dd")</td>
-                                    <td>
-                                        <span class="proposal-status @GetStatusClass(proposal.Status)">
-                                            <span class="status-dot"></span>
-                                            @proposal.Status
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="#" class="proposal-view-btn" title="View details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <div class="proposal-empty-state">
-                    <div class="empty-icon"><i class="fas fa-inbox"></i></div>
-                    <div class="empty-title">No proposals yet</div>
-                    <div class="empty-text">Get started by creating your first proposal.</div>
-                    <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="btn btn-ocean" style="margin-top:1rem;">
-                        <i class="fas fa-plus"></i> Create Proposal
-                    </a>
-                </div>
-            }
-        </div>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="proposal-empty-state">
+                <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+                <div class="empty-title">No proposals yet</div>
+                <div class="empty-text">No proposals were submitted by your department yet.</div>
+            </div>
+        }
     </div>
 </div>
 
@@ -204,3 +190,4 @@
         };
     }
 }
+

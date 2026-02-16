@@ -23,7 +23,17 @@ namespace project_lifecycle.Models
 
         [Required]
         [StringLength(50)]
+        [RegularExpression("^(Pending|Rejected|Approved|Requires Revision)$", ErrorMessage = "Status must be one of: Pending, Rejected, Approved, Requires Revision.")]
         public string Status { get; set; } = "Pending";
+
+        // Optional: reference to the department head who reviewed or is assigned to this proposal
+        public int? DepartmentHeadId { get; set; }
+        [ForeignKey("DepartmentHeadId")]
+        public DepartmentHead? DepartmentHead { get; set; }
+
+        // Optional internal note about the proposal or review comments
+        [Column(TypeName = "nvarchar(max)")]
+        public string? Note { get; set; }
 
         [Required]
         public DateTime DateCreated { get; set; } = DateTime.Now;

@@ -36,6 +36,9 @@
                     <li class="nav-item">
                         <a href="@Url.Action("Index", "Dashboard", new { area = "DepartmentHead" })" class="nav-link"><i class="fas fa-tachometer-alt"></i><span class="nav-text">Dashboard</span></a>
                     </li>
+                    <li class="nav-item">
+                        <a id="navProposals" href="@Url.Action("Index", "Proposal", new { area = "DepartmentHead" })" class="nav-link"><i class="fas fa-folder-open"></i><span class="nav-text">Proposals</span></a>
+                    </li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -63,6 +66,25 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Ensure Proposals tab always navigates to the Proposal index
+        (function(){
+            document.addEventListener('DOMContentLoaded', function(){
+                var nav = document.getElementById('navProposals');
+                if (!nav) return;
+                nav.addEventListener('click', function(e){
+                    // Allow normal modifier-clicks to open in new tab
+                    if (e.defaultPrevented) return;
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                    var href = nav.getAttribute('href');
+                    if (href){
+                        e.preventDefault();
+                        window.location.href = href;
+                    }
+                });
+            });
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
