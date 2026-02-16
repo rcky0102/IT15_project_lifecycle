@@ -40,6 +40,13 @@
             <div class="form-group-ocean">
                 <label for="Description" class="form-label-ocean">Description</label>
                 <textarea id="Description" name="Description" rows="5" class="form-control-ocean" placeholder="Describe the goals, scope and expected outcomes…" required></textarea>
+                <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+                    <button type="button" id="insertRichFileBtn" class="btn btn-outline-ocean" style="padding:6px 12px;">
+                        <i class="fas fa-paperclip"></i> Add file/image to description
+                    </button>
+                    <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
+                </div>
+                <input type="file" id="richFileInput" style="display:none;" />
             </div>
 
             <div class="proposal-date-row">
@@ -75,10 +82,92 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const editorSelector = '#Description';
+        const uploadEndpoint = '@Url.Action("UploadRichText", "Proposal", new { area = "Employee" })';
+        let editorInstance = null;
+
         const cdnCandidates = [
             'https://cdn.jsdelivr.net/npm/%40ckeditor/ckeditor5-build-classic@41.4.2/build/ckeditor.js',
             'https://unpkg.com/%40ckeditor/ckeditor5-build-classic@41.4.2/build/ckeditor.js'
         ];
+
+        class ProposalUploadAdapter {
+            constructor(loader) {
+                this.loader = loader;
+                this.abortController = new AbortController();
+            }
+
+            async upload() {
+                const file = await this.loader.file;
+                const result = await uploadFile(file, this.abortController.signal);
+                return { default: result.url };
+            }
+
+            abort() {
+                this.abortController.abort();
+            }
+        }
+
+        function ProposalUploadAdapterPlugin(editor) {
+            editor.plugins.get('FileRepository').createUploadAdapter = (loader) => new ProposalUploadAdapter(loader);
+        }
+
+        async function uploadFile(file, abortSignal) {
+            const formData = new FormData();
+            formData.append('upload', file);
+
+            const response = await fetch(uploadEndpoint, {
+                method: 'POST',
+                body: formData,
+                signal: abortSignal
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload?.error?.message || 'Upload failed.');
+            }
+
+            return payload;
+        }
+
+        function wireFileInsertButton() {
+            const button = document.getElementById('insertRichFileBtn');
+            const input = document.getElementById('richFileInput');
+
+            if (!button || !input) return;
+
+            button.addEventListener('click', function () {
+                input.click();
+            });
+
+            input.addEventListener('change', async function () {
+                if (!editorInstance || !input.files || input.files.length === 0) return;
+
+                const file = input.files[0];
+                button.disabled = true;
+
+                try {
+                    const result = await uploadFile(file);
+
+                    if (file.type.startsWith('image/')) {
+                        editorInstance.model.change(writer => {
+                            const imageElement = writer.createElement('imageBlock', { src: result.url });
+                            editorInstance.model.insertContent(imageElement, editorInstance.model.document.selection);
+                        });
+                    } else {
+                        editorInstance.model.change(writer => {
+                            const linkText = writer.createText(result.fileName || file.name, { linkHref: result.url });
+                            editorInstance.model.insertContent(linkText, editorInstance.model.document.selection);
+                        });
+                    }
+                } catch (error) {
+                    console.error('File insertion failed:', error);
+                    alert(error.message || 'File upload failed.');
+                } finally {
+                    input.value = '';
+                    button.disabled = false;
+                }
+            });
+        }
 
         function initEditor() {
             if (!window.ClassicEditor) {
@@ -88,7 +177,39 @@
 
             window.ClassicEditor
                 .create(document.querySelector(editorSelector), {
-                    toolbar: ['heading', '|', 'bold', 'italic', '|', 'bulletedList', 'numberedList', '|', 'link', 'blockQuote', '|', 'undo', 'redo']
+                    extraPlugins: [ProposalUploadAdapterPlugin],
+                    toolbar: {
+                        items: [
+                            'undo', 'redo',
+                            '|',
+                            'heading',
+                            '|',
+                            'bold', 'italic', 'link',
+                            '|',
+                            'bulletedList', 'numberedList',
+                            '|',
+                            'outdent', 'indent',
+                            '|',
+                            'imageUpload', 'insertTable', 'mediaEmbed', 'blockQuote'
+                        ],
+                        shouldNotGroupWhenFull: true
+                    },
+                    image: {
+                        toolbar: [
+                            'imageTextAlternative',
+                            'toggleImageCaption',
+                            'imageStyle:inline',
+                            'imageStyle:block',
+                            'imageStyle:side'
+                        ]
+                    },
+                    table: {
+                        contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+                    }
+                })
+                .then(editor => {
+                    editorInstance = editor;
+                    wireFileInsertButton();
                 })
                 .catch(error => {
                     console.error('CKEditor initialization error:', error);

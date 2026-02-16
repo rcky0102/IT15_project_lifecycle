@@ -206,6 +206,65 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
         [HttpPost]
         [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UploadRichText(IFormFile upload)
+        {
+            try
+            {
+                if (upload == null || upload.Length == 0)
+                {
+                    return BadRequest(new { error = new { message = "No file uploaded." } });
+                }
+
+                const long maxFileSize = 10 * 1024 * 1024;
+                if (upload.Length > maxFileSize)
+                {
+                    return BadRequest(new { error = new { message = "File too large. Max size is 10 MB." } });
+                }
+
+                var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg",
+                    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".csv", ".zip"
+                };
+
+                var extension = Path.GetExtension(upload.FileName);
+                if (string.IsNullOrWhiteSpace(extension) || !allowedExtensions.Contains(extension))
+                {
+                    return BadRequest(new { error = new { message = "Unsupported file type." } });
+                }
+
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "editor");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+
+                var safeOriginalName = Path.GetFileName(upload.FileName);
+                var fileName = $"{Guid.NewGuid()}_{safeOriginalName}";
+                var filePath = Path.Combine(uploadsDir, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await upload.CopyToAsync(stream);
+                }
+
+                var publicUrl = Url.Content($"~/uploads/editor/{fileName}") ?? $"/uploads/editor/{fileName}";
+                return Json(new
+                {
+                    url = publicUrl,
+                    fileName = safeOriginalName,
+                    isImage = upload.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in UploadRichText");
+                return StatusCode(500, new { error = new { message = "Upload failed." } });
+            }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Upload(IFormFile upload, string CKEditorFuncNum)
         {
             try
