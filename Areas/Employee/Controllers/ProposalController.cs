@@ -203,5 +203,41 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 return RedirectToAction("Index");
             }
         }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> Upload(IFormFile upload, string CKEditorFuncNum)
+        {
+            try
+            {
+                if (upload == null || upload.Length == 0)
+                {
+                    var emptyScript = $"<script>window.parent.CKEDITOR.tools.callFunction({CKEditorFuncNum}, '', 'No file uploaded');</script>";
+                    return Content(emptyScript, "text/html");
+                }
+
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "ckeditor");
+                if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
+
+                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(upload.FileName)}";
+                var filePath = Path.Combine(uploadsDir, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await upload.CopyToAsync(stream);
+                }
+
+                var url = Url.Content($"~/uploads/ckeditor/{fileName}");
+                var successScript = $"<script>window.parent.CKEDITOR.tools.callFunction({CKEditorFuncNum}, '{url}', '');</script>";
+                return Content(successScript, "text/html");
+            }
+            catch (Exception ex)
+            {
+                var safe = ex.Message.Replace("'", "\\'");
+                var errScript = $"<script>window.parent.CKEDITOR.tools.callFunction({CKEditorFuncNum}, '', 'Upload failed: {safe}');</script>";
+                _logger.LogError(ex, "Error in CKEditor upload");
+                return Content(errScript, "text/html");
+            }
+        }
     }
 }

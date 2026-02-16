@@ -72,12 +72,55 @@
     </div>
 </div>
 
-<script src="https://cdn.ckeditor.com/4.20.2/standard/ckeditor.js"></script>
 <script>
-    // Initialize CKEditor for the Description textarea
-    if (window.CKEDITOR) {
-        CKEDITOR.replace('Description', {
-            height: 220
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function () {
+        const editorSelector = '#Description';
+        const cdnCandidates = [
+            'https://cdn.jsdelivr.net/npm/%40ckeditor/ckeditor5-build-classic@41.4.2/build/ckeditor.js',
+            'https://unpkg.com/%40ckeditor/ckeditor5-build-classic@41.4.2/build/ckeditor.js'
+        ];
+
+        function initEditor() {
+            if (!window.ClassicEditor) {
+                console.error('CKEditor Classic build was not loaded from available CDNs.');
+                return;
+            }
+
+            window.ClassicEditor
+                .create(document.querySelector(editorSelector), {
+                    toolbar: ['heading', '|', 'bold', 'italic', 'underline', '|', 'bulletedList', 'numberedList', '|', 'link', 'blockQuote', '|', 'undo', 'redo']
+                })
+                .catch(error => {
+                    console.error('CKEditor initialization error:', error);
+                });
+        }
+
+        function loadScriptSequentially(index) {
+            if (window.ClassicEditor) {
+                initEditor();
+                return;
+            }
+
+            if (index >= cdnCandidates.length) {
+                initEditor();
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = cdnCandidates[index];
+            script.async = true;
+
+            script.onload = function () {
+                initEditor();
+            };
+
+            script.onerror = function () {
+                loadScriptSequentially(index + 1);
+            };
+
+            document.head.appendChild(script);
+        }
+
+        loadScriptSequentially(0);
+    });
 </script>
