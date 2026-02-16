@@ -46,8 +46,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcRGFzaGJvYXJkXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/DepartmentHead/Views/Proposal/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcUHJvcG9zYWxcRGV0YWlscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/DepartmentHead/Views/Proposal/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcUHJvcG9zYWxcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/DepartmentHead/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/DepartmentHead/Views/_ViewStart.cshtml]
@@ -72,6 +80,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/Employee/Views/Proposal/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRW1wbG95ZWVcVmlld3NcUHJvcG9zYWxcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/Employee/Views/Proposal/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRW1wbG95ZWVcVmlld3NcUHJvcG9zYWxcRGV0YWlscy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/Employee/Views/Proposal/Index.cshtml]

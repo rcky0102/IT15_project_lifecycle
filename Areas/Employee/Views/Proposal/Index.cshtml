@@ -15,70 +15,7 @@
     </div>
 
 
-    <!-- Proposal View Modal -->
-    <div id="proposalModal" class="proposal-modal" aria-hidden="true">
-        <div class="proposal-modal-backdrop" data-close></div>
-        <div class="proposal-modal-panel">
-            <header class="proposal-modal-header">
-                <h3 id="proposalModalTitle">Proposal</h3>
-                <button type="button" class="proposal-modal-close" data-close aria-label="Close">×</button>
-            </header>
-            <div id="proposalModalBody" class="proposal-modal-body">Loading…</div>
-            <footer class="proposal-modal-footer">
-                <button type="button" class="btn btn-secondary" data-close>Close</button>
-            </footer>
-        </div>
-    </div>
-
-    <style>
-        .proposal-modal{display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center}
-        .proposal-modal.open{display:flex}
-        .proposal-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4)}
-        .proposal-modal-panel{position:relative;background:#fff;max-width:900px;width:95%;max-height:85vh;overflow:auto;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:1}
-        .proposal-modal-header{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-bottom:1px solid #eee}
-        .proposal-modal-body{padding:1rem}
-        .proposal-modal-footer{padding:0.75rem 1rem;border-top:1px solid #eee;text-align:right}
-        .proposal-modal-close{background:transparent;border:0;font-size:1.25rem;cursor:pointer}
-        .proposal-input-content{display:none}
-    </style>
-
-    <script>
-        (function(){
-            function openModal(title, html){
-                var modal = document.getElementById('proposalModal');
-                document.getElementById('proposalModalTitle').innerText = title || 'Proposal';
-                document.getElementById('proposalModalBody').innerHTML = html || '—';
-                modal.classList.add('open');
-                modal.setAttribute('aria-hidden','false');
-            }
-
-            function closeModal(){
-                var modal = document.getElementById('proposalModal');
-                modal.classList.remove('open');
-                modal.setAttribute('aria-hidden','true');
-                document.getElementById('proposalModalBody').innerHTML = '';
-            }
-
-            document.addEventListener('click', function(e){
-                var btn = e.target.closest('.proposal-view-btn');
-                if (btn){
-                    e.preventDefault();
-                    var row = btn.closest('tr');
-                    var titleEl = row.querySelector('.proposal-title-cell');
-                    var hidden = row.querySelector('.proposal-input-content');
-                    var title = titleEl ? titleEl.innerText.trim() : 'Proposal';
-                    var html = hidden ? hidden.innerHTML : '—';
-                    openModal(title, html);
-                }
-
-                if (e.target.matches('[data-close]') || e.target.closest('[data-close]')){
-                    closeModal();
-                }
-            });
-
-            document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
-        })();
-    </script>
+    <!-- Details are on a dedicated page now; removed modal and inline scripts -->
 
 @if (TempData["SuccessMessage"] != null)
 {
@@ -136,7 +73,7 @@
                                 <tr>
                                     <td class="proposal-title-cell">
                                         @proposal.Title
-                                        <div class="proposal-input-content" style="display:none">@Html.Raw(proposal.Input)</div>
+                                        
                                     </td>
                                     <td>@GetInputPreview(proposal.Input)</td>
                                     <td class="proposal-date">@proposal.DateCreated.ToString("yyyy-MM-dd")</td>
@@ -147,7 +84,7 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="#" class="proposal-view-btn" title="View details">
+                                        <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id" class="proposal-view-btn" title="View details">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>

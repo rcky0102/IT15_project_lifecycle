@@ -42,5 +42,26 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             return View(proposals);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (dh == null) return Forbid();
+
+            var proposal = await _context.ProjectProposals
+                .Include(p => p.Employee)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (proposal == null) return NotFound();
+
+            if (proposal.Employee == null || proposal.Employee.DepartmentId != dh.DepartmentId)
+                return Forbid();
+
+            return View(proposal);
+        }
     }
 }

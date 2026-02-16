@@ -1,0 +1,21 @@
+@model ProjectProposal
+@using project_lifecycle.Models
+@{
+    ViewData["Title"] = Model?.Title ?? "Proposal";
+}
+
+<div class="dashboard-container py-4">
+    <div class="proposal-page-header">
+        <h1><i class="fas fa-lightbulb"></i>&nbsp; @ViewData["Title"]</h1>
+        <p class="proposal-subtitle">Submitted @Model.DateCreated.ToString("yyyy-MM-dd") — Status: @Model.Status</p>
+    </div>
+
+    <div class="proposal-detail-card">
+        <div class="proposal-detail-body">
+            @Html.Raw(Model.Input)
+        </div>
+        <div style="margin-top:1rem">
+            <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Index" class="btn btn-secondary">Back</a>
+        </div>
+    </div>
+</div>
