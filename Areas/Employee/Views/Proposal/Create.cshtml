@@ -38,11 +38,11 @@
             </div>
 
             <div class="form-group-ocean">
-                <label for="Description" class="form-label-ocean">Description</label>
-                <textarea id="Description" name="Description" rows="5" class="form-control-ocean" placeholder="Describe the goals, scope and expected outcomes…" required></textarea>
+                <label for="Input" class="form-label-ocean">Input</label>
+                <textarea id="Input" name="Input" rows="5" class="form-control-ocean" placeholder="Enter the proposal input details…" required></textarea>
                 <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
                     <button type="button" id="insertRichFileBtn" class="btn btn-outline-ocean" style="padding:6px 12px;">
-                        <i class="fas fa-paperclip"></i> Add file/image to description
+                        <i class="fas fa-paperclip"></i> Add file/image to input
                     </button>
                     <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
                 </div>
@@ -60,7 +60,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const editorSelector = '#Description';
+        const editorSelector = '#Input';
         const uploadEndpoint = '@Url.Action("UploadRichText", "Proposal", new { area = "Employee" })';
         let editorInstance = null;
 

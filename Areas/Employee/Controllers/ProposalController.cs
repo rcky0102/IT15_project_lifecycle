@@ -117,10 +117,10 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     return RedirectToAction("Index");
                 }
 
-                if (string.IsNullOrEmpty(proposal.Description))
+                if (string.IsNullOrEmpty(proposal.Input))
                 {
-                    _logger.LogWarning("Description is empty");
-                    TempData["ErrorMessage"] = "Description is required.";
+                    _logger.LogWarning("Input is empty");
+                    TempData["ErrorMessage"] = "Input is required.";
                     return RedirectToAction("Index");
                 }
 
