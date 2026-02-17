@@ -32,16 +32,17 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Assign To</label>
+                        <label class="form-label">Assign To (select one or more)</label>
                         <div>
                             @foreach (var m in Model.AvailableMembers)
                             {
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="assignedMemberId" id="member_@m.Value" value="@m.Value" required />
+                                    <input class="form-check-input" type="checkbox" name="assignedMemberIds" id="member_@m.Value" value="@m.Value" />
                                     <label class="form-check-label" for="member_@m.Value">@m.Text</label>
                                 </div>
                             }
                         </div>
+                        <div class="form-text">Select one or more members. Selected members will all be assigned to this task and share the same submission.</div>
                     </div>
 
                     <div class="mb-3">

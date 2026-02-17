@@ -384,7 +384,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddTask(int projectMilestoneId, ProjectTask input, int assignedMemberId)
+        public async Task<IActionResult> AddTask(int projectMilestoneId, ProjectTask input, int[]? assignedMemberIds)
         {
             var pm = await GetCurrentProjectManagerAsync();
             if (pm == null) return Challenge();
@@ -392,10 +392,17 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var pmst = await _context.ProjectMilestones.Include(p => p.Project).FirstOrDefaultAsync(p => p.Id == projectMilestoneId && p.Project != null && p.Project.ProjectManagerId == pm.Id);
             if (pmst == null) return NotFound();
 
-            var member = await _context.Members.FirstOrDefaultAsync(m => m.Id == assignedMemberId && m.ProjectId == pmst.ProjectId);
-            if (member == null)
+            var selectedMemberIds = (assignedMemberIds ?? Array.Empty<int>()).Where(id => id > 0).Distinct().ToArray();
+            if (selectedMemberIds.Length == 0)
             {
-                TempData["ErrorMessage"] = "Invalid member selected.";
+                TempData["ErrorMessage"] = "Please select at least one member to assign.";
+                return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
+            }
+
+            var members = await _context.Members.Where(m => selectedMemberIds.Contains(m.Id) && m.ProjectId == pmst.ProjectId).ToListAsync();
+            if (members.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Selected members are not valid for this project.";
                 return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
             }
 
@@ -422,15 +429,25 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             _context.ProjectTasks.Add(task);
             await _context.SaveChangesAsync();
 
-            var tm = new Models.TaskMember
+            foreach (var m in members)
             {
-                ProjectTaskId = task.Id,
-                MemberId = member.Id,
-                DateCreated = DateTime.Now
-            };
-
-            _context.TaskMembers.Add(tm);
+                var tm = new Models.TaskMember
+                {
+                    ProjectTaskId = task.Id,
+                    MemberId = m.Id,
+                    DateCreated = DateTime.Now
+                };
+                _context.TaskMembers.Add(tm);
+            }
             await _context.SaveChangesAsync();
+
+            // If the milestone was previously marked Finished, adding a new task
+            // (which defaults to Pending) should revert the milestone to Unfinished.
+            if (pmst != null && string.Equals(pmst.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+            {
+                pmst.Status = "Unfinished";
+                await _context.SaveChangesAsync();
+            }
 
             TempData["SuccessMessage"] = "Task created and assigned.";
             return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
