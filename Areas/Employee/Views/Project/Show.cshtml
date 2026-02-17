@@ -1,0 +1,41 @@
+@model project_lifecycle.ViewModels.Employee.EmployeeProjectViewModel
+@{
+    ViewData["Title"] = "Project";
+}
+
+<div class="dashboard-container py-4">
+    <div class="proposal-page-header">
+        <h1>Project: @Model.Project.Name</h1>
+        <p class="proposal-subtitle">Proposal: @Model.Project.ProposalTitle</p>
+    </div>
+
+    <div class="card p-3">
+        <h5>Project Timeline</h5>
+        <div class="text-muted">@Model.Project.StartDate.ToString("yyyy-MM-dd") - @Model.Project.EndDate.ToString("yyyy-MM-dd")</div>
+
+        <hr />
+
+        <h5>Your Tasks</h5>
+        @if (Model.Tasks.Any())
+        {
+            <ul class="list-unstyled">
+                @foreach (var t in Model.Tasks)
+                {
+                    <li class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>@t.Name</strong>
+                            <div class="text-muted">@t.StartDate.ToString("yyyy-MM-dd") - @t.EndDate.ToString("yyyy-MM-dd")</div>
+                        </div>
+                        <div>
+                            <a asp-area="Employee" asp-controller="Project" asp-action="Task" asp-route-id="@t.Id" class="btn btn-sm btn-outline-secondary">View Task</a>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <div class="text-muted">No tasks assigned to you for this project.</div>
+        }
+    </div>
+</div>

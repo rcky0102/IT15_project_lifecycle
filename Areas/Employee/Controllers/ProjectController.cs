@@ -90,5 +90,74 @@ namespace project_lifecycle.EmployeeArea.Controllers
             var vm = new ProjectIndexViewModel { Projects = projects };
             return View(vm);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Show(int id)
+        {
+            ViewData["Title"] = "Project Details";
+
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+            if (employee == null) return Challenge();
+
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.ProjectId == id && m.EmployeeId == employee.Id);
+            if (member == null)
+            {
+                return Forbid();
+            }
+
+            var project = await _context.Projects
+                .Where(p => p.Id == id)
+                .Select(p => new ProjectDetailViewModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    ProposalTitle = p.ProjectProposal != null ? p.ProjectProposal.Title : string.Empty,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate
+                })
+                .FirstOrDefaultAsync();
+
+            if (project == null) return NotFound();
+
+            // tasks assigned to this employee (via member)
+            var taskItems = await _context.TaskMembers
+                .Where(tm => tm.MemberId == member.Id)
+                .Include(tm => tm.ProjectTask)
+                .Select(tm => new
+                {
+                    tm.ProjectTask.Id,
+                    tm.ProjectTask.Name,
+                    tm.ProjectTask.Status,
+                    tm.ProjectTask.StartDate,
+                    tm.ProjectTask.EndDate
+                })
+                .ToListAsync();
+
+            var vm = new project_lifecycle.ViewModels.Employee.EmployeeProjectViewModel
+            {
+                Project = project,
+                Tasks = taskItems.Select(t => new project_lifecycle.ViewModels.Employee.EmployeeProjectViewModel.TaskItem
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Status = t.Status,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public IActionResult Task(int id)
+        {
+            ViewData["Title"] = "Task";
+            // empty placeholder for now
+            return View();
+        }
     }
 }
