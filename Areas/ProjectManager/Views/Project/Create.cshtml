@@ -1,0 +1,104 @@
+@model project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
+@{
+    ViewData["Title"] = "Manage Project";
+}
+
+<div class="dashboard-container py-4">
+    <div class="proposal-page-header">
+        <h1>Manage Project: @Model.Project.Name</h1>
+        <p class="proposal-subtitle">Add members and milestones for this project</p>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Members</h5>
+                <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMember" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Employee</label>
+                        <select name="EmployeeId" class="form-select" required>
+                            <option value="">-- Select Employee --</option>
+                            @foreach (var e in Model.AvailableEmployees)
+                            {
+                                <option value="@e.Value">@e.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select name="ProjectRoleId" class="form-select" required>
+                            <option value="">-- Select Role --</option>
+                            @foreach (var r in Model.AvailableProjectRoles)
+                            {
+                                <option value="@r.Value">@r.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Add Member</button>
+                </form>
+
+                <hr />
+                <h6 class="mb-2">Current Members</h6>
+                <ul class="list-unstyled">
+                    @foreach (var m in Model.Project.Members)
+                    {
+                        <li class="d-flex justify-content-between align-items-center mb-2">
+                            <span>@m.EmployeeName <span class="badge bg-secondary">@m.ProjectRoleName</span></span>
+                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="memberId" value="@m.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Milestones</h5>
+                <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMilestone" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Milestone</label>
+                        <select name="MilestoneId" class="form-select" required>
+                            <option value="">-- Select Milestone --</option>
+                            @foreach (var t in Model.AvailableMilestones)
+                            {
+                                <option value="@t.Value">@t.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sequence Order</label>
+                        <input name="SequenceOrder" type="number" min="1" class="form-control" placeholder="Order" value="@((Model.Project.Milestones.Any() ? Model.Project.Milestones.Max(m => m.SequenceOrder) + 1 : 1))" required />
+                    </div>
+                    <button class="btn btn-primary" type="submit">Add Milestone</button>
+                </form>
+
+                <hr />
+                <h6 class="mb-2">Current Milestones</h6>
+                <ol>
+                    @foreach (var ms in Model.Project.Milestones.OrderBy(m => m.SequenceOrder))
+                    {
+                        <li class="d-flex justify-content-between align-items-center mb-2">
+                            <span>@ms.MilestoneName <small class="text-muted">(@ms.Status)</small></span>
+                            <div class="btn-group">
+                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                                <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone" asp-route-projectMilestoneId="@ms.Id" class="btn btn-sm btn-outline-secondary">View Milestone</a>
+                            </div>
+                        </li>
+                    }
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>

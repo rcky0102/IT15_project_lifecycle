@@ -128,6 +128,108 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             return View(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Create(int id)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var project = await _context.Projects
+                .Where(p => p.Id == id && p.ProjectManagerId == pm.Id)
+                .Select(p => new ProjectDetailViewModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    ProposalTitle = p.ProjectProposal != null ? p.ProjectProposal.Title : string.Empty,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate
+                })
+                .FirstOrDefaultAsync();
+
+            if (project == null) return NotFound();
+
+            var projectIds = new[] { project.Id };
+
+            var members = await _context.Members
+                .Where(m => projectIds.Contains(m.ProjectId))
+                .Include(m => m.Employee)
+                .Include(m => m.ProjectRole)
+                .ToListAsync();
+
+            var milestones = await _context.ProjectMilestones
+                .Where(pmst => projectIds.Contains(pmst.ProjectId))
+                .Include(pmst => pmst.Milestone)
+                .OrderBy(pmst => pmst.SequenceOrder)
+                .ToListAsync();
+
+            project.Members = members
+                .Where(m => m.ProjectId == project.Id)
+                .Select(m => new MemberViewModel
+                {
+                    Id = m.Id,
+                    EmployeeId = m.EmployeeId,
+                    EmployeeName = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A",
+                    ProjectRoleId = m.ProjectRoleId,
+                    ProjectRoleName = m.ProjectRole != null ? m.ProjectRole.Name : "N/A"
+                })
+                .ToList();
+
+            project.Milestones = milestones
+                .Where(ms => ms.ProjectId == project.Id)
+                .Select(ms => new ProjectMilestoneViewModel
+                {
+                    Id = ms.Id,
+                    MilestoneId = ms.MilestoneId,
+                    MilestoneName = ms.Milestone != null ? ms.Milestone.Name : "N/A",
+                    SequenceOrder = ms.SequenceOrder,
+                    Status = ms.Status
+                })
+                .ToList();
+
+            var employeeRows = await _context.Employees
+                .Where(e => e.DepartmentId == pm.DepartmentId)
+                .OrderBy(e => e.LastName)
+                .ThenBy(e => e.FirstName)
+                .Select(e => new { e.Id, e.FirstName, e.MiddleName, e.LastName })
+                .ToListAsync();
+
+            var availableEmployees = employeeRows
+                .Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = e.Id.ToString(),
+                    Text = string.Join(" ", new[] { e.FirstName, e.MiddleName, e.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                })
+                .ToList();
+
+            var roles = await _context.ProjectRoles
+                .OrderBy(r => r.Name)
+                .Select(r => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = r.Id.ToString(), Text = r.Name })
+                .ToListAsync();
+
+            var milestoneTemplates = await _context.Milestones
+                .OrderBy(m => m.Name)
+                .Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = m.Id.ToString(), Text = m.Name })
+                .ToListAsync();
+
+            var vm = new project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
+            {
+                Project = project,
+                AvailableEmployees = availableEmployees,
+                AvailableProjectRoles = roles,
+                AvailableMilestones = milestoneTemplates
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public IActionResult Milestone(int projectMilestoneId)
+        {
+            ViewData["Title"] = "Milestone";
+            // empty placeholder for now
+            return View();
+        }
+
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> AddMember([FromForm] Member input)

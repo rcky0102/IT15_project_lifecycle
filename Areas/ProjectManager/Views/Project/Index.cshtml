@@ -55,9 +55,7 @@
                                 <div class="col-md-6">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h6 class="mb-0">Members</h6>
-                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal-@project.Id">
-                                            Add Member
-                                        </button>
+                                        <a asp-area="ProjectManager" asp-controller="Project" asp-action="Create" asp-route-id="@project.Id" class="btn btn-sm btn-primary">Manage</a>
                                     </div>
                                     <ul class="list-unstyled">
                                         @foreach (var m in project.Members)
@@ -77,9 +75,7 @@
                                 <div class="col-md-6">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h6 class="mb-0">Milestones</h6>
-                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMilestoneModal-@project.Id">
-                                            Add Milestone
-                                        </button>
+                                        <a asp-area="ProjectManager" asp-controller="Project" asp-action="Create" asp-route-id="@project.Id" class="btn btn-sm btn-primary">Manage</a>
                                     </div>
                                     <ol>
                                         @foreach (var ms in project.Milestones.OrderBy(m => m.SequenceOrder))
@@ -97,81 +93,7 @@
                                 </div>
                             </div>
 
-                            <div class="modal fade" id="addMemberModal-@project.Id" tabindex="-1" aria-labelledby="addMemberModalLabel-@project.Id" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMember" method="post">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="ProjectId" value="@project.Id" />
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="addMemberModalLabel-@project.Id">Add Member</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Employee</label>
-                                                    <select name="EmployeeId" class="form-select" required>
-                                                        <option value="">-- Select Employee --</option>
-                                                        @foreach (var e in Model.AvailableEmployees)
-                                                        {
-                                                            <option value="@e.Value">@e.Text</option>
-                                                        }
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Role</label>
-                                                    <select name="ProjectRoleId" class="form-select" required>
-                                                        <option value="">-- Select Role --</option>
-                                                        @foreach (var r in Model.AvailableProjectRoles)
-                                                        {
-                                                            <option value="@r.Value">@r.Text</option>
-                                                        }
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button class="btn btn-primary" type="submit">Add Member</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="modal fade" id="addMilestoneModal-@project.Id" tabindex="-1" aria-labelledby="addMilestoneModalLabel-@project.Id" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMilestone" method="post">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="ProjectId" value="@project.Id" />
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="addMilestoneModalLabel-@project.Id">Add Milestone</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Milestone</label>
-                                                    <select name="MilestoneId" class="form-select" required>
-                                                        <option value="">-- Select Milestone --</option>
-                                                        @foreach (var t in Model.AvailableMilestones)
-                                                        {
-                                                            <option value="@t.Value">@t.Text</option>
-                                                        }
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Sequence Order</label>
-                                                    <input name="SequenceOrder" type="number" min="1" class="form-control" placeholder="Order" value="@((project.Milestones.Any() ? project.Milestones.Max(m => m.SequenceOrder) + 1 : 1))" required />
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button class="btn btn-primary" type="submit">Add Milestone</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- Management moved to Create/Manage page -->
                         </div>
                     }
                 </div>
