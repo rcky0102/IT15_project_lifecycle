@@ -352,6 +352,32 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             await _context.SaveChangesAsync();
 
+            // After updating a task status, if all tasks under the milestone are Checked, mark the milestone Finished.
+            var pmstId = task.ProjectMilestoneId;
+            var tasksForMilestone = await _context.ProjectTasks
+                .Where(t => t.ProjectMilestoneId == pmstId)
+                .ToListAsync();
+
+            if (tasksForMilestone.Count > 0)
+            {
+                var allChecked = tasksForMilestone.All(t => string.Equals(t.Status, "Checked", StringComparison.OrdinalIgnoreCase));
+                var pmst = await _context.ProjectMilestones.FirstOrDefaultAsync(p => p.Id == pmstId);
+                if (pmst != null)
+                {
+                    if (allChecked && !string.Equals(pmst.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pmst.Status = "Finished";
+                        await _context.SaveChangesAsync();
+                    }
+                    else if (!allChecked && string.Equals(pmst.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // If milestone was previously finished but a task is no longer checked, revert to Unfinished
+                        pmst.Status = "Unfinished";
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             TempData["SuccessMessage"] = "Task updated.";
             return RedirectToAction(nameof(Milestone), new { projectMilestoneId = task.ProjectMilestoneId });
         }
