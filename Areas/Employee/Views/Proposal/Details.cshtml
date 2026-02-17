@@ -4,18 +4,64 @@
     ViewData["Title"] = Model?.Title ?? "Proposal";
 }
 
-<div class="dashboard-container py-4">
-    <div class="proposal-page-header">
-        <h1><i class="fas fa-lightbulb"></i>&nbsp; @ViewData["Title"]</h1>
-        <p class="proposal-subtitle">Submitted @Model.DateCreated.ToString("yyyy-MM-dd") — Status: @Model.Status</p>
-    </div>
-
-    <div class="proposal-detail-card">
-        <div class="proposal-detail-body">
-            @Html.Raw(Model.Input)
+@if (Model == null)
+{
+    <div class="dashboard-container py-4">
+        <div class="proposal-page-header">
+            <h1><i class="fas fa-lightbulb"></i>&nbsp; @ViewData["Title"]</h1>
+        </div>
+        <div class="proposal-alert error">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Proposal not found or has been removed.</span>
         </div>
         <div style="margin-top:1rem">
             <a asp-area="Employee" asp-controller="Proposal" asp-action="Index" class="btn btn-secondary">Back</a>
         </div>
     </div>
-</div>
+}
+else
+{
+    <div class="dashboard-container py-4">
+        <div class="proposal-page-header">
+            <h1><i class="fas fa-lightbulb"></i>&nbsp; @ViewData["Title"]</h1>
+            <p class="proposal-subtitle">Submitted @Model.DateCreated.ToString("yyyy-MM-dd") — Status: @(Model.Status ?? "Unknown")</p>
+        </div>
+
+        <div class="proposal-detail-card">
+                <div class="proposal-detail-body">
+                    @Html.Raw(Model.Input ?? string.Empty)
+                </div>
+                <div style="margin-top:1rem">
+                    <a asp-area="Employee" asp-controller="Proposal" asp-action="Index" class="btn btn-secondary">Back</a>
+                    <a asp-area="Employee" asp-controller="Proposal" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+                </div>
+            </div>
+
+            <div class="proposal-versions mt-4">
+                <h5>Versions</h5>
+                @{ var versions = ViewBag.ProjectProposalVersions as List<project_lifecycle.Models.ProjectProposalVersion> ?? new List<project_lifecycle.Models.ProjectProposalVersion>(); }
+                <div class="mt-2">
+                    <div class="p-2 border rounded bg-light mb-2">
+                        <strong>Current</strong> — @Model.Title
+                        <div class="small text-muted">Updated @Model.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                    </div>
+
+                    @if (versions.Any())
+                    {
+                        @foreach (var v in versions)
+                        {
+                            <div class="p-2 border rounded mb-2">
+                                <a asp-area="Employee" asp-controller="Proposal" asp-action="Version" asp-route-id="@v.Id"><strong>Version @v.VersionNumber</strong></a>
+                                &nbsp;&mdash;&nbsp;@v.Title
+                                <div class="small text-muted">Saved @v.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="small text-muted">No previous versions.</div>
+                    }
+                </div>
+            </div>
+    </div>
+}

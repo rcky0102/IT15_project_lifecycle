@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.ViewModels;
 
 namespace project_lifecycle.EmployeeArea.Controllers
 {
@@ -256,6 +257,166 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 var errScript = $"<script>window.parent.CKEDITOR.tools.callFunction({CKEditorFuncNum}, '', 'Upload failed: {safe}');</script>";
                 _logger.LogError(ex, "Error in CKEditor upload");
                 return Content(errScript, "text/html");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId)) return Challenge();
+
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+                if (employee == null) return Forbid();
+
+                var proposal = await _context.ProjectProposals.FirstOrDefaultAsync(p => p.Id == id && p.EmployeeId == employee.Id);
+                if (proposal == null) return NotFound();
+
+                var versions = await _context.ProjectProposalVersions
+                    .Where(v => v.ProjectProposalId == proposal.Id)
+                    .OrderByDescending(v => v.VersionNumber)
+                    .ToListAsync();
+
+                ViewBag.ProjectProposalVersions = versions;
+
+                return View(proposal);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading proposal details for id {Id}", id);
+                return StatusCode(500);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId)) return Challenge();
+
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+                if (employee == null) return Forbid();
+
+                var proposal = await _context.ProjectProposals.FirstOrDefaultAsync(p => p.Id == id && p.EmployeeId == employee.Id);
+                if (proposal == null) return NotFound();
+
+                var versions = await _context.ProjectProposalVersions
+                    .Where(v => v.ProjectProposalId == proposal.Id)
+                    .OrderByDescending(v => v.VersionNumber)
+                    .ToListAsync();
+
+                var nextVersion = (versions.Any() ? versions.Max(v => v.VersionNumber) : 0) + 1;
+
+                var vm = new ProjectProposalEditViewModel
+                {
+                    Proposal = proposal,
+                    Versions = versions,
+                    NextVersionNumber = nextVersion
+                };
+
+                return View(vm);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading proposal edit for id {Id}", id);
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, ProjectProposalEditViewModel model)
+        {
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId)) return Challenge();
+
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+                if (employee == null) return Forbid();
+
+                var proposal = await _context.ProjectProposals.FirstOrDefaultAsync(p => p.Id == id && p.EmployeeId == employee.Id);
+                if (proposal == null) return NotFound();
+
+                if (model?.Proposal == null)
+                {
+                    TempData["ErrorMessage"] = "Invalid submission.";
+                    return RedirectToAction("Index");
+                }
+
+                if (string.IsNullOrWhiteSpace(model.Proposal.Title) || string.IsNullOrWhiteSpace(model.Proposal.Input))
+                {
+                    TempData["ErrorMessage"] = "Title and Input are required.";
+                    return RedirectToAction("Edit", new { id });
+                }
+
+                // Save current content as a previous version
+                var existingVersions = await _context.ProjectProposalVersions.Where(v => v.ProjectProposalId == proposal.Id).ToListAsync();
+                var nextVersion = (existingVersions.Any() ? existingVersions.Max(v => v.VersionNumber) : 0) + 1;
+
+                var previousVersion = new ProjectProposalVersion
+                {
+                    ProjectProposalId = proposal.Id,
+                    VersionNumber = nextVersion,
+                    Title = proposal.Title,
+                    Input = proposal.Input,
+                    EmployeeId = employee.Id,
+                    DateCreated = DateTime.Now
+                };
+
+                _context.ProjectProposalVersions.Add(previousVersion);
+
+                // Update the main proposal with the new content
+                proposal.Title = model.Proposal.Title;
+                proposal.Input = model.Proposal.Input;
+                proposal.DateCreated = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Proposal updated and previous version saved.";
+                return RedirectToAction("Details", new { id = proposal.Id });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "DB error updating proposal {Id}", id);
+                TempData["ErrorMessage"] = dbEx.InnerException?.Message ?? dbEx.Message;
+                return RedirectToAction("Edit", new { id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error updating proposal {Id}", id);
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Edit", new { id });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Version(int id)
+        {
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId)) return Challenge();
+
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+                if (employee == null) return Forbid();
+
+                var version = await _context.ProjectProposalVersions
+                    .Include(v => v.ProjectProposal)
+                    .FirstOrDefaultAsync(v => v.Id == id && v.EmployeeId == employee.Id);
+
+                if (version == null) return NotFound();
+
+                return View(version);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading proposal version {Id}", id);
+                return StatusCode(500);
             }
         }
     }

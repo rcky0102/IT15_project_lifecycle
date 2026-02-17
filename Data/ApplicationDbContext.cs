@@ -21,6 +21,7 @@ namespace project_lifecycle.Data
         public DbSet<TaskMember> TaskMembers { get; set; }
         public DbSet<Executive> Executives { get; set; }
         public DbSet<ProjectProposal> ProjectProposals { get; set; }
+        public DbSet<ProjectProposalVersion> ProjectProposalVersions { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -95,6 +96,18 @@ namespace project_lifecycle.Data
                 .HasOne(tm => tm.Member)
                 .WithMany()
                 .HasForeignKey(tm => tm.MemberId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProjectProposalVersion>()
+                .HasOne(ppv => ppv.ProjectProposal)
+                .WithMany()
+                .HasForeignKey(ppv => ppv.ProjectProposalId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProjectProposalVersion>()
+                .HasOne(ppv => ppv.Employee)
+                .WithMany()
+                .HasForeignKey(ppv => ppv.EmployeeId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }
