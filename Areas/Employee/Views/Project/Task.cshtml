@@ -1,14 +1,487 @@
 @{
     ViewData["Title"] = "Task";
+    var taskId = ViewData["TaskId"] ?? 0;
 }
 
 <div class="dashboard-container py-4">
     <div class="proposal-page-header">
         <h1>Task</h1>
-        <p class="proposal-subtitle">(Details will be implemented later)</p>
+        <p class="proposal-subtitle">Submit your work for this task</p>
     </div>
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="proposal-alert success"><i class="fas fa-check-circle"></i> <span>@TempData["SuccessMessage"]</span></div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="proposal-alert error"><i class="fas fa-exclamation-circle"></i> <span>@TempData["ErrorMessage"]</span></div>
+    }
+
     <div class="card p-4">
-        <!-- Empty task placeholder -->
+        <form asp-area="Employee" asp-controller="Project" asp-action="Task" asp-route-id="@taskId" method="post" class="auth-ocean-form">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label for="Input" class="form-label">Input</label>
+                <textarea id="Input" name="Input" rows="8" class="form-control"></textarea>
+                <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+                    <button type="button" id="insertRichFileBtn" class="btn btn-outline-ocean" style="padding:6px 12px;">
+                        <i class="fas fa-paperclip"></i> Add file/image to input
+                    </button>
+                    <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
+                </div>
+                <input type="file" id="richFileInput" style="display:none;" />
+            </div>
+
+            <div class="proposal-actions">
+                <button type="submit" id="submitProposalBtn" class="btn btn-ocean">Submit Input</button>
+                <button type="reset" class="btn-reset">Reset</button>
+                <a asp-area="Employee" asp-controller="Project" asp-action="Show" asp-route-id="@ViewContext.RouteData.Values["id"]" class="btn btn-outline-ocean" style="margin-left:auto;">Back to Project</a>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editorSelector = '#Input';
+        const uploadEndpoint = '@Url.Action("UploadRichText", "Proposal", new { area = "Employee" })';
+        const formElement = document.querySelector('form.auth-ocean-form');
+        const submitButton = document.getElementById('submitProposalBtn');
+        const titleInput = document.getElementById('Title');
+        let editorInstance = null;
+        let pendingUploads = 0;
+        let explicitSubmitRequested = false;
+        let explicitResetRequested = false;
+        let isSubmitting = false;
+        const draftStorageKey = 'employee-task-input-draft-' + '@taskId';
+
+        function saveDraft() {
+            if (isSubmitting) return;
+
+            const inputElement = document.querySelector(editorSelector);
+            const payload = {
+                title: titleInput ? titleInput.value : '',
+                inputHtml: editorInstance ? editorInstance.getData() : (inputElement ? inputElement.value : '')
+            };
+
+            try {
+                sessionStorage.setItem(draftStorageKey, JSON.stringify(payload));
+            } catch {
+            }
+        }
+
+        function restoreDraft() {
+            try {
+                const raw = sessionStorage.getItem(draftStorageKey);
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch {
+                return null;
+            }
+        }
+
+        function clearDraft() {
+            try {
+                sessionStorage.removeItem(draftStorageKey);
+            } catch {
+            }
+        }
+
+        function setUploadingState(isUploading) {
+            if (submitButton) {
+                submitButton.disabled = isUploading;
+            }
+        }
+
+        function beginUpload() {
+            pendingUploads += 1;
+            setUploadingState(true);
+        }
+
+        function endUpload() {
+            pendingUploads = Math.max(0, pendingUploads - 1);
+            setUploadingState(pendingUploads > 0);
+        }
+
+        const scriptCdnCandidates = [
+            'https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js',
+            'https://unpkg.com/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js'
+        ];
+
+        const styleCdnCandidates = [
+            'https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/ckeditor5.css',
+            'https://unpkg.com/ckeditor5@47.1.0/dist/ckeditor5.css'
+        ];
+
+        class ProposalUploadAdapter {
+            constructor(loader) {
+                this.loader = loader;
+                this.abortController = new AbortController();
+            }
+
+            async upload() {
+                const file = await this.loader.file;
+                const result = await uploadFile(file, this.abortController.signal);
+                return { default: result.url };
+            }
+
+            abort() {
+                this.abortController.abort();
+            }
+        }
+
+        function ProposalUploadAdapterPlugin(editor) {
+            editor.plugins.get('FileRepository').createUploadAdapter = (loader) => new ProposalUploadAdapter(loader);
+        }
+
+        async function uploadFile(file, abortSignal) {
+            beginUpload();
+            try {
+                const formData = new FormData();
+                formData.append('upload', file);
+
+                const response = await fetch(uploadEndpoint, {
+                    method: 'POST',
+                    body: formData,
+                    signal: abortSignal
+                });
+
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload?.error?.message || 'Upload failed.');
+                }
+
+                return payload;
+            } finally {
+                endUpload();
+            }
+        }
+
+        function wireFileInsertButton() {
+            const button = document.getElementById('insertRichFileBtn');
+            const input = document.getElementById('richFileInput');
+
+            if (!button || !input) return;
+
+            button.addEventListener('click', function () {
+                input.click();
+            });
+
+            input.addEventListener('change', async function () {
+                if (!editorInstance || !input.files || input.files.length === 0) return;
+
+                const file = input.files[0];
+                button.disabled = true;
+
+                try {
+                    const result = await uploadFile(file);
+
+                    if (file.type.startsWith('image/')) {
+                        editorInstance.model.change(writer => {
+                            const imageElement = writer.createElement('imageBlock', { src: result.url });
+                            editorInstance.model.insertContent(imageElement, editorInstance.model.document.selection);
+                        });
+                    } else {
+                        editorInstance.model.change(writer => {
+                            const linkText = writer.createText(result.fileName || file.name, { linkHref: result.url });
+                            editorInstance.model.insertContent(linkText, editorInstance.model.document.selection);
+                        });
+                    }
+                } catch (error) {
+                    console.error('File insertion failed:', error);
+                    alert(error.message || 'File upload failed.');
+                } finally {
+                    input.value = '';
+                    button.disabled = false;
+                }
+            });
+        }
+
+        function initEditor() {
+            if (!window.CKEDITOR || !window.CKEDITOR.ClassicEditor) {
+                console.error('CKEditor UMD bundle was not loaded from available CDNs.');
+                return;
+            }
+
+            const {
+                ClassicEditor,
+                Essentials,
+                Paragraph,
+                Heading,
+                Bold,
+                Italic,
+                Link,
+                List,
+                Indent,
+                BlockQuote,
+                Table,
+                TableToolbar,
+                Image,
+                ImageCaption,
+                ImageStyle,
+                ImageToolbar,
+                ImageUpload,
+                MediaEmbed,
+                Alignment
+            } = window.CKEDITOR;
+
+            ClassicEditor
+                .create(document.querySelector(editorSelector), {
+                    licenseKey: 'GPL',
+                    plugins: [
+                        Essentials,
+                        Paragraph,
+                        Heading,
+                        Bold,
+                        Italic,
+                        Link,
+                        List,
+                        Indent,
+                        BlockQuote,
+                        Table,
+                        TableToolbar,
+                        Image,
+                        ImageCaption,
+                        ImageStyle,
+                        ImageToolbar,
+                        ImageUpload,
+                        MediaEmbed,
+                        Alignment
+                    ],
+                    extraPlugins: [ProposalUploadAdapterPlugin],
+                    toolbar: {
+                        items: [
+                            'undo', 'redo',
+                            '|',
+                            'heading',
+                            '|',
+                            'bold', 'italic', 'link',
+                            '|',
+                            'alignment',
+                            '|',
+                            'bulletedList', 'numberedList',
+                            '|',
+                            'outdent', 'indent',
+                            '|',
+                            'imageUpload', 'insertTable', 'mediaEmbed', 'blockQuote'
+                        ],
+                        shouldNotGroupWhenFull: true
+                    },
+                    image: {
+                        toolbar: [
+                            'imageTextAlternative',
+                            'toggleImageCaption',
+                            'imageStyle:inline',
+                            'imageStyle:block',
+                            'imageStyle:side'
+                        ]
+                    },
+                    alignment: {
+                        options: ['left', 'center', 'right', 'justify']
+                    },
+                    table: {
+                        contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+                    }
+                })
+                .then(editor => {
+                    editorInstance = editor;
+                    const draft = restoreDraft();
+                    if (draft && typeof draft.inputHtml === 'string' && draft.inputHtml.length > 0) {
+                        editor.setData(draft.inputHtml);
+                    }
+
+                    editor.model.document.on('change:data', function () {
+                        saveDraft();
+                    });
+
+                    wireFileInsertButton();
+                })
+                .catch(error => {
+                    console.error('CKEditor initialization error:', error);
+                });
+        }
+
+        function hasMeaningfulContent(html) {
+            if (!html) return false;
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const text = (doc.body.textContent || '').replace(/\u00A0/g, ' ').trim();
+            const media = doc.body.querySelector('img,table,video,audio,iframe,embed,object');
+
+            return text.length > 0 || !!media;
+        }
+
+        function wireFormValidation() {
+            if (!formElement) return;
+
+            if (submitButton) {
+                submitButton.addEventListener('click', function () {
+                    explicitSubmitRequested = true;
+                });
+            }
+
+            const resetButton = formElement.querySelector('button[type="reset"]');
+            if (resetButton) {
+                resetButton.addEventListener('click', function () {
+                    explicitResetRequested = true;
+                });
+            }
+
+            formElement.addEventListener('reset', function (event) {
+                if (!explicitResetRequested) {
+                    event.preventDefault();
+                    return;
+                }
+
+                explicitResetRequested = false;
+                explicitSubmitRequested = false;
+                clearDraft();
+            });
+
+            formElement.addEventListener('submit', function (event) {
+                const submitter = event.submitter;
+                const isPrimarySubmit = submitter ? submitter === submitButton : explicitSubmitRequested;
+
+                if (!isPrimarySubmit) {
+                    event.preventDefault();
+                    return;
+                }
+
+                if (pendingUploads > 0) {
+                    event.preventDefault();
+                    explicitSubmitRequested = false;
+                    alert('Please wait for file upload to finish before submitting.');
+                    return;
+                }
+
+                const inputElement = document.querySelector(editorSelector);
+                const html = editorInstance ? editorInstance.getData() : (inputElement ? inputElement.value : '');
+
+                if (inputElement) {
+                    inputElement.value = html;
+                }
+
+                if (!hasMeaningfulContent(html)) {
+                    event.preventDefault();
+                    explicitSubmitRequested = false;
+                    alert('Input is required. Please enter details before submitting.');
+
+                    if (editorInstance) {
+                        editorInstance.editing.view.focus();
+                    }
+                    return;
+                }
+
+                isSubmitting = true;
+                clearDraft();
+            });
+        }
+
+        function normalizeFormButtons() {
+            if (!formElement) return;
+
+            const buttons = formElement.querySelectorAll('button');
+            buttons.forEach(function (button) {
+                if (button === submitButton) return;
+
+                const typeAttr = (button.getAttribute('type') || '').toLowerCase();
+                if (typeAttr === 'reset' || typeAttr === 'button') return;
+
+                button.setAttribute('type', 'button');
+            });
+        }
+
+        function observeDynamicButtons() {
+            if (!formElement) return;
+
+            const observer = new MutationObserver(function () {
+                normalizeFormButtons();
+            });
+
+            observer.observe(formElement, { childList: true, subtree: true });
+        }
+
+        function loadScriptSequentially(index) {
+            if (window.CKEDITOR && window.CKEDITOR.ClassicEditor) {
+                initEditor();
+                return;
+            }
+
+            if (index >= scriptCdnCandidates.length) {
+                initEditor();
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = scriptCdnCandidates[index];
+            script.async = true;
+
+            script.onload = function () {
+                initEditor();
+            };
+
+            script.onerror = function () {
+                loadScriptSequentially(index + 1);
+            };
+
+            document.head.appendChild(script);
+        }
+
+        function loadStyleSequentially(index) {
+            if (document.querySelector('link[data-ckeditor-style="true"]')) {
+                loadScriptSequentially(0);
+                return;
+            }
+
+            if (index >= styleCdnCandidates.length) {
+                loadScriptSequentially(0);
+                return;
+            }
+
+            const style = document.createElement('link');
+            style.rel = 'stylesheet';
+            style.href = styleCdnCandidates[index];
+            style.setAttribute('data-ckeditor-style', 'true');
+
+            style.onload = function () {
+                loadScriptSequentially(0);
+            };
+
+            style.onerror = function () {
+                style.remove();
+                loadStyleSequentially(index + 1);
+            };
+
+            document.head.appendChild(style);
+        }
+
+        function wireDraftHandlers() {
+            const draft = restoreDraft();
+            if (draft && titleInput && typeof draft.title === 'string' && titleInput.value.trim() === '') {
+                titleInput.value = draft.title;
+            }
+
+            if (titleInput) {
+                titleInput.addEventListener('input', function () {
+                    saveDraft();
+                });
+            }
+
+            const inputElement = document.querySelector(editorSelector);
+            if (inputElement) {
+                inputElement.addEventListener('input', function () {
+                    saveDraft();
+                });
+            }
+        }
+
+        wireFormValidation();
+        normalizeFormButtons();
+        observeDynamicButtons();
+        wireDraftHandlers();
+        loadStyleSequentially(0);
+    });
+</script>

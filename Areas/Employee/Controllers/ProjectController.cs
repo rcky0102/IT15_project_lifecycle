@@ -156,8 +156,32 @@ namespace project_lifecycle.EmployeeArea.Controllers
         public IActionResult Task(int id)
         {
             ViewData["Title"] = "Task";
-            // empty placeholder for now
+            ViewData["TaskId"] = id;
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Task(int id, string Input)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            // Ensure current user is assigned to this task
+            var taskMember = await _context.TaskMembers
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .FirstOrDefaultAsync(tm => tm.ProjectTaskId == id && tm.Member != null && tm.Member.Employee != null && tm.Member.Employee.UserId == userId);
+
+            if (taskMember == null) return Forbid();
+
+            var task = await _context.ProjectTasks.FirstOrDefaultAsync(t => t.Id == id);
+            if (task == null) return NotFound();
+
+            task.Input = Input;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Task input submitted.";
+            return RedirectToAction(nameof(Task), new { id });
         }
     }
 }
