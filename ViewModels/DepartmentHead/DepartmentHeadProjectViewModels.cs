@@ -1,0 +1,62 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
+namespace project_lifecycle.ViewModels.DepartmentHead
+{
+    public class DepartmentHeadProjectIndexViewModel
+    {
+        public List<DepartmentHeadProjectListItemViewModel> Projects { get; set; } = new();
+        public CreateDepartmentHeadProjectViewModel CreateProject { get; set; } = new();
+
+        public List<SelectListItem> AvailableProposals { get; set; } = new();
+        public List<SelectListItem> AvailableProjectManagers { get; set; } = new();
+        public List<SelectListItem> AvailableEmployees { get; set; } = new();
+        public List<SelectListItem> AvailableProjectRoles { get; set; } = new();
+    }
+
+    public class DepartmentHeadProjectListItemViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string ProposalTitle { get; set; } = string.Empty;
+        public string ProjectManagerName { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public DateTime DateCreated { get; set; }
+        public int MemberCount { get; set; }
+    }
+
+    public class CreateDepartmentHeadProjectViewModel
+    {
+        [Required]
+        [Display(Name = "Project Name")]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Display(Name = "Description")]
+        public string? Description { get; set; }
+
+        [Required]
+        [Display(Name = "Project Proposal")]
+        public int ProjectProposalId { get; set; }
+
+        [Required]
+        [Display(Name = "Project Manager")]
+        public int ProjectManagerId { get; set; }
+
+        [Required]
+        [DataType(DataType.Date)]
+        [Display(Name = "Start Date")]
+        public DateTime StartDate { get; set; } = DateTime.Today;
+
+        [Required]
+        [DataType(DataType.Date)]
+        [Display(Name = "End Date")]
+        public DateTime EndDate { get; set; } = DateTime.Today.AddDays(30);
+
+        public List<int> MemberEmployeeIds { get; set; } = new();
+        public List<int> MemberProjectRoleIds { get; set; } = new();
+    }
+}

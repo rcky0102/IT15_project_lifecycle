@@ -1,0 +1,279 @@
+﻿@model project_lifecycle.ViewModels.DepartmentHead.DepartmentHeadProjectIndexViewModel
+@{
+    ViewData["Title"] = "Projects";
+    var hasValidationErrors = !ViewData.ModelState.IsValid;
+}
+
+<div class="dashboard-container py-4">
+    <div class="proposal-page-header">
+        <h1><i class="fas fa-diagram-project"></i>&nbsp; Projects</h1>
+        <p class="proposal-subtitle">Create and manage projects for your department</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="proposal-alert success">
+            <i class="fas fa-check-circle"></i>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="proposal-alert error">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    <div class="proposal-table-section">
+        <div class="proposal-table-header">
+            <h3>
+                <i class="fas fa-list-check"></i> Department Projects
+                <span class="proposal-count-badge">@Model.Projects.Count</span>
+            </h3>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                <i class="fas fa-plus"></i> Create Project
+            </button>
+        </div>
+
+        <div class="proposal-table-card">
+            @if (Model.Projects.Any())
+            {
+                <div class="proposal-table-responsive">
+                    <table class="proposal-table">
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Proposal</th>
+                                <th>Project Manager</th>
+                                <th>Timeline</th>
+                                <th>Members</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in Model.Projects)
+                            {
+                                <tr>
+                                    <td class="proposal-title-cell">@project.Name</td>
+                                    <td>@project.ProposalTitle</td>
+                                    <td>@project.ProjectManagerName</td>
+                                    <td>
+                                        <span class="proposal-date">@project.StartDate.ToString("yyyy-MM-dd")</span>
+                                        <span> to </span>
+                                        <span class="proposal-date">@project.EndDate.ToString("yyyy-MM-dd")</span>
+                                    </td>
+                                    <td>@project.MemberCount</td>
+                                    <td class="proposal-date">@project.DateCreated.ToString("yyyy-MM-dd")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="proposal-empty-state">
+                    <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+                    <div class="empty-title">No projects yet</div>
+                    <div class="empty-text">Create your first project using the button above.</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form asp-area="DepartmentHead" asp-controller="Project" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createProjectModalLabel">Create Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if (hasValidationErrors)
+                    {
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    }
+
+                    @if (!Model.AvailableProposals.Any())
+                    {
+                        <div class="alert alert-warning mb-3">
+                            No approved proposals are currently available for project creation.
+                        </div>
+                    }
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="CreateProject.Name" class="form-label"></label>
+                            <input asp-for="CreateProject.Name" class="form-control" />
+                            <span asp-validation-for="CreateProject.Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CreateProject.ProjectProposalId" class="form-label"></label>
+                            <select asp-for="CreateProject.ProjectProposalId" class="form-select" asp-items="Model.AvailableProposals">
+                                <option value="">-- Select Proposal --</option>
+                            </select>
+                            <span asp-validation-for="CreateProject.ProjectProposalId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="CreateProject.ProjectManagerId" class="form-label"></label>
+                            <select asp-for="CreateProject.ProjectManagerId" class="form-select" asp-items="Model.AvailableProjectManagers">
+                                <option value="">-- Select Project Manager --</option>
+                            </select>
+                            <span asp-validation-for="CreateProject.ProjectManagerId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="CreateProject.StartDate" class="form-label"></label>
+                            <input asp-for="CreateProject.StartDate" class="form-control" type="date" />
+                            <span asp-validation-for="CreateProject.StartDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="CreateProject.EndDate" class="form-label"></label>
+                            <input asp-for="CreateProject.EndDate" class="form-control" type="date" />
+                            <span asp-validation-for="CreateProject.EndDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="CreateProject.Description" class="form-label"></label>
+                            <textarea asp-for="CreateProject.Description" rows="3" class="form-control"></textarea>
+                            <span asp-validation-for="CreateProject.Description" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Project Members (Optional)</h6>
+                        <button type="button" id="addMemberRowBtn" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-user-plus"></i> Add Member
+                        </button>
+                    </div>
+
+                    <div id="memberRowsContainer" class="d-flex flex-column gap-2">
+                        @if (Model.CreateProject.MemberEmployeeIds.Count == Model.CreateProject.MemberProjectRoleIds.Count && Model.CreateProject.MemberEmployeeIds.Any())
+                        {
+                            @for (var i = 0; i < Model.CreateProject.MemberEmployeeIds.Count; i++)
+                            {
+                                <div class="row g-2 member-row">
+                                    <div class="col-md-6">
+                                        <select name="CreateProject.MemberEmployeeIds" class="form-select">
+                                            <option value="">-- Select Employee --</option>
+                                            @foreach (var employee in Model.AvailableEmployees)
+                                            {
+                                                if (employee.Value == Model.CreateProject.MemberEmployeeIds[i].ToString())
+                                                {
+                                                    <option value="@employee.Value" selected>@employee.Text</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@employee.Value">@employee.Text</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <select name="CreateProject.MemberProjectRoleIds" class="form-select">
+                                            <option value="">-- Select Role --</option>
+                                            @foreach (var role in Model.AvailableProjectRoles)
+                                            {
+                                                if (role.Value == Model.CreateProject.MemberProjectRoleIds[i].ToString())
+                                                {
+                                                    <option value="@role.Value" selected>@role.Text</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@role.Value">@role.Text</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1 d-grid">
+                                        <button type="button" class="btn btn-outline-danger remove-member-row" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <template id="memberRowTemplate">
+                        <div class="row g-2 member-row">
+                            <div class="col-md-6">
+                                <select name="CreateProject.MemberEmployeeIds" class="form-select">
+                                    <option value="">-- Select Employee --</option>
+                                    @foreach (var employee in Model.AvailableEmployees)
+                                    {
+                                        <option value="@employee.Value">@employee.Text</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <select name="CreateProject.MemberProjectRoleIds" class="form-select">
+                                    <option value="">-- Select Role --</option>
+                                    @foreach (var role in Model.AvailableProjectRoles)
+                                    {
+                                        <option value="@role.Value">@role.Text</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-1 d-grid">
+                                <button type="button" class="btn btn-outline-danger remove-member-row" title="Remove">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" @(Model.AvailableProposals.Any() ? "" : "disabled")>Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var container = document.getElementById('memberRowsContainer');
+            var addBtn = document.getElementById('addMemberRowBtn');
+            var template = document.getElementById('memberRowTemplate');
+            var modalElement = document.getElementById('createProjectModal');
+
+            if (addBtn && container && template) {
+                addBtn.addEventListener('click', function () {
+                    container.insertAdjacentHTML('beforeend', template.innerHTML);
+                });
+            }
+
+            if (container) {
+                container.addEventListener('click', function (event) {
+                    var target = event.target;
+                    var button = target.closest('.remove-member-row');
+                    if (!button) {
+                        return;
+                    }
+
+                    var row = button.closest('.member-row');
+                    if (row) {
+                        row.remove();
+                    }
+                });
+            }
+
+            var shouldOpenModal = '@((ViewData["OpenCreateModal"] as bool?) == true ? "true" : "false")' === 'true';
+            if (shouldOpenModal && modalElement && window.bootstrap) {
+                var modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        })();
+    </script>
+}
