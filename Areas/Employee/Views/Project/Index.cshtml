@@ -1,5 +1,90 @@
 ﻿@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
+@model project_lifecycle.ViewModels.ProjectManager.ProjectIndexViewModel
 @{
+    ViewData["Title"] = "My Projects";
 }
+
+<link rel="stylesheet" href="~/css/proposal.css" asp-append-version="true" />
+
+<div class="dashboard-container py-4">
+    <div class="proposal-page-header">
+        <h1><i class="fas fa-diagram-project"></i>&nbsp; My Projects</h1>
+        <p class="proposal-subtitle">Projects you're a member of</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="proposal-alert success"><i class="fas fa-check-circle"></i> <span>@TempData["SuccessMessage"]</span></div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="proposal-alert error"><i class="fas fa-exclamation-circle"></i> <span>@TempData["ErrorMessage"]</span></div>
+    }
+
+    <div class="proposal-table-section">
+        <div class="proposal-table-header">
+            <h3><i class="fas fa-list-check"></i> Assigned Projects <span class="proposal-count-badge">@Model.Projects.Count</span></h3>
+        </div>
+
+        <div class="proposal-table-card">
+            @if (Model.Projects.Any())
+            {
+                <div class="list-group">
+                    @foreach (var project in Model.Projects)
+                    {
+                        <div class="list-group-item mb-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5>@project.Name</h5>
+                                    <div class="text-muted">Proposal: @project.ProposalTitle</div>
+                                    <div class="text-muted">Timeline: @project.StartDate.ToString("yyyy-MM-dd") - @project.EndDate.ToString("yyyy-MM-dd")</div>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">Members: @project.Members.Count</small>
+                                </div>
+                            </div>
+
+                            <hr />
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <h6 class="mb-2">Members</h6>
+                                    <ul class="list-unstyled">
+                                        @foreach (var m in project.Members)
+                                        {
+                                            <li class="d-flex justify-content-between align-items-center">
+                                                <span>@m.EmployeeName <span class="badge bg-secondary">@m.ProjectRoleName</span></span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <h6 class="mb-2">Milestones</h6>
+                                    <ol>
+                                        @foreach (var ms in project.Milestones.OrderBy(m => m.SequenceOrder))
+                                        {
+                                            <li>@ms.MilestoneName <small class="text-muted">(@ms.Status)</small></li>
+                                        }
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="proposal-empty-state">
+                    <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+                    <div class="empty-title">No assigned projects</div>
+                    <div class="empty-text">Projects you are a member of will appear here.</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+

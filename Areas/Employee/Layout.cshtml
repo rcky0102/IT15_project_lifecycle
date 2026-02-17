@@ -46,6 +46,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="@Url.Action("Index", "Project", new { area = "Employee" })" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Project" ? "active" : "")">
+                            <i class="fas fa-diagram-project"></i>
+                            <span class="nav-text">Projects</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="@Url.Action("Index", "Proposal", new { area = "Employee" })" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Proposal" ? "active" : "")">
                             <i class="fas fa-file-lines"></i>
                             <span class="nav-text">Proposals</span>
