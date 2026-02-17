@@ -153,10 +153,26 @@ namespace project_lifecycle.EmployeeArea.Controllers
         }
 
         [HttpGet]
-        public IActionResult Task(int id)
+        public async Task<IActionResult> Task(int id)
         {
             ViewData["Title"] = "Task";
+
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            // Ensure current user is assigned to this task
+            var taskMember = await _context.TaskMembers
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .FirstOrDefaultAsync(tm => tm.ProjectTaskId == id && tm.Member != null && tm.Member.Employee != null && tm.Member.Employee.UserId == userId);
+
+            if (taskMember == null) return Forbid();
+
+            var task = await _context.ProjectTasks.FirstOrDefaultAsync(t => t.Id == id);
+            if (task == null) return NotFound();
+
             ViewData["TaskId"] = id;
+            ViewData["Instructions"] = task.Instructions ?? string.Empty;
+            ViewData["ExistingInput"] = task.Input ?? string.Empty;
             return View();
         }
 

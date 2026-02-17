@@ -22,9 +22,24 @@
         <form asp-area="Employee" asp-controller="Project" asp-action="Task" asp-route-id="@taskId" method="post" class="auth-ocean-form">
             @Html.AntiForgeryToken()
 
+            @{
+                var instructionsObj = ViewData["Instructions"] ?? ViewBag.Instructions;
+                var instructions = instructionsObj == null ? null : instructionsObj.ToString();
+            }
+
+            @if (!string.IsNullOrWhiteSpace(instructions))
+            {
+                <div class="mb-3">
+                    <label class="form-label">Instructions</label>
+                    <div class="card bg-light p-3" style="white-space:pre-wrap;">
+                        @Html.Raw(instructions)
+                    </div>
+                </div>
+            }
+
             <div class="mb-3">
                 <label for="Input" class="form-label">Input</label>
-                <textarea id="Input" name="Input" rows="8" class="form-control"></textarea>
+                <textarea id="Input" name="Input" rows="8" class="form-control">@Html.Raw(ViewData["ExistingInput"] ?? string.Empty)</textarea>
                 <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
                     <button type="button" id="insertRichFileBtn" class="btn btn-outline-ocean" style="padding:6px 12px;">
                         <i class="fas fa-paperclip"></i> Add file/image to input
