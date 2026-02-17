@@ -283,6 +283,79 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             return View(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Task(int id)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone).ThenInclude(pmst => pmst.Project)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null) return NotFound();
+
+            if (task.ProjectMilestone == null || task.ProjectMilestone.Project == null || task.ProjectMilestone.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            var taskMember = await _context.TaskMembers
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .FirstOrDefaultAsync(tm => tm.ProjectTaskId == id);
+
+            var assignedName = taskMember?.Member?.Employee != null ? string.Join(" ", new[] { taskMember.Member.Employee.FirstName, taskMember.Member.Employee.MiddleName, taskMember.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null;
+
+            var vm = new project_lifecycle.ViewModels.ProjectManager.ProjectTaskReviewViewModel
+            {
+                Id = task.Id,
+                ProjectId = task.ProjectMilestone.ProjectId,
+                ProjectMilestoneId = task.ProjectMilestoneId,
+                Name = task.Name,
+                Instructions = task.Instructions ?? string.Empty,
+                EmployeeInput = task.Input,
+                AssignedMemberName = assignedName,
+                Status = task.Status,
+                Notes = task.Notes
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Task(int id, string? Notes, string? action)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone).ThenInclude(pmst => pmst.Project)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null) return NotFound();
+
+            if (task.ProjectMilestone == null || task.ProjectMilestone.Project == null || task.ProjectMilestone.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            // Update notes
+            task.Notes = Notes;
+
+            // Interpret action (button pressed)
+            if (!string.IsNullOrEmpty(action))
+            {
+                if (action == "Checked") task.Status = "Checked";
+                else if (action == "RequireRevision") task.Status = "Require Revision";
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Task updated.";
+            return RedirectToAction(nameof(Milestone), new { projectMilestoneId = task.ProjectMilestoneId });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddTask(int projectMilestoneId, ProjectTask input, int assignedMemberId)

@@ -1,0 +1,49 @@
+@model project_lifecycle.ViewModels.ProjectManager.ProjectTaskReviewViewModel
+@{
+    ViewData["Title"] = "Review Task";
+}
+
+<div class="dashboard-container py-4">
+    <div class="proposal-page-header">
+        <h1>Task: @Model.Name</h1>
+        <p class="proposal-subtitle">Assigned: @Model.AssignedMemberName ?? "(unassigned)"</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="proposal-alert success"><i class="fas fa-check-circle"></i> <span>@TempData["SuccessMessage"]</span></div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="proposal-alert error"><i class="fas fa-exclamation-circle"></i> <span>@TempData["ErrorMessage"]</span></div>
+    }
+
+    <div class="card p-3 mb-3">
+        <h5>Instructions</h5>
+        <div class="bg-light p-3" style="white-space:pre-wrap;">@Html.Raw(Model.Instructions)</div>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <h5>Employee Submission</h5>
+        <div class="bg-white p-3" style="white-space:pre-wrap;">@Html.Raw(Model.EmployeeInput ?? "<em>No submission yet</em>")</div>
+    </div>
+
+    <div class="card p-3">
+        <h5>Your Feedback / Notes</h5>
+        <form asp-area="ProjectManager" asp-controller="Project" asp-action="Task" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="mb-3">
+                <textarea name="Notes" class="form-control" rows="6">@Model.Notes</textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" name="action" value="" class="btn btn-outline-secondary">Save Note</button>
+                <button type="submit" name="action" value="Checked" class="btn btn-success">Mark as Checked</button>
+                <button type="submit" name="action" value="RequireRevision" class="btn btn-warning">Require Revision</button>
+                <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone" asp-route-projectMilestoneId="@Model.ProjectMilestoneId" class="btn btn-outline-primary ms-auto">Back to Milestone</a>
+            </div>
+        </form>
+    </div>
+</div>

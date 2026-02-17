@@ -518,10 +518,15 @@
                 <ul class="list-unstyled">
                     @foreach (var t in Model.Tasks)
                     {
-                        <li class="mb-2">
-                            <strong>@t.Name</strong>
-                            <div class="text-muted">@t.StartDate.ToString("yyyy-MM-dd") - @t.EndDate.ToString("yyyy-MM-dd")</div>
-                            <div>Assigned to: @t.AssignedMemberName ?? "(unassigned)"</div>
+                        <li class="mb-2 d-flex align-items-start gap-3">
+                            <div>
+                                <strong>@t.Name</strong>
+                                <div class="text-muted">@t.StartDate.ToString("yyyy-MM-dd") - @t.EndDate.ToString("yyyy-MM-dd")</div>
+                                <div>Assigned to: @t.AssignedMemberName ?? "(unassigned)"</div>
+                            </div>
+                            <div class="ms-auto">
+                                <a asp-area="ProjectManager" asp-controller="Project" asp-action="Task" asp-route-id="@t.Id" class="btn btn-sm btn-outline-primary">View Task</a>
+                            </div>
                         </li>
                     }
                 </ul>
