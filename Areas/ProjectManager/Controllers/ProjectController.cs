@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -223,11 +225,116 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         }
 
         [HttpGet]
-        public IActionResult Milestone(int projectMilestoneId)
+        public async Task<IActionResult> Milestone(int projectMilestoneId)
         {
-            ViewData["Title"] = "Milestone";
-            // empty placeholder for now
-            return View();
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var pmst = await _context.ProjectMilestones
+                .Include(p => p.Project)
+                .Include(p => p.Milestone)
+                .FirstOrDefaultAsync(p => p.Id == projectMilestoneId && p.Project != null && p.Project.ProjectManagerId == pm.Id);
+
+            if (pmst == null) return NotFound();
+
+            var projectId = pmst.ProjectId;
+
+            var tasks = await _context.ProjectTasks
+                .Where(t => t.ProjectMilestoneId == pmst.Id)
+                .ToListAsync();
+
+            var taskMembers = await _context.TaskMembers
+                .Where(tm => tasks.Select(t => t.Id).Contains(tm.ProjectTaskId))
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .ToListAsync();
+
+            var members = await _context.Members
+                .Where(m => m.ProjectId == projectId)
+                .Include(m => m.Employee)
+                .ToListAsync();
+
+            var vm = new project_lifecycle.ViewModels.ProjectManager.MilestoneViewModel
+            {
+                ProjectId = pmst.ProjectId,
+                ProjectName = pmst.Project != null ? pmst.Project.Name : string.Empty,
+                ProjectMilestoneId = pmst.Id,
+                MilestoneId = pmst.MilestoneId,
+                MilestoneName = pmst.Milestone != null ? pmst.Milestone.Name : string.Empty,
+                SequenceOrder = pmst.SequenceOrder,
+                Status = pmst.Status
+            };
+
+            vm.Tasks = tasks.Select(t => new project_lifecycle.ViewModels.ProjectManager.ProjectTaskItemViewModel
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Status = t.Status,
+                StartDate = t.StartDate,
+                EndDate = t.EndDate,
+                AssignedMemberName = taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)?.Member?.Employee != null ? string.Join(" ", new[] { taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.FirstName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.MiddleName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null
+            }).ToList();
+
+            vm.AvailableMembers = members.Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            {
+                Value = m.Id.ToString(),
+                Text = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A"
+            }).ToList();
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddTask(int projectMilestoneId, ProjectTask input, int assignedMemberId)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var pmst = await _context.ProjectMilestones.Include(p => p.Project).FirstOrDefaultAsync(p => p.Id == projectMilestoneId && p.Project != null && p.Project.ProjectManagerId == pm.Id);
+            if (pmst == null) return NotFound();
+
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Id == assignedMemberId && m.ProjectId == pmst.ProjectId);
+            if (member == null)
+            {
+                TempData["ErrorMessage"] = "Invalid member selected.";
+                return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
+            }
+
+            if (input.EndDate < input.StartDate)
+            {
+                TempData["ErrorMessage"] = "End date must be on or after start date.";
+                return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
+            }
+
+            var task = new ProjectTask
+            {
+                ProjectMilestoneId = pmst.Id,
+                Name = input.Name?.Trim() ?? string.Empty,
+                Input = input.Input,
+                Instructions = input.Instructions ?? string.Empty,
+                Notes = input.Notes,
+                Status = string.IsNullOrWhiteSpace(input.Status) ? "Pending" : input.Status,
+                StartDate = input.StartDate,
+                EndDate = input.EndDate,
+                ProjectManagerId = pm.Id,
+                DateCreated = DateTime.Now
+            };
+
+            _context.ProjectTasks.Add(task);
+            await _context.SaveChangesAsync();
+
+            var tm = new Models.TaskMember
+            {
+                ProjectTaskId = task.Id,
+                MemberId = member.Id,
+                DateCreated = DateTime.Now
+            };
+
+            _context.TaskMembers.Add(tm);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Task created and assigned.";
+            return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
         }
 
         [HttpPost]
@@ -458,6 +565,62 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             TempData["SuccessMessage"] = "Milestone removed from project.";
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UploadRichText(IFormFile upload)
+        {
+            try
+            {
+                if (upload == null || upload.Length == 0)
+                {
+                    return BadRequest(new { error = new { message = "No file uploaded." } });
+                }
+
+                const long maxFileSize = 10 * 1024 * 1024;
+                if (upload.Length > maxFileSize)
+                {
+                    return BadRequest(new { error = new { message = "File too large. Max size is 10 MB." } });
+                }
+
+                var allowedExtensions = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+                {
+                    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg",
+                    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".csv", ".zip"
+                };
+
+                var extension = Path.GetExtension(upload.FileName);
+                if (string.IsNullOrWhiteSpace(extension) || !allowedExtensions.Contains(extension))
+                {
+                    return BadRequest(new { error = new { message = "Unsupported file type." } });
+                }
+
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "editor");
+                if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
+
+                var safeOriginalName = Path.GetFileName(upload.FileName);
+                var fileName = $"{Guid.NewGuid()}_{safeOriginalName}";
+                var filePath = Path.Combine(uploadsDir, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await upload.CopyToAsync(stream);
+                }
+
+                var publicUrl = Url.Content($"~/uploads/editor/{fileName}") ?? $"/uploads/editor/{fileName}";
+                return Json(new
+                {
+                    url = publicUrl,
+                    fileName = safeOriginalName,
+                    isImage = upload.ContentType.StartsWith("image/", System.StringComparison.OrdinalIgnoreCase)
+                });
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in UploadRichText");
+                return StatusCode(500, new { error = new { message = "Upload failed." } });
+            }
         }
     }
 }

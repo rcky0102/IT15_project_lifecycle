@@ -19,7 +19,7 @@ namespace project_lifecycle.Models
         public string Name { get; set; } = string.Empty;
 
         [Column(TypeName = "nvarchar(max)")]
-        public string Input { get; set; } = string.Empty;
+        public string? Input { get; set; }
 
         [Column(TypeName = "nvarchar(max)")]
         public string Instructions { get; set; } = string.Empty;
