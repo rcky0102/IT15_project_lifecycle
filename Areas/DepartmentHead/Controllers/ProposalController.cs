@@ -61,7 +61,36 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             if (proposal.Employee == null || proposal.Employee.DepartmentId != dh.DepartmentId)
                 return Forbid();
 
+            var versions = await _context.ProjectProposalVersions
+                .Where(v => v.ProjectProposalId == proposal.Id)
+                .OrderByDescending(v => v.VersionNumber)
+                .ToListAsync();
+
+            ViewBag.ProjectProposalVersions = versions;
+
             return View(proposal);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Version(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (dh == null) return Forbid();
+
+            var version = await _context.ProjectProposalVersions
+                .Include(v => v.ProjectProposal)
+                .ThenInclude(p => p.Employee)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (version == null) return NotFound();
+
+            if (version.ProjectProposal == null || version.ProjectProposal.Employee == null || version.ProjectProposal.Employee.DepartmentId != dh.DepartmentId)
+                return Forbid();
+
+            return View(version);
         }
 
         [HttpPost]

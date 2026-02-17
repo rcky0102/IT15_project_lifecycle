@@ -1,0 +1,21 @@
+@model project_lifecycle.Models.ProjectProposalVersion
+@{
+    ViewData["Title"] = $"Version {Model?.VersionNumber} - {Model?.Title}";
+}
+
+<div class="dashboard-container py-4">
+    <div class="proposal-page-header">
+        <h1><i class="fas fa-file-alt"></i>&nbsp; Version @Model.VersionNumber</h1>
+        <p class="proposal-subtitle">@Model.Title — Saved @Model.DateCreated.ToString("yyyy-MM-dd HH:mm")</p>
+    </div>
+
+    <div class="proposal-detail-card">
+        <div class="proposal-detail-body">
+            @Html.Raw(Model.Input ?? string.Empty)
+        </div>
+
+        <div style="margin-top:1rem">
+            <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.ProjectProposalId" class="btn btn-secondary">Back to Proposal</a>
+        </div>
+    </div>
+</div>
