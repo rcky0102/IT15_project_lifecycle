@@ -1,0 +1,329 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model IEnumerable<project_lifecycle.Models.ProjectRole>
+@{
+    ViewData["Title"] = "Project Role Management";
+    Layout = "~/Areas/ProjectManager/Layout.cshtml";
+}
+
+<div class="container-fluid user-management-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center user-management-header">
+                <div>
+                    <h1 class="user-management-title">Project Role Management</h1>
+                    <p class="user-management-subtitle">Manage roles used in projects</p>
+                </div>
+                <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                    <i class="fas fa-user-tag"></i> Add Role
+                </button>
+            </div>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success-ocean alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="card users-card">
+                <div class="card-header users-card-header">
+                    <h5>
+                        <i class="fas fa-user-tag"></i>
+                        Existing Project Roles
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive users-table-wrapper">
+                            <table class="table table-users mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Date Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr class="user-row">
+                                            <td>
+                                                <div class="user-email">
+                                                    <i class="fas fa-user-tag text-muted"></i>
+                                                    <strong>@Html.DisplayFor(modelItem => item.Name)</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.Description))
+                                                {
+                                                    @Html.DisplayFor(modelItem => item.Description)
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No description</span>
+                                                }
+                                            </td>
+                                            <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <div class="btn-group-actions">
+                                                    <button type="button" class="btn-icon-edit" onclick="editRole(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')" title="Edit Role">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn-icon-delete" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')" title="Delete Role">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-tag fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No roles found</h5>
+                            <p class="text-muted">Create your first project role to get started.</p>
+                            <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                                <i class="fas fa-plus"></i> Add Role
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Role Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modal-modern">
+            <div class="modal-header modal-header-ocean">
+                <h5 class="modal-title" id="createRoleModalLabel">
+                    <i class="fas fa-user-tag"></i> Create New Project Role
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-body-custom">
+                <form id="createRoleForm">
+                    @Html.AntiForgeryToken()
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label-custom">Role Name</label>
+                                <input name="Name" class="form-control-custom" id="roleName" placeholder="Enter role name" />
+                                <span class="text-danger" data-valmsg-for="Name"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label-custom">Description</label>
+                                <textarea name="Description" class="form-control-custom" id="roleDescription" rows="4" placeholder="Enter role description (optional)"></textarea>
+                                <span class="text-danger" data-valmsg-for="Description"></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer modal-footer-custom">
+                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn-save-user" id="saveRoleBtn">
+                    <i class="fas fa-save"></i> Create Role
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modal-modern">
+            <div class="modal-header modal-header-ocean">
+                <h5 class="modal-title" id="editRoleModalLabel">
+                    <i class="fas fa-edit"></i> Edit Project Role
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-body-custom">
+                <form id="editRoleForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editRoleId" />
+                    <input type="hidden" id="editRoleDateCreated" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label-custom">Role Name</label>
+                                <input name="Name" class="form-control-custom" id="editRoleName" placeholder="Enter role name" />
+                                <span class="text-danger" data-valmsg-for="Name"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label-custom">Description</label>
+                                <textarea name="Description" class="form-control-custom" id="editRoleDescription" rows="4" placeholder="Enter role description (optional)"></textarea>
+                                <span class="text-danger" data-valmsg-for="Description"></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer modal-footer-custom">
+                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn-save-user" id="updateRoleBtn">
+                    <i class="fas fa-save"></i> Update Role
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteRoleModal" tabindex="-1" aria-labelledby="deleteRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content modal-modern">
+            <div class="modal-header modal-header-ocean">
+                <h5 class="modal-title" id="deleteRoleModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-body-custom">
+                <div class="alert alert-danger-custom" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>Warning:</strong> Are you sure you want to delete this project role? This action cannot be undone.
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Role Name:</strong> <span id="deleteRoleName"></span>
+                </div>
+                
+                <form id="deleteRoleForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="deleteRoleId" />
+                </form>
+            </div>
+            <div class="modal-footer modal-footer-custom">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteRoleBtn">
+                    <i class="fas fa-trash"></i> Delete Role
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <style>
+        /* reuse styles from user management */
+    </style>
+    <script>
+        $(document).ready(function() {
+            // Create role
+            $('#saveRoleBtn').click(function() {
+                var form = $('#createRoleForm');
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+                var data = {
+                    Name: $('#roleName').val(),
+                    Description: $('#roleDescription').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("CreateProjectRole", "Management", new { area = "ProjectManager" })',
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    data: data,
+                    success: function(res) {
+                        if (res.success) location.reload();
+                        else if (res.errors) {
+                            $('.text-danger').text('');
+                            for (var key in res.errors) {
+                                var msgs = res.errors[key];
+                                $('[data-valmsg-for="' + key.split('.').pop() + '"]').text(msgs.join(', '));
+                            }
+                        }
+                    }
+                });
+            });
+
+            $('#createRoleModal').on('hidden.bs.modal', function () { $('#createRoleForm')[0].reset(); $('.text-danger').text(''); });
+
+            window.editRole = function(id, name, description) {
+                $('#editRoleId').val(id);
+                $('#editRoleName').val(name);
+                $('#editRoleDescription').val(description);
+                $('#editRoleModal').modal('show');
+            };
+
+            $('#updateRoleBtn').click(function() {
+                var form = $('#editRoleForm');
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+                var id = $('#editRoleId').val();
+                var data = {
+                    Id: id,
+                    Name: $('#editRoleName').val(),
+                    Description: $('#editRoleDescription').val(),
+                    DateCreated: $('#editRoleDateCreated').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("EditProjectRole", "Management", new { area = "ProjectManager" })',
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    data: data,
+                    success: function(res) {
+                        if (res.success) location.reload();
+                        else if (res.errors) {
+                            $('.text-danger').text('');
+                            for (var key in res.errors) {
+                                var msgs = res.errors[key];
+                                $('[data-valmsg-for="' + key.split('.').pop() + '"]').text(msgs.join(', '));
+                            }
+                        }
+                    }
+                });
+            });
+
+            window.confirmDelete = function(id, name) {
+                $('#deleteRoleId').val(id);
+                $('#deleteRoleName').text(name);
+                $('#deleteRoleModal').modal('show');
+            };
+
+            $('#confirmDeleteRoleBtn').click(function() {
+                var form = $('#deleteRoleForm');
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+                var id = $('#deleteRoleId').val();
+
+                $.ajax({
+                    url: '@Url.Action("DeleteProjectRole", "Management", new { area = "ProjectManager" })',
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    data: { id: id },
+                    success: function(res) {
+                        if (res.success) location.reload();
+                        else alert(res.message || 'Unable to delete');
+                    }
+                });
+            });
+        });
+    </script>
+}

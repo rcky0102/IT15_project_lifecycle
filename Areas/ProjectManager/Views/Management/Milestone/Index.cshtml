@@ -1,0 +1,333 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model IEnumerable<project_lifecycle.Models.Milestone>
+@{
+    ViewData["Title"] = "Milestone Management";
+    Layout = "~/Areas/ProjectManager/Layout.cshtml";
+}
+
+<div class="container-fluid user-management-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center user-management-header">
+                <div>
+                    <h1 class="user-management-title">Milestone Management</h1>
+                    <p class="user-management-subtitle">Manage project milestones</p>
+                </div>
+                <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createMilestoneModal">
+                    <i class="fas fa-flag"></i> Add Milestone
+                </button>
+            </div>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success-ocean alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="card users-card">
+                <div class="card-header users-card-header">
+                    <h5>
+                        <i class="fas fa-flag"></i>
+                        Existing Milestones
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive users-table-wrapper">
+                            <table class="table table-users mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Date Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr class="user-row">
+                                            <td>
+                                                <div class="user-email">
+                                                    <i class="fas fa-flag text-muted"></i>
+                                                    <strong>@Html.DisplayFor(modelItem => item.Name)</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.Description))
+                                                {
+                                                    @Html.DisplayFor(modelItem => item.Description)
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No description</span>
+                                                }
+                                            </td>
+                                            <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <div class="btn-group-actions">
+                                                    <button type="button" class="btn-icon-edit" onclick="editMilestone(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')" title="Edit Milestone">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn-icon-delete" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')" title="Delete Milestone">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-flag fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No milestones found</h5>
+                            <p class="text-muted">Create your first milestone to get started.</p>
+                            <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createMilestoneModal">
+                                <i class="fas fa-plus"></i> Add Milestone
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Milestone Modal -->
+<div class="modal fade" id="createMilestoneModal" tabindex="-1" aria-labelledby="createMilestoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modal-modern">
+            <div class="modal-header modal-header-ocean">
+                <h5 class="modal-title" id="createMilestoneModalLabel">
+                    <i class="fas fa-flag"></i> Create New Milestone
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-body-custom">
+                <form id="createMilestoneForm">
+                    @Html.AntiForgeryToken()
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label-custom">Milestone Name</label>
+                                <input name="Name" class="form-control-custom" id="milestoneName" placeholder="Enter milestone name" />
+                                <span class="text-danger" data-valmsg-for="Name"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label-custom">Description</label>
+                                <textarea name="Description" class="form-control-custom" id="milestoneDescription" rows="4" placeholder="Enter milestone description (optional)"></textarea>
+                                <span class="text-danger" data-valmsg-for="Description"></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer modal-footer-custom">
+                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn-save-user" id="saveMilestoneBtn">
+                    <i class="fas fa-save"></i> Create Milestone
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Milestone Modal -->
+<div class="modal fade" id="editMilestoneModal" tabindex="-1" aria-labelledby="editMilestoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content modal-modern">
+            <div class="modal-header modal-header-ocean">
+                <h5 class="modal-title" id="editMilestoneModalLabel">
+                    <i class="fas fa-edit"></i> Edit Milestone
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-body-custom">
+                <form id="editMilestoneForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editMilestoneId" />
+                    <input type="hidden" id="editDateCreated" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label-custom">Milestone Name</label>
+                                <input name="Name" class="form-control-custom" id="editMilestoneName" placeholder="Enter milestone name" />
+                                <span class="text-danger" data-valmsg-for="Name"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label-custom">Description</label>
+                                <textarea name="Description" class="form-control-custom" id="editMilestoneDescription" rows="4" placeholder="Enter milestone description (optional)"></textarea>
+                                <span class="text-danger" data-valmsg-for="Description"></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer modal-footer-custom">
+                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn-save-user" id="updateMilestoneBtn">
+                    <i class="fas fa-save"></i> Update Milestone
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteMilestoneModal" tabindex="-1" aria-labelledby="deleteMilestoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content modal-modern">
+            <div class="modal-header modal-header-ocean">
+                <h5 class="modal-title" id="deleteMilestoneModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-body-custom">
+                <div class="alert alert-danger-custom" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>Warning:</strong> Are you sure you want to delete this milestone? This action cannot be undone.
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Milestone Name:</strong> <span id="deleteMilestoneName"></span>
+                </div>
+                
+                <form id="deleteMilestoneForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="deleteMilestoneId" />
+                </form>
+            </div>
+            <div class="modal-footer modal-footer-custom">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> Delete Milestone
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <style>
+        /* keep the same styling as SuperAdmin's management UI by reusing classes */
+    </style>
+    <script>
+        $(document).ready(function() {
+            // Create milestone
+            $('#saveMilestoneBtn').click(function() {
+                var form = $('#createMilestoneForm');
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+                var data = {
+                    Name: $('#milestoneName').val(),
+                    Description: $('#milestoneDescription').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("CreateMilestone", "Management", new { area = "ProjectManager" })',
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    data: data,
+                    success: function(res) {
+                        if (res.success) location.reload();
+                        else if (res.errors) {
+                            // simple display
+                            $('.text-danger').text('');
+                            for (var key in res.errors) {
+                                var msgs = res.errors[key];
+                                $('[data-valmsg-for="' + key.split('.').pop() + '"]').text(msgs.join(', '));
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Reset form when modal hidden
+            $('#createMilestoneModal').on('hidden.bs.modal', function () { $('#createMilestoneForm')[0].reset(); $('.text-danger').text(''); });
+
+            // Edit milestone
+            window.editMilestone = function(id, name, description) {
+                $('#editMilestoneId').val(id);
+                $('#editMilestoneName').val(name);
+                $('#editMilestoneDescription').val(description);
+                $('#editMilestoneModal').modal('show');
+            };
+
+            $('#updateMilestoneBtn').click(function() {
+                var form = $('#editMilestoneForm');
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+                var id = $('#editMilestoneId').val();
+                var data = {
+                    Id: id,
+                    Name: $('#editMilestoneName').val(),
+                    Description: $('#editMilestoneDescription').val(),
+                    DateCreated: $('#editDateCreated').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("EditMilestone", "Management", new { area = "ProjectManager" })',
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    data: data,
+                    success: function(res) {
+                        if (res.success) location.reload();
+                        else if (res.errors) {
+                            $('.text-danger').text('');
+                            for (var key in res.errors) {
+                                var msgs = res.errors[key];
+                                $('[data-valmsg-for="' + key.split('.').pop() + '"]').text(msgs.join(', '));
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Confirm delete
+            window.confirmDelete = function(id, name) {
+                $('#deleteMilestoneId').val(id);
+                $('#deleteMilestoneName').text(name);
+                $('#deleteMilestoneModal').modal('show');
+            };
+
+            $('#confirmDeleteBtn').click(function() {
+                var form = $('#deleteMilestoneForm');
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+                var id = $('#deleteMilestoneId').val();
+
+                $.ajax({
+                    url: '@Url.Action("DeleteMilestone", "Management", new { area = "ProjectManager" })',
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    data: { id: id },
+                    success: function(res) {
+                        if (res.success) location.reload();
+                        else alert(res.message || 'Unable to delete');
+                    }
+                });
+            });
+        });
+    </script>
+}

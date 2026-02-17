@@ -36,6 +36,26 @@
                     <li class="nav-item">
                         <a href="@Url.Action("Index", "Dashboard", new { area = "ProjectManager" })" class="nav-link"><i class="fas fa-tachometer-alt"></i><span class="nav-text">Dashboard</span></a>
                     </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("Index", "Project", new { area = "ProjectManager" })" class="nav-link"><i class="fas fa-briefcase"></i><span class="nav-text">Projects</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" data-bs-toggle="collapse" href="#managementMenu" role="button" aria-expanded="false" aria-controls="managementMenu">
+                            <i class="fas fa-cogs"></i>
+                            <span class="nav-text">Management</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </a>
+                        <div class="collapse" id="managementMenu">
+                            <ul class="nav-list sub-nav">
+                                <li class="nav-item">
+                                    <a href="@Url.Action("Milestone", "Management", new { area = "ProjectManager" })" class="nav-link"><span class="nav-text">Milestones</span></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="@Url.Action("ProjectRole", "Management", new { area = "ProjectManager" })" class="nav-link"><span class="nav-text">Project Roles</span></a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
                 </ul>
             </nav>
             <div class="sidebar-footer">

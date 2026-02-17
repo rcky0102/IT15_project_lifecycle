@@ -1,0 +1,190 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model project_lifecycle.ViewModels.ProjectManager.ProjectIndexViewModel
+@{
+    ViewData["Title"] = "My Projects";
+}
+
+<!-- Include area-specific styles -->
+<link rel="stylesheet" href="~/css/proposal.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/user-management.css" asp-append-version="true" />
+
+<div class="dashboard-container py-4">
+    <div class="proposal-page-header">
+        <h1><i class="fas fa-diagram-project"></i>&nbsp; My Projects</h1>
+        <p class="proposal-subtitle">Projects assigned to you</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="proposal-alert success"><i class="fas fa-check-circle"></i> <span>@TempData["SuccessMessage"]</span></div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="proposal-alert error"><i class="fas fa-exclamation-circle"></i> <span>@TempData["ErrorMessage"]</span></div>
+    }
+
+    <div class="proposal-table-section">
+        <div class="proposal-table-header">
+            <h3><i class="fas fa-list-check"></i> Assigned Projects <span class="proposal-count-badge">@Model.Projects.Count</span></h3>
+        </div>
+
+        <div class="proposal-table-card">
+            @if (Model.Projects.Any())
+            {
+                <div class="list-group">
+                    @foreach (var project in Model.Projects)
+                    {
+                        <div class="list-group-item mb-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5>@project.Name</h5>
+                                    <div class="text-muted">Proposal: @project.ProposalTitle</div>
+                                    <div class="text-muted">Timeline: @project.StartDate.ToString("yyyy-MM-dd") - @project.EndDate.ToString("yyyy-MM-dd")</div>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">Members: @project.Members.Count</small>
+                                </div>
+                            </div>
+
+                            <hr />
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Members</h6>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal-@project.Id">
+                                            Add Member
+                                        </button>
+                                    </div>
+                                    <ul class="list-unstyled">
+                                        @foreach (var m in project.Members)
+                                        {
+                                            <li class="d-flex justify-content-between align-items-center">
+                                                <span>@m.EmployeeName <span class="badge bg-secondary">@m.ProjectRoleName</span></span>
+                                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" class="ms-2">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="memberId" value="@m.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                                </form>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Milestones</h6>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMilestoneModal-@project.Id">
+                                            Add Milestone
+                                        </button>
+                                    </div>
+                                    <ol>
+                                        @foreach (var ms in project.Milestones.OrderBy(m => m.SequenceOrder))
+                                        {
+                                            <li class="d-flex justify-content-between align-items-center">
+                                                <span>@ms.MilestoneName <small class="text-muted">(@ms.Status)</small></span>
+                                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" class="ms-2">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                                </form>
+                                            </li>
+                                        }
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="addMemberModal-@project.Id" tabindex="-1" aria-labelledby="addMemberModalLabel-@project.Id" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMember" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="ProjectId" value="@project.Id" />
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="addMemberModalLabel-@project.Id">Add Member</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Employee</label>
+                                                    <select name="EmployeeId" class="form-select" required>
+                                                        <option value="">-- Select Employee --</option>
+                                                        @foreach (var e in Model.AvailableEmployees)
+                                                        {
+                                                            <option value="@e.Value">@e.Text</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Role</label>
+                                                    <select name="ProjectRoleId" class="form-select" required>
+                                                        <option value="">-- Select Role --</option>
+                                                        @foreach (var r in Model.AvailableProjectRoles)
+                                                        {
+                                                            <option value="@r.Value">@r.Text</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button class="btn btn-primary" type="submit">Add Member</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="addMilestoneModal-@project.Id" tabindex="-1" aria-labelledby="addMilestoneModalLabel-@project.Id" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMilestone" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="ProjectId" value="@project.Id" />
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="addMilestoneModalLabel-@project.Id">Add Milestone</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Milestone</label>
+                                                    <select name="MilestoneId" class="form-select" required>
+                                                        <option value="">-- Select Milestone --</option>
+                                                        @foreach (var t in Model.AvailableMilestones)
+                                                        {
+                                                            <option value="@t.Value">@t.Text</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Sequence Order</label>
+                                                    <input name="SequenceOrder" type="number" min="1" class="form-control" placeholder="Order" value="@((project.Milestones.Any() ? project.Milestones.Max(m => m.SequenceOrder) + 1 : 1))" required />
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button class="btn btn-primary" type="submit">Add Milestone</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="proposal-empty-state">
+                    <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+                    <div class="empty-title">No assigned projects</div>
+                    <div class="empty-text">Projects assigned to you by the department head will appear here.</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
