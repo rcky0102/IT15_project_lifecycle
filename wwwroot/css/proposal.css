@@ -434,6 +434,18 @@
     box-shadow: 0 4px 12px rgba(0,105,148,0.25);
 }
 
+/* Action cell layout: align action buttons horizontally */
+.proposal-actions-td {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.proposal-actions-td form {
+    margin: 0; /* let flex gap handle spacing */
+}
+
 /* Empty state */
 .proposal-empty-state {
     padding: 3.5rem 1.5rem;
@@ -682,4 +694,50 @@
         flex-direction: column;
         align-items: flex-start;
     }
+}
+
+/* ===== Archive controls & archived row styling ===== */
+.proposal-archive-btn,
+.proposal-unarchive-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(15,23,42,0.06);
+    background: #fff;
+    color: #374151;
+    font-size: 0.95rem;
+    transition: all 0.18s ease;
+    cursor: pointer;
+}
+
+.proposal-archive-btn:hover {
+    background: linear-gradient(135deg, #fff7ed, #fff1e6);
+    color: #92400e;
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(249,115,22,0.08);
+}
+
+.proposal-unarchive-btn:hover {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    color: #065f46;
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(16,185,129,0.08);
+}
+
+.proposal-row.archived {
+    opacity: 0.65;
+    font-style: italic;
+    background: linear-gradient(90deg, rgba(203,213,225,0.03), rgba(203,213,225,0.01));
+}
+
+.proposal-row.archived .proposal-status {
+    opacity: 0.85;
+}
+
+.proposal-row.archived .proposal-view-btn {
+    filter: grayscale(30%);
+    opacity: 0.9;
 }

@@ -23,7 +23,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(string archiveFilter = "active")
         {
             ViewData["Title"] = "Proposals";
             
@@ -49,10 +49,22 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
                 _logger.LogInformation($"Found employee: {employee.Id}");
 
-                var proposals = _context.ProjectProposals
-                    .Where(p => p.EmployeeId == employee.Id)
-                    .OrderByDescending(p => p.DateCreated)
-                    .ToList();
+                // archiveFilter: "all" | "active" | "inactive" (default: active)
+                IQueryable<ProjectProposal> query = _context.ProjectProposals.Where(p => p.EmployeeId == employee.Id);
+                if (!string.Equals(archiveFilter, "all", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (string.Equals(archiveFilter, "inactive", StringComparison.OrdinalIgnoreCase))
+                    {
+                        query = query.Where(p => p.IsArchived);
+                    }
+                    else // active
+                    {
+                        query = query.Where(p => !p.IsArchived);
+                    }
+                }
+
+                var proposals = query.OrderByDescending(p => p.DateCreated).ToList();
+                ViewData["ArchiveFilter"] = archiveFilter;
 
                 _logger.LogInformation($"Found {proposals.Count} proposals for employee {employee.Id}");
 
@@ -449,6 +461,64 @@ namespace project_lifecycle.EmployeeArea.Controllers
             {
                 _logger.LogError(ex, "Error loading proposal note {Id}", id);
                 return StatusCode(500);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Archive(int id)
+        {
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId)) return Challenge();
+
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+                if (employee == null) return Forbid();
+
+                var proposal = await _context.ProjectProposals.FirstOrDefaultAsync(p => p.Id == id && p.EmployeeId == employee.Id);
+                if (proposal == null) return NotFound();
+
+                proposal.IsArchived = true;
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Proposal archived.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error archiving proposal {Id}", id);
+                TempData["ErrorMessage"] = "Could not archive proposal.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Unarchive(int id)
+        {
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId)) return Challenge();
+
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+                if (employee == null) return Forbid();
+
+                var proposal = await _context.ProjectProposals.FirstOrDefaultAsync(p => p.Id == id && p.EmployeeId == employee.Id);
+                if (proposal == null) return NotFound();
+
+                proposal.IsArchived = false;
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Proposal restored from archive.";
+                return RedirectToAction("Index", new { archiveFilter = "inactive" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unarchiving proposal {Id}", id);
+                TempData["ErrorMessage"] = "Could not restore proposal.";
+                return RedirectToAction("Index");
             }
         }
     }

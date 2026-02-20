@@ -6,6 +6,10 @@
 @{
 }
 
+@{
+    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active"; // active|inactive|all
+}
+
 <div class="dashboard-container pb-4">
 
     <!-- ===== Search & Filters ===== -->
@@ -16,7 +20,7 @@
                 <input id="proposalSearch" type="text" class="proposal-search-input" placeholder="Search by title or content…" autocomplete="off" />
             </div>
             <div class="proposal-filter-wrap">
-                <select id="statusFilter" class="proposal-filter-select">
+                    <select id="statusFilter" class="proposal-filter-select">
                     <option value="">All Statuses</option>
                     <option value="Pending">Pending</option>
                     <option value="Approved">Approved</option>
@@ -24,6 +28,13 @@
                     <option value="Requires Revision">Requires Revision</option>
                 </select>
             </div>
+                <div class="proposal-filter-wrap">
+                    <select id="archiveFilter" class="proposal-filter-select">
+                        @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                        @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                        @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+                    </select>
+                </div>
         </div>
     </div>
 
@@ -82,10 +93,11 @@
                         <tbody id="proposalsBody">
                             @foreach (var proposal in Model)
                             {
-                                <tr class="proposal-row"
+                                <tr class="proposal-row @(proposal.IsArchived ? "archived" : "")"
                                     data-title="@proposal.Title.ToLower()"
                                     data-preview="@GetInputPreview(proposal.Input).ToLower()"
-                                    data-status="@proposal.Status">
+                                    data-status="@proposal.Status"
+                                    data-archived="@(proposal.IsArchived.ToString().ToLower())">
                                     <td class="proposal-title-cell">@proposal.Title</td>
                                     <td>@GetInputPreview(proposal.Input)</td>
                                     <td class="proposal-date">@proposal.DateCreated.ToString("yyyy-MM-dd")</td>
@@ -95,10 +107,26 @@
                                             @proposal.Status
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="proposal-actions-td">
                                         <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id" class="proposal-view-btn" title="View details">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        @if (!proposal.IsArchived)
+                                        {
+                                            <form asp-area="Employee" asp-controller="Proposal" asp-action="Archive" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@proposal.Id" />
+                                                <button type="submit" class="proposal-archive-btn" title="Archive"><i class="fas fa-archive"></i></button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-area="Employee" asp-controller="Proposal" asp-action="Unarchive" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@proposal.Id" />
+                                                <button type="submit" class="proposal-unarchive-btn" title="Restore"><i class="fas fa-box-open"></i></button>
+                                            </form>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -226,6 +254,14 @@
 
     if (searchInput) searchInput.addEventListener('input', applyFilters);
     if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+    const archiveSelect = document.getElementById('archiveFilter');
+    if (archiveSelect) archiveSelect.addEventListener('change', () => {
+        const url = new URL(window.location.href);
+        // default 'active' is the default server behavior; remove param for active
+        if (archiveSelect.value === 'active') url.searchParams.delete('archiveFilter');
+        else url.searchParams.set('archiveFilter', archiveSelect.value);
+        window.location.href = url.toString();
+    });
 
     // Initial render
     filteredRows = allRows.slice();
