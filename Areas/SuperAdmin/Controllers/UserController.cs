@@ -855,6 +855,40 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     }
                 }
 
+                // Update password if provided (admin reset)
+                if (!string.IsNullOrEmpty(model.Password))
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    var pwdResult = await _userManager.ResetPasswordAsync(user, token, model.Password);
+                    if (!pwdResult.Succeeded)
+                    {
+                        foreach (var error in pwdResult.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+
+                        // Return validation errors for AJAX requests
+                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        {
+                            var errors = ModelState.ToDictionary(
+                                kvp => kvp.Key,
+                                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                            );
+                            return Json(new { success = false, errors = errors });
+                        }
+
+                        // For non-AJAX, reload dropdowns and return to Index with model errors
+                        model.Departments = await _context.Departments.ToListAsync();
+                        model.Positions = await _context.Positions.ToListAsync();
+                        var viewModel = new UserListViewModel
+                        {
+                            CreateUserViewModel = model,
+                            Users = await GetUserListAsync()
+                        };
+                        return View("Index", viewModel);
+                    }
+                }
+
                 await _context.SaveChangesAsync();
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")

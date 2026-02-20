@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj": {}
+    "c:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj": {
+    "c:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj",
+        "projectUniqueName": "c:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj",
         "projectName": "project_lifecycle",
-        "projectPath": "C:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj",
+        "projectPath": "c:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj",
         "packagesPath": "C:\\Users\\Asus\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\obj\\",
+        "outputPath": "c:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
