@@ -388,6 +388,11 @@
     color: #1e40af;
 }
 
+.proposal-status.status-requiresrevision {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+}
+
 .proposal-status.status-default {
     background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
     color: #475569;
@@ -404,6 +409,7 @@
 .status-approved .status-dot { background: #10b981; }
 .status-rejected .status-dot { background: #ef4444; }
 .status-inprogress .status-dot { background: #3b82f6; }
+.status-requiresrevision .status-dot { background: #f59e0b; }
 .status-default .status-dot { background: #94a3b8; }
 
 /* View action */
@@ -499,5 +505,181 @@
 @media (max-width: 576px) {
     .proposal-page-header h1 {
         font-size: 1.2rem;
+    }
+}
+
+/* ===== Search & Filters Bar ===== */
+.proposal-filters-bar {
+    background: white;
+    border-radius: 20px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 24px rgba(0,105,148,0.08);
+    border: 1px solid rgba(0,105,148,0.06);
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.3s ease;
+}
+
+.proposal-filters-bar:hover {
+    box-shadow: 0 8px 32px rgba(0,105,148,0.13);
+}
+
+.proposal-filters-inner {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.proposal-search-wrap {
+    position: relative;
+    flex: 1 1 260px;
+}
+
+.proposal-search-icon {
+    position: absolute;
+    left: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ocean-light);
+    font-size: .85rem;
+    pointer-events: none;
+}
+
+.proposal-search-input {
+    width: 100%;
+    padding: .7rem 1rem .7rem 2.35rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: .92rem;
+    background: #fff;
+    color: #1e293b;
+    transition: border-color .25s ease, box-shadow .25s ease;
+    outline: none;
+}
+
+.proposal-search-input:focus {
+    border-color: var(--ocean-light);
+    box-shadow: 0 0 0 4px rgba(76,163,221,0.12);
+}
+
+.proposal-search-input::placeholder {
+    color: #9ca3af;
+}
+
+.proposal-filter-wrap {
+    flex: 0 1 200px;
+}
+
+.proposal-filter-select {
+    width: 100%;
+    padding: .7rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: .92rem;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    outline: none;
+    transition: border-color .25s ease, box-shadow .25s ease;
+    appearance: auto;
+}
+
+.proposal-filter-select:focus {
+    border-color: var(--ocean-light);
+    box-shadow: 0 0 0 4px rgba(76,163,221,0.12);
+}
+
+/* ===== Pagination ===== */
+.proposal-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: .85rem 1.25rem;
+    border-top: 2px solid rgba(0,105,148,0.06);
+    margin-top: .25rem;
+}
+
+.pagination-info {
+    font-size: .82rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 .6rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    color: #374151;
+    font-size: .83rem;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+    line-height: 1;
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+    background: linear-gradient(135deg, #f0f7fc 0%, #e8f1f8 100%);
+    border-color: var(--ocean-light);
+    color: var(--ocean-deep);
+}
+
+.page-btn.active {
+    background: var(--ocean-gradient);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,105,148,0.25);
+}
+
+.page-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.page-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 36px;
+    color: #94a3b8;
+    font-size: .85rem;
+    user-select: none;
+}
+
+@media (max-width: 768px) {
+    .proposal-filters-bar {
+        padding: .85rem 1rem;
+        border-radius: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .proposal-filters-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .proposal-filter-wrap {
+        flex: 1 1 100%;
+    }
+
+    .proposal-pagination {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

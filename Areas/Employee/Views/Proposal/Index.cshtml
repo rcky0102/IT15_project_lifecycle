@@ -6,14 +6,26 @@
 @{
 }
 
-<div class="dashboard-container py-4">
+<div class="dashboard-container pb-4">
 
-    <!-- ===== Page Header ===== -->
-    <div class="proposal-page-header">
-        <h1><i class="fas fa-lightbulb"></i>&nbsp; @(ViewData["Title"] ?? "Proposals")</h1>
-        <p class="proposal-subtitle">View and manage your project proposals</p>
+    <!-- ===== Search & Filters ===== -->
+    <div class="proposal-filters-bar">
+        <div class="proposal-filters-inner">
+            <div class="proposal-search-wrap">
+                <i class="fas fa-search proposal-search-icon"></i>
+                <input id="proposalSearch" type="text" class="proposal-search-input" placeholder="Search by title or content…" autocomplete="off" />
+            </div>
+            <div class="proposal-filter-wrap">
+                <select id="statusFilter" class="proposal-filter-select">
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Requires Revision">Requires Revision</option>
+                </select>
+            </div>
+        </div>
     </div>
-
 
     <!-- Details are on a dedicated page now; removed modal and inline scripts -->
 
@@ -43,10 +55,10 @@
 
 <!-- ===== Proposals Table ===== -->
 <div class="proposal-table-section">
-        <div class="proposal-table-header">
+        <div class="proposal-table-header px-4">
             <h3>
                 <i class="fas fa-folder-open"></i> My Proposals
-                <span class="proposal-count-badge">@Model.Count</span>
+                <span class="proposal-count-badge" id="visibleCount">@Model.Count</span>
             </h3>
             <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="btn btn-ocean">
                 <i class="fas fa-plus"></i> New Proposal
@@ -57,7 +69,7 @@
             @if (Model.Any())
             {
                 <div class="proposal-table-responsive">
-                    <table class="proposal-table">
+                    <table class="proposal-table" id="proposalsTable">
                         <thead>
                             <tr>
                                 <th>Title</th>
@@ -67,14 +79,14 @@
                                 <th style="width:50px;"></th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="proposalsBody">
                             @foreach (var proposal in Model)
                             {
-                                <tr>
-                                    <td class="proposal-title-cell">
-                                        @proposal.Title
-                                        
-                                    </td>
+                                <tr class="proposal-row"
+                                    data-title="@proposal.Title.ToLower()"
+                                    data-preview="@GetInputPreview(proposal.Input).ToLower()"
+                                    data-status="@proposal.Status">
+                                    <td class="proposal-title-cell">@proposal.Title</td>
                                     <td>@GetInputPreview(proposal.Input)</td>
                                     <td class="proposal-date">@proposal.DateCreated.ToString("yyyy-MM-dd")</td>
                                     <td>
@@ -92,6 +104,18 @@
                             }
                         </tbody>
                     </table>
+                    <!-- No-results row (shown by JS) -->
+                    <div id="noFilterResults" class="proposal-empty-state" style="display:none;">
+                        <div class="empty-icon"><i class="fas fa-search"></i></div>
+                        <div class="empty-title">No matching proposals</div>
+                        <div class="empty-text">Try adjusting your search or filter.</div>
+                    </div>
+                </div>
+
+                <!-- ===== Pagination ===== -->
+                <div class="proposal-pagination" id="paginationContainer">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination-controls" id="paginationControls"></div>
                 </div>
             }
             else
@@ -108,6 +132,107 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+(function () {
+    const PAGE_SIZE = 8;
+    let currentPage = 1;
+    let filteredRows = [];
+
+    const searchInput   = document.getElementById('proposalSearch');
+    const statusSelect  = document.getElementById('statusFilter');
+    const allRows       = Array.from(document.querySelectorAll('.proposal-row'));
+    const noResults     = document.getElementById('noFilterResults');
+    const countBadge    = document.getElementById('visibleCount');
+    const pageInfo      = document.getElementById('paginationInfo');
+    const pageControls  = document.getElementById('paginationControls');
+
+    function applyFilters() {
+        const query  = (searchInput?.value ?? '').toLowerCase().trim();
+        const status = statusSelect?.value ?? '';
+
+        filteredRows = allRows.filter(row => {
+            const titleMatch   = !query  || row.dataset.title.includes(query) || row.dataset.preview.includes(query);
+            const statusMatch  = !status || row.dataset.status === status;
+            return titleMatch && statusMatch;
+        });
+
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        const total = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end   = start + PAGE_SIZE;
+
+        // Hide all, then show page slice
+        allRows.forEach(r => r.style.display = 'none');
+        filteredRows.forEach((r, i) => {
+            r.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        // No-results state
+        if (noResults) noResults.style.display = total === 0 ? '' : 'none';
+
+        // Badge
+        if (countBadge) countBadge.textContent = total;
+
+        // Pagination info
+        if (pageInfo) {
+            if (total === 0) {
+                pageInfo.textContent = '';
+            } else {
+                const from = start + 1;
+                const to   = Math.min(end, total);
+                pageInfo.textContent = `Showing ${from}–${to} of ${total}`;
+            }
+        }
+
+        // Pagination buttons
+        if (pageControls) {
+            pageControls.innerHTML = '';
+
+            const makeBtn = (label, page, disabled, active) => {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn' + (active ? ' active' : '');
+                btn.innerHTML = label;
+                btn.disabled  = disabled;
+                btn.addEventListener('click', () => { currentPage = page; render(); });
+                return btn;
+            };
+
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
+
+            const window = 2;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - window && p <= currentPage + window)) {
+                    pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                } else if (p === currentPage - window - 1 || p === currentPage + window + 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'page-ellipsis';
+                    ellipsis.textContent = '…';
+                    pageControls.appendChild(ellipsis);
+                }
+            }
+
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
+        }
+    }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+
+    // Initial render
+    filteredRows = allRows.slice();
+    render();
+})();
+</script>
+}
 
 @functions {
     private string GetInputPreview(string? html)
