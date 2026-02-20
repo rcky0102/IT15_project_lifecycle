@@ -280,6 +280,12 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     .ToListAsync();
 
                 ViewBag.ProjectProposalVersions = versions;
+                var noteVersions = await _context.ProposalNoteVersions
+                    .Where(n => n.ProjectProposalId == proposal.Id)
+                    .OrderByDescending(n => n.VersionNumber)
+                    .ToListAsync();
+
+                ViewBag.ProposalNoteVersions = noteVersions;
 
                 return View(proposal);
             }
@@ -416,6 +422,32 @@ namespace project_lifecycle.EmployeeArea.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading proposal version {Id}", id);
+                return StatusCode(500);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Note(int id)
+        {
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId)) return Challenge();
+
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+                if (employee == null) return Forbid();
+
+                var note = await _context.ProposalNoteVersions
+                    .Include(n => n.ProjectProposal)
+                    .FirstOrDefaultAsync(n => n.Id == id && n.ProjectProposal.EmployeeId == employee.Id);
+
+                if (note == null) return NotFound();
+
+                return View(note);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading proposal note {Id}", id);
                 return StatusCode(500);
             }
         }

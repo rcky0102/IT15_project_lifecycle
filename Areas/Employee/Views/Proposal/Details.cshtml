@@ -38,7 +38,7 @@ else
             </div>
 
             <div class="proposal-versions mt-4">
-                <h5>Versions</h5>
+                <h5>Versions <a asp-area="Employee" asp-controller="Proposal" asp-action="Notes" asp-route-id="@Model.Id" class="ms-2">View All Notes</a></h5>
                 @{ var versions = ViewBag.ProjectProposalVersions as List<project_lifecycle.Models.ProjectProposalVersion> ?? new List<project_lifecycle.Models.ProjectProposalVersion>(); }
                 <div class="mt-2">
                     <div class="p-2 border rounded bg-light mb-2">
@@ -60,6 +60,44 @@ else
                     else
                     {
                         <div class="small text-muted">No previous versions.</div>
+                    }
+                </div>
+            </div>
+            
+            <div class="proposal-notes mt-4">
+                <h5>Notes</h5>
+                @{ var notes = ViewBag.ProposalNoteVersions as List<project_lifecycle.Models.ProposalNoteVersion> ?? new List<project_lifecycle.Models.ProposalNoteVersion>(); }
+                <div class="mt-2">
+                    @if (notes.Any())
+                    {
+                        var ordered = notes.OrderByDescending(n => n.VersionNumber).ToList();
+                        var current = ordered.First();
+
+                        <div class="p-2 border rounded bg-light mb-2">
+                            <strong><a asp-area="Employee" asp-controller="Proposal" asp-action="Note" asp-route-id="@current.Id">Current version</a></strong>@(current.VersionNumber > 0 ? (" (v" + current.VersionNumber + ")") : "")
+                            <div class="small text-muted">Saved @current.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div class="mt-2">@Html.Raw(current.Note)</div>
+                        </div>
+
+                        @foreach (var n in ordered.Skip(1))
+                        {
+                            <div class="p-2 border rounded mb-2">
+                                <strong><a asp-area="Employee" asp-controller="Proposal" asp-action="Note" asp-route-id="@n.Id">Version @n.VersionNumber</a></strong>
+                                <div class="small text-muted">Saved @n.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                                <div class="mt-2">@Html.Raw(n.Note)</div>
+                            </div>
+                        }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(Model.Note))
+                    {
+                        <div class="p-2 border rounded bg-light mb-2">
+                            <strong>Current version</strong>
+                            <div class="mt-2">@Html.Raw(Model.Note)</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="small text-muted">No notes available.</div>
                     }
                 </div>
             </div>
