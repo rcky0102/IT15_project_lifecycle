@@ -35,6 +35,8 @@ namespace project_lifecycle.Models
         [Column(TypeName = "nvarchar(max)")]
         public string? Note { get; set; }
 
+        public bool IsArchived { get; set; } = false;
+
         [Required]
         public DateTime DateCreated { get; set; } = DateTime.Now;
     }

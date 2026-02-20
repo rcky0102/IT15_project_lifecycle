@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using project_lifecycle.Data;
 
@@ -11,9 +12,11 @@ using project_lifecycle.Data;
 namespace project_lifecycle.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260220051411_ProposalNoteVersion_ModifiedProjectProposal")]
+    partial class ProposalNoteVersion_ModifiedProjectProposal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -822,38 +825,6 @@ namespace project_lifecycle.Data.Migrations
                     b.ToTable("ProjectTasks");
                 });
 
-            modelBuilder.Entity("project_lifecycle.Models.ProposalNoteVersion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("DepartmentHeadId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProjectProposalId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VersionNumber")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DepartmentHeadId");
-
-                    b.HasIndex("ProjectProposalId");
-
-                    b.ToTable("ProposalNoteVersions");
-                });
-
             modelBuilder.Entity("project_lifecycle.Models.TaskMember", b =>
                 {
                     b.Property<int>("Id")
@@ -1140,24 +1111,6 @@ namespace project_lifecycle.Data.Migrations
                     b.Navigation("ProjectManager");
 
                     b.Navigation("ProjectMilestone");
-                });
-
-            modelBuilder.Entity("project_lifecycle.Models.ProposalNoteVersion", b =>
-                {
-                    b.HasOne("project_lifecycle.Models.DepartmentHead", "DepartmentHead")
-                        .WithMany()
-                        .HasForeignKey("DepartmentHeadId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("project_lifecycle.Models.ProjectProposal", "ProjectProposal")
-                        .WithMany()
-                        .HasForeignKey("ProjectProposalId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("DepartmentHead");
-
-                    b.Navigation("ProjectProposal");
                 });
 
             modelBuilder.Entity("project_lifecycle.Models.TaskMember", b =>

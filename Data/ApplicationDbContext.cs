@@ -22,6 +22,7 @@ namespace project_lifecycle.Data
         public DbSet<Executive> Executives { get; set; }
         public DbSet<ProjectProposal> ProjectProposals { get; set; }
         public DbSet<ProjectProposalVersion> ProjectProposalVersions { get; set; }
+        public DbSet<ProposalNoteVersion> ProposalNoteVersions { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -108,6 +109,18 @@ namespace project_lifecycle.Data
                 .HasOne(ppv => ppv.Employee)
                 .WithMany()
                 .HasForeignKey(ppv => ppv.EmployeeId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProposalNoteVersion>()
+                .HasOne(pnv => pnv.ProjectProposal)
+                .WithMany()
+                .HasForeignKey(pnv => pnv.ProjectProposalId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProposalNoteVersion>()
+                .HasOne(pnv => pnv.DepartmentHead)
+                .WithMany()
+                .HasForeignKey(pnv => pnv.DepartmentHeadId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }

@@ -29,6 +29,7 @@
                     <button type="submit" name="actionType" value="Approve" class="btn btn-success" onclick="return confirm('Approve this proposal?');">Approve</button>
                     <button type="submit" name="actionType" value="Reject" class="btn btn-danger" onclick="return confirm('Reject this proposal?');">Reject</button>
                     <button type="submit" name="actionType" value="ReturnForRevision" class="btn btn-warning">Return for Revision</button>
+                    <button type="submit" name="actionType" value="SendFeedback" class="btn btn-primary">Send Feedback</button>
                     <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Index" class="btn btn-secondary ms-auto">Back</a>
                 </div>
             </form>
@@ -36,7 +37,7 @@
     </div>
     
     <div class="proposal-versions mt-4">
-        <h5>Versions</h5>
+        <h5>Versions <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Notes" asp-route-id="@Model.Id" class="ms-2">View All Notes</a></h5>
         @{ var versions = ViewBag.ProjectProposalVersions as List<project_lifecycle.Models.ProjectProposalVersion> ?? new List<project_lifecycle.Models.ProjectProposalVersion>(); }
         <div class="mt-2">
             <div class="p-2 border rounded bg-light mb-2">
@@ -58,6 +59,44 @@
             else
             {
                 <div class="small text-muted">No previous versions.</div>
+            }
+        </div>
+    </div>
+
+    <div class="proposal-notes mt-4">
+        <h5>Notes</h5>
+        @{ var notes = ViewBag.ProposalNoteVersions as List<project_lifecycle.Models.ProposalNoteVersion> ?? new List<project_lifecycle.Models.ProposalNoteVersion>(); }
+        <div class="mt-2">
+            @if (notes.Any())
+            {
+                var ordered = notes.OrderByDescending(n => n.VersionNumber).ToList();
+                var current = ordered.First();
+
+                <div class="p-2 border rounded bg-light mb-2">
+                    <strong>Current version</strong>@(current.VersionNumber > 0 ? (" (v" + current.VersionNumber + ")") : "")
+                    <div class="small text-muted">Saved @current.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div class="mt-2">@Html.Raw(current.Note)</div>
+                </div>
+
+                @foreach (var n in ordered.Skip(1))
+                {
+                    <div class="p-2 border rounded mb-2">
+                        <strong>Version @n.VersionNumber</strong>
+                        <div class="small text-muted">Saved @n.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="mt-2">@Html.Raw(n.Note)</div>
+                    </div>
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.Note))
+            {
+                <div class="p-2 border rounded bg-light mb-2">
+                    <strong>Current version</strong>
+                    <div class="mt-2">@Html.Raw(Model.Note)</div>
+                </div>
+            }
+            else
+            {
+                <div class="small text-muted">No notes available.</div>
             }
         </div>
     </div>
