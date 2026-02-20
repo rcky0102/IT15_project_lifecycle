@@ -434,6 +434,28 @@
     box-shadow: 0 4px 12px rgba(0,105,148,0.25);
 }
 
+/* Edit button (placed next to view) */
+.proposal-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(59,130,246,0.06);
+    color: #1e40af;
+    transition: all 0.18s ease;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.proposal-edit-btn:hover {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #0f172a;
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(59,130,246,0.12);
+}
+
 /* Action cell layout: align action buttons horizontally */
 .proposal-actions-td {
     display: flex;
