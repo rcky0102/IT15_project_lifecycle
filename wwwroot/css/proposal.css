@@ -91,7 +91,7 @@
 .proposal-form-card {
     background: white;
     border-radius: 20px;
-    padding: 2.25rem;
+    padding: 1.25rem;
     box-shadow: 0 4px 24px rgba(0,105,148,0.08);
     border: 1px solid rgba(0,105,148,0.06);
     margin-bottom: 2.5rem;
@@ -105,13 +105,13 @@
 .proposal-form-card .form-section-title {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    font-size: 1.15rem;
+    gap: 0.5rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--ocean-deep);
-    margin-bottom: 1.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid rgba(0,105,148,0.08);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0,105,148,0.06);
 }
 
 .proposal-form-card .form-section-title i {
@@ -124,7 +124,7 @@
 
 /* Form controls inside proposal card */
 .proposal-form-card .form-label-ocean {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     font-weight: 600;
     color: #374151;
     letter-spacing: 0.02em;
@@ -134,8 +134,8 @@
 .proposal-form-card .form-control-ocean {
     border: 2px solid #e5e7eb;
     border-radius: 12px;
-    padding: 0.8rem 1rem;
-    font-size: 0.95rem;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.88rem;
     transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
@@ -146,7 +146,7 @@
 
 .proposal-form-card textarea.form-control-ocean {
     resize: vertical;
-    min-height: 120px;
+    min-height: 90px;
 }
 
 /* Date inputs row */
@@ -214,13 +214,13 @@
 /* Action buttons */
 .proposal-actions {
     display: flex;
-    gap: 0.85rem;
-    margin-top: 1.5rem;
+    gap: 0.5rem;
+    margin-top: 1rem;
 }
 
 .proposal-actions .btn-ocean {
-    padding: 0.85rem 2.25rem;
-    font-size: 1rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.92rem;
     font-weight: 600;
     border-radius: 12px;
     box-shadow: 0 4px 14px rgba(0,105,148,0.2);
@@ -232,8 +232,8 @@
 }
 
 .proposal-actions .btn-reset {
-    padding: 0.85rem 1.75rem;
-    font-size: 0.95rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.88rem;
     font-weight: 500;
     border: 2px solid #e5e7eb;
     background: white;
@@ -313,8 +313,8 @@
 }
 
 .proposal-table thead th {
-    padding: 1rem 1.25rem;
-    font-size: 0.78rem;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -332,8 +332,8 @@
 }
 
 .proposal-table tbody td {
-    padding: 1rem 1.25rem;
-    font-size: 0.92rem;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.86rem;
     color: #374151;
     border-bottom: 1px solid #f1f5f9;
     vertical-align: middle;
