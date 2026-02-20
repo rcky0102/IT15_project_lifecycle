@@ -73,7 +73,7 @@
                 var current = ordered.First();
 
                 <div class="p-2 border rounded bg-light mb-2">
-                    <strong>Current version</strong>@(current.VersionNumber > 0 ? (" (v" + current.VersionNumber + ")") : "")
+                    <strong><a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Note" asp-route-id="@current.Id">Current version</a></strong>@(current.VersionNumber > 0 ? (" (v" + current.VersionNumber + ")") : "")
                     <div class="small text-muted">Saved @current.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
                     <div class="mt-2">@Html.Raw(current.Note)</div>
                 </div>
@@ -81,7 +81,7 @@
                 @foreach (var n in ordered.Skip(1))
                 {
                     <div class="p-2 border rounded mb-2">
-                        <strong>Version @n.VersionNumber</strong>
+                        <strong><a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Note" asp-route-id="@n.Id">Version @n.VersionNumber</a></strong>
                         <div class="small text-muted">Saved @n.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
                         <div class="mt-2">@Html.Raw(n.Note)</div>
                     </div>

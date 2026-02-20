@@ -17,7 +17,7 @@
                 <div class="p-3 border rounded mb-3">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <strong>Version @n.VersionNumber</strong>
+                            <strong><a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Note" asp-route-id="@n.Id">Version @n.VersionNumber</a></strong>
                             <div class="small text-muted">Saved @n.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
                         </div>
                         <div class="small text-muted">DepartmentHead Id: @n.DepartmentHeadId</div>

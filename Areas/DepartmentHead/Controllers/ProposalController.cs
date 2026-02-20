@@ -101,6 +101,28 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Note(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (dh == null) return Forbid();
+
+            var note = await _context.ProposalNoteVersions
+                .Include(n => n.ProjectProposal)
+                .ThenInclude(p => p.Employee)
+                .FirstOrDefaultAsync(n => n.Id == id);
+
+            if (note == null) return NotFound();
+
+            if (note.ProjectProposal == null || note.ProjectProposal.Employee == null || note.ProjectProposal.Employee.DepartmentId != dh.DepartmentId)
+                return Forbid();
+
+            return View(note);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Notes(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
