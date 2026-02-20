@@ -3,12 +3,7 @@
     ViewData["Title"] = "Edit Proposal";
 }
 
-<div class="dashboard-container py-4">
-
-    <div class="proposal-page-header">
-        <h1><i class="fas fa-edit"></i>&nbsp; Edit Proposal</h1>
-        <p class="proposal-subtitle">Editing: @Model.Proposal.Title</p>
-    </div>
+<div class="dashboard-container pb-4">
 
     @if (TempData["ErrorMessage"] != null)
     {
@@ -19,12 +14,13 @@
     }
 
     <div class="proposal-form-card">
-        <div class="form-section-title">
-            <i class="fas fa-lightbulb"></i> Proposal Details
-        </div>
+                    <div class="form-section-title">
+                        <i class="fas fa-lightbulb"></i> Proposal Details
+                        <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.Proposal.Id" class="versions-link" style="margin-left:auto; font-weight:600; text-decoration:underline; color:var(--ocean-deep);">Versions</a>
+                    </div>
 
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-md-12">
                 <form asp-area="Employee" asp-controller="Proposal" asp-action="Edit" method="post" class="auth-ocean-form">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Proposal.Id" />
@@ -47,48 +43,15 @@
                     </div>
 
                     <div class="proposal-actions">
-                        <button type="submit" id="submitProposalBtn" class="btn btn-ocean"><i class="fas fa-save"></i> Save Changes</button>
-                        <button type="reset" class="btn-reset"><i class="fas fa-rotate-left"></i> Reset</button>
-                        <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.Proposal.Id" class="btn btn-outline-ocean" style="margin-left:auto;"><i class="fas fa-arrow-left"></i> Back to Proposal</a>
+                        <span style="margin-left:auto; display:flex; gap:0.5rem;">
+                            <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.Proposal.Id" class="btn-reset" style="text-decoration:none;"><i class="fas fa-arrow-left"></i> Back</a>
+                            <button type="submit" id="submitProposalBtn" class="btn btn-ocean"><i class="fas fa-save"></i> Save Changes</button>
+                        </span>
                     </div>
                 </form>
             </div>
 
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Versions</h5>
-                        <p class="small text-muted">Current version (live)</p>
-                        <div class="mb-3 p-2 border rounded bg-light">
-                            <strong>@Model.Proposal.Title</strong>
-                            <div class="small text-muted">Submitted @Model.Proposal.DateCreated.ToString("yyyy-MM-dd")</div>
-                        </div>
-
-                        @if (Model.Versions != null && Model.Versions.Any())
-                        {
-                            <p class="small text-muted">Past versions</p>
-                            <ul class="list-unstyled">
-                                @foreach (var v in Model.Versions)
-                                {
-                                    <li class="mb-2">
-                                        <div class="p-2 border rounded">
-                                            <div>
-                                                <a asp-area="Employee" asp-controller="Proposal" asp-action="Version" asp-route-id="@v.Id"><strong>Version @v.VersionNumber</strong></a>
-                                                &nbsp;&mdash;&nbsp;@v.Title
-                                            </div>
-                                            <div class="small text-muted">Saved @v.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
-                                        </div>
-                                    </li>
-                                }
-                            </ul>
-                        }
-                        else
-                        {
-                            <div class="small text-muted">No previous versions.</div>
-                        }
-                    </div>
-                </div>
-            </div>
+            
         </div>
     </div>
 </div>
