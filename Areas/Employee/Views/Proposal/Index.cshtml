@@ -87,7 +87,7 @@
                                 <th>Input Preview</th>
                                 <th>Submitted</th>
                                 <th>Status</th>
-                                <th style="width:50px;"></th>
+                                <th style="width:120px;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="proposalsBody">
@@ -102,9 +102,9 @@
                                     <td>@GetInputPreview(proposal.Input)</td>
                                     <td class="proposal-date">@proposal.DateCreated.ToString("yyyy-MM-dd")</td>
                                     <td>
-                                        <span class="proposal-status @GetStatusClass(proposal.Status)">
-                                            <span class="status-dot"></span>
-                                            @proposal.Status
+                                        <span class="status-inline">
+                                            <span class="status-dot @GetStatusClass(proposal.Status)" title="@proposal.Status"></span>
+                                            <span class="status-text">@proposal.Status</span>
                                         </span>
                                     </td>
                                     <td class="proposal-actions-td">

@@ -412,6 +412,39 @@
 .status-requiresrevision .status-dot { background: #f59e0b; }
 .status-default .status-dot { background: #94a3b8; }
 
+/* Standalone dot color when class is applied directly to the dot */
+.status-dot.status-pending { background: #f59e0b; }
+.status-dot.status-approved { background: #10b981; }
+.status-dot.status-rejected { background: #ef4444; }
+.status-dot.status-inprogress { background: #3b82f6; }
+.status-dot.status-requiresrevision { background: #f59e0b; }
+.status-dot.status-default { background: #94a3b8; }
+
+/* Make standalone dot slightly larger and centered */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+    border-radius: 50%;
+}
+
+/* Inline container keeps dot + text on the same line and centers them */
+.status-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+}
+
+/* Status text shown beside the dot */
+.status-text {
+    display: inline-block;
+    margin-left: 0;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.92rem;
+}
+
 /* View action */
 .proposal-view-btn {
     display: inline-flex;
