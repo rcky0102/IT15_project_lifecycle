@@ -1,0 +1,375 @@
+/* ============================================
+   Employee News – Modern UI
+   ============================================ */
+
+/* ---------- Page Header ---------- */
+.news-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.news-page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--emp-text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.news-page-header h1 i {
+    color: var(--emp-primary);
+    font-size: 1.5rem;
+}
+
+.news-badge {
+    background: var(--emp-primary);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: .25rem .6rem;
+    border-radius: 50px;
+    letter-spacing: .03em;
+}
+
+/* ---------- Search / Filter Card ---------- */
+.news-filter-card {
+    background: var(--emp-surface);
+    border: 1px solid var(--emp-border);
+    border-radius: var(--emp-radius);
+    box-shadow: var(--emp-shadow-sm);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.75rem;
+    transition: box-shadow .25s var(--emp-ease);
+}
+
+.news-filter-card:hover {
+    box-shadow: var(--emp-shadow-md);
+}
+
+.news-filter-card .form-label {
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--emp-text-muted);
+    margin-bottom: .35rem;
+}
+
+.news-filter-card .form-control,
+.news-filter-card .form-select {
+    border-radius: var(--emp-radius-xs);
+    border: 1px solid var(--emp-border);
+    font-size: .875rem;
+    padding: .5rem .75rem;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.news-filter-card .form-control:focus,
+.news-filter-card .form-select:focus {
+    border-color: var(--emp-primary-light);
+    box-shadow: 0 0 0 3px rgba(0, 105, 148, .12);
+}
+
+.news-filter-card .input-group-text {
+    background: var(--emp-bg);
+    border: 1px solid var(--emp-border);
+    border-right: 0;
+    color: var(--emp-text-muted);
+    border-radius: var(--emp-radius-xs) 0 0 var(--emp-radius-xs);
+}
+
+.news-search-btn {
+    background: var(--emp-primary);
+    border: none;
+    color: #fff;
+    border-radius: var(--emp-radius-xs) !important;
+    font-weight: 600;
+    font-size: .875rem;
+    padding: .55rem 1.25rem;
+    transition: background .2s, transform .15s;
+}
+
+.news-search-btn:hover {
+    background: var(--emp-primary-dark);
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+.news-search-btn:active {
+    transform: translateY(0);
+}
+
+/* ---------- Results Summary ---------- */
+.news-results-summary {
+    font-size: .85rem;
+    color: var(--emp-text-muted);
+    margin-bottom: 1rem;
+    padding-left: .15rem;
+}
+
+.news-results-summary strong {
+    color: var(--emp-text);
+}
+
+/* ---------- Article Grid ---------- */
+.news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+    .news-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Article Card ---------- */
+.news-card {
+    background: var(--emp-surface);
+    border: 1px solid var(--emp-border);
+    border-radius: var(--emp-radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--emp-shadow-sm);
+    transition: transform .25s var(--emp-ease), box-shadow .25s var(--emp-ease);
+}
+
+.news-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--emp-shadow-lg);
+}
+
+.news-card-img-wrap {
+    position: relative;
+    overflow: hidden;
+    max-height: 200px;
+    background: var(--emp-bg);
+}
+
+.news-card-img-wrap img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+    transition: transform .4s var(--emp-ease);
+}
+
+.news-card:hover .news-card-img-wrap img {
+    transform: scale(1.04);
+}
+
+.news-card-img-wrap .news-source-badge {
+    position: absolute;
+    top: .75rem;
+    left: .75rem;
+    background: rgba(0, 0, 0, .55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: .2rem .6rem;
+    border-radius: 50px;
+    letter-spacing: .02em;
+}
+
+.news-card-body {
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.news-card-title {
+    font-size: 1rem;
+    font-weight: 650;
+    color: var(--emp-text);
+    line-height: 1.4;
+    margin: 0 0 .5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.news-card-desc {
+    font-size: .84rem;
+    color: var(--emp-text-muted);
+    line-height: 1.55;
+    margin: 0 0 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+}
+
+.news-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding-top: .75rem;
+    border-top: 1px solid var(--emp-border);
+}
+
+.news-card-meta {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .75rem;
+    color: var(--emp-text-muted);
+}
+
+.news-card-meta i {
+    font-size: .65rem;
+}
+
+.news-read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--emp-primary);
+    text-decoration: none;
+    padding: .35rem .85rem;
+    border-radius: 50px;
+    background: rgba(0, 105, 148, .08);
+    transition: background .2s, color .2s, transform .15s;
+    white-space: nowrap;
+}
+
+.news-read-btn:hover {
+    background: var(--emp-primary);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.news-read-btn i {
+    font-size: .65rem;
+}
+
+/* No-image placeholder */
+.news-card-no-img {
+    height: 6px;
+    background: linear-gradient(90deg, var(--emp-primary), var(--emp-accent));
+}
+
+/* ---------- Empty State ---------- */
+.news-empty {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--emp-text-muted);
+}
+
+.news-empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--emp-bg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+}
+
+.news-empty-icon i {
+    font-size: 2rem;
+    color: var(--emp-primary-light);
+}
+
+.news-empty h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--emp-text);
+    margin-bottom: .3rem;
+}
+
+.news-empty p {
+    font-size: .85rem;
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+/* ---------- Error Banner ---------- */
+.news-alert {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--emp-radius-sm);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .85rem;
+}
+
+.news-alert-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: #fef3c7;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d97706;
+    font-size: .95rem;
+}
+
+.news-alert-body h5 {
+    font-size: .9rem;
+    font-weight: 600;
+    color: #92400e;
+    margin: 0 0 .25rem;
+}
+
+.news-alert-body p {
+    font-size: .82rem;
+    color: #a16207;
+    margin: 0 0 .5rem;
+}
+
+.news-alert-body .btn {
+    font-size: .78rem;
+}
+
+/* ---------- Quick-topic Pills ---------- */
+.news-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-bottom: 1.25rem;
+}
+
+.news-topic-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .3rem .75rem;
+    border-radius: 50px;
+    border: 1px solid var(--emp-border);
+    background: var(--emp-surface);
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--emp-text-muted);
+    text-decoration: none;
+    transition: all .2s var(--emp-ease);
+}
+
+.news-topic-pill:hover,
+.news-topic-pill.active {
+    background: var(--emp-primary);
+    color: #fff;
+    border-color: var(--emp-primary);
+}
+
+.news-topic-pill i {
+    font-size: .65rem;
+}

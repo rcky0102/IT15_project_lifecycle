@@ -2,65 +2,177 @@
 
 @{
     ViewData["Title"] = "News";
+    var query    = ViewBag.Query    as string ?? "";
+    var sortBy   = ViewBag.SortBy   as string ?? "publishedAt";
+    var language = ViewBag.Language as string ?? "en";
+    var pageSize = (int?)ViewBag.PageSize ?? 10;
+    var total    = (int?)ViewBag.TotalResults ?? 0;
+
+    string[] quickTopics = { "Technology", "Business", "Sports", "Health", "Science", "Entertainment", "Bitcoin", "AI" };
 }
 
-<div class="container py-3">
-    <h1 class="mb-3">Latest News</h1>
+<div class="container-fluid px-4 py-3">
 
+    <!-- ===== Page Header ===== -->
+    <div class="news-page-header">
+        <h1><i class="fas fa-newspaper"></i> News</h1>
+        @if (total > 0)
+        {
+            <span class="news-badge">@total.ToString("N0") results</span>
+        }
+    </div>
+
+    <!-- ===== Search & Filter Card ===== -->
+    <form method="get" asp-action="Index" asp-area="Employee" asp-controller="News" class="news-filter-card">
+        <div class="row g-2 align-items-end">
+
+            <!-- Search -->
+            <div class="col-lg-4 col-md-6">
+                <label class="form-label">Search Topic</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-magnifying-glass"></i></span>
+                    <input type="text" name="q" class="form-control"
+                           placeholder="e.g. technology, sports, bitcoin…"
+                           value="@query" />
+                </div>
+            </div>
+
+            <!-- Sort -->
+            <div class="col-lg-2 col-md-3 col-6">
+                <label class="form-label">Sort By</label>
+                <select name="sortBy" class="form-select">
+                    <option value="publishedAt" selected="@(sortBy == "publishedAt")">Newest</option>
+                    <option value="relevancy"   selected="@(sortBy == "relevancy")">Relevance</option>
+                    <option value="popularity"  selected="@(sortBy == "popularity")">Popular</option>
+                </select>
+            </div>
+
+            <!-- Language -->
+            <div class="col-lg-2 col-md-3 col-6">
+                <label class="form-label">Language</label>
+                <select name="language" class="form-select">
+                    <option value="en" selected="@(language == "en")">English</option>
+                    <option value="es" selected="@(language == "es")">Spanish</option>
+                    <option value="fr" selected="@(language == "fr")">French</option>
+                    <option value="de" selected="@(language == "de")">German</option>
+                    <option value="it" selected="@(language == "it")">Italian</option>
+                    <option value="pt" selected="@(language == "pt")">Portuguese</option>
+                    <option value="zh" selected="@(language == "zh")">Chinese</option>
+                    <option value="ar" selected="@(language == "ar")">Arabic</option>
+                </select>
+            </div>
+
+            <!-- Page Size -->
+            <div class="col-lg-2 col-md-3 col-6">
+                <label class="form-label">Show</label>
+                <select name="pageSize" class="form-select">
+                    <option value="5"   selected="@(pageSize == 5)">5 articles</option>
+                    <option value="10"  selected="@(pageSize == 10)">10 articles</option>
+                    <option value="20"  selected="@(pageSize == 20)">20 articles</option>
+                    <option value="50"  selected="@(pageSize == 50)">50 articles</option>
+                </select>
+            </div>
+
+            <!-- Submit -->
+            <div class="col-lg-2 col-md-3 col-6 d-grid">
+                <button type="submit" class="btn news-search-btn">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ===== Quick Topics ===== -->
+    <div class="news-topics">
+        @foreach (var topic in quickTopics)
+        {
+            var isActive = string.Equals(query, topic, StringComparison.OrdinalIgnoreCase);
+            <a href="@Url.Action("Index", "News", new { area = "Employee", q = topic, sortBy, language, pageSize })"
+               class="news-topic-pill @(isActive ? "active" : "")">
+                <i class="fas fa-hashtag"></i> @topic
+            </a>
+        }
+    </div>
+
+    <!-- ===== Error Banner ===== -->
     @if (ViewBag.Error != null)
     {
-        <div class="alert alert-warning">
-            <h5 class="mb-1">@ViewBag.Error</h5>
-            <p class="mb-1">To fetch live news, add your NewsAPI.org key to the <strong>NewsApi:ApiKey</strong> setting in <em>appsettings.json</em> or set the environment variable <strong>NewsApi__ApiKey</strong>.</p>
-            <div>
-                <button id="copyEnvBtn" class="btn btn-sm btn-outline-secondary" type="button">Copy env var name</button>
-                <a href="https://newsapi.org/" target="_blank" class="btn btn-sm btn-primary ms-2">Get API key</a>
+        <div class="news-alert">
+            <div class="news-alert-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="news-alert-body">
+                <h5>@ViewBag.Error</h5>
+                <p>Add your key to <strong>NewsApi:ApiKey</strong> in <em>appsettings.json</em> or set <strong>NewsApi__ApiKey</strong> as an environment variable.</p>
+                <a href="https://newsapi.org/" target="_blank" class="btn btn-sm btn-warning">Get API Key</a>
             </div>
         </div>
     }
 
-    <div class="row">
+    <!-- ===== Results Summary ===== -->
+    @if (total > 0)
+    {
+        <p class="news-results-summary">
+            Showing <strong>@Model.Count()</strong> of <strong>@total.ToString("N0")</strong> results
+            @if (!string.IsNullOrEmpty(query)) { <span>for <strong>"@query"</strong></span> }
+        </p>
+    }
+
+    <!-- ===== Article Grid ===== -->
+    <div class="news-grid">
         @foreach (var a in Model)
         {
-            <div class="col-md-6 mb-3">
-                <div class="card h-100">
-                    @if (!string.IsNullOrEmpty(a.UrlToImage))
-                    {
-                        <img src="@a.UrlToImage" class="card-img-top" alt="@a.Title" style="max-height:200px;object-fit:cover;" />
-                    }
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@a.Title</h5>
-                        <p class="card-text">@a.Description</p>
-                        <div class="mt-auto">
-                            <small class="text-muted">@a.Source @((a.PublishedAt.HasValue) ? ("· " + a.PublishedAt.Value.ToString("g")) : "")</small>
-                            @if (!string.IsNullOrEmpty(a.Url))
+            <article class="news-card">
+                @if (!string.IsNullOrEmpty(a.UrlToImage))
+                {
+                    <div class="news-card-img-wrap">
+                        <img src="@a.UrlToImage" alt="@a.Title" loading="lazy" />
+                        @if (!string.IsNullOrEmpty(a.Source))
+                        {
+                            <span class="news-source-badge">@a.Source</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="news-card-no-img"></div>
+                }
+
+                <div class="news-card-body">
+                    <h3 class="news-card-title">@a.Title</h3>
+                    <p class="news-card-desc">@a.Description</p>
+
+                    <div class="news-card-footer">
+                        <div class="news-card-meta">
+                            @if (!string.IsNullOrEmpty(a.Source) && string.IsNullOrEmpty(a.UrlToImage))
                             {
-                                <a href="@a.Url" class="btn btn-sm btn-primary float-end" target="_blank">Read</a>
+                                <span>@a.Source</span>
+                            }
+                            @if (a.PublishedAt.HasValue)
+                            {
+                                <i class="far fa-clock"></i>
+                                <span>@a.PublishedAt.Value.ToString("MMM dd, yyyy · h:mm tt")</span>
                             }
                         </div>
+                        @if (!string.IsNullOrEmpty(a.Url))
+                        {
+                            <a href="@a.Url" class="news-read-btn" target="_blank" rel="noopener">
+                                Read <i class="fas fa-arrow-right"></i>
+                            </a>
+                        }
                     </div>
                 </div>
-            </div>
+            </article>
         }
     </div>
 
-    @if (!Model.Any())
+    <!-- ===== Empty State ===== -->
+    @if (!Model.Any() && ViewBag.Error == null)
     {
-        <p class="text-muted">No articles to display.</p>
+        <div class="news-empty">
+            <div class="news-empty-icon">
+                <i class="fas fa-newspaper"></i>
+            </div>
+            <h5>No articles found</h5>
+            <p>Try a different search term or pick one of the quick topics above.</p>
+        </div>
     }
 </div>
-
-<script>
-    (function () {
-        var btn = document.getElementById('copyEnvBtn');
-        if (!btn) return;
-        btn.addEventListener('click', function () {
-            navigator.clipboard?.writeText('NewsApi__ApiKey').then(function () {
-                btn.textContent = 'Copied!';
-                setTimeout(function () { btn.textContent = 'Copy env var name'; }, 2000);
-            }).catch(function () {
-                alert('Copy to clipboard not supported in this browser.');
-            });
-        });
-    })();
-</script>
