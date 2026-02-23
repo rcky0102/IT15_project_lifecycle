@@ -413,6 +413,9 @@
     border-radius: 20px;
     box-shadow: 0 25px 60px rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.08);
     overflow: hidden;
+    /* ensure modal content doesn't exceed viewport so inner body can scroll */
+    max-height: calc(100vh - 80px);
+    box-sizing: border-box;
 }
 
 /* Modal header – gradient */
@@ -463,6 +466,10 @@
 #createProjectModal .modal-body {
     padding: 1.75rem;
     background: #fafbfc;
+    /* allow the modal body to scroll when content exceeds available space */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 220px);
 }
 
 /* Form section cards */
