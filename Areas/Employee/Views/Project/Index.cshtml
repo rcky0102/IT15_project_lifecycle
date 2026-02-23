@@ -1,94 +1,103 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@model project_lifecycle.ViewModels.ProjectManager.ProjectIndexViewModel
+﻿@model project_lifecycle.ViewModels.ProjectManager.ProjectIndexViewModel
 @{
     ViewData["Title"] = "My Projects";
 }
 
-<link rel="stylesheet" href="~/css/proposal.css" asp-append-version="true" />
+<!-- Page hero -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div>
+            <h1 class="emp-page-title"><span class="emp-page-title-icon"><i class="fas fa-diagram-project"></i></span> My Projects</h1>
+            <p class="emp-page-subtitle">Projects you're a member of</p>
+        </div>
+        <!-- New Project button removed per request -->
+    </div>
+</div>
 
-<div class="dashboard-container py-4">
-    <div class="proposal-page-header">
-        <h1><i class="fas fa-diagram-project"></i>&nbsp; My Projects</h1>
-        <p class="proposal-subtitle">Projects you're a member of</p>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success"><div class="emp-alert-icon"><i class="fas fa-check-circle"></i></div><span>@TempData["SuccessMessage"]</span><button class="emp-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error"><div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div><span>@TempData["ErrorMessage"]</span><button class="emp-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>
+}
+
+<div class="emp-table-card">
+    <div class="emp-table-toolbar">
+        <div class="emp-table-toolbar-left">
+            <h3 class="emp-table-title"><i class="fas fa-list-check"></i> Assigned Projects</h3>
+            <span class="emp-count-chip">@Model.Projects.Count</span>
+        </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
+    @if (Model.Projects.Any())
     {
-        <div class="proposal-alert success"><i class="fas fa-check-circle"></i> <span>@TempData["SuccessMessage"]</span></div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="proposal-alert error"><i class="fas fa-exclamation-circle"></i> <span>@TempData["ErrorMessage"]</span></div>
-    }
-
-    <div class="proposal-table-section">
-        <div class="proposal-table-header">
-            <h3><i class="fas fa-list-check"></i> Assigned Projects <span class="proposal-count-badge">@Model.Projects.Count</span></h3>
-        </div>
-
-        <div class="proposal-table-card">
-            @if (Model.Projects.Any())
-            {
-                <div class="list-group">
-                    @foreach (var project in Model.Projects)
-                    {
-                        <div class="list-group-item mb-3">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h5>@project.Name</h5>
-                                    <div class="text-muted">Proposal: @project.ProposalTitle</div>
-                                    <div class="text-muted">Timeline: @project.StartDate.ToString("yyyy-MM-dd") - @project.EndDate.ToString("yyyy-MM-dd")</div>
+        <div class="emp-table-responsive">
+            <div class="emp-project-list">
+                @foreach (var project in Model.Projects)
+                {
+                    <div class="emp-project-card mb-3">
+                        <div class="emp-project-header d-flex align-items-center justify-content-between">
+                            <div class="emp-project-meta" style="min-width:0;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <h5 class="mb-0 emp-project-title">@project.Name</h5>
+                                    <span class="text-muted small">· @project.ProposalTitle</span>
                                 </div>
-                                <div class="text-end">
-                                    <small class="text-muted">Members: @project.Members.Count</small>
-                                </div>
+                                <div class="text-muted mt-1">Timeline: @project.StartDate.ToString("MMM dd, yyyy") – @project.EndDate.ToString("MMM dd, yyyy")</div>
+                                <div class="mt-2 small text-muted"><strong>Members:</strong> <span class="ms-2">@project.Members.Count</span></div>
                             </div>
 
-                            <div class="mt-2 text-end">
-                                <a asp-area="Employee" asp-controller="Project" asp-action="Show" asp-route-id="@project.Id" class="btn btn-sm btn-outline-primary">View Project</a>
-                            </div>
-
-                            <hr />
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <h6 class="mb-2">Members</h6>
-                                    <ul class="list-unstyled">
-                                        @foreach (var m in project.Members)
-                                        {
-                                            <li class="d-flex justify-content-between align-items-center">
-                                                <span>@m.EmployeeName <span class="badge bg-secondary">@m.ProjectRoleName</span></span>
-                                            </li>
-                                        }
-                                    </ul>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <h6 class="mb-2">Milestones</h6>
-                                    <ol>
-                                        @foreach (var ms in project.Milestones.OrderBy(m => m.SequenceOrder))
-                                        {
-                                            <li>@ms.MilestoneName <small class="text-muted">(@ms.Status)</small></li>
-                                        }
-                                    </ol>
-                                </div>
+                            <div class="emp-project-action">
+                                <a asp-area="Employee" asp-controller="Project" asp-action="Show" asp-route-id="@project.Id" class="emp-btn emp-action-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
                             </div>
                         </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="proposal-empty-state">
-                    <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
-                    <div class="empty-title">No assigned projects</div>
-                    <div class="empty-text">Projects you are a member of will appear here.</div>
-                </div>
-            }
+
+                        <hr class="emp-project-sep" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h6 class="mb-2">Members</h6>
+                                <ul class="list-unstyled mb-0 emp-members-list">
+                                    @foreach (var m in project.Members)
+                                    {
+                                        <li class="d-flex justify-content-between align-items-center py-1">
+                                            <span>@m.EmployeeName</span>
+                                            <span class="badge bg-secondary">@m.ProjectRoleName</span>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-2">Milestones</h6>
+                                <ol class="mb-0 emp-milestones-list">
+                                    @foreach (var ms in project.Milestones.OrderBy(m => m.SequenceOrder))
+                                    {
+                                        <li>@ms.MilestoneName <small class="text-muted">(@ms.Status)</small></li>
+                                    }
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div id="noFilterResults" class="emp-empty-state" style="display:none;">
+                <div class="emp-empty-icon"><i class="fas fa-folder-open"></i></div>
+                <h4 class="emp-empty-title">No matching projects</h4>
+                <p class="emp-empty-text">Try adjusting your search or filters.</p>
+            </div>
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="emp-empty-state">
+            <div class="emp-empty-icon"><i class="fas fa-folder-open"></i></div>
+            <h4 class="emp-empty-title">No assigned projects</h4>
+            <p class="emp-empty-text">Projects you are a member of will appear here.</p>
+        </div>
+    }
 </div>
 
