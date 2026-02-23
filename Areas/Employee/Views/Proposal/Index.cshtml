@@ -1,167 +1,188 @@
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
 @model List<ProjectProposal>
 @using project_lifecycle.Models
 @{
+    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active";
 }
 
-@{
-    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active"; // active|inactive|all
-}
-
-<div class="dashboard-container pb-4">
-
-    <!-- ===== Search & Filters ===== -->
-    <div class="proposal-filters-bar">
-        <div class="proposal-filters-inner">
-            <div class="proposal-search-wrap">
-                <i class="fas fa-search proposal-search-icon"></i>
-                <input id="proposalSearch" type="text" class="proposal-search-input" placeholder="Search by title or content…" autocomplete="off" />
-            </div>
-            <div class="proposal-filter-wrap">
-                    <select id="statusFilter" class="proposal-filter-select">
-                    <option value="">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="Requires Revision">Requires Revision</option>
-                </select>
-            </div>
-                <div class="proposal-filter-wrap">
-                    <select id="archiveFilter" class="proposal-filter-select">
-                        @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
-                        @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
-                        @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
-                    </select>
-                </div>
+<!-- ===== Page Title Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-file-lines"></i></span>
+                My Proposals
+            </h1>
+            <p class="emp-page-subtitle">Manage and track all your submitted proposals</p>
         </div>
-    </div>
-
-    <!-- Details are on a dedicated page now; removed modal and inline scripts -->
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="proposal-alert success">
-        <i class="fas fa-check-circle"></i>
-        <span>@TempData["SuccessMessage"]</span>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="proposal-alert error">
-        <i class="fas fa-exclamation-circle"></i>
-        <span>@TempData["ErrorMessage"]</span>
-    </div>
-}
-
-@if (ViewData["ErrorMessage"] != null)
-{
-    <div class="proposal-alert error">
-        <i class="fas fa-exclamation-circle"></i>
-        <span>@ViewData["ErrorMessage"]</span>
-    </div>
-}
-
-<!-- ===== Proposals Table ===== -->
-<div class="proposal-table-section">
-        <div class="proposal-table-header px-4">
-            <h3>
-                <i class="fas fa-folder-open"></i> My Proposals
-                <span class="proposal-count-badge" id="visibleCount">@Model.Count</span>
-            </h3>
-            <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="btn btn-ocean">
-                <i class="fas fa-plus"></i> New Proposal
+        <div class="emp-page-hero-right">
+            <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="emp-btn emp-btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>New Proposal</span>
             </a>
         </div>
+    </div>
+</div>
 
-        <div class="proposal-table-card">
-            @if (Model.Any())
-            {
-                <div class="proposal-table-responsive">
-                    <table class="proposal-table" id="proposalsTable">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Input Preview</th>
-                                <th>Submitted</th>
-                                <th>Status</th>
-                                <th style="width:120px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="proposalsBody">
-                            @foreach (var proposal in Model)
-                            {
-                                <tr class="proposal-row @(proposal.IsArchived ? "archived" : "")"
-                                    data-title="@proposal.Title.ToLower()"
-                                    data-preview="@GetInputPreview(proposal.Input).ToLower()"
-                                    data-status="@proposal.Status"
-                                    data-archived="@(proposal.IsArchived.ToString().ToLower())">
-                                    <td class="proposal-title-cell">@proposal.Title</td>
-                                    <td>@GetInputPreview(proposal.Input)</td>
-                                    <td class="proposal-date">@proposal.DateCreated.ToString("yyyy-MM-dd")</td>
-                                    <td>
-                                        <span class="status-inline">
-                                            <span class="status-dot @GetStatusClass(proposal.Status)" title="@proposal.Status"></span>
-                                            <span class="status-text">@proposal.Status</span>
-                                        </span>
-                                    </td>
-                                    <td class="proposal-actions-td">
-                                        <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id" class="proposal-view-btn" title="View details">
-                                            <i class="fas fa-search"></i>
-                                        </a>
-                                        <a asp-area="Employee" asp-controller="Proposal" asp-action="Edit" asp-route-id="@proposal.Id" class="proposal-edit-btn" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        @if (!proposal.IsArchived)
-                                        {
-                                            <form asp-area="Employee" asp-controller="Proposal" asp-action="Archive" method="post">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="id" value="@proposal.Id" />
-                                                <button type="submit" class="proposal-archive-btn" title="Archive"><i class="fas fa-archive"></i></button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <form asp-area="Employee" asp-controller="Proposal" asp-action="Unarchive" method="post">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="id" value="@proposal.Id" />
-                                                <button type="submit" class="proposal-unarchive-btn" title="Restore"><i class="fas fa-box-open"></i></button>
-                                            </form>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                    <!-- No-results row (shown by JS) -->
-                    <div id="noFilterResults" class="proposal-empty-state" style="display:none;">
-                        <div class="empty-icon"><i class="fas fa-search"></i></div>
-                        <div class="empty-title">No matching proposals</div>
-                        <div class="empty-text">Try adjusting your search or filter.</div>
-                    </div>
-                </div>
+<!-- ===== Alerts ===== -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <div class="emp-alert-icon"><i class="fas fa-check-circle"></i></div>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@ViewData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
 
-                <!-- ===== Pagination ===== -->
-                <div class="proposal-pagination" id="paginationContainer">
-                    <div class="pagination-info" id="paginationInfo"></div>
-                    <div class="pagination-controls" id="paginationControls"></div>
-                </div>
-            }
-            else
-            {
-                <div class="proposal-empty-state">
-                    <div class="empty-icon"><i class="fas fa-inbox"></i></div>
-                    <div class="empty-title">No proposals yet</div>
-                    <div class="empty-text">Get started by creating your first proposal.</div>
-                    <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="btn btn-ocean" style="margin-top:1rem;">
-                        <i class="fas fa-plus"></i> Create Proposal
-                    </a>
-                </div>
-            }
+<!-- ===== Filters ===== -->
+<div class="emp-filters-card">
+    <div class="emp-filters-row">
+        <div class="emp-search-group">
+            <i class="fas fa-magnifying-glass emp-search-icon"></i>
+            <input id="proposalSearch" type="text" class="emp-search-input" placeholder="Search proposals…" autocomplete="off" />
+        </div>
+        <div class="emp-select-group">
+            <select id="statusFilter" class="emp-select">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Requires Revision">Requires Revision</option>
+            </select>
+        </div>
+        <div class="emp-select-group">
+            <select id="archiveFilter" class="emp-select">
+                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
         </div>
     </div>
+</div>
+
+<!-- ===== Table ===== -->
+<div class="emp-table-card">
+    <div class="emp-table-toolbar">
+        <div class="emp-table-toolbar-left">
+            <h3 class="emp-table-title">
+                <i class="fas fa-folder-open"></i> Proposals
+            </h3>
+            <span class="emp-count-chip" id="visibleCount">@Model.Count</span>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="emp-table-responsive">
+            <table class="emp-table" id="proposalsTable">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Preview</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th class="emp-th-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="proposalsBody">
+                    @foreach (var proposal in Model)
+                    {
+                        <tr class="emp-row @(proposal.IsArchived ? "emp-row-archived" : "")"
+                            data-title="@proposal.Title.ToLower()"
+                            data-preview="@GetInputPreview(proposal.Input).ToLower()"
+                            data-status="@proposal.Status"
+                            data-archived="@(proposal.IsArchived.ToString().ToLower())">
+                            <td class="emp-cell-title">
+                                <span class="emp-title-text">@proposal.Title</span>
+                            </td>
+                            <td class="emp-cell-preview">@GetInputPreview(proposal.Input)</td>
+                            <td class="emp-cell-date">
+                                <span class="emp-date-chip">
+                                    <i class="far fa-calendar"></i>
+                                    @proposal.DateCreated.ToString("MMM dd, yyyy")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="emp-status-badge @GetStatusClass(proposal.Status)">
+                                    <span class="emp-status-dot"></span>
+                                    @proposal.Status
+                                </span>
+                            </td>
+                            <td class="emp-cell-actions">
+                                <div class="emp-action-group">
+                                    <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
+                                       class="emp-action-btn emp-action-view" title="View details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-area="Employee" asp-controller="Proposal" asp-action="Edit" asp-route-id="@proposal.Id"
+                                       class="emp-action-btn emp-action-edit" title="Edit">
+                                        <i class="fas fa-pen-to-square"></i>
+                                    </a>
+                                    @if (!proposal.IsArchived)
+                                    {
+                                        <form asp-area="Employee" asp-controller="Proposal" asp-action="Archive" method="post" class="emp-action-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@proposal.Id" />
+                                            <button type="submit" class="emp-action-btn emp-action-archive" title="Archive">
+                                                <i class="fas fa-box-archive"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-area="Employee" asp-controller="Proposal" asp-action="Unarchive" method="post" class="emp-action-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@proposal.Id" />
+                                            <button type="submit" class="emp-action-btn emp-action-restore" title="Restore">
+                                                <i class="fas fa-arrow-rotate-left"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div id="noFilterResults" class="emp-empty-state" style="display:none;">
+                <div class="emp-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <h4 class="emp-empty-title">No matching proposals</h4>
+                <p class="emp-empty-text">Try adjusting your search or filters.</p>
+            </div>
+        </div>
+
+        <div class="emp-pagination" id="paginationContainer">
+            <div class="emp-pagination-info" id="paginationInfo"></div>
+            <div class="emp-pagination-controls" id="paginationControls"></div>
+        </div>
+    }
+    else
+    {
+        <div class="emp-empty-state">
+            <div class="emp-empty-icon"><i class="fas fa-inbox"></i></div>
+            <h4 class="emp-empty-title">No proposals yet</h4>
+            <p class="emp-empty-text">Get started by creating your first proposal.</p>
+            <a asp-area="Employee" asp-controller="Proposal" asp-action="Create" class="emp-btn emp-btn-primary" style="margin-top:1rem;">
+                <i class="fas fa-plus"></i> Create Proposal
+            </a>
+        </div>
+    }
 </div>
 
 @section Scripts {
@@ -171,24 +192,22 @@
     let currentPage = 1;
     let filteredRows = [];
 
-    const searchInput   = document.getElementById('proposalSearch');
-    const statusSelect  = document.getElementById('statusFilter');
-    const allRows       = Array.from(document.querySelectorAll('.proposal-row'));
-    const noResults     = document.getElementById('noFilterResults');
-    const countBadge    = document.getElementById('visibleCount');
-    const pageInfo      = document.getElementById('paginationInfo');
-    const pageControls  = document.getElementById('paginationControls');
+    const searchInput  = document.getElementById('proposalSearch');
+    const statusSelect = document.getElementById('statusFilter');
+    const allRows      = Array.from(document.querySelectorAll('.emp-row'));
+    const noResults    = document.getElementById('noFilterResults');
+    const countBadge   = document.getElementById('visibleCount');
+    const pageInfo     = document.getElementById('paginationInfo');
+    const pageControls = document.getElementById('paginationControls');
 
     function applyFilters() {
         const query  = (searchInput?.value ?? '').toLowerCase().trim();
         const status = statusSelect?.value ?? '';
-
         filteredRows = allRows.filter(row => {
-            const titleMatch   = !query  || row.dataset.title.includes(query) || row.dataset.preview.includes(query);
-            const statusMatch  = !status || row.dataset.status === status;
+            const titleMatch  = !query  || row.dataset.title.includes(query) || row.dataset.preview.includes(query);
+            const statusMatch = !status || row.dataset.status === status;
             return titleMatch && statusMatch;
         });
-
         currentPage = 1;
         render();
     }
@@ -197,40 +216,26 @@
         const total = filteredRows.length;
         const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
         currentPage = Math.min(currentPage, totalPages);
-
         const start = (currentPage - 1) * PAGE_SIZE;
         const end   = start + PAGE_SIZE;
 
-        // Hide all, then show page slice
         allRows.forEach(r => r.style.display = 'none');
         filteredRows.forEach((r, i) => {
             r.style.display = (i >= start && i < end) ? '' : 'none';
         });
 
-        // No-results state
         if (noResults) noResults.style.display = total === 0 ? '' : 'none';
-
-        // Badge
         if (countBadge) countBadge.textContent = total;
 
-        // Pagination info
         if (pageInfo) {
-            if (total === 0) {
-                pageInfo.textContent = '';
-            } else {
-                const from = start + 1;
-                const to   = Math.min(end, total);
-                pageInfo.textContent = `Showing ${from}–${to} of ${total}`;
-            }
+            pageInfo.textContent = total === 0 ? '' : `Showing ${start + 1}–${Math.min(end, total)} of ${total}`;
         }
 
-        // Pagination buttons
         if (pageControls) {
             pageControls.innerHTML = '';
-
             const makeBtn = (label, page, disabled, active) => {
                 const btn = document.createElement('button');
-                btn.className = 'page-btn' + (active ? ' active' : '');
+                btn.className = 'emp-page-btn' + (active ? ' active' : '');
                 btn.innerHTML = label;
                 btn.disabled  = disabled;
                 btn.addEventListener('click', () => { currentPage = page; render(); });
@@ -238,35 +243,32 @@
             };
 
             pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
-
-            const window = 2;
+            const w = 2;
             for (let p = 1; p <= totalPages; p++) {
-                if (p === 1 || p === totalPages || (p >= currentPage - window && p <= currentPage + window)) {
+                if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
                     pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
-                } else if (p === currentPage - window - 1 || p === currentPage + window + 1) {
-                    const ellipsis = document.createElement('span');
-                    ellipsis.className = 'page-ellipsis';
-                    ellipsis.textContent = '…';
-                    pageControls.appendChild(ellipsis);
+                } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                    const el = document.createElement('span');
+                    el.className = 'emp-page-ellipsis';
+                    el.textContent = '…';
+                    pageControls.appendChild(el);
                 }
             }
-
             pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
         }
     }
 
-    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (searchInput)  searchInput.addEventListener('input', applyFilters);
     if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+
     const archiveSelect = document.getElementById('archiveFilter');
     if (archiveSelect) archiveSelect.addEventListener('change', () => {
         const url = new URL(window.location.href);
-        // default 'active' is the default server behavior; remove param for active
         if (archiveSelect.value === 'active') url.searchParams.delete('archiveFilter');
         else url.searchParams.set('archiveFilter', archiveSelect.value);
         window.location.href = url.toString();
     });
 
-    // Initial render
     filteredRows = allRows.slice();
     render();
 })();
@@ -276,32 +278,20 @@
 @functions {
     private string GetInputPreview(string? html)
     {
-        if (string.IsNullOrWhiteSpace(html))
-        {
-            return "—";
-        }
-
+        if (string.IsNullOrWhiteSpace(html)) return "—";
         var withoutTags = System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", " ");
-        var normalized = System.Text.RegularExpressions.Regex.Replace(withoutTags, "\\s+", " ").Trim();
-
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return "—";
-        }
-
-        const int maxLength = 120;
-        return normalized.Length <= maxLength ? normalized : normalized.Substring(0, maxLength) + "...";
+        var normalized  = System.Text.RegularExpressions.Regex.Replace(withoutTags, "\\s+", " ").Trim();
+        if (string.IsNullOrWhiteSpace(normalized)) return "—";
+        const int maxLength = 100;
+        return normalized.Length <= maxLength ? normalized : normalized.Substring(0, maxLength) + "…";
     }
 
-    private string GetStatusClass(string status)
+    private string GetStatusClass(string status) => status switch
     {
-        return status switch
-        {
-            "Pending"           => "status-pending",
-            "Approved"          => "status-approved",
-            "Rejected"          => "status-rejected",
-            "Requires Revision" => "status-requiresrevision",
-            _                    => "status-default"
-        };
-    }
+        "Pending"           => "emp-status-pending",
+        "Approved"          => "emp-status-approved",
+        "Rejected"          => "emp-status-rejected",
+        "Requires Revision" => "emp-status-revision",
+        _                   => "emp-status-default"
+    };
 }
