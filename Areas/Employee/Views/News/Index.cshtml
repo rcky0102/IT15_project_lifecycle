@@ -1,0 +1,66 @@
+@model IEnumerable<project_lifecycle.Models.NewsArticle>
+
+@{
+    ViewData["Title"] = "News";
+}
+
+<div class="container py-3">
+    <h1 class="mb-3">Latest News</h1>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-warning">
+            <h5 class="mb-1">@ViewBag.Error</h5>
+            <p class="mb-1">To fetch live news, add your NewsAPI.org key to the <strong>NewsApi:ApiKey</strong> setting in <em>appsettings.json</em> or set the environment variable <strong>NewsApi__ApiKey</strong>.</p>
+            <div>
+                <button id="copyEnvBtn" class="btn btn-sm btn-outline-secondary" type="button">Copy env var name</button>
+                <a href="https://newsapi.org/" target="_blank" class="btn btn-sm btn-primary ms-2">Get API key</a>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        @foreach (var a in Model)
+        {
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(a.UrlToImage))
+                    {
+                        <img src="@a.UrlToImage" class="card-img-top" alt="@a.Title" style="max-height:200px;object-fit:cover;" />
+                    }
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@a.Title</h5>
+                        <p class="card-text">@a.Description</p>
+                        <div class="mt-auto">
+                            <small class="text-muted">@a.Source @((a.PublishedAt.HasValue) ? ("· " + a.PublishedAt.Value.ToString("g")) : "")</small>
+                            @if (!string.IsNullOrEmpty(a.Url))
+                            {
+                                <a href="@a.Url" class="btn btn-sm btn-primary float-end" target="_blank">Read</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No articles to display.</p>
+    }
+</div>
+
+<script>
+    (function () {
+        var btn = document.getElementById('copyEnvBtn');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            navigator.clipboard?.writeText('NewsApi__ApiKey').then(function () {
+                btn.textContent = 'Copied!';
+                setTimeout(function () { btn.textContent = 'Copy env var name'; }, 2000);
+            }).catch(function () {
+                alert('Copy to clipboard not supported in this browser.');
+            });
+        });
+    })();
+</script>

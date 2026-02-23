@@ -273,7 +273,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 // Create role-specific record using more robust comparison
                 if (model.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
                 {
-                    var employee = new Employee
+                    var employee = new global::project_lifecycle.Models.Employee
                     {
                         UserId = user.Id,
                         EmployeeNumber = model.EmployeeNumber,
@@ -730,7 +730,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
                     if (employee == null)
                     {
-                        employee = new Employee { UserId = user.Id };
+                        employee = new global::project_lifecycle.Models.Employee { UserId = user.Id };
                         _context.Employees.Add(employee);
                     }
 
