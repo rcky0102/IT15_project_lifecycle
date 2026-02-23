@@ -4,16 +4,16 @@
 
 /* ---------- Design Tokens ---------- */
 :root {
-    --emp-primary: #0e7490;
-    --emp-primary-light: #22d3ee;
-    --emp-primary-dark: #164e63;
-    --emp-accent: #6366f1;
-    --emp-accent-light: #818cf8;
-    --emp-sidebar-bg: linear-gradient(195deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+    --emp-primary: #006994;
+    --emp-primary-light: #4CA3DD;
+    --emp-primary-dark: #004d6d;
+    --emp-accent: #00A8CC;
+    --emp-accent-light: #7ec8e3;
+    --emp-sidebar-bg: linear-gradient(195deg, #003d55 0%, #006994 55%, #004d6d 100%);
     --emp-sidebar-width: 260px;
     --emp-sidebar-collapsed: 78px;
     --emp-header-height: 64px;
-    --emp-bg: #f1f5f9;
+    --emp-bg: #F0F4F8;
     --emp-surface: #ffffff;
     --emp-text: #0f172a;
     --emp-text-muted: #64748b;
@@ -90,13 +90,13 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 14px rgba(14,116,144,.35);
+    box-shadow: 0 4px 14px rgba(0,105,148,.35);
     transition: transform .3s var(--emp-ease), box-shadow .3s var(--emp-ease);
 }
 
 .emp-brand-icon:hover {
     transform: scale(1.08) rotate(-3deg);
-    box-shadow: 0 6px 20px rgba(14,116,144,.45);
+    box-shadow: 0 6px 20px rgba(0,105,148,.45);
 }
 
 .emp-brand-icon svg {
@@ -189,9 +189,9 @@
 }
 
 .emp-nav-link.active {
-    background: linear-gradient(135deg, rgba(14,116,144,.2) 0%, rgba(99,102,241,.15) 100%);
+    background: linear-gradient(135deg, rgba(0,105,148,.25) 0%, rgba(0,168,204,.15) 100%);
     color: #fff;
-    box-shadow: 0 0 0 1px rgba(14,116,144,.15);
+    box-shadow: 0 0 0 1px rgba(0,105,148,.2);
 }
 
 .emp-nav-link.active::before {
@@ -266,7 +266,7 @@
     width: 10px;
     height: 10px;
     background: #22c55e;
-    border: 2px solid #1e293b;
+    border: 2px solid #004d6d;
     border-radius: 50%;
 }
 
@@ -380,7 +380,7 @@
     left: calc(100% + 12px);
     top: 50%;
     transform: translateY(-50%) scale(.9);
-    background: #1e293b;
+    background: #003d55;
     color: #e2e8f0;
     padding: .35rem .75rem;
     border-radius: var(--emp-radius-xs);
@@ -391,7 +391,7 @@
     pointer-events: none;
     transition: all .2s var(--emp-ease);
     z-index: 9999;
-    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+    box-shadow: 0 4px 12px rgba(0,105,148,.3);
 }
 
 .emp-sidebar.collapsed .emp-nav-link:hover::after {
@@ -460,7 +460,7 @@
 .emp-mobile-toggle:hover {
     border-color: var(--emp-primary);
     color: var(--emp-primary);
-    background: rgba(14,116,144,.04);
+    background: rgba(0,105,148,.04);
 }
 
 .emp-breadcrumb {
@@ -515,7 +515,7 @@
 }
 
 .emp-header-btn:hover {
-    background: rgba(14,116,144,.05);
+    background: rgba(0,105,148,.05);
     border-color: var(--emp-primary);
     color: var(--emp-primary);
     transform: translateY(-1px);
@@ -557,7 +557,7 @@
 }
 
 .emp-header-profile:hover {
-    background: rgba(14,116,144,.04);
+    background: rgba(0,105,148,.04);
 }
 
 .emp-header-avatar {
@@ -709,6 +709,6 @@
    CUSTOM SCROLLBAR (body)
    =================================== */
 ::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+::-webkit-scrollbar-track { background: #F0F4F8; }
+::-webkit-scrollbar-thumb { background: var(--emp-primary-light); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--emp-primary); }
