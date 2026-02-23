@@ -50,6 +50,33 @@
 .emp-members-list li { padding:.5rem 0; border-bottom:1px dashed #f8fafc; }
 .emp-members-list li:last-child { border-bottom:none; }
 
+/* Members list - modern rows */
+.emp-member-row { display:flex; align-items:center; gap:.75rem; padding:.45rem 0; }
+.emp-member-row .emp-member-avatar { flex:0 0 auto; }
+.emp-member-row .emp-member-info { display:flex; flex-direction:column; min-width:0; }
+.emp-member-name { font-weight:600; color:#0b3b4a; font-size:.95rem; }
+.emp-member-role { color:var(--emp-muted); font-size:.85rem; }
+
+/* Milestone timeline */
+.emp-milestone-timeline { display:flex; flex-direction:column; gap:.6rem; }
+.emp-milestone { display:flex; gap:.75rem; align-items:flex-start; }
+.emp-milestone-dot { width:12px; height:12px; border-radius:50%; margin-top:.3rem; flex:0 0 auto; }
+.emp-milestone-body { background:transparent; padding: .25rem 0; }
+.emp-milestone-title { font-weight:600; color:#0b3b4a; font-size:.93rem; }
+.emp-milestone-meta { color:var(--emp-muted); font-size:.82rem; }
+.emp-status-badge { padding:.18rem .5rem; border-radius:999px; font-size:.78rem; font-weight:600; display:inline-flex; align-items:center; gap:.35rem; }
+.emp-status-completed { background: rgba(76,163,221,0.12); color: #057a9e; }
+.emp-status-inprogress { background: rgba(6,105,148,0.08); color: #0b5f7a; }
+.emp-status-pending { background: rgba(6,30,50,0.04); color: #334155; }
+
+/* small tweaks for list spacing */
+.emp-members-list { display:flex; flex-direction:column; gap:.35rem; }
+.emp-milestones-list { display:none; }
+
+@media (max-width: 768px) {
+  .emp-member-row { gap:.6rem; }
+}
+
 @media (max-width: 992px) {
   .emp-project-grid { grid-template-columns: 1fr 140px 56px; }
 }

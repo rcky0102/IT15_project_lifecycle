@@ -84,27 +84,35 @@
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <h6 class="mb-2">Members</h6>
-                                        <ul class="list-unstyled mb-0 emp-members-list">
+                                        <div class="emp-members-list">
                                             @foreach (var m in project.Members)
                                             {
-                                                <li class="d-flex justify-content-between align-items-center py-1">
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <div class="emp-member-avatar small">@GetInitials(m.EmployeeName)</div>
+                                                <div class="emp-member-row">
+                                                    <div class="emp-member-avatar small" title="@m.EmployeeName">@GetInitials(m.EmployeeName)</div>
+                                                    <div class="emp-member-info">
                                                         <div class="emp-member-name">@m.EmployeeName</div>
+                                                        <div class="emp-member-role">@m.ProjectRoleName</div>
                                                     </div>
-                                                    <span class="badge bg-secondary">@m.ProjectRoleName</span>
-                                                </li>
+                                                </div>
                                             }
-                                        </ul>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <h6 class="mb-2">Milestones</h6>
-                                        <ol class="mb-0 emp-milestones-list">
+                                        <div class="emp-milestone-timeline">
                                             @foreach (var ms in project.Milestones.OrderBy(m => m.SequenceOrder))
                                             {
-                                                <li>@ms.MilestoneName <small class="text-muted">(@ms.Status)</small></li>
+                                                var status = (ms.Status ?? "").ToLowerInvariant();
+                                                var badgeClass = status == "completed" ? "emp-status-completed" : status == "in progress" || status == "inprogress" ? "emp-status-inprogress" : "emp-status-pending";
+                                                <div class="emp-milestone">
+                                                    <div class="emp-milestone-dot" style="background:@(status=="completed"?"var(--emp-ocean-light)":"#cbd5e1")"></div>
+                                                    <div class="emp-milestone-body">
+                                                        <div class="emp-milestone-title">@ms.MilestoneName <span class="emp-status-badge @badgeClass">@ms.Status</span></div>
+                                                        <div class="emp-milestone-meta">Order: @ms.SequenceOrder</div>
+                                                    </div>
+                                                </div>
                                             }
-                                        </ol>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
