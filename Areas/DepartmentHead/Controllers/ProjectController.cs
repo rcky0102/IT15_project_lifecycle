@@ -5,10 +5,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.Services;
 using project_lifecycle.ViewModels.DepartmentHead;
 
 namespace project_lifecycle.DepartmentHeadArea.Controllers
@@ -18,10 +20,12 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
     public class ProjectController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly INagerHolidayService _holidayService;
 
-        public ProjectController(ApplicationDbContext context)
+        public ProjectController(ApplicationDbContext context, INagerHolidayService holidayService)
         {
             _context = context;
+            _holidayService = holidayService;
         }
 
         [HttpGet]
@@ -169,6 +173,33 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             TempData["SuccessMessage"] = "Project created successfully.";
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetHolidays(DateTime startDate, DateTime endDate)
+        {
+            if (endDate < startDate)
+            {
+                return Json(new List<object>());
+            }
+
+            // Limit range to 2 years max to avoid excessive API calls
+            if ((endDate - startDate).TotalDays > 730)
+            {
+                endDate = startDate.AddDays(730);
+            }
+
+            var holidays = await _holidayService.GetHolidaysAsync(startDate, endDate);
+
+            var result = holidays.Select(h => new
+            {
+                date = h.Date.ToString("yyyy-MM-dd"),
+                localName = h.LocalName,
+                name = h.Name,
+                type = h.Type
+            });
+
+            return Json(result);
         }
 
         private async Task<DepartmentHead?> GetCurrentDepartmentHeadAsync()

@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/proposal.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/depthead-project.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/depthead-layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
 </head>
@@ -36,11 +37,14 @@
             <!-- Brand -->
             <div class="dh-sidebar-header">
                 <a href="@Url.Action("Index", "Dashboard", new { area = "DepartmentHead" })" class="dh-sidebar-brand">
-                    <div class="dh-brand-icon">
-                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M16 2L20 8L27 7L24 14L28 20L21 19L16 24L11 19L4 20L8 14L5 7L12 8L16 2Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-                            <circle cx="16" cy="14" r="6" fill="white"/>
-                            <path d="M13 12L15 14L19 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <div class="dh-brand-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Department Head">
+                            <!-- Rounded badge with person silhouette -->
+                            <rect x="0.5" y="0.5" width="23" height="23" rx="5" fill="currentColor" opacity="0.06" />
+                            <g transform="translate(4,3)" fill="currentColor">
+                                <circle cx="8" cy="4.5" r="3.2" />
+                                <path d="M0.3 16.2c0-2.9 3.9-5.2 7.7-5.2s7.7 2.3 7.7 5.2v1.6H0.3v-1.6z" />
+                            </g>
                         </svg>
                     </div>
                     <span class="dh-brand-text">Department Head</span>
