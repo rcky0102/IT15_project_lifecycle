@@ -35,53 +35,81 @@
     {
         <div class="emp-table-responsive">
             <div class="emp-project-list">
-                @foreach (var project in Model.Projects)
-                {
-                    <div class="emp-project-card mb-3">
-                        <div class="emp-project-header d-flex align-items-center justify-content-between">
-                            <div class="emp-project-meta" style="min-width:0;">
-                                <div class="d-flex align-items-center gap-2">
-                                    <h5 class="mb-0 emp-project-title">@project.Name</h5>
-                                    <span class="text-muted small">· @project.ProposalTitle</span>
+                    @foreach (var project in Model.Projects)
+                    {
+                        var totalMs = project.Milestones?.Count() ?? 0;
+                        var completedMs = project.Milestones?.Count(m => (m.Status ?? "").Equals("Completed", StringComparison.OrdinalIgnoreCase)) ?? 0;
+                        var percent = totalMs > 0 ? (int)Math.Round((double)completedMs * 100 / totalMs) : 0;
+                        <div class="emp-project-card mb-3">
+                            <div class="emp-project-grid">
+                                <div>
+                                    <div class="emp-project-title-row">
+                                        <h5 class="emp-project-title">@project.Name</h5>
+                                        <div class="emp-proposal-subtitle">@project.ProposalTitle</div>
+                                    </div>
+                                    <div class="emp-project-meta-row">Timeline: <span class="text-muted">@project.StartDate.ToString("MMM dd, yyyy") – @project.EndDate.ToString("MMM dd, yyyy")</span> · Members: <strong>@project.Members.Count</strong></div>
+
+                                    <div class="emp-members-avatars">
+                                        @foreach (var m in project.Members.Take(6))
+                                        {
+                                            <div class="emp-member" title="@m.EmployeeName">
+                                                <div class="emp-member-avatar">@GetInitials(m.EmployeeName)</div>
+                                            </div>
+                                        }
+                                        @if (project.Members.Count > 6)
+                                        {
+                                            <div class="emp-member more">+@(project.Members.Count - 6)</div>
+                                        }
+                                    </div>
                                 </div>
-                                <div class="text-muted mt-1">Timeline: @project.StartDate.ToString("MMM dd, yyyy") – @project.EndDate.ToString("MMM dd, yyyy")</div>
-                                <div class="mt-2 small text-muted"><strong>Members:</strong> <span class="ms-2">@project.Members.Count</span></div>
+
+                                <div class="emp-project-stats">
+                                    <div class="emp-progress-wrap">
+                                        <div class="emp-progress-label">Progress</div>
+                                        <div class="emp-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@percent">
+                                            <div class="emp-progress-fill" style="width:@percent%"></div>
+                                        </div>
+                                        <div class="emp-progress-percent">@percent% complete</div>
+                                    </div>
+                                </div>
+
+                                <div class="emp-project-actions">
+                                    <a asp-area="Employee" asp-controller="Project" asp-action="Show" asp-route-id="@project.Id" class="emp-action-btn emp-action-view" title="View project">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
                             </div>
 
-                            <div class="emp-project-action">
-                                <a asp-area="Employee" asp-controller="Project" asp-action="Show" asp-route-id="@project.Id" class="emp-btn emp-action-sm">
-                                    <i class="fas fa-eye"></i>
-                                </a>
+                            <div class="emp-project-details">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-2">Members</h6>
+                                        <ul class="list-unstyled mb-0 emp-members-list">
+                                            @foreach (var m in project.Members)
+                                            {
+                                                <li class="d-flex justify-content-between align-items-center py-1">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="emp-member-avatar small">@GetInitials(m.EmployeeName)</div>
+                                                        <div class="emp-member-name">@m.EmployeeName</div>
+                                                    </div>
+                                                    <span class="badge bg-secondary">@m.ProjectRoleName</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="mb-2">Milestones</h6>
+                                        <ol class="mb-0 emp-milestones-list">
+                                            @foreach (var ms in project.Milestones.OrderBy(m => m.SequenceOrder))
+                                            {
+                                                <li>@ms.MilestoneName <small class="text-muted">(@ms.Status)</small></li>
+                                            }
+                                        </ol>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        <hr class="emp-project-sep" />
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <h6 class="mb-2">Members</h6>
-                                <ul class="list-unstyled mb-0 emp-members-list">
-                                    @foreach (var m in project.Members)
-                                    {
-                                        <li class="d-flex justify-content-between align-items-center py-1">
-                                            <span>@m.EmployeeName</span>
-                                            <span class="badge bg-secondary">@m.ProjectRoleName</span>
-                                        </li>
-                                    }
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="mb-2">Milestones</h6>
-                                <ol class="mb-0 emp-milestones-list">
-                                    @foreach (var ms in project.Milestones.OrderBy(m => m.SequenceOrder))
-                                    {
-                                        <li>@ms.MilestoneName <small class="text-muted">(@ms.Status)</small></li>
-                                    }
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                }
+                    }
             </div>
 
             <div id="noFilterResults" class="emp-empty-state" style="display:none;">
@@ -100,4 +128,22 @@
         </div>
     }
 </div>
+
+        <link rel="stylesheet" href="~/css/employee-project.css" />
+
+        @functions {
+            private string GetInitials(string name)
+            {
+                if (string.IsNullOrWhiteSpace(name)) return "?";
+                var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length == 1)
+                {
+                    var s = parts[0];
+                    return s.Length >= 2 ? s.Substring(0, 2).ToUpperInvariant() : s.Substring(0, 1).ToUpperInvariant();
+                }
+                var first = parts[0][0];
+                var second = parts[1][0];
+                return (char.ToUpperInvariant(first).ToString() + char.ToUpperInvariant(second).ToString());
+            }
+        }
 
