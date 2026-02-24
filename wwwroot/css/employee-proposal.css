@@ -896,9 +896,71 @@
     line-height: 1.7;
     min-height: 60px;
 }
+.emp-detail-body::after { content: ''; display: table; clear: both; }
 
 /* Rich content resets inside detail body */
-.emp-detail-body img    { max-width: 100%; border-radius: 8px; margin: .5rem 0; }
+
+/* Standalone img (not inside a CKEditor figure) */
+.emp-detail-body > img,
+.emp-detail-body p > img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: .5rem 0;
+    display: block;
+}
+
+/* CKEditor block/side image figure – width is set via inline style by the resize plugin */
+.emp-detail-body figure.image {
+    margin: .5rem 0;
+    max-width: 100%;
+    display: table; /* shrink-wraps to inline style width */
+}
+.emp-detail-body figure.image img {
+    width: 100%;       /* fill the figure which carries the resized width */
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 0;
+}
+.emp-detail-body figure.image figcaption {
+    font-size: .78rem;
+    color: #64748b;
+    text-align: center;
+    padding: .3rem .5rem 0;
+    display: table-caption;
+    caption-side: bottom;
+}
+
+/* Side-floated image style */
+.emp-detail-body figure.image.image-style-side {
+    float: right;
+    margin-left: 1.25rem;
+    margin-bottom: .5rem;
+}
+.emp-detail-body figure.image.image-style-align-left {
+    float: left;
+    margin-right: 1.25rem;
+    margin-bottom: .5rem;
+}
+.emp-detail-body figure.image.image-style-align-right {
+    float: right;
+    margin-left: 1.25rem;
+    margin-bottom: .5rem;
+}
+
+/* CKEditor inline image span */
+.emp-detail-body .image-inline {
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: middle;
+}
+.emp-detail-body .image-inline img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
 .emp-detail-body table  { width: 100%; border-collapse: collapse; margin: .75rem 0; }
 .emp-detail-body td,
 .emp-detail-body th     { border: 1px solid #e2e8f0; padding: .45rem .7rem; font-size: .84rem; }
@@ -1134,7 +1196,16 @@
     color: #374151;
     line-height: 1.65;
 }
-.emp-note-content img   { max-width: 100%; border-radius: 6px; }
+.emp-note-content::after { content: ''; display: table; clear: both; }
+/* Standalone img */
+.emp-note-content > img,
+.emp-note-content p > img   { max-width: 100%; height: auto; border-radius: 6px; display: block; margin: .35rem 0; }
+/* CKEditor figure */
+.emp-note-content figure.image                  { margin: .35rem 0; max-width: 100%; display: table; }
+.emp-note-content figure.image img              { width: 100%; height: auto; border-radius: 6px; display: block; margin: 0; }
+.emp-note-content figure.image.image-style-side { float: right; margin-left: 1rem; margin-bottom: .35rem; }
+.emp-note-content .image-inline                 { display: inline-block; max-width: 100%; vertical-align: middle; }
+.emp-note-content .image-inline img             { max-width: 100%; height: auto; border-radius: 6px; }
 .emp-note-content p     { margin: 0 0 .5rem; }
 .emp-note-content ul,
 .emp-note-content ol    { padding-left: 1.4rem; margin: .35rem 0; }

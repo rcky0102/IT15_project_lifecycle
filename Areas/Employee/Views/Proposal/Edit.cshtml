@@ -252,6 +252,9 @@
                 ImageStyle,
                 ImageToolbar,
                 ImageUpload,
+                ImageResize,
+                ImageResizeEditing,
+                ImageResizeHandles,
                 MediaEmbed,
                 Alignment
             } = window.CKEDITOR;
@@ -276,6 +279,9 @@
                         ImageStyle,
                         ImageToolbar,
                         ImageUpload,
+                        ImageResize,
+                        ImageResizeEditing,
+                        ImageResizeHandles,
                         MediaEmbed,
                         Alignment
                     ],
@@ -286,7 +292,26 @@
                         ],
                         shouldNotGroupWhenFull: true
                     },
-                    image: {},
+                    image: {
+                        toolbar: [
+                            'imageTextAlternative',
+                            'toggleImageCaption',
+                            '|',
+                            'imageStyle:inline',
+                            'imageStyle:block',
+                            'imageStyle:side',
+                            '|',
+                            'resizeImage'
+                        ],
+                        resizeOptions: [
+                            { name: 'resizeImage:original', value: null,  label: 'Original' },
+                            { name: 'resizeImage:25',       value: '25',   label: '25%' },
+                            { name: 'resizeImage:50',       value: '50',   label: '50%' },
+                            { name: 'resizeImage:75',       value: '75',   label: '75%' },
+                            { name: 'resizeImage:100',      value: '100',  label: '100%' }
+                        ],
+                        resizeUnit: '%'
+                    },
                     alignment: {
                         options: ['left', 'center', 'right', 'justify']
                     },

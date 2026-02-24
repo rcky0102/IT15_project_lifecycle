@@ -1,58 +1,82 @@
 @{
     ViewData["Title"] = "Task";
-    var taskId = ViewData["TaskId"] ?? 0;
+    var taskId   = ViewData["TaskId"] ?? 0;
+    var taskName = ViewData["TaskName"]?.ToString() ?? "Task";
 }
 
-<div class="dashboard-container py-4">
-    <div class="proposal-page-header">
-        <h1>Task</h1>
-        <p class="proposal-subtitle">Submit your work for this task</p>
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-circle-check"></i></span>
+                @taskName
+            </h1>
+            <p class="emp-page-subtitle">Submit your work for this task</p>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="Employee" asp-controller="Project" asp-action="Show"
+               asp-route-id="@ViewContext.RouteData.Values["id"]" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Project</span>
+            </a>
+        </div>
     </div>
+</div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="proposal-alert success"><i class="fas fa-check-circle"></i> <span>@TempData["SuccessMessage"]</span></div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="proposal-alert error"><i class="fas fa-exclamation-circle"></i> <span>@TempData["ErrorMessage"]</span></div>
-    }
+<!-- ===== Alerts ===== -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <div class="emp-alert-icon"><i class="fas fa-check-circle"></i></div>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
 
-    <div class="card p-4">
-        <form asp-area="Employee" asp-controller="Project" asp-action="Task" asp-route-id="@taskId" method="post" class="auth-ocean-form">
+<!-- ===== Task Form ===== -->
+<div class="emp-form-card">
+    <div class="emp-form-section">
+
+        @{
+            var instructionsObj = ViewData["Instructions"] ?? ViewBag.Instructions;
+            var instructions    = instructionsObj == null ? null : instructionsObj.ToString();
+        }
+        @if (!string.IsNullOrWhiteSpace(instructions))
+        {
+            <div class="emp-instructions-block">
+                <div class="emp-instructions-label"><i class="fas fa-circle-info"></i> Instructions</div>
+                <div class="emp-instructions-body">@Html.Raw(instructions)</div>
+            </div>
+        }
+
+        <form asp-area="Employee" asp-controller="Project" asp-action="Task"
+              asp-route-id="@taskId" method="post" class="emp-form">
             @Html.AntiForgeryToken()
 
-            @{
-                var instructionsObj = ViewData["Instructions"] ?? ViewBag.Instructions;
-                var instructions = instructionsObj == null ? null : instructionsObj.ToString();
-            }
-
-            @if (!string.IsNullOrWhiteSpace(instructions))
-            {
-                <div class="mb-3">
-                    <label class="form-label">Instructions</label>
-                    <div class="card bg-light p-3" style="white-space:pre-wrap;">
-                        @Html.Raw(instructions)
-                    </div>
-                </div>
-            }
-
-            <div class="mb-3">
-                <label for="Input" class="form-label">Input</label>
-                <textarea id="Input" name="Input" rows="8" class="form-control">@Html.Raw(ViewData["ExistingInput"] ?? string.Empty)</textarea>
+            <div class="emp-form-row">
+                <label for="Input" class="emp-form-label">Your Input</label>
+                <textarea id="Input" name="Input" rows="8" class="emp-form-control">@Html.Raw(ViewData["ExistingInput"] ?? string.Empty)</textarea>
                 <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-                    <button type="button" id="insertRichFileBtn" class="btn btn-outline-ocean" style="padding:6px 12px;">
-                        <i class="fas fa-paperclip"></i> Add file/image to input
+                    <button type="button" id="insertRichFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
+                        <i class="fas fa-paperclip"></i> Add file/image
                     </button>
                     <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
                 </div>
                 <input type="file" id="richFileInput" style="display:none;" />
             </div>
 
-            <div class="proposal-actions">
-                <button type="submit" id="submitProposalBtn" class="btn btn-ocean">Submit Input</button>
-                <button type="reset" class="btn-reset">Reset</button>
-                <a asp-area="Employee" asp-controller="Project" asp-action="Show" asp-route-id="@ViewContext.RouteData.Values["id"]" class="btn btn-outline-ocean" style="margin-left:auto;">Back to Project</a>
+            <div class="emp-form-actions" style="justify-content:flex-end;">
+                <button type="reset" class="emp-btn emp-btn-secondary"><i class="fas fa-rotate-left"></i> Reset</button>
+                <button type="submit" id="submitProposalBtn" class="emp-btn emp-btn-primary"><i class="fas fa-paper-plane"></i> Submit Input</button>
             </div>
         </form>
     </div>
@@ -62,7 +86,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const editorSelector = '#Input';
         const uploadEndpoint = '@Url.Action("UploadRichText", "Proposal", new { area = "Employee" })';
-        const formElement = document.querySelector('form.auth-ocean-form');
+        const formElement = document.querySelector('form.emp-form');
         const submitButton = document.getElementById('submitProposalBtn');
         const titleInput = document.getElementById('Title');
         let editorInstance = null;
@@ -238,6 +262,9 @@
                 ImageStyle,
                 ImageToolbar,
                 ImageUpload,
+                ImageResize,
+                ImageResizeEditing,
+                ImageResizeHandles,
                 MediaEmbed,
                 Alignment
             } = window.CKEDITOR;
@@ -262,6 +289,9 @@
                         ImageStyle,
                         ImageToolbar,
                         ImageUpload,
+                        ImageResize,
+                        ImageResizeEditing,
+                        ImageResizeHandles,
                         MediaEmbed,
                         Alignment
                     ],
@@ -288,10 +318,21 @@
                         toolbar: [
                             'imageTextAlternative',
                             'toggleImageCaption',
+                            '|',
                             'imageStyle:inline',
                             'imageStyle:block',
-                            'imageStyle:side'
-                        ]
+                            'imageStyle:side',
+                            '|',
+                            'resizeImage'
+                        ],
+                        resizeOptions: [
+                            { name: 'resizeImage:original', value: null,  label: 'Original' },
+                            { name: 'resizeImage:25',       value: '25',   label: '25%' },
+                            { name: 'resizeImage:50',       value: '50',   label: '50%' },
+                            { name: 'resizeImage:75',       value: '75',   label: '75%' },
+                            { name: 'resizeImage:100',      value: '100',  label: '100%' }
+                        ],
+                        resizeUnit: '%'
                     },
                     alignment: {
                         options: ['left', 'center', 'right', 'justify']

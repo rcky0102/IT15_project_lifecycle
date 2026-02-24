@@ -44,7 +44,7 @@
 .emp-progress-percent { font-size:.82rem; color:#0b3b4a; font-weight:600; }
 
 .emp-project-actions { display:flex; align-items:center; justify-content:center; }
-.emp-action-btn { width:44px; height:44px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(6,30,50,0.06); background:transparent; color:var(--emp-ocean); }
+/* .emp-action-btn base styles and hover variants are defined in employee-proposal.css */
 
 .emp-project-details { margin-top:.75rem; border-top:1px dashed #f1f5f9; padding-top:.75rem; }
 .emp-members-list li { padding:.5rem 0; border-bottom:1px dashed #f8fafc; }
@@ -64,14 +64,214 @@
 .emp-milestone-body { background:transparent; padding: .25rem 0; }
 .emp-milestone-title { font-weight:600; color:#0b3b4a; font-size:.93rem; }
 .emp-milestone-meta { color:var(--emp-muted); font-size:.82rem; }
-.emp-status-badge { padding:.18rem .5rem; border-radius:999px; font-size:.78rem; font-weight:600; display:inline-flex; align-items:center; gap:.35rem; }
-.emp-status-completed { background: rgba(76,163,221,0.12); color: #057a9e; }
-.emp-status-inprogress { background: rgba(6,105,148,0.08); color: #0b5f7a; }
-.emp-status-pending { background: rgba(6,30,50,0.04); color: #334155; }
+/* Note: .emp-status-badge and status colour variants are defined in employee-proposal.css */
 
 /* small tweaks for list spacing */
 .emp-members-list { display:flex; flex-direction:column; gap:.35rem; }
 .emp-milestones-list { display:none; }
+
+/* ===========================================
+   SHOW PAGE – info strip
+   =========================================== */
+.emp-info-strip {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem 1.5rem;
+    background: #fff;
+    border-radius: 14px;
+    padding: .85rem 1.35rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(0,105,148,.06);
+    box-shadow: 0 2px 10px rgba(0,105,148,.04);
+    font-size: .84rem;
+    color: #475569;
+}
+.emp-info-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+.emp-info-item i { color: var(--emp-ocean-light); font-size: .8rem; }
+.emp-info-progress {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin-left: auto;
+}
+.emp-info-progress-bar {
+    width: 120px;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.emp-info-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--emp-ocean) 0%, var(--emp-ocean-light) 100%);
+    border-radius: 999px;
+    transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.emp-info-progress-label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--emp-ocean);
+    min-width: 2.5rem;
+    text-align: right;
+}
+
+/* ===========================================
+   SHOW PAGE – two-column grid
+   =========================================== */
+.emp-show-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.25rem;
+    align-items: start;
+}
+@media (max-width: 992px) {
+    .emp-show-grid { grid-template-columns: 1fr; }
+}
+
+/* ===========================================
+   SHOW PAGE – tasks card
+   =========================================== */
+.emp-show-tasks-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(0,105,148,.06);
+    box-shadow: 0 2px 12px rgba(0,105,148,.05);
+    transition: box-shadow .3s ease;
+}
+.emp-show-tasks-card:hover {
+    box-shadow: 0 6px 28px rgba(0,105,148,.1);
+}
+
+/* ===========================================
+   TASK LIST rows (inside emp-show-tasks-card)
+   =========================================== */
+.emp-task-list {
+    display: flex;
+    flex-direction: column;
+}
+.emp-task-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .75rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background .18s ease;
+}
+.emp-task-row:last-child { border-bottom: none; }
+.emp-task-row:hover { background: rgba(76,163,221,.03); }
+.emp-task-row-left {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+}
+.emp-task-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.emp-dot-green  { background: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.15); }
+.emp-dot-orange { background: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.15); }
+.emp-dot-gray   { background: #94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,.15); }
+.emp-task-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.emp-task-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: .88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.emp-task-dates {
+    font-size: .76rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    margin-top: .15rem;
+}
+.emp-task-dates i { font-size: .68rem; }
+.emp-task-row-right {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-shrink: 0;
+}
+
+/* ===========================================
+   SIDE PANEL cards
+   =========================================== */
+.emp-show-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+.emp-side-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid rgba(0,105,148,.07);
+    box-shadow: 0 2px 10px rgba(0,105,148,.04);
+    padding: 1.1rem 1.25rem;
+}
+.emp-side-card-title {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--emp-ocean);
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .85rem;
+    padding-bottom: .55rem;
+    border-bottom: 2px solid rgba(0,105,148,.07);
+}
+.emp-member-stack { display: flex; flex-direction: column; gap: .1rem; }
+
+/* Milestone dot colours (Show page) */
+.emp-ms-dot-done   { background: #10b981; }
+.emp-ms-dot-active { background: #f97316; }
+.emp-ms-dot-idle   { background: #cbd5e1; }
+
+/* ===========================================
+   TASK PAGE – instructions block
+   =========================================== */
+.emp-instructions-block {
+    background: linear-gradient(135deg, #eff9ff, #e0f2fe);
+    border: 1.5px solid rgba(0,105,148,.15);
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+    margin-bottom: 1.5rem;
+}
+.emp-instructions-label {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--emp-ocean);
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .6rem;
+}
+.emp-instructions-body {
+    font-size: .875rem;
+    color: #374151;
+    line-height: 1.65;
+    white-space: pre-wrap;
+}
 
 @media (max-width: 768px) {
   .emp-member-row { gap:.6rem; }
