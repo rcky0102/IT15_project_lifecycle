@@ -741,3 +741,259 @@
     .emp-page-title { font-size: 1.1rem; }
     .emp-action-btn { width: 30px; height: 30px; font-size: .75rem; }
 }
+
+/* ===========================================
+   BUTTON VARIANTS  (outline / secondary)
+   =========================================== */
+.emp-btn-outline {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,.4);
+    backdrop-filter: blur(4px);
+}
+.emp-btn-outline:hover {
+    background: rgba(255,255,255,.28);
+    color: #fff;
+    border-color: rgba(255,255,255,.7);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+    text-decoration: none;
+}
+
+/* When outline is used outside the hero (white bg) */
+.emp-form-card .emp-btn-outline,
+.emp-form-actions .emp-btn-outline {
+    background: #fff;
+    color: var(--emp-ocean);
+    border-color: rgba(0,105,148,.3);
+}
+.emp-form-card .emp-btn-outline:hover,
+.emp-form-actions .emp-btn-outline:hover {
+    background: #f0f7fc;
+    color: var(--emp-ocean-dark);
+    border-color: var(--emp-ocean-light);
+    box-shadow: 0 4px 14px rgba(0,105,148,.12);
+}
+
+.emp-btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1.5px solid #e2e8f0;
+}
+.emp-btn-secondary:hover {
+    background: #e2e8f0;
+    color: #334155;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,.06);
+}
+
+/* Primary inside a white card (no hero context) */
+.emp-form-actions .emp-btn-primary {
+    background: var(--emp-ocean-gradient);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(0,105,148,.25);
+}
+.emp-form-actions .emp-btn-primary:hover {
+    background: linear-gradient(135deg, #004d6d 0%, #006994 100%);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(0,105,148,.3);
+}
+
+/* ===========================================
+   FORM CARD  (Create / Edit)
+   =========================================== */
+.emp-form-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid rgba(0,105,148,.07);
+    box-shadow: 0 2px 14px rgba(0,105,148,.06);
+    overflow: hidden;
+    animation: emp-fadeSlide .4s cubic-bezier(.4,0,.2,1);
+}
+
+.emp-form-section {
+    padding: 1.75rem 2rem;
+}
+
+.emp-form-section-title {
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--emp-ocean);
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: .65rem;
+    border-bottom: 2px solid rgba(0,105,148,.07);
+}
+
+.emp-form-row {
+    margin-bottom: 1.375rem;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.emp-form-label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.emp-form-control {
+    width: 100%;
+    padding: .65rem .9rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: .875rem;
+    font-family: inherit;
+    color: #1e293b;
+    background: #fff;
+    outline: none;
+    transition: border-color .25s ease, box-shadow .25s ease;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.emp-form-control:focus {
+    border-color: var(--emp-ocean-light);
+    box-shadow: 0 0 0 3px rgba(76,163,221,.1);
+}
+
+.emp-form-control::placeholder { color: #94a3b8; }
+
+.emp-form-actions {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+    padding-top: .75rem;
+    border-top: 1px solid #f1f5f9;
+    margin-top: .5rem;
+}
+
+/* ===========================================
+   DETAIL PAGE
+   =========================================== */
+.emp-page-container {
+    animation: emp-fadeSlide .4s cubic-bezier(.4,0,.2,1);
+}
+
+.emp-detail-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid rgba(0,105,148,.07);
+    box-shadow: 0 2px 14px rgba(0,105,148,.06);
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.emp-detail-body {
+    font-size: .9rem;
+    color: #374151;
+    line-height: 1.7;
+    min-height: 60px;
+}
+
+/* Rich content resets inside detail body */
+.emp-detail-body img    { max-width: 100%; border-radius: 8px; margin: .5rem 0; }
+.emp-detail-body table  { width: 100%; border-collapse: collapse; margin: .75rem 0; }
+.emp-detail-body td,
+.emp-detail-body th     { border: 1px solid #e2e8f0; padding: .45rem .7rem; font-size: .84rem; }
+.emp-detail-body th     { background: #f0f7fc; font-weight: 600; color: var(--emp-ocean); }
+.emp-detail-body ul,
+.emp-detail-body ol     { padding-left: 1.5rem; margin: .5rem 0; }
+.emp-detail-body p      { margin: 0 0 .6rem; }
+.emp-detail-body h2,
+.emp-detail-body h3,
+.emp-detail-body h4     { color: #1e293b; margin: .9rem 0 .35rem; font-weight: 700; }
+
+/* ===========================================
+   SECTIONS  (Versions / Notes panels)
+   =========================================== */
+.emp-section {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid rgba(0,105,148,.07);
+    box-shadow: 0 2px 10px rgba(0,105,148,.04);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.emp-section-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding-bottom: .6rem;
+    border-bottom: 2px solid rgba(0,105,148,.07);
+}
+
+.emp-section-title a {
+    font-size: .75rem;
+    font-weight: 500;
+    color: var(--emp-ocean-light);
+    text-decoration: none;
+}
+.emp-section-title a:hover { text-decoration: underline; }
+
+/* Version items */
+.emp-version-item {
+    border-radius: 10px;
+    padding: .65rem .9rem;
+    border: 1px solid #e8f4fb;
+    font-size: .85rem;
+    color: #374151;
+    line-height: 1.5;
+    background: #f9fcff;
+}
+
+.emp-version-current {
+    background: linear-gradient(135deg, #eff9ff, #e0f2fe);
+    border-color: rgba(0,105,148,.15);
+    font-weight: 500;
+}
+
+/* Note items */
+.emp-note-item {
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    border: 1px solid #e8f4fb;
+    font-size: .875rem;
+    color: #374151;
+    line-height: 1.65;
+    background: #f9fcff;
+}
+
+.emp-note-current {
+    background: linear-gradient(135deg, #eff9ff, #e0f2fe);
+    border-color: rgba(0,105,148,.15);
+}
+
+.emp-note-item a,
+.emp-version-item a {
+    color: var(--emp-ocean);
+    text-decoration: none;
+    font-weight: 600;
+}
+.emp-note-item a:hover,
+.emp-version-item a:hover { text-decoration: underline; }
+
+/* ===========================================
+   RESPONSIVE – form / detail
+   =========================================== */
+@media (max-width: 768px) {
+    .emp-form-section { padding: 1.25rem 1rem; }
+    .emp-detail-card  { padding: 1.25rem 1rem; }
+    .emp-section      { padding: 1rem; }
+}
+
+@media (max-width: 576px) {
+    .emp-form-actions { flex-direction: column; align-items: stretch; }
+    .emp-form-actions .emp-btn { justify-content: center; }
+}
