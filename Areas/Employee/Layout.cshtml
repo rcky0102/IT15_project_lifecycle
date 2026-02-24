@@ -102,7 +102,7 @@
                     <form action="/Identity/Account/Logout" method="post" class="emp-logout-form" id="logoutForm">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="returnUrl" value="/" />
-                        <button type="submit" class="emp-logout-btn" title="Sign out" onclick="return confirm('Are you sure you want to logout?');">
+                        <button type="button" class="emp-logout-btn" id="logoutBtn" title="Sign out">
                             <i class="fas fa-arrow-right-from-bracket"></i>
                         </button>
                     </form>
@@ -156,6 +156,31 @@
             </main>
         </div>
 
+    </div>
+
+    <!-- Logout confirmation modal + Scripts -->
+
+    <style>
+    .emp-modal-backdrop { position: fixed; inset: 0; background: rgba(3,7,18,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .emp-modal-backdrop.active { display: flex; }
+    .emp-modal { background: #fff; border-radius: 12px; width: 94%; max-width: 420px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(2,6,23,0.35); }
+    .emp-modal h4 { margin: 0 0 .5rem; font-size: 1.05rem; color: #0f172a; }
+    .emp-modal p { margin: 0 0 1rem; color: #64748b; font-size: .92rem; }
+    .emp-modal .emp-modal-actions { display:flex; gap:.5rem; justify-content:flex-end; }
+    .emp-modal .emp-btn { border-radius: 8px; padding: .5rem .85rem; font-weight:600; }
+    .emp-modal .emp-btn-cancel { background: transparent; border:1px solid #e6eef6; color:#475569; }
+    .emp-modal .emp-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color:#fff; border:none; }
+    </style>
+
+    <div class="emp-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="emp-modal" role="document">
+            <h4>Sign out</h4>
+            <p>Are you sure you want to sign out of your account?</p>
+            <div class="emp-modal-actions">
+                <button type="button" class="emp-btn emp-btn-cancel" id="cancelLogoutBtn">Cancel</button>
+                <button type="button" class="emp-btn emp-btn-confirm" id="confirmLogoutBtn">Sign out</button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
@@ -219,6 +244,40 @@
         window.addEventListener('scroll', function () {
             header?.classList.toggle('scrolled', window.scrollY > 8);
         }, { passive: true });
+
+        /* --- Logout confirmation modal --- */
+        const logoutForm = document.getElementById('logoutForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = document.getElementById('logoutModal');
+        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+        function showLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.add('active');
+            logoutModal.setAttribute('aria-hidden', 'false');
+        }
+        function hideLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.remove('active');
+            logoutModal.setAttribute('aria-hidden', 'true');
+        }
+
+        logoutBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLogoutModal();
+        });
+
+        cancelLogoutBtn?.addEventListener('click', function () { hideLogoutModal(); });
+
+        // Close modal when clicking backdrop
+        logoutModal?.addEventListener('click', function (e) {
+            if (e.target === logoutModal) hideLogoutModal();
+        });
+
+        confirmLogoutBtn?.addEventListener('click', function () {
+            if (logoutForm) logoutForm.submit();
+        });
     })();
     </script>
 
