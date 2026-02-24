@@ -93,7 +93,6 @@
                 <thead>
                     <tr>
                         <th>Title</th>
-                        <th>Preview</th>
                         <th>Submitted</th>
                         <th>Status</th>
                         <th class="emp-th-actions">Actions</th>
@@ -104,17 +103,15 @@
                     {
                         <tr class="emp-row @(proposal.IsArchived ? "emp-row-archived" : "")"
                             data-title="@proposal.Title.ToLower()"
-                            data-preview="@GetInputPreview(proposal.Input).ToLower()"
                             data-status="@proposal.Status"
                             data-archived="@(proposal.IsArchived.ToString().ToLower())">
                             <td class="emp-cell-title">
                                 <span class="emp-title-text">@proposal.Title</span>
                             </td>
-                            <td class="emp-cell-preview">@GetInputPreview(proposal.Input)</td>
                             <td class="emp-cell-date">
                                 <span class="emp-date-chip">
                                     <i class="far fa-calendar"></i>
-                                    @proposal.DateCreated.ToString("MMM dd, yyyy")
+                                    @proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")
                                 </span>
                             </td>
                             <td class="emp-cell-status">
@@ -204,7 +201,9 @@
         const query  = (searchInput?.value ?? '').toLowerCase().trim();
         const status = statusSelect?.value ?? '';
         filteredRows = allRows.filter(row => {
-            const titleMatch  = !query  || row.dataset.title.includes(query) || row.dataset.preview.includes(query);
+            const title = (row.dataset.title || '');
+            const preview = (row.dataset.preview || '');
+            const titleMatch  = !query  || title.includes(query) || preview.includes(query);
             const statusMatch = !status || row.dataset.status === status;
             return titleMatch && statusMatch;
         });
