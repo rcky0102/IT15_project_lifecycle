@@ -117,17 +117,17 @@
                                     @proposal.DateCreated.ToString("MMM dd, yyyy")
                                 </span>
                             </td>
-                            <td>
-                                <span class="emp-status-badge @GetStatusClass(proposal.Status)">
+                            <td class="emp-cell-status">
+                                <span class="emp-status-inline @GetStatusClass(proposal.Status)">
                                     <span class="emp-status-dot"></span>
-                                    @proposal.Status
+                                    <span class="emp-status-text">@proposal.Status</span>
                                 </span>
                             </td>
                             <td class="emp-cell-actions">
                                 <div class="emp-action-group">
                                     <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
                                        class="emp-action-btn emp-action-view" title="View details">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="fas fa-magnifying-glass"></i>
                                     </a>
                                     <a asp-area="Employee" asp-controller="Proposal" asp-action="Edit" asp-route-id="@proposal.Id"
                                        class="emp-action-btn emp-action-edit" title="Edit">

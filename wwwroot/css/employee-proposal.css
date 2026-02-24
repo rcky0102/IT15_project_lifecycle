@@ -502,6 +502,91 @@
 }
 .emp-status-default .emp-status-dot { background: #94a3b8; }
 
+/* Ensure dot also exposes its colour via `color` so currentColor-based effects work */
+.emp-status-pending .emp-status-dot { color: #f59e0b; }
+.emp-status-approved .emp-status-dot { color: #10b981; }
+.emp-status-rejected .emp-status-dot { color: #ef4444; }
+.emp-status-revision .emp-status-dot { color: #f97316; }
+.emp-status-default .emp-status-dot { color: #94a3b8; }
+
+/* Inline status (dot + text) — neutral container, colored dot */
+.emp-status-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 400;
+    font-size: .88rem;
+}
+
+/* When using the inline variant, neutralize the badge background from status classes */
+.emp-status-inline.emp-status-pending,
+.emp-status-inline.emp-status-approved,
+.emp-status-inline.emp-status-rejected,
+.emp-status-inline.emp-status-revision,
+.emp-status-inline.emp-status-default {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+}
+
+/* Status dot visual effects */
+.emp-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: relative;
+    transition: transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s ease;
+    /* subtle breathing animation */
+    animation: emp-dot-breath 3s ease-in-out infinite;
+}
+
+.emp-status-dot::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .08;
+    filter: blur(6px);
+    pointer-events: none;
+    transition: transform .45s ease, opacity .45s ease;
+}
+
+.emp-status-inline:hover .emp-status-dot {
+    transform: scale(1.35) translateZ(0);
+    box-shadow: 0 6px 18px rgba(0,0,0,.06), 0 0 18px currentColor;
+}
+.emp-status-inline:hover .emp-status-dot::after {
+    opacity: .18;
+    transform: translate(-50%, -50%) scale(1.9);
+}
+
+@keyframes emp-dot-breath {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.12); }
+    60%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .emp-status-dot,
+    .emp-status-dot::after {
+        animation: none !important;
+        transition: none !important;
+    }
+    .emp-status-inline:hover .emp-status-dot {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+}
+
 /* ===========================================
    ACTION BUTTONS
    =========================================== */
