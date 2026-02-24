@@ -72,6 +72,15 @@
                 @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
             </select>
         </div>
+        <div class="emp-select-group">
+            <label for="pageSizeSelect" style="font-size:.82rem;color:var(--emp-muted);margin-right:.4rem;">Show</label>
+            <select id="pageSizeSelect" class="emp-select" style="width:92px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
     </div>
 </div>
 
@@ -183,9 +192,9 @@
 </div>
 
 @section Scripts {
-<script>
+    <script>
 (function () {
-    const PAGE_SIZE = 8;
+    let PAGE_SIZE = 10; // default to 10 (options: 5,10,25,50)
     let currentPage = 1;
     let filteredRows = [];
 
@@ -196,6 +205,7 @@
     const countBadge   = document.getElementById('visibleCount');
     const pageInfo     = document.getElementById('paginationInfo');
     const pageControls = document.getElementById('paginationControls');
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
 
     function applyFilters() {
         const query  = (searchInput?.value ?? '').toLowerCase().trim();
@@ -259,6 +269,17 @@
 
     if (searchInput)  searchInput.addEventListener('input', applyFilters);
     if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+
+    if (pageSizeSelect) {
+        // initialize select to current page size
+        pageSizeSelect.value = String(PAGE_SIZE);
+        pageSizeSelect.addEventListener('change', function () {
+            const val = parseInt(pageSizeSelect.value, 10) || 10;
+            PAGE_SIZE = Math.max(5, val);
+            currentPage = 1;
+            render();
+        });
+    }
 
     const archiveSelect = document.getElementById('archiveFilter');
     if (archiveSelect) archiveSelect.addEventListener('change', () => {
