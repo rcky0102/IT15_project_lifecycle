@@ -45,5 +45,8 @@ namespace project_lifecycle.Models
 
         [Required]
         public DateTime DateCreated { get; set; } = DateTime.Now;
+
+        // When task was completed (set when Status transitions to "Checked")
+        public DateTime? CompletedAt { get; set; }
     }
 }

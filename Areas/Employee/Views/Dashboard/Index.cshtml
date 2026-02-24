@@ -81,11 +81,12 @@
     <div class="charts-row">
         <div class="chart-container">
             <div class="chart-header">
-                <h3>Weekly Productivity</h3>
+                <h3 id="prodChartTitle">Tasks Completed</h3>
                 <div class="chart-actions">
-                    <select class="form-select form-select-sm">
-                        <option>Last 7 days</option>
-                        <option>Last 30 days</option>
+                    <select id="prodRangeSelect" class="form-select form-select-sm">
+                        <option value="7" selected>Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
                     </select>
                 </div>
             </div>
@@ -221,30 +222,61 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Productivity Chart
+        // Productivity Chart (Tasks completed over time)
         const prodCtx = document.getElementById('productivityChart').getContext('2d');
-        new Chart(prodCtx, {
+        let productivityChart = new Chart(prodCtx, {
             type: 'line',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Hours Logged',
-                    data: [4, 6, 5, 7, 6, 3, 2],
-                    borderColor: '#4CA3DD',
-                    backgroundColor: 'rgba(76, 163, 221, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
+            data: { labels: [], datasets: [{ label: 'Tasks Completed', data: [], borderColor: '#4CA3DD', backgroundColor: 'rgba(76,163,221,0.08)', tension: 0.35, fill: true, pointRadius: 4, pointHoverRadius: 6 }] },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
-                    x: { grid: { display: false } }
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: { precision: 0 },
+                        title: { display: true, text: 'Tasks completed', color: '#64748b', font: { weight: '600', size: 12 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, autoSkip: true },
+                        title: { display: true, text: 'Date', color: '#64748b', font: { weight: '600', size: 12 } }
+                    }
                 }
             }
+        });
+
+        // Fetch completed tasks trend (daily for last 7 days)
+        const prodRangeSelect = document.getElementById('prodRangeSelect');
+
+        function fetchCompletedTasks(days = 7) {
+            const url = '@Url.Action("CompletedTasksTrend","Dashboard", new { area = "Employee" })';
+            // update header immediately
+            const titleEl = document.getElementById('prodChartTitle');
+            if (titleEl) titleEl.textContent = `Tasks Completed — Last ${days} days`;
+            fetch(url + '?days=' + encodeURIComponent(days))
+                .then(r => r.json())
+                .then(payload => {
+                    const labels = Array.from(payload.labels);
+                    const data = Array.from(payload.data);
+                    productivityChart.data.labels = labels.map(l => {
+                        const d = new Date(l);
+                        return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                    });
+                    productivityChart.data.datasets[0].data = data;
+                    productivityChart.update();
+                })
+                .catch(err => { console.error('Failed to load completed tasks trend', err); });
+        }
+
+        // initial load
+        fetchCompletedTasks(parseInt(prodRangeSelect?.value || 7, 10));
+
+        // update on change
+        prodRangeSelect?.addEventListener('change', function () {
+            const days = parseInt(this.value || '7', 10);
+            fetchCompletedTasks(days);
         });
 
         // Task Status Chart

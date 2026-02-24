@@ -346,8 +346,20 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             // Interpret action (button pressed)
             if (!string.IsNullOrEmpty(action))
             {
-                if (action == "Checked") task.Status = "Checked";
-                else if (action == "RequireRevision") task.Status = "Require Revision";
+                if (action == "Checked")
+                {
+                    task.Status = "Checked";
+                    if (task.CompletedAt == null)
+                    {
+                        task.CompletedAt = DateTime.Now;
+                    }
+                }
+                else if (action == "RequireRevision")
+                {
+                    task.Status = "Require Revision";
+                    // If reverting from Checked, clear CompletedAt so the timestamp reflects current state
+                    task.CompletedAt = null;
+                }
             }
 
             await _context.SaveChangesAsync();

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using project_lifecycle.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
@@ -51,6 +52,32 @@ namespace project_lifecycle.EmployeeArea.Controllers
             ViewData["OpenTasks"] = openTasks;
 
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CompletedTasksTrend(int days = 7)
+        {
+            // Use EndDate as a proxy for completion date when Status == "Checked".
+            var endDate = DateTime.UtcNow.Date.AddDays(-days + 1);
+
+            var counts = await _context.ProjectTasks
+                .Where(t => t.Status == "Checked" && t.EndDate >= endDate)
+                .GroupBy(t => new { t.EndDate.Year, t.EndDate.Month, t.EndDate.Day })
+                .Select(g => new
+                {
+                    Date = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            // Build day series for the requested range
+            var labels = Enumerable.Range(0, days)
+                .Select(i => endDate.AddDays(i))
+                .ToList();
+
+            var data = labels.Select(d => counts.FirstOrDefault(c => c.Date == d)?.Count ?? 0).ToList();
+
+            return Json(new { labels = labels.Select(d => d.ToString("yyyy-MM-dd")), data });
         }
     }
 }
