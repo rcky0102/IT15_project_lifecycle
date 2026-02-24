@@ -1,7 +1,8 @@
 @{
     ViewData["Title"] = "Task";
-    var taskId   = ViewData["TaskId"] ?? 0;
-    var taskName = ViewData["TaskName"]?.ToString() ?? "Task";
+    var taskId    = ViewData["TaskId"] ?? 0;
+    var taskName  = ViewData["TaskName"]?.ToString() ?? "Task";
+    var projectId = ViewData["ProjectId"];
 }
 
 <!-- ===== Page Hero ===== -->
@@ -16,9 +17,9 @@
         </div>
         <div class="emp-page-hero-right">
             <a asp-area="Employee" asp-controller="Project" asp-action="Show"
-               asp-route-id="@ViewContext.RouteData.Values["id"]" class="emp-btn emp-btn-outline">
+               asp-route-id="@projectId" class="emp-btn emp-btn-outline">
                 <i class="fas fa-arrow-left"></i>
-                <span>Back to Project</span>
+                <span>Back to Tasks</span>
             </a>
         </div>
     </div>

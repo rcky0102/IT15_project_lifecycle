@@ -167,10 +167,14 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
             if (taskMember == null) return Forbid();
 
-            var task = await _context.ProjectTasks.FirstOrDefaultAsync(t => t.Id == id);
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone)
+                .FirstOrDefaultAsync(t => t.Id == id);
             if (task == null) return NotFound();
 
             ViewData["TaskId"] = id;
+            ViewData["TaskName"] = task.Name;
+            ViewData["ProjectId"] = task.ProjectMilestone?.ProjectId;
             ViewData["Instructions"] = task.Instructions ?? string.Empty;
             ViewData["ExistingInput"] = task.Input ?? string.Empty;
             return View();
