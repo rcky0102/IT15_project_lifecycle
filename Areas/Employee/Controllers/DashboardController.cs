@@ -57,12 +57,12 @@ namespace project_lifecycle.EmployeeArea.Controllers
         [HttpGet]
         public async Task<IActionResult> CompletedTasksTrend(int days = 7)
         {
-            // Use EndDate as a proxy for completion date when Status == "Checked".
+            // Use CompletedAt as the completion date when Status == "Checked".
             var endDate = DateTime.UtcNow.Date.AddDays(-days + 1);
 
             var counts = await _context.ProjectTasks
-                .Where(t => t.Status == "Checked" && t.EndDate >= endDate)
-                .GroupBy(t => new { t.EndDate.Year, t.EndDate.Month, t.EndDate.Day })
+                .Where(t => t.Status == "Checked" && t.CompletedAt.HasValue && t.CompletedAt.Value.Date >= endDate)
+                .GroupBy(t => new { Year = t.CompletedAt.Value.Year, Month = t.CompletedAt.Value.Month, Day = t.CompletedAt.Value.Day })
                 .Select(g => new
                 {
                     Date = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
