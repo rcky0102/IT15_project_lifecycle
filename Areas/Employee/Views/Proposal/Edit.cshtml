@@ -3,56 +3,70 @@
     ViewData["Title"] = "Edit Proposal";
 }
 
-<div class="dashboard-container pb-4">
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="proposal-alert error">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>@TempData["ErrorMessage"]</span>
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-pen-to-square"></i></span>
+                Edit Proposal
+            </h1>
+            <p class="emp-page-subtitle">Update the details below and save your changes</p>
         </div>
-    }
+        <div class="emp-page-hero-right" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.Proposal.Id" class="emp-btn emp-btn-outline">
+                <i class="fas fa-eye"></i>
+                <span>View Details</span>
+            </a>
+            <a asp-area="Employee" asp-controller="Proposal" asp-action="Index" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Proposals</span>
+            </a>
+        </div>
+    </div>
+</div>
 
-    <div class="proposal-form-card">
-                    <div class="form-section-title">
-                        <i class="fas fa-lightbulb"></i> Proposal Details
-                        <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.Proposal.Id" class="versions-link" style="margin-left:auto; font-weight:600; text-decoration:underline; color:var(--ocean-deep);">Versions</a>
-                    </div>
+<!-- ===== Alerts ===== -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
 
-        <div class="row">
-            <div class="col-md-12">
-                <form asp-area="Employee" asp-controller="Proposal" asp-action="Edit" method="post" class="auth-ocean-form">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@Model.Proposal.Id" />
+<!-- ===== Edit Form ===== -->
+<div class="emp-form-card">
+    <div class="emp-form-section">
+        <div class="emp-form-section-title"><i class="fas fa-lightbulb"></i> Proposal Details</div>
 
-                    <div class="form-group-ocean">
-                        <label for="Title" class="form-label-ocean">Project Title</label>
-                        <input type="text" id="Title" name="Proposal.Title" class="form-control-ocean" required maxlength="200" value="@Model.Proposal.Title" />
-                    </div>
+        <form asp-area="Employee" asp-controller="Proposal" asp-action="Edit" method="post" class="emp-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Proposal.Id" />
 
-                    <div class="form-group-ocean">
-                        <label for="Input" class="form-label-ocean">Input</label>
-                        <textarea id="Input" name="Proposal.Input" rows="5" class="form-control-ocean">@Html.Raw(Model.Proposal.Input)</textarea>
-                        <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-                            <button type="button" id="insertRichFileBtn" class="btn btn-outline-ocean" style="padding:6px 12px;">
-                                Insert file
-                            </button>
-                            <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
-                        </div>
-                        <input type="file" id="richFileInput" style="display:none;" />
-                    </div>
-
-                    <div class="proposal-actions">
-                        <span style="margin-left:auto; display:flex; gap:0.5rem;">
-                            <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.Proposal.Id" class="btn-reset" style="text-decoration:none;"><i class="fas fa-arrow-left"></i> Back</a>
-                            <button type="submit" id="submitProposalBtn" class="btn btn-ocean"><i class="fas fa-save"></i> Save Changes</button>
-                        </span>
-                    </div>
-                </form>
+            <div class="emp-form-row">
+                <label for="Title" class="emp-form-label">Project Title</label>
+                <input type="text" id="Title" name="Proposal.Title" class="emp-form-control" required maxlength="200" value="@Model.Proposal.Title" />
             </div>
 
-            
-        </div>
+            <div class="emp-form-row">
+                <label for="Input" class="emp-form-label">Input</label>
+                <textarea id="Input" name="Proposal.Input" rows="8" class="emp-form-control">@Html.Raw(Model.Proposal.Input)</textarea>
+                <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+                    <button type="button" id="insertRichFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
+                        <i class="fas fa-paperclip"></i> Add file/image to input
+                    </button>
+                    <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
+                </div>
+                <input type="file" id="richFileInput" style="display:none;" />
+            </div>
+
+            <div class="emp-form-actions" style="justify-content:flex-end;">
+                <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.Proposal.Id" class="emp-btn emp-btn-secondary"><i class="fas fa-arrow-left"></i> Cancel</a>
+                <button type="submit" id="submitProposalBtn" class="emp-btn emp-btn-primary"><i class="fas fa-floppy-disk"></i> Save Changes</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -60,7 +74,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const editorSelector = '#Input';
         const uploadEndpoint = '@Url.Action("UploadRichText", "Proposal", new { area = "Employee" })';
-        const formElement = document.querySelector('form.auth-ocean-form');
+        const formElement = document.querySelector('form.emp-form');
         const submitButton = document.getElementById('submitProposalBtn');
         const titleInput = document.getElementById('Title');
         let editorInstance = null;
