@@ -203,17 +203,17 @@
 
                 <!-- Stepper Track -->
                 <div class="cp-stepper">
-                    <div class="cp-step active" data-step="1">
+                    <div class="cp-step active" data-step="1" role="button" tabindex="0" aria-label="Go to Details step">
                         <div class="cp-step-circle"><i class="fas fa-file-lines"></i></div>
                         <span class="cp-step-label">Details</span>
                     </div>
                     <div class="cp-step-line" id="stepLine1"></div>
-                    <div class="cp-step" data-step="2">
+                    <div class="cp-step" data-step="2" role="button" tabindex="0" aria-label="Go to Schedule step">
                         <div class="cp-step-circle"><i class="fas fa-calendar-check"></i></div>
                         <span class="cp-step-label">Schedule</span>
                     </div>
                     <div class="cp-step-line" id="stepLine2"></div>
-                    <div class="cp-step" data-step="3">
+                    <div class="cp-step" data-step="3" role="button" tabindex="0" aria-label="Go to Team step">
                         <div class="cp-step-circle"><i class="fas fa-users-gear"></i></div>
                         <span class="cp-step-label">Team</span>
                     </div>
@@ -574,6 +574,29 @@
             if (validateCurrent()) goTo(current + 1);
         });
         btnPrev.addEventListener('click', () => goTo(current - 1));
+
+        // clickable and keyboard-accessible steps
+        const stepEls = Array.from(document.querySelectorAll('.cp-step'));
+        function attemptNavigate(target, skipValidation) {
+            target = Number(target);
+            if (!target || target === current) return;
+            // when skipValidation is true (clicked step), allow jumping freely
+            if (!skipValidation && target > current) {
+                // ensure current is valid before moving forward
+                if (!validateCurrent()) return;
+            }
+            goTo(target);
+        }
+
+        stepEls.forEach(el => {
+            el.addEventListener('click', () => attemptNavigate(el.dataset.step, true));
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    attemptNavigate(el.dataset.step, true);
+                }
+            });
+        });
 
         if (modalEl) {
             modalEl.addEventListener('hidden.bs.modal', () => goTo(1));

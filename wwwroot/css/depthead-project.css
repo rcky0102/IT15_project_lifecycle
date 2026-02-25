@@ -910,6 +910,8 @@
     gap: .3rem;
 }
 
+.cp-step { cursor: pointer; }
+
 .cp-step-circle {
     width: 42px;
     height: 42px;
