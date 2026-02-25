@@ -61,6 +61,16 @@
             </select>
         </div>
         <div class="emp-select-group">
+            <select id="archiveFilter" class="emp-select">
+                @{
+                    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active";
+                }
+                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
+        </div>
+        <div class="emp-select-group">
             <label for="pageSizeSelect" style="font-size:.82rem;color:#64748b;margin-right:.4rem;">Show</label>
             <select id="pageSizeSelect" class="emp-select" style="width:92px;">
                 <option value="5">5</option>
@@ -122,12 +132,32 @@
                                     <span class="emp-status-text">@proposal.Status</span>
                                 </span>
                             </td>
-                            <td class="emp-cell-actions">
-                                <div class="emp-action-group">
+                            <td class="emp-cell-actions" style="vertical-align:middle;text-align:left;padding-left:0.5rem;">
+                                <div class="emp-action-group" style="display:inline-flex;align-items:center;justify-content:flex-start;gap:.35rem;">
                                     <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
                                        class="emp-action-btn emp-action-view" title="View details">
                                         <i class="fas fa-magnifying-glass"></i>
                                     </a>
+                                    @if (!proposal.IsArchived)
+                                    {
+                                        <form asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Archive" method="post" class="emp-action-form" onsubmit="return confirm('Archive this proposal?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@proposal.Id" />
+                                            <button type="submit" class="emp-action-btn emp-action-archive" title="Archive">
+                                                <i class="fas fa-box-archive"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Unarchive" method="post" class="emp-action-form" onsubmit="return confirm('Unarchive this proposal?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@proposal.Id" />
+                                            <button type="submit" class="emp-action-btn emp-action-unarchive" title="Unarchive">
+                                                <i class="fas fa-box-open"></i>
+                                            </button>
+                                        </form>
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -172,6 +202,7 @@
     const pageInfo       = document.getElementById('paginationInfo');
     const pageControls   = document.getElementById('paginationControls');
     const pageSizeSelect = document.getElementById('pageSizeSelect');
+    const archiveSelect  = document.getElementById('archiveFilter');
 
     function applyFilters() {
         const query  = (searchInput?.value ?? '').toLowerCase().trim();
@@ -237,6 +268,13 @@
             render();
         });
     }
+
+    if (archiveSelect) archiveSelect.addEventListener('change', () => {
+        const url = new URL(window.location.href);
+        if (archiveSelect.value === 'active') url.searchParams.delete('archiveFilter');
+        else url.searchParams.set('archiveFilter', archiveSelect.value);
+        window.location.href = url.toString();
+    });
 
     filteredRows = allRows.slice();
     render();

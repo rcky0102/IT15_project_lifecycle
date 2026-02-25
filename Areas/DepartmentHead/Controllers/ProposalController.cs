@@ -20,7 +20,10 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        [Route("DepartmentHead/Proposal")]
+        [Route("DepartmentHead/Proposal/Index")]
+        public async Task<IActionResult> Index(string archiveFilter = "active")
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
@@ -34,11 +37,20 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 return Forbid();
             }
 
-            var proposals = await _context.ProjectProposals
+            IQueryable<ProjectProposal> query = _context.ProjectProposals
                 .Include(p => p.Employee)
-                .Where(p => p.Employee != null && p.Employee.DepartmentId == dh.DepartmentId)
-                .OrderByDescending(p => p.DateCreated)
-                .ToListAsync();
+                .Where(p => p.Employee != null && p.Employee.DepartmentId == dh.DepartmentId);
+
+            if (!string.Equals(archiveFilter, "all", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.Equals(archiveFilter, "inactive", StringComparison.OrdinalIgnoreCase))
+                    query = query.Where(p => p.IsArchived);
+                else
+                    query = query.Where(p => !p.IsArchived);
+            }
+
+            var proposals = await query.OrderByDescending(p => p.DateCreated).ToListAsync();
+            ViewData["ArchiveFilter"] = archiveFilter;
 
             return View(proposals);
         }
@@ -221,6 +233,56 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             TempData["SuccessMessage"] = "Proposal updated.";
             return RedirectToAction(nameof(Details), new { id = proposal.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Archive(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (dh == null) return Forbid();
+
+            var proposal = await _context.ProjectProposals
+                .Include(p => p.Employee)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (proposal == null) return NotFound();
+            if (proposal.Employee == null || proposal.Employee.DepartmentId != dh.DepartmentId) return Forbid();
+
+            proposal.IsArchived = true;
+            _context.Update(proposal);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Proposal archived.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Unarchive(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (dh == null) return Forbid();
+
+            var proposal = await _context.ProjectProposals
+                .Include(p => p.Employee)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (proposal == null) return NotFound();
+            if (proposal.Employee == null || proposal.Employee.DepartmentId != dh.DepartmentId) return Forbid();
+
+            proposal.IsArchived = false;
+            _context.Update(proposal);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Proposal unarchived.";
+            return RedirectToAction(nameof(Index));
         }
     }
 }
