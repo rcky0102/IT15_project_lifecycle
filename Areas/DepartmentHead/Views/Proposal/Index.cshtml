@@ -83,108 +83,104 @@
 </div>
 
 <!-- ===== Table ===== -->
-<div class="emp-table-card">
-    <div class="emp-table-toolbar">
-        <div class="emp-table-toolbar-left">
-            <h3 class="emp-table-title">
-                <i class="fas fa-folder-open"></i> Team Proposals
-            </h3>
-            <span class="emp-count-chip" id="visibleCount">@Model.Count</span>
-        </div>
-    </div>
-
-    @if (Model.Any())
-    {
-        <div class="emp-table-responsive">
-            <table class="emp-table" id="proposalsTable">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Submitted By</th>
-                        <th>Submitted</th>
-                        <th>Status</th>
-                        <th class="emp-th-actions">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="proposalsBody">
-                    @foreach (var proposal in Model)
-                    {
-                        <tr class="emp-row"
-                            data-title="@proposal.Title.ToLower()"
-                            data-status="@proposal.Status">
-                            <td class="emp-cell-title">
-                                <span class="emp-title-text">@proposal.Title</span>
-                            </td>
-                            <td>
-                                <span style="font-size:.85rem;color:#374151;font-weight:500;">
-                                    @(proposal.Employee != null ? $"{proposal.Employee.FirstName} {proposal.Employee.LastName}" : "—")
-                                </span>
-                            </td>
-                            <td class="emp-cell-date">
-                                <span class="emp-date-chip">
-                                    <i class="far fa-calendar"></i>
-                                    @proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")
-                                </span>
-                            </td>
-                            <td class="emp-cell-status">
-                                <span class="emp-status-inline @GetStatusClass(proposal.Status)">
-                                    <span class="emp-status-dot"></span>
-                                    <span class="emp-status-text">@proposal.Status</span>
-                                </span>
-                            </td>
-                            <td class="emp-cell-actions" style="vertical-align:middle;text-align:left;padding-left:0.5rem;">
-                                <div class="emp-action-group" style="display:inline-flex;align-items:center;justify-content:flex-start;gap:.35rem;">
-                                    <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
-                                       class="emp-action-btn emp-action-view" title="View details">
-                                        <i class="fas fa-magnifying-glass"></i>
-                                    </a>
-                                    @if (!proposal.IsArchived)
-                                    {
-                                        <form asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Archive" method="post" class="emp-action-form" onsubmit="return confirm('Archive this proposal?');">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@proposal.Id" />
-                                            <button type="submit" class="emp-action-btn emp-action-archive" title="Archive">
-                                                <i class="fas fa-box-archive"></i>
-                                            </button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <form asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Unarchive" method="post" class="emp-action-form" onsubmit="return confirm('Unarchive this proposal?');">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@proposal.Id" />
-                                            <button type="submit" class="emp-action-btn emp-action-unarchive" title="Unarchive">
-                                                <i class="fas fa-box-open"></i>
-                                            </button>
-                                        </form>
-                                    }
-                                </div>
-                            </td>
+<div class="project-table-section">
+    <div class="project-table-card">
+        @if (Model.Any())
+        {
+            <div class="project-table-responsive">
+                <table class="project-table" id="proposalsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Submitted By</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-
-            <div id="noFilterResults" class="emp-empty-state" style="display:none;">
-                <div class="emp-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
-                <h4 class="emp-empty-title">No matching proposals</h4>
-                <p class="emp-empty-text">Try adjusting your search or filters.</p>
+                    </thead>
+                    <tbody id="proposalsBody">
+                        @foreach (var proposal in Model)
+                        {
+                            <tr class="emp-row"
+                                data-title="@proposal.Title.ToLower()"
+                                data-status="@proposal.Status">
+                                <td>
+                                    <div class="project-name-cell">
+                                        <div class="project-name-icon">
+                                            <i class="fas fa-file-lines"></i>
+                                        </div>
+                                        <div>
+                                            <div class="project-name-text">@proposal.Title</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="project-pm-badge">
+                                        <i class="fas fa-user"></i>
+                                        @(proposal.Employee != null ? $"{proposal.Employee.FirstName} {proposal.Employee.LastName}" : "—")
+                                    </span>
+                                </td>
+                                <td class="project-date">@proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")</td>
+                                <td>
+                                    <span class="emp-status-inline @GetStatusClass(proposal.Status)">
+                                        <span class="emp-status-dot"></span>
+                                        <span class="emp-status-text">@proposal.Status</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display:inline-flex;align-items:center;gap:.35rem;">
+                                        <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
+                                           class="emp-action-btn emp-action-view" title="View details">
+                                            <i class="fas fa-magnifying-glass"></i>
+                                        </a>
+                                        @if (!proposal.IsArchived)
+                                        {
+                                            <form asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Archive" method="post" class="emp-action-form" onsubmit="return confirm('Archive this proposal?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@proposal.Id" />
+                                                <button type="submit" class="emp-action-btn emp-action-archive" title="Archive">
+                                                    <i class="fas fa-box-archive"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Unarchive" method="post" class="emp-action-form" onsubmit="return confirm('Unarchive this proposal?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@proposal.Id" />
+                                                <button type="submit" class="emp-action-btn emp-action-unarchive" title="Unarchive">
+                                                    <i class="fas fa-box-open"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-        </div>
 
-        <div class="emp-pagination" id="paginationContainer">
-            <div class="emp-pagination-info" id="paginationInfo"></div>
-            <div class="emp-pagination-controls" id="paginationControls"></div>
-        </div>
-    }
-    else
-    {
-        <div class="emp-empty-state">
-            <div class="emp-empty-icon"><i class="fas fa-inbox"></i></div>
-            <h4 class="emp-empty-title">No proposals yet</h4>
-            <p class="emp-empty-text">No proposals have been submitted by your department yet.</p>
-        </div>
-    }
+            <div id="noFilterResults" class="project-empty-state" style="display:none;">
+                <div class="project-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <div class="project-empty-title">No matching proposals</div>
+                <div class="project-empty-text">Try adjusting your search or filters.</div>
+            </div>
+
+            <div class="emp-pagination" id="paginationContainer">
+                <div class="emp-pagination-info" id="paginationInfo"></div>
+                <div class="emp-pagination-controls" id="paginationControls"></div>
+            </div>
+        }
+        else
+        {
+            <div class="project-empty-state">
+                <div class="project-empty-icon"><i class="fas fa-inbox"></i></div>
+                <div class="project-empty-title">No proposals yet</div>
+                <div class="project-empty-text">No proposals have been submitted by your department yet.</div>
+            </div>
+        }
+    </div>
 </div>
 
 @section Scripts {
