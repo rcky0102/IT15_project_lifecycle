@@ -78,14 +78,17 @@ else
 </div>
 
 <!-- ===== Review card ===== -->
-<div class="emp-detail-card" style="margin-top:1.25rem;">
+    <div class="emp-detail-card" style="margin-top:1.25rem;">
     <div class="emp-detail-card-header">
         <span style="font-size:.95rem;font-weight:700;color:#1e293b;"><i class="fas fa-pen-to-square" style="color:#006994;margin-right:.4rem;"></i>Review &amp; Feedback</span>
     </div>
     <div class="emp-detail-body">
-        <form asp-action="Review" asp-controller="Proposal" asp-area="DepartmentHead" method="post">
+        <form asp-action="Review" asp-controller="Proposal" asp-area="DepartmentHead" method="post" id="reviewForm">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@Model.Id" />
+            <!-- hidden field that will carry the selected status when updating -->
+            <input type="hidden" name="actionType" id="actionTypeHidden" value="" />
+
             <div style="margin-bottom:1rem;">
                 <label for="note" style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.4rem;">Feedback / Note</label>
                 <textarea id="note" name="note" rows="5"
@@ -93,29 +96,50 @@ else
                     onfocus="this.style.borderColor='#4CA3DD';this.style.boxShadow='0 0 0 3px rgba(76,163,221,.1)'"
                     onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">@Model.Note</textarea>
             </div>
-            <div style="display:flex;gap:.625rem;flex-wrap:wrap;align-items:center;">
-                <button type="submit" name="actionType" value="Approve"
-                    class="emp-btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"
-                    onclick="return confirm('Approve this proposal?');">
-                    <i class="fas fa-circle-check"></i> Approve
-                </button>
-                <button type="submit" name="actionType" value="Reject"
-                    class="emp-btn" style="background:linear-gradient(135deg,#ef4444,#f87171);color:#fff;"
-                    onclick="return confirm('Reject this proposal?');">
-                    <i class="fas fa-circle-xmark"></i> Reject
-                </button>
-                <button type="submit" name="actionType" value="ReturnForRevision"
-                    class="emp-btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;">
-                    <i class="fas fa-rotate-left"></i> Return for Revision
-                </button>
-                <button type="submit" name="actionType" value="SendFeedback"
-                    class="emp-btn" style="background:linear-gradient(135deg,#006994,#4CA3DD);color:#fff;">
-                    <i class="fas fa-paper-plane"></i> Send Feedback
-                </button>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:.625rem;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:nowrap;">
+                    <label for="statusSelect" style="font-weight:600;color:#374151;margin-right:.25rem;white-space:nowrap;">Set status</label>
+                    <select id="statusSelect" class="emp-select" style="min-width:160px;padding:.45rem .65rem;border-radius:10px;border:1.5px solid #e2e8f0;font-size:. ninerem;">
+                        <option value="Approve">Approve</option>
+                        <option value="Reject">Reject</option>
+                        <option value="ReturnForRevision">Require Revision</option>
+                    </select>
+                    <button type="button" id="updateStatusBtn" class="emp-btn" style="background:linear-gradient(135deg,#006994,#4CA3DD);color:#fff;padding:.5rem .8rem;"
+                            onclick="document.getElementById('actionTypeHidden').value = document.getElementById('statusSelect').value; confirmUpdateStatus();">
+                        <i class="fas fa-arrow-up-right-from-square"></i> Update Status
+                    </button>
+                </div>
+
+                <div style="display:flex;align-items:center;">
+                    <button type="submit" name="actionType" value="SendFeedback"
+                        class="emp-btn" style="background:linear-gradient(135deg,#006994,#4CA3DD);color:#fff;">
+                        <i class="fas fa-paper-plane"></i> Send Feedback
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+function confirmUpdateStatus() {
+    const sel = document.getElementById('statusSelect');
+    if (!sel) return;
+    const v = sel.value;
+    // For actions that need confirmation, ask first then submit
+    if (v === 'Approve') {
+        if (confirm('Approve this proposal?')) document.getElementById('reviewForm').submit();
+        return;
+    }
+    if (v === 'Reject') {
+        if (confirm('Reject this proposal?')) document.getElementById('reviewForm').submit();
+        return;
+    }
+    // Require Revision — submit without extra confirmation
+    document.getElementById('reviewForm').submit();
+}
+</script>
 
 <!-- ===== Versions Modal ===== -->
 <div id="versionsModal" class="emp-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="versionsModalTitle">
