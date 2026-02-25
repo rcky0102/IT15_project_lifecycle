@@ -3,46 +3,109 @@
     ViewData["Title"] = "Review Task";
 }
 
-<div class="dashboard-container py-4">
-    <div class="proposal-page-header">
-        <h1>Task: @Model.Name</h1>
-        <p class="proposal-subtitle">Assigned: @Model.AssignedMemberName ?? "(unassigned)"</p>
+<style>
+    .task-review-content { background: #f8fafc; border-radius: 10px; padding: 1.25rem 1.5rem; border: 1px solid #e2e8f0; line-height: 1.7; }
+    .task-review-content img { max-width: 100%; border-radius: 6px; }
+    .emp-btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; border-radius: 8px; padding: .55rem 1.25rem; font-weight: 600; font-size: .88rem; cursor: pointer; transition: background .2s; text-decoration: none; display: inline-flex; align-items: center; }
+    .emp-btn-warning:hover { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
+    .task-review-section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #64748b; margin-bottom: .75rem; }
+    .task-review-empty { color: #94a3b8; font-style: italic; }
+    .task-review-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-top: 1.25rem; }
+</style>
+
+<!-- Hero -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <div class="emp-page-title-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div>
+                <h1 class="emp-page-title">@Model.Name</h1>
+                <p class="emp-page-subtitle">Assigned to: @(Model.AssignedMemberName ?? "(unassigned)")</p>
+            </div>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="ProjectManager"
+               asp-controller="Project"
+               asp-action="Milestone"
+               asp-route-projectMilestoneId="@Model.ProjectMilestoneId"
+               class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left me-1"></i>Back to Milestone
+            </a>
+        </div>
     </div>
+</div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="proposal-alert success"><i class="fas fa-check-circle"></i> <span>@TempData["SuccessMessage"]</span></div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="proposal-alert error"><i class="fas fa-exclamation-circle"></i> <span>@TempData["ErrorMessage"]</span></div>
-    }
-
-    <div class="card p-3 mb-3">
-        <h5>Instructions</h5>
-        <div class="bg-light p-3" style="white-space:pre-wrap;">@Html.Raw(Model.Instructions)</div>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <i class="fas fa-check-circle emp-alert-icon"></i>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()">×</button>
     </div>
-
-    <div class="card p-3 mb-3">
-        <h5>Employee Submission</h5>
-        <div class="bg-white p-3" style="white-space:pre-wrap;">@Html.Raw(Model.EmployeeInput ?? "<em>No submission yet</em>")</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <i class="fas fa-exclamation-circle emp-alert-icon"></i>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()">×</button>
     </div>
+}
 
-    <div class="card p-3">
-        <h5>Your Feedback / Notes</h5>
+<!-- Instructions -->
+<div class="emp-form-card mb-4">
+    <div class="emp-form-section">
+        <div class="task-review-section-label"><i class="fas fa-list-ul me-1"></i> Task Instructions</div>
+        <div class="task-review-content">@Html.Raw(Model.Instructions)</div>
+    </div>
+</div>
+
+<!-- Employee Submission -->
+<div class="emp-form-card mb-4">
+    <div class="emp-form-section">
+        <div class="task-review-section-label"><i class="fas fa-upload me-1"></i> Employee Submission</div>
+        <div class="task-review-content">
+            @if (!string.IsNullOrWhiteSpace(Model.EmployeeInput))
+            {
+                @Html.Raw(Model.EmployeeInput)
+            }
+            else
+            {
+                <span class="task-review-empty">No submission yet.</span>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Feedback / Notes -->
+<div class="emp-form-card">
+    <div class="emp-form-section">
+        <h2 class="emp-form-section-title" style="font-size:1rem; font-weight:700; color:#1e293b; margin-bottom:1rem;">
+            <i class="fas fa-comment-alt me-2" style="color:#6366f1;"></i>Your Feedback / Notes
+        </h2>
         <form asp-area="ProjectManager" asp-controller="Project" asp-action="Task" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@Model.Id" />
 
-            <div class="mb-3">
-                <textarea name="Notes" class="form-control" rows="6">@Model.Notes</textarea>
+            <div class="emp-form-row">
+                <div class="emp-form-group" style="flex:1">
+                    <label class="emp-form-label">Notes</label>
+                    <textarea name="Notes" class="emp-form-control" rows="6">@Model.Notes</textarea>
+                </div>
             </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" name="action" value="" class="btn btn-outline-secondary">Save Note</button>
-                <button type="submit" name="action" value="Checked" class="btn btn-success">Mark as Checked</button>
-                <button type="submit" name="action" value="RequireRevision" class="btn btn-warning">Require Revision</button>
-                <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone" asp-route-projectMilestoneId="@Model.ProjectMilestoneId" class="btn btn-outline-primary ms-auto">Back to Milestone</a>
+            <div class="task-review-actions">
+                <button type="submit" name="action" value="" class="emp-btn emp-btn-secondary">
+                    <i class="fas fa-save me-1"></i>Save Note
+                </button>
+                <button type="submit" name="action" value="Checked" class="emp-btn emp-btn-primary">
+                    <i class="fas fa-check-circle me-1"></i>Mark as Checked
+                </button>
+                <button type="submit" name="action" value="RequireRevision" class="emp-btn emp-btn-warning">
+                    <i class="fas fa-redo me-1"></i>Require Revision
+                </button>
             </div>
         </form>
     </div>

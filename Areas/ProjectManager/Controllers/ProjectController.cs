@@ -491,21 +491,21 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             if (employee == null)
             {
                 TempData["ErrorMessage"] = "Selected employee is not valid.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Create), new { id = resolvedProjectId });
             }
 
             var role = await _context.ProjectRoles.FindAsync(resolvedProjectRoleId);
             if (role == null)
             {
                 TempData["ErrorMessage"] = "Selected role is not valid.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Create), new { id = resolvedProjectId });
             }
 
             var exists = await _context.Members.AnyAsync(m => m.ProjectId == resolvedProjectId && m.EmployeeId == resolvedEmployeeId);
             if (exists)
             {
                 TempData["ErrorMessage"] = "Employee is already a member of the project.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Create), new { id = resolvedProjectId });
             }
 
             var member = new Member
@@ -536,7 +536,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 TempData["ErrorMessage"] = "Failed to add member: " + detail;
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Create), new { id = resolvedProjectId });
         }
 
         private string BuildExceptionDetails(Exception ex)
@@ -594,14 +594,14 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             if (milestone == null)
             {
                 TempData["ErrorMessage"] = "Selected milestone is not valid.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Create), new { id = resolvedProjectId });
             }
 
             var duplicate = await _context.ProjectMilestones.AnyAsync(pmst => pmst.ProjectId == resolvedProjectId && pmst.MilestoneId == resolvedMilestoneId);
             if (duplicate)
             {
                 TempData["ErrorMessage"] = "Milestone already added to this project.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Create), new { id = resolvedProjectId });
             }
 
             var projectMilestone = new ProjectMilestone
@@ -633,7 +633,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 TempData["ErrorMessage"] = "Failed to add milestone: " + detail;
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Create), new { id = resolvedProjectId });
         }
 
         private int? GetPostedInt(params string[] keys)
@@ -670,7 +670,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Member removed from project.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Create), new { id = member.Project!.Id });
         }
 
         [HttpPost]
@@ -692,7 +692,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Milestone removed from project.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Create), new { id = pmst.Project!.Id });
         }
 
         [HttpPost]

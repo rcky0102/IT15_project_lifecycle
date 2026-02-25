@@ -3,42 +3,92 @@
     ViewData["Title"] = "Milestone";
 }
 
-<div class="dashboard-container py-4">
-    <div class="proposal-page-header">
-        <h1>Milestone: @Model.MilestoneName</h1>
-        <p class="proposal-subtitle">Project: @Model.ProjectName</p>
+<style>
+    .milestone-member-check { display:flex; align-items:center; gap:.6rem; padding:.3rem 0; border-bottom:1px solid #f1f5f9; }
+    .milestone-member-check:last-child { border-bottom:none; }
+    .milestone-member-check input[type="checkbox"] { width:15px; height:15px; accent-color:#6366f1; cursor:pointer; flex-shrink:0; }
+    .milestone-member-check label { font-size:.9rem; color:#374151; cursor:pointer; margin:0; }
+    .ms-task-row { display:flex; align-items:flex-start; gap:.75rem; padding:.85rem 0; border-bottom:1px solid #f1f5f9; }
+    .ms-task-row:last-child { border-bottom:none; }
+    .ms-task-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:.35rem; background:#94a3b8; }
+    .ms-task-dot.checked { background:#22c55e; }
+    .ms-task-dot.require_revision { background:#f59e0b; }
+    .ms-task-dot.in_progress { background:#6366f1; }
+    .ms-task-body { flex:1; min-width:0; }
+    .ms-task-name { font-weight:600; font-size:.88rem; color:#1e293b; }
+    .ms-task-meta { font-size:.77rem; color:#64748b; margin-top:.18rem; }
+    .ms-tasks-empty { text-align:center; padding:2.5rem 1rem; color:#94a3b8; }
+    .ms-tasks-empty i { font-size:2rem; margin-bottom:.5rem; display:block; }
+    .emp-show-grid { display:grid; grid-template-columns: 1fr 320px; gap:1.5rem; align-items:start; }
+    @@media (max-width:900px) { .emp-show-grid { grid-template-columns:1fr; } }
+</style>
+
+<!-- Hero -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <div class="emp-page-title-icon">
+                <i class="fas fa-flag-checkered"></i>
+            </div>
+            <div>
+                <h1 class="emp-page-title">@Model.MilestoneName</h1>
+                <p class="emp-page-subtitle">Project: @Model.ProjectName</p>
+            </div>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="ProjectManager"
+               asp-controller="Project"
+               asp-action="Index"
+               class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left me-1"></i>Back to Projects
+            </a>
+        </div>
     </div>
+</div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="proposal-alert success"><i class="fas fa-check-circle"></i> <span>@TempData["SuccessMessage"]</span></div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="proposal-alert error"><i class="fas fa-exclamation-circle"></i> <span>@TempData["ErrorMessage"]</span></div>
-    }
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <i class="fas fa-check-circle emp-alert-icon"></i>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <i class="fas fa-exclamation-circle emp-alert-icon"></i>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
 
-    <div class="row g-3">
-        <div class="col-md-6">
-            <div class="card p-3">
-                <h5>Create Task</h5>
-                <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddTask" method="post" class="auth-ocean-form">
+<!-- Main Grid -->
+<div class="emp-show-grid">
+    <!-- Left: Create Task Form -->
+    <div class="emp-show-tasks-card">
+        <div class="emp-table-toolbar" style="margin-bottom:1.25rem;">
+            <div class="emp-table-toolbar-left">
+                <span class="emp-table-title"><i class="fas fa-plus-circle me-2" style="color:#6366f1;"></i>Create Task</span>
+            </div>
+        </div>
+        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddTask" method="post" class="emp-milestone-form">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="projectMilestoneId" value="@Model.ProjectMilestoneId" />
 
                     <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input name="Name" class="form-control" required />
+                        <label class="emp-form-label">Name</label>
+                        <input name="Name" class="emp-form-control" required />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Assign To (select one or more)</label>
+                        <label class="emp-form-label">Assign To (select one or more)</label>
                         <div>
                             @foreach (var m in Model.AvailableMembers)
                             {
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="assignedMemberIds" id="member_@m.Value" value="@m.Value" />
-                                    <label class="form-check-label" for="member_@m.Value">@m.Text</label>
+                                <div class="milestone-member-check">
+                                    <input type="checkbox" name="assignedMemberIds" id="member_@m.Value" value="@m.Value" />
+                                    <label for="member_@m.Value">@m.Text</label>
                                 </div>
                             }
                         </div>
@@ -46,18 +96,18 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Start Date</label>
-                        <input name="StartDate" type="date" class="form-control" required />
+                        <label class="emp-form-label">Start Date</label>
+                        <input name="StartDate" type="date" class="emp-form-control" required />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">End Date</label>
-                        <input name="EndDate" type="date" class="form-control" required />
+                        <label class="emp-form-label">End Date</label>
+                        <input name="EndDate" type="date" class="emp-form-control" required />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Instructions</label>
-                        <textarea id="Instructions" name="Instructions" class="form-control"></textarea>
+                        <label class="emp-form-label">Instructions</label>
+                        <textarea id="Instructions" name="Instructions" class="emp-form-control"></textarea>
                         <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
                             <button type="button" id="insertRichFileBtn" class="btn btn-outline-secondary" style="padding:6px 12px;">
                                 <i class="fas fa-paperclip"></i> Add file/image to instructions
@@ -67,16 +117,15 @@
                         <input type="file" id="richFileInput" style="display:none;" />
                     </div>
 
-                    <button id="submitProposalBtn" class="btn btn-primary" type="submit">Create Task</button>
+                    <button id="submitProposalBtn" class="emp-btn emp-btn-primary mt-3" type="submit"><i class="fas fa-plus me-1"></i>Create Task</button>
                 </form>
-            </div>
-        </div>
+    </div>
 
-            <script>
+    <script>
                 document.addEventListener('DOMContentLoaded', function () {
                     const editorSelector = '#Instructions';
                     const uploadEndpoint = '@Url.Action("UploadRichText", "Project", new { area = "ProjectManager" })';
-                    const formElement = document.querySelector('form.auth-ocean-form');
+                    const formElement = document.querySelector('form.emp-milestone-form');
                     const submitButton = document.getElementById('submitProposalBtn');
                     const titleInput = document.getElementById('Title');
                     let editorInstance = null;
@@ -515,25 +564,43 @@
                 });
             </script>
 
-        <div class="col-md-6">
-            <div class="card p-3">
-                <h5>Existing Tasks</h5>
-                <ul class="list-unstyled">
+    <!-- Right: Existing Tasks -->
+    <div class="emp-show-side">
+        <div class="emp-side-card">
+            <div class="emp-side-card-title">
+                <i class="fas fa-tasks me-2" style="color:#6366f1;"></i>Tasks
+                <span class="emp-count-chip ms-auto">@Model.Tasks.Count</span>
+            </div>
+            @if (!Model.Tasks.Any())
+            {
+                <div class="ms-tasks-empty">
+                    <i class="fas fa-inbox"></i>
+                    <span>No tasks created yet.</span>
+                </div>
+            }
+            else
+            {
+                <div>
                     @foreach (var t in Model.Tasks)
                     {
-                        <li class="mb-2 d-flex align-items-start gap-3">
-                            <div>
-                                <strong>@t.Name</strong>
-                                <div class="text-muted">@t.StartDate.ToString("yyyy-MM-dd") - @t.EndDate.ToString("yyyy-MM-dd")</div>
-                                <div>Assigned to: @t.AssignedMemberName ?? "(unassigned)"</div>
+                        <div class="ms-task-row">
+                            <div class="ms-task-dot @t.Status.ToLower().Replace(" ", "_")"></div>
+                            <div class="ms-task-body">
+                                <div class="ms-task-name">@t.Name</div>
+                                <div class="ms-task-meta">
+                                    @t.StartDate.ToString("MMM d") – @t.EndDate.ToString("MMM d, yyyy")
+                                </div>
+                                <div class="ms-task-meta">@(t.AssignedMemberName ?? "(unassigned)")</div>
                             </div>
-                            <div class="ms-auto">
-                                <a asp-area="ProjectManager" asp-controller="Project" asp-action="Task" asp-route-id="@t.Id" class="btn btn-sm btn-outline-primary">View Task</a>
-                            </div>
-                        </li>
+                            <a asp-area="ProjectManager"
+                               asp-controller="Project"
+                               asp-action="Task"
+                               asp-route-id="@t.Id"
+                               class="emp-btn-xs">View</a>
+                        </div>
                     }
-                </ul>
-            </div>
+                </div>
+            }
         </div>
     </div>
 </div>
