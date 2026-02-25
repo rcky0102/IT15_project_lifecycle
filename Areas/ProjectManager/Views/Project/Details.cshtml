@@ -1,29 +1,33 @@
-﻿@model project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
+@model project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
 @{
     ViewData["Title"] = Model.Project.Name;
     var duration = (Model.Project.EndDate - Model.Project.StartDate).Days;
-    var _milestonesTyped = Model.Project.Milestones.Cast<project_lifecycle.ViewModels.ProjectManager.ProjectMilestoneViewModel>().ToList();
-    var finishedMs = _milestonesTyped.Count(m => m.Status == "Finished");
-    var nextOrder  = _milestonesTyped.Any() ? _milestonesTyped.Max(m => m.SequenceOrder) + 1 : 1;
+    var finishedMs = Model.Project.Milestones.Count(m => m.Status == "Finished");
+    var nextOrder  = Model.Project.Milestones.Any() ? Model.Project.Milestones.Max(m => m.SequenceOrder) + 1 : 1;
 }
 
 <style>
+    /* ---- detail info strip ---- */
     .det-info-strip { display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; padding:1rem 1.5rem; background:#fff; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:1.5rem; }
     .det-info-item  { display:flex; align-items:center; gap:.45rem; font-size:.82rem; color:#475569; }
     .det-info-item i { color:#6366f1; width:14px; text-align:center; }
     .det-info-item strong { color:#1e293b; }
+    /* ---- two-col grid ---- */
     .det-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
     @@media(max-width:800px){ .det-grid{grid-template-columns:1fr;} }
+    /* ---- panel card ---- */
     .det-panel { background:#fff; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden; }
     .det-panel-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #f1f5f9; }
     .det-panel-title { font-weight:700; font-size:.95rem; color:#1e293b; display:flex; align-items:center; gap:.5rem; }
     .det-panel-body  { padding:1rem 1.25rem; }
+    /* ---- member row ---- */
     .det-member-row { display:flex; align-items:center; gap:.75rem; padding:.65rem 0; border-bottom:1px solid #f8fafc; }
     .det-member-row:last-child { border-bottom:none; }
     .det-member-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.82rem; flex-shrink:0; }
     .det-member-info { flex:1; min-width:0; }
     .det-member-name { font-weight:600; font-size:.85rem; color:#1e293b; }
     .det-member-role { font-size:.73rem; color:#6366f1; font-weight:600; }
+    /* ---- milestone row ---- */
     .det-ms-row { display:flex; align-items:flex-start; gap:.75rem; padding:.75rem 0; border-bottom:1px solid #f8fafc; }
     .det-ms-row:last-child { border-bottom:none; }
     .det-ms-num { width:24px; height:24px; border-radius:50%; background:#f1f5f9; color:#6366f1; font-weight:700; font-size:.72rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:.1rem; }
@@ -35,6 +39,7 @@
     .det-ms-status.in_progress { background:#ede9fe; color:#7c3aed; }
     .det-empty { text-align:center; padding:2rem 1rem; color:#94a3b8; }
     .det-empty i { font-size:1.8rem; display:block; margin-bottom:.4rem; }
+    /* ---- modal ---- */
     .det-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1040; align-items:center; justify-content:center; }
     .det-modal-backdrop.open { display:flex; }
     .det-modal { background:#fff; border-radius:16px; width:100%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,.18); overflow:hidden; animation:detModalIn .2s ease; }
@@ -45,10 +50,6 @@
     .det-modal-close:hover { background:#f1f5f9; color:#64748b; }
     .det-modal-body { padding:1.5rem; }
     .det-modal-footer { padding:.75rem 1.5rem 1.25rem; display:flex; gap:.6rem; justify-content:flex-end; }
-    .milestone-member-check { display:flex; align-items:center; gap:.6rem; padding:.3rem 0; border-bottom:1px solid #f1f5f9; }
-    .milestone-member-check:last-child { border-bottom:none; }
-    .milestone-member-check input[type="checkbox"] { width:15px; height:15px; accent-color:#6366f1; cursor:pointer; flex-shrink:0; }
-    .milestone-member-check label { font-size:.9rem; color:#374151; cursor:pointer; margin:0; }
 </style>
 
 <!-- ===== Hero ===== -->
@@ -94,98 +95,25 @@
 
 <!-- ===== Info Strip ===== -->
 <div class="det-info-strip">
-    <div class="det-info-item"><i class="fas fa-calendar-alt"></i><span><strong>Start:</strong> @Model.Project.StartDate.ToString("MMM d, yyyy")</span></div>
-    <div class="det-info-item"><i class="fas fa-calendar-check"></i><span><strong>End:</strong> @Model.Project.EndDate.ToString("MMM d, yyyy")</span></div>
-    <div class="det-info-item"><i class="fas fa-clock"></i><span><strong>Duration:</strong> @duration days</span></div>
-    <div class="det-info-item"><i class="fas fa-users"></i><span><strong>Members:</strong> @Model.Project.Members.Count</span></div>
-    <div class="det-info-item"><i class="fas fa-flag-checkered"></i><span><strong>Milestones:</strong> @_milestonesTyped.Count (@finishedMs finished)</span></div>
-</div>
-
-<!-- ===== Create Task Panel ===== -->
-<div class="det-panel" style="margin-bottom:1.5rem;">
-    <div class="det-panel-head">
-        <div class="det-panel-title">
-            <i class="fas fa-plus-circle" style="color:#6366f1;"></i>Create Task
-        </div>
+    <div class="det-info-item">
+        <i class="fas fa-calendar-alt"></i>
+        <span><strong>Start:</strong> @Model.Project.StartDate.ToString("MMM d, yyyy")</span>
     </div>
-    <div class="det-panel-body">
-        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddTask" method="post" class="emp-create-task-form">
-            @Html.AntiForgeryToken()
-
-            <div class="emp-form-row">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Milestone</label>
-                    <select name="projectMilestoneId" class="emp-form-control" required>
-                        <option value="">-- Select Milestone --</option>
-                        @foreach (var ms in _milestonesTyped.OrderBy(m => m.SequenceOrder))
-                        {
-                            <option value="@ms.Id">@ms.SequenceOrder - @ms.MilestoneName</option>
-                        }
-                    </select>
-                </div>
-            </div>
-
-            <div class="emp-form-row" style="margin-top:.85rem;">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Task Name</label>
-                    <input name="Name" class="emp-form-control" required />
-                </div>
-            </div>
-
-            <div class="emp-form-row" style="margin-top:.85rem;">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Assign To (select one or more)</label>
-                    <div style="margin-top:.5rem;">
-                        @if (!Model.Project.Members.Any())
-                        {
-                            <div style="color:#94a3b8; font-size:.85rem;">No project members yet. Add members first.</div>
-                        }
-                        else
-                        {
-                            foreach (var m in Model.Project.Members)
-                            {
-                                <div class="milestone-member-check">
-                                    <input type="checkbox" name="assignedMemberIds" id="ctmember_@m.Id" value="@m.Id" />
-                                    <label for="ctmember_@m.Id">@m.EmployeeName (@m.ProjectRoleName)</label>
-                                </div>
-                            }
-                        }
-                    </div>
-                    <div class="form-text" style="margin-top:.4rem;">Selected members will share the same task submission.</div>
-                </div>
-            </div>
-
-            <div class="emp-form-row" style="margin-top:.85rem;">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Start Date</label>
-                    <input name="StartDate" type="date" class="emp-form-control" required />
-                </div>
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">End Date</label>
-                    <input name="EndDate" type="date" class="emp-form-control" required />
-                </div>
-            </div>
-
-            <div class="emp-form-row" style="margin-top:.85rem;">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Instructions</label>
-                    <textarea id="CreateTaskInstructions" name="Instructions" class="emp-form-control"></textarea>
-                    <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-                        <button type="button" id="insertCreateTaskFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
-                            <i class="fas fa-paperclip"></i> Add file/image to instructions
-                        </button>
-                        <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
-                    </div>
-                    <input type="file" id="createTaskRichFileInput" style="display:none;" />
-                </div>
-            </div>
-
-            <div style="margin-top:1rem; text-align:right;">
-                <button id="submitCreateTaskBtn" class="emp-btn emp-btn-primary" type="submit">
-                    <i class="fas fa-plus me-1"></i>Create Task
-                </button>
-            </div>
-        </form>
+    <div class="det-info-item">
+        <i class="fas fa-calendar-check"></i>
+        <span><strong>End:</strong> @Model.Project.EndDate.ToString("MMM d, yyyy")</span>
+    </div>
+    <div class="det-info-item">
+        <i class="fas fa-clock"></i>
+        <span><strong>Duration:</strong> @duration days</span>
+    </div>
+    <div class="det-info-item">
+        <i class="fas fa-users"></i>
+        <span><strong>Members:</strong> @Model.Project.Members.Count</span>
+    </div>
+    <div class="det-info-item">
+        <i class="fas fa-flag-checkered"></i>
+        <span><strong>Milestones:</strong> @Model.Project.Milestones.Count (@finishedMs finished)</span>
     </div>
 </div>
 
@@ -240,14 +168,14 @@
         <div class="det-panel-head">
             <div class="det-panel-title">
                 <i class="fas fa-flag-checkered" style="color:#6366f1;"></i>Milestones
-                <span class="emp-count-chip">@_milestonesTyped.Count</span>
+                <span class="emp-count-chip">@Model.Project.Milestones.Count</span>
             </div>
             <button type="button" class="emp-btn-xs" onclick="openModal('milestonesModal')">
                 <i class="fas fa-plus me-1"></i>Add
             </button>
         </div>
         <div class="det-panel-body">
-            @if (!_milestonesTyped.Any())
+            @if (!Model.Project.Milestones.Any())
             {
                 <div class="det-empty">
                     <i class="fas fa-inbox"></i>
@@ -256,7 +184,7 @@
             }
             else
             {
-                foreach (var ms in _milestonesTyped.OrderBy(m => m.SequenceOrder))
+                foreach (var ms in Model.Project.Milestones.OrderBy(m => m.SequenceOrder))
                 {
                     var statusClass = ms.Status?.ToLower().Replace(" ", "_") ?? "unfinished";
                     <div class="det-ms-row">
@@ -266,8 +194,11 @@
                             <span class="det-ms-status @statusClass">@ms.Status</span>
                         </div>
                         <div style="display:flex;gap:.4rem;align-items:center;">
-                            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone"
-                               asp-route-projectMilestoneId="@ms.Id" class="emp-btn-xs" title="View Milestone">
+                            <a asp-area="ProjectManager"
+                               asp-controller="Project"
+                               asp-action="Milestone"
+                               asp-route-projectMilestoneId="@ms.Id"
+                               class="emp-btn-xs" title="View Milestone">
                                 <i class="fas fa-eye"></i>
                             </a>
                             <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" style="margin:0;">
@@ -356,7 +287,8 @@
                 <div class="emp-form-row" style="margin-top:.85rem;">
                     <div class="emp-form-group" style="flex:1">
                         <label class="emp-form-label">Sequence Order</label>
-                        <input name="SequenceOrder" type="number" min="1" class="emp-form-control" value="@nextOrder" required />
+                        <input name="SequenceOrder" type="number" min="1" class="emp-form-control"
+                               value="@nextOrder" required />
                         <span style="font-size:.75rem;color:#64748b;margin-top:.3rem;display:block;">Order determines the milestone's position in the project timeline.</span>
                     </div>
                 </div>
@@ -371,94 +303,24 @@
 
 @section Scripts {
 <script>
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-function closeOnBackdrop(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+}
+function closeOnBackdrop(e, id) {
+    if (e.target === document.getElementById(id)) closeModal(id);
+}
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { document.querySelectorAll('.det-modal-backdrop.open').forEach(m => { m.classList.remove('open'); }); document.body.style.overflow = ''; }
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const editorSelector = '#CreateTaskInstructions';
-    const uploadEndpoint = '@Url.Action("UploadRichText", "Project", new { area = "ProjectManager" })';
-    const formElement = document.querySelector('form.emp-create-task-form');
-    const submitButton = document.getElementById('submitCreateTaskBtn');
-    const taskNameInput = formElement ? formElement.querySelector('input[name="Name"]') : null;
-    let editorInstance = null, pendingUploads = 0, explicitSubmitRequested = false, isSubmitting = false;
-    const draftStorageKey = 'pm-create-task-draft';
-
-    function saveDraft() { if (isSubmitting) return; const el = document.querySelector(editorSelector); try { sessionStorage.setItem(draftStorageKey, JSON.stringify({ name: taskNameInput ? taskNameInput.value : '', inputHtml: editorInstance ? editorInstance.getData() : (el ? el.value : '') })); } catch {} }
-    function restoreDraft() { try { const r = sessionStorage.getItem(draftStorageKey); return r ? JSON.parse(r) : null; } catch { return null; } }
-    function clearDraft() { try { sessionStorage.removeItem(draftStorageKey); } catch {} }
-    function beginUpload() { pendingUploads += 1; if (submitButton) submitButton.disabled = true; }
-    function endUpload() { pendingUploads = Math.max(0, pendingUploads - 1); if (submitButton) submitButton.disabled = pendingUploads > 0; }
-
-    const scriptCdn = ['https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js','https://unpkg.com/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js'];
-    const styleCdn  = ['https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/ckeditor5.css','https://unpkg.com/ckeditor5@47.1.0/dist/ckeditor5.css'];
-
-    class CTUploadAdapter { constructor(l){ this.loader=l; this.ctrl=new AbortController(); } async upload(){ const f=await this.loader.file; const r=await uploadFile(f,this.ctrl.signal); return {default:r.url}; } abort(){ this.ctrl.abort(); } }
-    function CTUploadAdapterPlugin(ed){ ed.plugins.get('FileRepository').createUploadAdapter=(l)=>new CTUploadAdapter(l); }
-
-    async function uploadFile(file, signal) {
-        beginUpload();
-        try { const fd=new FormData(); fd.append('upload',file); const resp=await fetch(uploadEndpoint,{method:'POST',body:fd,signal}); const p=await resp.json(); if(!resp.ok) throw new Error(p?.error?.message||'Upload failed.'); return p; }
-        finally { endUpload(); }
-    }
-
-    function wireFileInsertButton() {
-        const btn=document.getElementById('insertCreateTaskFileBtn'), inp=document.getElementById('createTaskRichFileInput');
-        if(!btn||!inp) return;
-        btn.addEventListener('click',()=>inp.click());
-        inp.addEventListener('change', async function(){
-            if(!editorInstance||!inp.files||!inp.files.length) return;
-            const file=inp.files[0]; btn.disabled=true;
-            try { const r=await uploadFile(file); if(file.type.startsWith('image/')){ editorInstance.model.change(w=>{const img=w.createElement('imageBlock',{src:r.url});editorInstance.model.insertContent(img,editorInstance.model.document.selection);}); } else { editorInstance.model.change(w=>{const t=w.createText(r.fileName||file.name,{linkHref:r.url});editorInstance.model.insertContent(t,editorInstance.model.document.selection);}); } }
-            catch(err){ alert(err.message||'Upload failed.'); } finally{ inp.value=''; btn.disabled=false; }
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.det-modal-backdrop.open').forEach(m => {
+            m.classList.remove('open');
         });
+        document.body.style.overflow = '';
     }
-
-    function initEditor() {
-        if(!window.CKEDITOR||!window.CKEDITOR.ClassicEditor) return;
-        const {ClassicEditor,Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,MediaEmbed,Alignment}=window.CKEDITOR;
-        ClassicEditor.create(document.querySelector(editorSelector),{
-            licenseKey:'GPL',
-            plugins:[Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,MediaEmbed,Alignment],
-            extraPlugins:[CTUploadAdapterPlugin],
-            toolbar:{items:['undo','redo','|','heading','|','bold','italic','link','|','alignment','|','bulletedList','numberedList','|','outdent','indent','|','imageUpload','insertTable','mediaEmbed','blockQuote'],shouldNotGroupWhenFull:true},
-            image:{toolbar:['imageTextAlternative','toggleImageCaption','imageStyle:inline','imageStyle:block','imageStyle:side']},
-            alignment:{options:['left','center','right','justify']},
-            table:{contentToolbar:['tableColumn','tableRow','mergeTableCells']}
-        }).then(ed=>{
-            editorInstance=ed;
-            const draft=restoreDraft(); if(draft&&typeof draft.inputHtml==='string'&&draft.inputHtml.length>0) ed.setData(draft.inputHtml);
-            if(draft&&taskNameInput&&draft.name&&taskNameInput.value.trim()==='') taskNameInput.value=draft.name;
-            ed.model.document.on('change:data',saveDraft);
-            wireFileInsertButton();
-        }).catch(err=>console.error('CKEditor init error:',err));
-    }
-
-    function hasMeaningfulContent(html) { if(!html) return false; const doc=new DOMParser().parseFromString(html,'text/html'); return (doc.body.textContent||'').replace(/\u00A0/g,' ').trim().length>0||!!doc.body.querySelector('img,table,video,audio,iframe'); }
-
-    if(formElement){
-        if(submitButton) submitButton.addEventListener('click',()=>explicitSubmitRequested=true);
-        formElement.addEventListener('submit',function(e){
-            const isPrimary=e.submitter?e.submitter===submitButton:explicitSubmitRequested;
-            if(!isPrimary){e.preventDefault();return;}
-            if(pendingUploads>0){e.preventDefault();explicitSubmitRequested=false;alert('Please wait for file upload to finish.');return;}
-            const el=document.querySelector(editorSelector); const html=editorInstance?editorInstance.getData():(el?el.value:''); if(el) el.value=html;
-            if(!hasMeaningfulContent(html)){e.preventDefault();explicitSubmitRequested=false;alert('Instructions are required before creating the task.');if(editorInstance) editorInstance.editing.view.focus();return;}
-            isSubmitting=true; clearDraft();
-        });
-        formElement.querySelectorAll('button').forEach(b=>{ if(b===submitButton) return; const t=(b.getAttribute('type')||'').toLowerCase(); if(t==='reset'||t==='button') return; b.setAttribute('type','button'); });
-    }
-
-    if(taskNameInput) taskNameInput.addEventListener('input',saveDraft);
-
-    function loadScript(i){ if(window.CKEDITOR&&window.CKEDITOR.ClassicEditor){initEditor();return;} if(i>=scriptCdn.length){initEditor();return;} const s=document.createElement('script');s.src=scriptCdn[i];s.async=true;s.onload=()=>initEditor();s.onerror=()=>loadScript(i+1);document.head.appendChild(s); }
-    function loadStyle(i){ if(document.querySelector('link[data-ckeditor-style="true"]')){loadScript(0);return;} if(i>=styleCdn.length){loadScript(0);return;} const l=document.createElement('link');l.rel='stylesheet';l.href=styleCdn[i];l.setAttribute('data-ckeditor-style','true');l.onload=()=>loadScript(0);l.onerror=()=>{l.remove();loadStyle(i+1);};document.head.appendChild(l); }
-    loadStyle(0);
 });
 </script>
 }
