@@ -183,222 +183,257 @@
     </div>
 </div>
 
-<!-- ========== Create Project Modal ========== -->
+<!-- ========== Create Project Modal (Stepper) ========== -->
 <div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <form asp-area="DepartmentHead" asp-controller="Project" asp-action="Create" method="post">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content cp-modal">
+            <form asp-area="DepartmentHead" asp-controller="Project" asp-action="Create" method="post" id="createProjectForm" novalidate>
                 @Html.AntiForgeryToken()
 
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createProjectModalLabel">
-                        <i class="fas fa-plus-circle"></i> Create New Project
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <!-- Gradient Header -->
+                <div class="cp-modal-header">
+                    <div>
+                        <h5 class="cp-modal-title" id="createProjectModalLabel">
+                            <i class="fas fa-plus-circle"></i> Create New Project
+                        </h5>
+                        <p class="cp-modal-subtitle" id="stepSubtitle">Step 1 of 3 &mdash; Project Details</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white mt-1" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
-                <div class="modal-body">
+                <!-- Stepper Track -->
+                <div class="cp-stepper">
+                    <div class="cp-step active" data-step="1">
+                        <div class="cp-step-circle"><i class="fas fa-file-lines"></i></div>
+                        <span class="cp-step-label">Details</span>
+                    </div>
+                    <div class="cp-step-line" id="stepLine1"></div>
+                    <div class="cp-step" data-step="2">
+                        <div class="cp-step-circle"><i class="fas fa-calendar-check"></i></div>
+                        <span class="cp-step-label">Schedule</span>
+                    </div>
+                    <div class="cp-step-line" id="stepLine2"></div>
+                    <div class="cp-step" data-step="3">
+                        <div class="cp-step-circle"><i class="fas fa-users-gear"></i></div>
+                        <span class="cp-step-label">Team</span>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body cp-modal-body">
                     @if (hasValidationErrors)
                     {
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                     }
-
                     @if (!Model.AvailableProposals.Any())
                     {
-                        <div class="alert alert-warning mb-3">
+                        <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
                             No approved proposals are currently available for project creation.
                         </div>
                     }
 
-                    <!-- Project Details Section -->
-                    <div class="modal-form-section">
-                        <div class="modal-section-title">
-                            <i class="fas fa-info-circle"></i> Project Details
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="CreateProject.Name" class="form-label"></label>
-                                <input asp-for="CreateProject.Name" class="form-control" placeholder="Enter project name" />
-                                <span asp-validation-for="CreateProject.Name" class="text-danger"></span>
+                    <!-- ===== Step 1: Project Details ===== -->
+                    <div class="cp-step-panel" id="stepPanel1">
+                        <div class="modal-form-section">
+                            <div class="modal-section-title">
+                                <i class="fas fa-info-circle"></i> Project Details
                             </div>
-                            <div class="col-md-6">
-                                <label asp-for="CreateProject.ProjectProposalId" class="form-label"></label>
-                                <select asp-for="CreateProject.ProjectProposalId" class="form-select" asp-items="Model.AvailableProposals">
-                                    <option value="">-- Select Proposal --</option>
-                                </select>
-                                <span asp-validation-for="CreateProject.ProjectProposalId" class="text-danger"></span>
-                            </div>
-                            <div class="col-12">
-                                <label asp-for="CreateProject.Description" class="form-label"></label>
-                                <textarea asp-for="CreateProject.Description" rows="3" class="form-control" placeholder="Describe the project scope and objectives..."></textarea>
-                                <span asp-validation-for="CreateProject.Description" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Assignment Section -->
-                    <div class="modal-form-section">
-                        <div class="modal-section-title">
-                            <i class="fas fa-user-check"></i> Assignment & Schedule
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <label asp-for="CreateProject.ProjectManagerId" class="form-label"></label>
-                                <select asp-for="CreateProject.ProjectManagerId" class="form-select" asp-items="Model.AvailableProjectManagers">
-                                    <option value="">-- Select Project Manager --</option>
-                                </select>
-                                <span asp-validation-for="CreateProject.ProjectManagerId" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="CreateProject.StartDate" class="form-label"></label>
-                                <input asp-for="CreateProject.StartDate" class="form-control" type="date" />
-                                <span asp-validation-for="CreateProject.StartDate" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="CreateProject.EndDate" class="form-label"></label>
-                                <input asp-for="CreateProject.EndDate" class="form-control" type="date" />
-                                <span asp-validation-for="CreateProject.EndDate" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Holidays Section -->
-                    <div id="holidaysSection" style="display: none;">
-                        <div class="modal-form-section" style="padding: 0; overflow: hidden;">
-                            <div class="card modal-holidays-card" style="border: none !important; box-shadow: none;">
-                                <div class="card-header d-flex align-items-center gap-2 py-2">
-                                    <i class="fas fa-calendar-day text-warning"></i>
-                                    <strong class="text-warning">Public Holidays (Philippines)</strong>
-                                    <span id="holidayCount" class="badge bg-warning text-dark ms-auto">0</span>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="CreateProject.Name" class="form-label"></label>
+                                    <input asp-for="CreateProject.Name" class="form-control" placeholder="Enter project name" />
+                                    <span asp-validation-for="CreateProject.Name" class="text-danger"></span>
                                 </div>
-                                <div class="card-body p-0">
-                                    <div id="holidaysLoading" class="text-center py-3" style="display: none;">
-                                        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
-                                        <span class="ms-2 text-muted">Loading holidays...</span>
-                                    </div>
-                                    <div id="holidaysError" class="text-center py-3 text-danger" style="display: none;">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        <span class="ms-1">Could not load holidays. Please check your internet connection.</span>
-                                    </div>
-                                    <div id="holidaysEmpty" class="text-center py-3 text-muted" style="display: none;">
-                                        <i class="fas fa-check-circle text-success"></i>
-                                        <span class="ms-1">No public holidays in this date range.</span>
-                                    </div>
-                                    <table id="holidaysTable" class="table table-sm table-hover mb-0" style="display: none;">
-                                        <thead>
-                                            <tr>
-                                                <th style="width: 130px;">Date</th>
-                                                <th>Holiday</th>
-                                                <th>Local Name</th>
-                                                <th style="width: 80px;">Day</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="holidaysTableBody"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Members Section -->
-                    <div class="modal-form-section">
-                        <div class="modal-members-header">
-                            <h6>
-                                <i class="fas fa-users-gear"></i> Team Members
-                                <span style="font-weight: 400; font-size: 0.7rem; text-transform: none; letter-spacing: 0; color: #94a3b8;">(Optional)</span>
-                            </h6>
-                            <button type="button" id="addMemberRowBtn" class="btn-add-member">
-                                <i class="fas fa-user-plus"></i> Add Member
-                            </button>
-                        </div>
-
-                        <div id="memberRowsContainer">
-                            @if (Model.CreateProject.MemberEmployeeIds.Count == Model.CreateProject.MemberProjectRoleIds.Count && Model.CreateProject.MemberEmployeeIds.Any())
-                            {
-                                @for (var i = 0; i < Model.CreateProject.MemberEmployeeIds.Count; i++)
-                                {
-                                    <div class="member-row-modern member-row">
-                                        <div class="member-field">
-                                            <select name="CreateProject.MemberEmployeeIds" class="form-select">
-                                                <option value="">-- Select Employee --</option>
-                                                @foreach (var employee in Model.AvailableEmployees)
-                                                {
-                                                    if (employee.Value == Model.CreateProject.MemberEmployeeIds[i].ToString())
-                                                    {
-                                                        <option value="@employee.Value" selected>@employee.Text</option>
-                                                    }
-                                                    else
-                                                    {
-                                                        <option value="@employee.Value">@employee.Text</option>
-                                                    }
-                                                }
-                                            </select>
-                                        </div>
-                                        <div class="member-field">
-                                            <select name="CreateProject.MemberProjectRoleIds" class="form-select">
-                                                <option value="">-- Select Role --</option>
-                                                @foreach (var role in Model.AvailableProjectRoles)
-                                                {
-                                                    if (role.Value == Model.CreateProject.MemberProjectRoleIds[i].ToString())
-                                                    {
-                                                        <option value="@role.Value" selected>@role.Text</option>
-                                                    }
-                                                    else
-                                                    {
-                                                        <option value="@role.Value">@role.Text</option>
-                                                    }
-                                                }
-                                            </select>
-                                        </div>
-                                        <button type="button" class="btn-remove-member remove-member-row" title="Remove member">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                }
-                            }
-                        </div>
-
-                        <div id="membersEmptyHint" class="members-empty-hint" @(Model.CreateProject.MemberEmployeeIds.Any() ? "style=display:none" : "")>
-                            <i class="fas fa-user-plus"></i>
-                            Click "Add Member" to assign team members to this project
-                        </div>
-
-                        <template id="memberRowTemplate">
-                            <div class="member-row-modern member-row">
-                                <div class="member-field">
-                                    <select name="CreateProject.MemberEmployeeIds" class="form-select">
-                                        <option value="">-- Select Employee --</option>
-                                        @foreach (var employee in Model.AvailableEmployees)
-                                        {
-                                            <option value="@employee.Value">@employee.Text</option>
-                                        }
+                                <div class="col-md-6">
+                                    <label asp-for="CreateProject.ProjectProposalId" class="form-label"></label>
+                                    <select asp-for="CreateProject.ProjectProposalId" class="form-select" asp-items="Model.AvailableProposals">
+                                        <option value="">-- Select Proposal --</option>
                                     </select>
+                                    <span asp-validation-for="CreateProject.ProjectProposalId" class="text-danger"></span>
                                 </div>
-                                <div class="member-field">
-                                    <select name="CreateProject.MemberProjectRoleIds" class="form-select">
-                                        <option value="">-- Select Role --</option>
-                                        @foreach (var role in Model.AvailableProjectRoles)
-                                        {
-                                            <option value="@role.Value">@role.Text</option>
-                                        }
+                                <div class="col-12">
+                                    <label asp-for="CreateProject.Description" class="form-label"></label>
+                                    <textarea asp-for="CreateProject.Description" rows="3" class="form-control" placeholder="Describe the project scope and objectives..."></textarea>
+                                    <span asp-validation-for="CreateProject.Description" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Step 2: Schedule & Assignment ===== -->
+                    <div class="cp-step-panel" id="stepPanel2" style="display:none;">
+                        <div class="modal-form-section">
+                            <div class="modal-section-title">
+                                <i class="fas fa-user-check"></i> Assignment &amp; Schedule
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label asp-for="CreateProject.ProjectManagerId" class="form-label"></label>
+                                    <select asp-for="CreateProject.ProjectManagerId" class="form-select" asp-items="Model.AvailableProjectManagers">
+                                        <option value="">-- Select Project Manager --</option>
                                     </select>
+                                    <span asp-validation-for="CreateProject.ProjectManagerId" class="text-danger"></span>
                                 </div>
-                                <button type="button" class="btn-remove-member remove-member-row" title="Remove member">
-                                    <i class="fas fa-trash-alt"></i>
+                                <div class="col-md-6">
+                                    <label asp-for="CreateProject.StartDate" class="form-label"></label>
+                                    <input asp-for="CreateProject.StartDate" class="form-control" type="date" />
+                                    <span asp-validation-for="CreateProject.StartDate" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="CreateProject.EndDate" class="form-label"></label>
+                                    <input asp-for="CreateProject.EndDate" class="form-control" type="date" />
+                                    <span asp-validation-for="CreateProject.EndDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Holidays -->
+                        <div id="holidaysSection" style="display: none;">
+                            <div class="modal-form-section" style="padding: 0; overflow: hidden;">
+                                <div class="card modal-holidays-card" style="border: none !important; box-shadow: none;">
+                                    <div class="card-header d-flex align-items-center gap-2 py-2">
+                                        <i class="fas fa-calendar-day text-warning"></i>
+                                        <strong class="text-warning">Public Holidays (Philippines)</strong>
+                                        <span id="holidayCount" class="badge bg-warning text-dark ms-auto">0</span>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="holidaysLoading" class="text-center py-3" style="display: none;">
+                                            <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                                            <span class="ms-2 text-muted">Loading holidays...</span>
+                                        </div>
+                                        <div id="holidaysError" class="text-center py-3 text-danger" style="display: none;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span class="ms-1">Could not load holidays. Please check your internet connection.</span>
+                                        </div>
+                                        <div id="holidaysEmpty" class="text-center py-3 text-muted" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            <span class="ms-1">No public holidays in this date range.</span>
+                                        </div>
+                                        <table id="holidaysTable" class="table table-sm table-hover mb-0" style="display: none;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 130px;">Date</th>
+                                                    <th>Holiday</th>
+                                                    <th>Local Name</th>
+                                                    <th style="width: 80px;">Day</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="holidaysTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Step 3: Team Members ===== -->
+                    <div class="cp-step-panel" id="stepPanel3" style="display:none;">
+                        <div class="modal-form-section">
+                            <div class="modal-members-header">
+                                <h6>
+                                    <i class="fas fa-users-gear"></i> Team Members
+                                    <span style="font-weight:400;font-size:.7rem;text-transform:none;letter-spacing:0;color:#94a3b8;">(Optional)</span>
+                                </h6>
+                                <button type="button" id="addMemberRowBtn" class="btn-add-member">
+                                    <i class="fas fa-user-plus"></i> Add Member
                                 </button>
                             </div>
-                        </template>
+
+                            <div id="memberRowsContainer">
+                                @if (Model.CreateProject.MemberEmployeeIds.Count == Model.CreateProject.MemberProjectRoleIds.Count && Model.CreateProject.MemberEmployeeIds.Any())
+                                {
+                                    @for (var i = 0; i < Model.CreateProject.MemberEmployeeIds.Count; i++)
+                                    {
+                                        <div class="member-row-modern member-row">
+                                            <div class="member-field">
+                                                <select name="CreateProject.MemberEmployeeIds" class="form-select">
+                                                    <option value="">-- Select Employee --</option>
+                                                    @foreach (var employee in Model.AvailableEmployees)
+                                                    {
+                                                        if (employee.Value == Model.CreateProject.MemberEmployeeIds[i].ToString())
+                                                        {
+                                                            <option value="@employee.Value" selected>@employee.Text</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@employee.Value">@employee.Text</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="member-field">
+                                                <select name="CreateProject.MemberProjectRoleIds" class="form-select">
+                                                    <option value="">-- Select Role --</option>
+                                                    @foreach (var role in Model.AvailableProjectRoles)
+                                                    {
+                                                        if (role.Value == Model.CreateProject.MemberProjectRoleIds[i].ToString())
+                                                        {
+                                                            <option value="@role.Value" selected>@role.Text</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@role.Value">@role.Text</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+                                            <button type="button" class="btn-remove-member remove-member-row" title="Remove member">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                }
+                            </div>
+
+                            <div id="membersEmptyHint" class="members-empty-hint" @(Model.CreateProject.MemberEmployeeIds.Any() ? "style=display:none" : "")>
+                                <i class="fas fa-user-plus"></i>
+                                Click "Add Member" to assign team members to this project
+                            </div>
+
+                            <template id="memberRowTemplate">
+                                <div class="member-row-modern member-row">
+                                    <div class="member-field">
+                                        <select name="CreateProject.MemberEmployeeIds" class="form-select">
+                                            <option value="">-- Select Employee --</option>
+                                            @foreach (var employee in Model.AvailableEmployees)
+                                            {
+                                                <option value="@employee.Value">@employee.Text</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="member-field">
+                                        <select name="CreateProject.MemberProjectRoleIds" class="form-select">
+                                            <option value="">-- Select Role --</option>
+                                            @foreach (var role in Model.AvailableProjectRoles)
+                                            {
+                                                <option value="@role.Value">@role.Text</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn-remove-member remove-member-row" title="Remove member">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn-modal-submit" @(Model.AvailableProposals.Any() ? "" : "disabled")>
-                        <i class="fas fa-rocket"></i> Create Project
-                    </button>
+                <!-- Stepper Footer -->
+                <div class="cp-modal-footer">
+                    <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <div class="cp-step-nav">
+                        <button type="button" class="btn-modal-prev" id="stepBtnPrev" style="display:none;">
+                            <i class="fas fa-chevron-left"></i> Back
+                        </button>
+                        <button type="button" class="btn-modal-next" id="stepBtnNext">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button type="submit" class="btn-modal-submit" id="stepBtnSubmit" style="display:none;" @(Model.AvailableProposals.Any() ? "" : "disabled")>
+                            <i class="fas fa-rocket"></i> Create Project
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -483,6 +518,69 @@
     filteredRows = allRows.slice();
     render();
 })();
+    </script>
+    <script>
+    // ── Stepper Logic ──
+    (function () {
+        const TOTAL = 3;
+        let current = 1;
+
+        const subtitles = [
+            'Step 1 of 3 \u2014 Project Details',
+            'Step 2 of 3 \u2014 Schedule & Assignment',
+            'Step 3 of 3 \u2014 Team Members'
+        ];
+
+        const stepSubtitle = document.getElementById('stepSubtitle');
+        const btnPrev      = document.getElementById('stepBtnPrev');
+        const btnNext      = document.getElementById('stepBtnNext');
+        const btnSubmit    = document.getElementById('stepBtnSubmit');
+        const modalEl      = document.getElementById('createProjectModal');
+
+        function goTo(step) {
+            for (let i = 1; i <= TOTAL; i++) {
+                document.getElementById('stepPanel' + i).style.display = i === step ? '' : 'none';
+            }
+            document.querySelectorAll('.cp-step').forEach(el => {
+                const s = parseInt(el.dataset.step);
+                el.classList.toggle('active', s === step);
+                el.classList.toggle('completed', s < step);
+            });
+            for (let i = 1; i < TOTAL; i++) {
+                const line = document.getElementById('stepLine' + i);
+                if (line) line.classList.toggle('completed', i < step);
+            }
+            btnPrev.style.display   = step > 1 ? '' : 'none';
+            btnNext.style.display   = step < TOTAL ? '' : 'none';
+            btnSubmit.style.display = step === TOTAL ? '' : 'none';
+            if (stepSubtitle) stepSubtitle.textContent = subtitles[step - 1];
+            current = step;
+        }
+
+        function validateCurrent() {
+            const panel = document.getElementById('stepPanel' + current);
+            let valid = true;
+            panel.querySelectorAll('input, select, textarea').forEach(el => {
+                if (el.hasAttribute('required') || el.hasAttribute('data-val-required')) {
+                    const empty = !el.value || !el.value.trim();
+                    el.classList.toggle('is-invalid', empty);
+                    if (empty) valid = false;
+                }
+            });
+            return valid;
+        }
+
+        btnNext.addEventListener('click', () => {
+            if (validateCurrent()) goTo(current + 1);
+        });
+        btnPrev.addEventListener('click', () => goTo(current - 1));
+
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', () => goTo(1));
+        }
+
+        goTo(1);
+    })();
     </script>
     <script>
         (function () {
