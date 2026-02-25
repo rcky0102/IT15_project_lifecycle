@@ -3,19 +3,38 @@
     ViewData["Title"] = $"Version {Model?.VersionNumber} - {Model?.Title}";
 }
 
-<div class="dashboard-container py-4">
-    <div class="proposal-page-header">
-        <h1><i class="fas fa-file-alt"></i>&nbsp; Version @Model.VersionNumber</h1>
-        <p class="proposal-subtitle">@Model.Title — Saved @Model.DateCreated.ToString("yyyy-MM-dd HH:mm")</p>
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-clock-rotate-left"></i></span>
+                Version @Model?.VersionNumber
+            </h1>
+            <p class="emp-page-subtitle">
+                @Model?.Title
+                <span style="opacity:.75;"> &mdash; Saved @Model?.DateCreated.ToString("MMM dd, yyyy h:mm tt")</span>
+            </p>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Details"
+               asp-route-id="@Model?.ProjectProposalId" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Details</span>
+            </a>
+        </div>
     </div>
+</div>
 
-    <div class="proposal-detail-card">
-        <div class="proposal-detail-body">
-            @Html.Raw(Model.Input ?? string.Empty)
-        </div>
-
-        <div style="margin-top:1rem">
-            <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Details" asp-route-id="@Model.ProjectProposalId" class="btn btn-secondary">Back to Proposal</a>
-        </div>
+<!-- ===== Version content card ===== -->
+<div class="emp-detail-card">
+    <div class="emp-detail-card-header">
+        <span class="emp-status-badge emp-status-default">
+            <span class="emp-status-dot"></span>
+            Version @Model?.VersionNumber
+        </span>
+    </div>
+    <div class="emp-detail-body">
+        @Html.Raw(Model?.Input ?? string.Empty)
     </div>
 </div>

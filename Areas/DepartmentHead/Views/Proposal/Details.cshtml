@@ -2,102 +2,233 @@
 @using project_lifecycle.Models
 @{
     ViewData["Title"] = Model?.Title ?? "Proposal";
+    var versions = ViewBag.ProjectProposalVersions as List<project_lifecycle.Models.ProjectProposalVersion> ?? new List<project_lifecycle.Models.ProjectProposalVersion>();
+    var notes    = ViewBag.ProposalNoteVersions    as List<project_lifecycle.Models.ProposalNoteVersion>    ?? new List<project_lifecycle.Models.ProposalNoteVersion>();
+    var orderedNotes = notes.OrderByDescending(n => n.VersionNumber).ToList();
 }
 
-<div class="dashboard-container py-4">
-    <div class="proposal-page-header">
-        <h1><i class="fas fa-lightbulb"></i>&nbsp; @ViewData["Title"]</h1>
-        <p class="proposal-subtitle">Submitted @Model.DateCreated.ToString("yyyy-MM-dd") — Status: @Model.Status</p>
+@if (Model == null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>Proposal not found or has been removed.</span>
     </div>
-
-    <div class="proposal-detail-card">
-        <div class="proposal-detail-body">
-            @Html.Raw(Model.Input)
+    <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Index" class="emp-btn emp-btn-outline" style="margin-top:.5rem">Back</a>
+}
+else
+{
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-file-lines"></i></span>
+                @Model.Title
+            </h1>
+            <p class="emp-page-subtitle">Submitted @Model.DateCreated.ToString("MMMM dd, yyyy")</p>
         </div>
-
-        <div style="margin-top:1rem">
-            <form asp-action="Review" asp-controller="Proposal" asp-area="DepartmentHead" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.Id" />
-
-                <div class="mb-3">
-                    <label for="note" class="form-label">Feedback / Note</label>
-                    <textarea id="note" name="note" class="form-control" rows="5">@Model.Note</textarea>
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button type="submit" name="actionType" value="Approve" class="btn btn-success" onclick="return confirm('Approve this proposal?');">Approve</button>
-                    <button type="submit" name="actionType" value="Reject" class="btn btn-danger" onclick="return confirm('Reject this proposal?');">Reject</button>
-                    <button type="submit" name="actionType" value="ReturnForRevision" class="btn btn-warning">Return for Revision</button>
-                    <button type="submit" name="actionType" value="SendFeedback" class="btn btn-primary">Send Feedback</button>
-                    <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Index" class="btn btn-secondary ms-auto">Back</a>
-                </div>
-            </form>
+        <div class="emp-page-hero-right" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('versionsModal')">
+                <i class="fas fa-clock-rotate-left"></i>
+                <span>Versions</span>
+                @if (versions.Any()) { <span class="emp-modal-count-chip">@versions.Count</span> }
+            </button>
+            <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('notesModal')">
+                <i class="fas fa-note-sticky"></i>
+                <span>Notes</span>
+                @if (notes.Any()) { <span class="emp-modal-count-chip">@notes.Count</span> }
+            </button>
+            <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Index" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
         </div>
     </div>
-    
-    <div class="proposal-versions mt-4">
-        <h5>Versions <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Notes" asp-route-id="@Model.Id" class="ms-2">View All Notes</a></h5>
-        @{ var versions = ViewBag.ProjectProposalVersions as List<project_lifecycle.Models.ProjectProposalVersion> ?? new List<project_lifecycle.Models.ProjectProposalVersion>(); }
-        <div class="mt-2">
-            <div class="p-2 border rounded bg-light mb-2">
-                <strong>Current</strong> — @Model.Title
-                <div class="small text-muted">Updated @Model.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+</div>
+
+<!-- ===== Alerts ===== -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <div class="emp-alert-icon"><i class="fas fa-check-circle"></i></div>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+
+<!-- ===== Proposal content card ===== -->
+<div class="emp-detail-card">
+    <div class="emp-detail-card-header">
+        <span class="emp-status-badge @GetStatusClass(Model.Status)">
+            <span class="emp-status-dot"></span>
+            @Model.Status
+        </span>
+    </div>
+    <div class="emp-detail-body">
+        @Html.Raw(Model.Input ?? string.Empty)
+    </div>
+</div>
+
+<!-- ===== Review card ===== -->
+<div class="emp-detail-card" style="margin-top:1.25rem;">
+    <div class="emp-detail-card-header">
+        <span style="font-size:.95rem;font-weight:700;color:#1e293b;"><i class="fas fa-pen-to-square" style="color:#006994;margin-right:.4rem;"></i>Review &amp; Feedback</span>
+    </div>
+    <div class="emp-detail-body">
+        <form asp-action="Review" asp-controller="Proposal" asp-area="DepartmentHead" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div style="margin-bottom:1rem;">
+                <label for="note" style="font-size:.85rem;font-weight:600;color:#374151;display:block;margin-bottom:.4rem;">Feedback / Note</label>
+                <textarea id="note" name="note" rows="5"
+                    style="width:100%;padding:.7rem .9rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.875rem;font-family:inherit;color:#1e293b;outline:none;resize:vertical;transition:border-color .25s ease,box-shadow .25s ease;"
+                    onfocus="this.style.borderColor='#4CA3DD';this.style.boxShadow='0 0 0 3px rgba(76,163,221,.1)'"
+                    onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">@Model.Note</textarea>
             </div>
+            <div style="display:flex;gap:.625rem;flex-wrap:wrap;align-items:center;">
+                <button type="submit" name="actionType" value="Approve"
+                    class="emp-btn" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"
+                    onclick="return confirm('Approve this proposal?');">
+                    <i class="fas fa-circle-check"></i> Approve
+                </button>
+                <button type="submit" name="actionType" value="Reject"
+                    class="emp-btn" style="background:linear-gradient(135deg,#ef4444,#f87171);color:#fff;"
+                    onclick="return confirm('Reject this proposal?');">
+                    <i class="fas fa-circle-xmark"></i> Reject
+                </button>
+                <button type="submit" name="actionType" value="ReturnForRevision"
+                    class="emp-btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;">
+                    <i class="fas fa-rotate-left"></i> Return for Revision
+                </button>
+                <button type="submit" name="actionType" value="SendFeedback"
+                    class="emp-btn" style="background:linear-gradient(135deg,#006994,#4CA3DD);color:#fff;">
+                    <i class="fas fa-paper-plane"></i> Send Feedback
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
+<!-- ===== Versions Modal ===== -->
+<div id="versionsModal" class="emp-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="versionsModalTitle">
+    <div class="emp-modal">
+        <div class="emp-modal-header">
+            <h5 id="versionsModalTitle" class="emp-modal-title"><i class="fas fa-clock-rotate-left"></i> Versions</h5>
+            <button class="emp-modal-close" onclick="empModalClose('versionsModal')" aria-label="Close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="emp-modal-body">
+            <div class="emp-version-item emp-version-current mb-2">
+                <strong>Current</strong> — @Model.Title
+                <div class="emp-modal-meta"><i class="far fa-calendar"></i> Updated @Model.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+            </div>
             @if (versions.Any())
             {
                 @foreach (var v in versions)
                 {
-                    <div class="p-2 border rounded mb-2">
-                        <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Version" asp-route-id="@v.Id"><strong>Version @v.VersionNumber</strong></a>
+                    <div class="emp-version-item mb-2">
+                        <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Version" asp-route-id="@v.Id">
+                            <strong>Version @v.VersionNumber</strong>
+                        </a>
                         &nbsp;&mdash;&nbsp;@v.Title
-                        <div class="small text-muted">Saved @v.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="emp-modal-meta"><i class="far fa-calendar"></i> Saved @v.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
                     </div>
                 }
             }
             else
             {
-                <div class="small text-muted">No previous versions.</div>
+                <div class="emp-modal-empty"><i class="fas fa-layer-group"></i><span>No previous versions.</span></div>
             }
         </div>
     </div>
+</div>
 
-    <div class="proposal-notes mt-4">
-        <h5>Notes</h5>
-        @{ var notes = ViewBag.ProposalNoteVersions as List<project_lifecycle.Models.ProposalNoteVersion> ?? new List<project_lifecycle.Models.ProposalNoteVersion>(); }
-        <div class="mt-2">
-            @if (notes.Any())
+<!-- ===== Notes Modal ===== -->
+<div id="notesModal" class="emp-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
+    <div class="emp-modal">
+        <div class="emp-modal-header">
+            <h5 id="notesModalTitle" class="emp-modal-title"><i class="fas fa-note-sticky"></i> Notes</h5>
+            <button class="emp-modal-close" onclick="empModalClose('notesModal')" aria-label="Close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="emp-modal-body">
+            @if (orderedNotes.Any())
             {
-                var ordered = notes.OrderByDescending(n => n.VersionNumber).ToList();
-                var current = ordered.First();
-
-                <div class="p-2 border rounded bg-light mb-2">
-                    <strong><a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Note" asp-route-id="@current.Id">Current version</a></strong>@(current.VersionNumber > 0 ? (" (v" + current.VersionNumber + ")") : "")
-                    <div class="small text-muted">Saved @current.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
-                    <div class="mt-2">@Html.Raw(current.Note)</div>
+                var current = orderedNotes.First();
+                <div class="emp-note-item emp-note-current mb-2">
+                    <strong>
+                        <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Note" asp-route-id="@current.Id">Current version</a>
+                    </strong>@(current.VersionNumber > 0 ? (" (v" + current.VersionNumber + ")") : "")
+                    <div class="emp-modal-meta"><i class="far fa-calendar"></i> Saved @current.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div class="emp-note-content mt-2">@Html.Raw(current.Note)</div>
                 </div>
-
-                @foreach (var n in ordered.Skip(1))
+                @foreach (var n in orderedNotes.Skip(1))
                 {
-                    <div class="p-2 border rounded mb-2">
-                        <strong><a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Note" asp-route-id="@n.Id">Version @n.VersionNumber</a></strong>
-                        <div class="small text-muted">Saved @n.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="mt-2">@Html.Raw(n.Note)</div>
+                    <div class="emp-note-item mb-2">
+                        <strong>
+                            <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Note" asp-route-id="@n.Id">Version @n.VersionNumber</a>
+                        </strong>
+                        <div class="emp-modal-meta"><i class="far fa-calendar"></i> Saved @n.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="emp-note-content mt-2">@Html.Raw(n.Note)</div>
                     </div>
                 }
             }
             else if (!string.IsNullOrWhiteSpace(Model.Note))
             {
-                <div class="p-2 border rounded bg-light mb-2">
+                <div class="emp-note-item emp-note-current mb-2">
                     <strong>Current version</strong>
-                    <div class="mt-2">@Html.Raw(Model.Note)</div>
+                    <div class="emp-note-content mt-2">@Html.Raw(Model.Note)</div>
                 </div>
             }
             else
             {
-                <div class="small text-muted">No notes available.</div>
+                <div class="emp-modal-empty"><i class="fas fa-note-sticky"></i><span>No notes available.</span></div>
             }
         </div>
     </div>
 </div>
+
+<script>
+function empModalOpen(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('emp-modal-visible');
+    document.body.style.overflow = 'hidden';
+}
+function empModalClose(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('emp-modal-visible');
+    document.body.style.overflow = '';
+}
+document.querySelectorAll('.emp-modal-overlay').forEach(function(overlay) {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) empModalClose(overlay.id);
+    });
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.emp-modal-overlay.emp-modal-visible').forEach(function(m) {
+            empModalClose(m.id);
+        });
+    }
+});
+</script>
+}
+
+@functions {
+    private string GetStatusClass(string status) => status switch
+    {
+        "Pending"           => "emp-status-pending",
+        "Approved"          => "emp-status-approved",
+        "Rejected"          => "emp-status-rejected",
+        "Requires Revision" => "emp-status-revision",
+        _                   => "emp-status-default"
+    };
+}
