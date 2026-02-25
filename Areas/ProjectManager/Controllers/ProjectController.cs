@@ -225,7 +225,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Create(int id)
+        public async Task<IActionResult> Create(int id, int? milestoneId = null)
         {
             var pm = await GetCurrentProjectManagerAsync();
             if (pm == null) return Challenge();
@@ -303,6 +303,9 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     .Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = m.Id.ToString(), Text = m.Name })
                     .ToListAsync()
             };
+
+            if (milestoneId.HasValue)
+                ViewData["PreselectedMilestoneId"] = milestoneId.Value;
 
             return View("Create", vm);
         }

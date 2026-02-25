@@ -56,15 +56,32 @@
         <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddTask" method="post" class="emp-form emp-create-task-form">
             @Html.AntiForgeryToken()
 
+            @{
+                var _preselectedMilestoneId = ViewData["PreselectedMilestoneId"] as int?;
+                var _preselectedMilestone = _preselectedMilestoneId.HasValue
+                    ? _milestonesTyped.FirstOrDefault(m => m.Id == _preselectedMilestoneId.Value)
+                    : null;
+            }
             <div class="emp-form-row">
                 <label class="emp-form-label">Milestone</label>
-                <select name="projectMilestoneId" class="emp-form-control" required>
-                    <option value="">-- Select Milestone --</option>
-                    @foreach (var ms in _milestonesTyped.OrderBy(m => m.SequenceOrder))
-                    {
-                        <option value="@ms.Id">@ms.SequenceOrder — @ms.MilestoneName</option>
-                    }
-                </select>
+                @if (_preselectedMilestone != null)
+                {
+                    <input type="hidden" name="projectMilestoneId" value="@_preselectedMilestone.Id" />
+                    <div class="emp-form-control" style="background:#f8fafc;color:#374151;cursor:default;">
+                        <i class="fas fa-flag" style="color:#6366f1;margin-right:.4rem;"></i>
+                        @_preselectedMilestone.SequenceOrder — @_preselectedMilestone.MilestoneName
+                    </div>
+                }
+                else
+                {
+                    <select name="projectMilestoneId" class="emp-form-control" required>
+                        <option value="">-- Select Milestone --</option>
+                        @foreach (var ms in _milestonesTyped.OrderBy(m => m.SequenceOrder))
+                        {
+                            <option value="@ms.Id">@ms.SequenceOrder — @ms.MilestoneName</option>
+                        }
+                    </select>
+                }
             </div>
 
             <div class="emp-form-row">

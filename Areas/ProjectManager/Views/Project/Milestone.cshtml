@@ -57,7 +57,7 @@
         </div>
         <div class="emp-page-hero-right" style="display:flex;gap:.6rem;flex-wrap:wrap;">
             <a asp-area="ProjectManager" asp-controller="Project" asp-action="Create"
-               asp-route-id="@Model.ProjectId"
+               asp-route-id="@Model.ProjectId" asp-route-milestoneId="@Model.ProjectMilestoneId"
                class="emp-btn emp-btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 <span>Create Task</span>
@@ -124,7 +124,7 @@
             </div>
             <div class="emp-table-toolbar-right">
                 <a asp-area="ProjectManager" asp-controller="Project" asp-action="Create"
-                   asp-route-id="@Model.ProjectId" class="emp-btn emp-btn-outline" style="font-size:.8rem;padding:.35rem .85rem;">
+                   asp-route-id="@Model.ProjectId" asp-route-milestoneId="@Model.ProjectMilestoneId" class="emp-btn emp-btn-outline" style="font-size:.8rem;padding:.35rem .85rem;">
                     <i class="fas fa-plus me-1"></i>Add Task
                 </a>
             </div>
@@ -171,7 +171,7 @@
                 <h4 class="emp-empty-title">No tasks yet</h4>
                 <p class="emp-empty-text">No tasks have been created for this milestone.</p>
                 <a asp-area="ProjectManager" asp-controller="Project" asp-action="Create"
-                   asp-route-id="@Model.ProjectId" class="emp-btn emp-btn-primary" style="margin-top:.75rem;">
+                   asp-route-id="@Model.ProjectId" asp-route-milestoneId="@Model.ProjectMilestoneId" class="emp-btn emp-btn-primary" style="margin-top:.75rem;">
                     <i class="fas fa-plus me-1"></i>Create First Task
                 </a>
             </div>
