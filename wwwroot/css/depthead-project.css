@@ -1041,3 +1041,12 @@
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(2,132,199,.42);
 }
+
+/* ---- Extra-small button variant for table action cells ---- */
+.emp-btn-xs {
+    padding: .28rem .65rem !important;
+    font-size: .72rem !important;
+    border-radius: 7px !important;
+    line-height: 1.4;
+    white-space: nowrap;
+}

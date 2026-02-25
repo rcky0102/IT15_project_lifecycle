@@ -286,3 +286,29 @@
   .emp-project-stats { order: 2; margin-top:.6rem; }
   .emp-project-actions { order: 3; margin-top:.5rem; }
 }
+
+/* ---- Compact member avatar chips (project table) ---- */
+.emp-avatar-chip {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #006994, #4CA3DD);
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,105,148,.18);
+    cursor: default;
+    flex-shrink: 0;
+    letter-spacing: 0;
+}
+
+.emp-avatar-chip.more {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: .6rem;
+    font-weight: 700;
+}
