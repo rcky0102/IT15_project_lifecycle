@@ -1,135 +1,267 @@
-﻿@*
-    DepartmentHead proposals list — shows proposals from employees in the same department.
-*@
-@model List<ProjectProposal>
+﻿@model List<ProjectProposal>
 @using project_lifecycle.Models
 @{
+    ViewData["Title"] = "Team Proposals";
+    Layout = "~/Areas/DepartmentHead/Layout.cshtml";
 }
 
-<div class="dashboard-container py-4">
-
-    <!-- ===== Page Header ===== -->
-    <div class="proposal-page-header">
-        <h1><i class="fas fa-lightbulb"></i>&nbsp; @(ViewData["Title"] ?? "Team Proposals")</h1>
-        <p class="proposal-subtitle">Proposals submitted by members of your department</p>
-    </div>
-
-
-    <!-- Details are on a dedicated page now; removed modal and inline scripts -->
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="proposal-alert success">
-        <i class="fas fa-check-circle"></i>
-        <span>@TempData["SuccessMessage"]</span>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="proposal-alert error">
-        <i class="fas fa-exclamation-circle"></i>
-        <span>@TempData["ErrorMessage"]</span>
-    </div>
-}
-
-@if (ViewData["ErrorMessage"] != null)
-{
-    <div class="proposal-alert error">
-        <i class="fas fa-exclamation-circle"></i>
-        <span>@ViewData["ErrorMessage"]</span>
-    </div>
-}
-
-<!-- ===== Proposals Table ===== -->
-<div class="proposal-table-section">
-    <div class="proposal-table-header">
-        <h3>
-            <i class="fas fa-folder-open"></i> Team Proposals
-            <span class="proposal-count-badge">@Model.Count</span>
-        </h3>
-    </div>
-    <div class="proposal-table-card">
-        @if (Model.Any())
-        {
-            <div class="proposal-table-responsive">
-                <table class="proposal-table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Input Preview</th>
-                            <th>Submitted</th>
-                            <th>Status</th>
-                            <th style="width:50px;"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var proposal in Model)
-                        {
-                            <tr>
-                                <td class="proposal-title-cell">
-                                    @proposal.Title
-                                </td>
-                                <td>@GetInputPreview(proposal.Input)</td>
-                                <td class="proposal-date">@proposal.DateCreated.ToString("yyyy-MM-dd")</td>
-                                <td>
-                                    <span class="proposal-status @GetStatusClass(proposal.Status)">
-                                        <span class="status-dot"></span>
-                                        @proposal.Status
-                                    </span>
-                                </td>
-                                <td>
-                                    <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id" class="proposal-view-btn" title="View details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-        else
-        {
-            <div class="proposal-empty-state">
-                <div class="empty-icon"><i class="fas fa-inbox"></i></div>
-                <div class="empty-title">No proposals yet</div>
-                <div class="empty-text">No proposals were submitted by your department yet.</div>
-            </div>
-        }
+<!-- ===== Page Title Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-file-lines"></i></span>
+                Team Proposals
+            </h1>
+            <p class="emp-page-subtitle">Proposals submitted by members of your department</p>
+        </div>
     </div>
 </div>
+
+<!-- ===== Alerts ===== -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <div class="emp-alert-icon"><i class="fas fa-check-circle"></i></div>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@ViewData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+
+<!-- ===== Filters ===== -->
+<div class="emp-filters-card">
+    <div class="emp-filters-row">
+        <div class="emp-search-group">
+            <i class="fas fa-magnifying-glass emp-search-icon"></i>
+            <input id="proposalSearch" type="text" class="emp-search-input" placeholder="Search proposals…" autocomplete="off" />
+        </div>
+        <div class="emp-select-group">
+            <select id="statusFilter" class="emp-select">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Requires Revision">Requires Revision</option>
+            </select>
+        </div>
+        <div class="emp-select-group">
+            <label for="pageSizeSelect" style="font-size:.82rem;color:#64748b;margin-right:.4rem;">Show</label>
+            <select id="pageSizeSelect" class="emp-select" style="width:92px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Table ===== -->
+<div class="emp-table-card">
+    <div class="emp-table-toolbar">
+        <div class="emp-table-toolbar-left">
+            <h3 class="emp-table-title">
+                <i class="fas fa-folder-open"></i> Team Proposals
+            </h3>
+            <span class="emp-count-chip" id="visibleCount">@Model.Count</span>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="emp-table-responsive">
+            <table class="emp-table" id="proposalsTable">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Submitted By</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th class="emp-th-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="proposalsBody">
+                    @foreach (var proposal in Model)
+                    {
+                        <tr class="emp-row"
+                            data-title="@proposal.Title.ToLower()"
+                            data-status="@proposal.Status">
+                            <td class="emp-cell-title">
+                                <span class="emp-title-text">@proposal.Title</span>
+                            </td>
+                            <td>
+                                <span style="font-size:.85rem;color:#374151;font-weight:500;">
+                                    @(proposal.Employee != null ? $"{proposal.Employee.FirstName} {proposal.Employee.LastName}" : "—")
+                                </span>
+                            </td>
+                            <td class="emp-cell-date">
+                                <span class="emp-date-chip">
+                                    <i class="far fa-calendar"></i>
+                                    @proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")
+                                </span>
+                            </td>
+                            <td class="emp-cell-status">
+                                <span class="emp-status-inline @GetStatusClass(proposal.Status)">
+                                    <span class="emp-status-dot"></span>
+                                    <span class="emp-status-text">@proposal.Status</span>
+                                </span>
+                            </td>
+                            <td class="emp-cell-actions">
+                                <div class="emp-action-group">
+                                    <a asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
+                                       class="emp-action-btn emp-action-view" title="View details">
+                                        <i class="fas fa-magnifying-glass"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div id="noFilterResults" class="emp-empty-state" style="display:none;">
+                <div class="emp-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <h4 class="emp-empty-title">No matching proposals</h4>
+                <p class="emp-empty-text">Try adjusting your search or filters.</p>
+            </div>
+        </div>
+
+        <div class="emp-pagination" id="paginationContainer">
+            <div class="emp-pagination-info" id="paginationInfo"></div>
+            <div class="emp-pagination-controls" id="paginationControls"></div>
+        </div>
+    }
+    else
+    {
+        <div class="emp-empty-state">
+            <div class="emp-empty-icon"><i class="fas fa-inbox"></i></div>
+            <h4 class="emp-empty-title">No proposals yet</h4>
+            <p class="emp-empty-text">No proposals have been submitted by your department yet.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+(function () {
+    let PAGE_SIZE = 10;
+    let currentPage = 1;
+    let filteredRows = [];
+
+    const searchInput    = document.getElementById('proposalSearch');
+    const statusSelect   = document.getElementById('statusFilter');
+    const allRows        = Array.from(document.querySelectorAll('.emp-row'));
+    const noResults      = document.getElementById('noFilterResults');
+    const countBadge     = document.getElementById('visibleCount');
+    const pageInfo       = document.getElementById('paginationInfo');
+    const pageControls   = document.getElementById('paginationControls');
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+    function applyFilters() {
+        const query  = (searchInput?.value ?? '').toLowerCase().trim();
+        const status = statusSelect?.value ?? '';
+        filteredRows = allRows.filter(row => {
+            const titleMatch  = !query  || (row.dataset.title || '').includes(query);
+            const statusMatch = !status || row.dataset.status === status;
+            return titleMatch && statusMatch;
+        });
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        const total      = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        currentPage      = Math.min(currentPage, totalPages);
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end   = start + PAGE_SIZE;
+
+        allRows.forEach(r => r.style.display = 'none');
+        filteredRows.forEach((r, i) => {
+            r.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        if (noResults)  noResults.style.display  = total === 0 ? '' : 'none';
+        if (countBadge) countBadge.textContent    = total;
+        if (pageInfo)   pageInfo.textContent      = total === 0 ? '' : `Showing ${start + 1}–${Math.min(end, total)} of ${total}`;
+
+        if (pageControls) {
+            pageControls.innerHTML = '';
+            const makeBtn = (label, page, disabled, active) => {
+                const btn = document.createElement('button');
+                btn.className = 'emp-page-btn' + (active ? ' active' : '');
+                btn.innerHTML = label;
+                btn.disabled  = disabled;
+                btn.addEventListener('click', () => { currentPage = page; render(); });
+                return btn;
+            };
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
+            const w = 2;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
+                    pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                    const el = document.createElement('span');
+                    el.className = 'emp-page-ellipsis';
+                    el.textContent = '…';
+                    pageControls.appendChild(el);
+                }
+            }
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
+        }
+    }
+
+    if (searchInput)  searchInput.addEventListener('input', applyFilters);
+    if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+    if (pageSizeSelect) {
+        pageSizeSelect.value = String(PAGE_SIZE);
+        pageSizeSelect.addEventListener('change', function () {
+            PAGE_SIZE = Math.max(5, parseInt(this.value, 10) || 10);
+            currentPage = 1;
+            render();
+        });
+    }
+
+    filteredRows = allRows.slice();
+    render();
+})();
+    </script>
+}
 
 @functions {
     private string GetInputPreview(string? html)
     {
-        if (string.IsNullOrWhiteSpace(html))
-        {
-            return "—";
-        }
-
+        if (string.IsNullOrWhiteSpace(html)) return "—";
         var withoutTags = System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", " ");
-        var normalized = System.Text.RegularExpressions.Regex.Replace(withoutTags, "\\s+", " ").Trim();
-
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return "—";
-        }
-
-        const int maxLength = 120;
-        return normalized.Length <= maxLength ? normalized : normalized.Substring(0, maxLength) + "...";
+        var normalized  = System.Text.RegularExpressions.Regex.Replace(withoutTags, "\\s+", " ").Trim();
+        if (string.IsNullOrWhiteSpace(normalized)) return "—";
+        const int maxLength = 100;
+        return normalized.Length <= maxLength ? normalized : normalized.Substring(0, maxLength) + "…";
     }
 
-    private string GetStatusClass(string status)
+    private string GetStatusClass(string status) => status switch
     {
-        return status switch
-        {
-            "Pending"           => "status-pending",
-            "Approved"          => "status-approved",
-            "Rejected"          => "status-rejected",
-            "Requires Revision" => "status-requiresrevision",
-            _                    => "status-default"
-        };
-    }
+        "Pending"           => "emp-status-pending",
+        "Approved"          => "emp-status-approved",
+        "Rejected"          => "emp-status-rejected",
+        "Requires Revision" => "emp-status-revision",
+        _                   => "emp-status-default"
+    };
 }
 
