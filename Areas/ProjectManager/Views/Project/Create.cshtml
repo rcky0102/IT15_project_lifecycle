@@ -132,7 +132,6 @@
                     </button>
                     <span style="font-size:12px;opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
                 </div>
-                <input type="file" id="createTaskRichFileInput" style="display:none;" />
             </div>
 
             <div class="emp-form-actions" style="justify-content:flex-end;">
@@ -178,14 +177,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function wireFileInsertButton() {
-        const btn=document.getElementById('insertCreateTaskFileBtn'), inp=document.getElementById('createTaskRichFileInput');
-        if(!btn||!inp) return;
-        btn.addEventListener('click',()=>inp.click());
-        inp.addEventListener('change', async function(){
-            if(!editorInstance||!inp.files||!inp.files.length) return;
-            const file=inp.files[0]; btn.disabled=true;
-            try { const r=await uploadFile(file); if(file.type.startsWith('image/')){ editorInstance.model.change(w=>{const img=w.createElement('imageBlock',{src:r.url});editorInstance.model.insertContent(img,editorInstance.model.document.selection);}); } else { editorInstance.model.change(w=>{const t=w.createText(r.fileName||file.name,{linkHref:r.url});editorInstance.model.insertContent(t,editorInstance.model.document.selection);}); } }
-            catch(err){ alert(err.message||'Upload failed.'); } finally{ inp.value=''; btn.disabled=false; }
+        const btn=document.getElementById('insertCreateTaskFileBtn');
+        if(!btn) return;
+        btn.addEventListener('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
+            if(!editorInstance) return;
+            // Create a fresh disposable file input each time — never reuse, never clear .value
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.style.display = 'none';
+            inp.addEventListener('change', async function() {
+                if(!inp.files||!inp.files.length){ document.body.removeChild(inp); return; }
+                const file = inp.files[0];
+                document.body.removeChild(inp); // remove immediately before any async work
+                btn.disabled = true;
+                try {
+                    const r = await uploadFile(file);
+                    if(file.type.startsWith('image/')){
+                        editorInstance.model.change(w=>{const img=w.createElement('imageBlock',{src:r.url});editorInstance.model.insertContent(img,editorInstance.model.document.selection);});
+                    } else {
+                        editorInstance.model.change(w=>{const t=w.createText(r.fileName||file.name,{linkHref:r.url});editorInstance.model.insertContent(t,editorInstance.model.document.selection);});
+                    }
+                } catch(err){ alert(err.message||'Upload failed.'); }
+                finally{ btn.disabled=false; }
+            });
+            document.body.appendChild(inp);
+            inp.click();
         });
     }
 
