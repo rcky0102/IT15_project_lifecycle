@@ -225,6 +225,89 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Create(int id)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var project = await _context.Projects
+                .Where(p => p.Id == id && p.ProjectManagerId == pm.Id)
+                .Select(p => new ProjectDetailViewModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    ProposalTitle = p.ProjectProposal != null ? p.ProjectProposal.Title : string.Empty,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate
+                })
+                .FirstOrDefaultAsync();
+
+            if (project == null) return NotFound();
+
+            var members = await _context.Members
+                .Where(m => m.ProjectId == project.Id)
+                .Include(m => m.Employee)
+                .Include(m => m.ProjectRole)
+                .ToListAsync();
+
+            var milestones = await _context.ProjectMilestones
+                .Where(pmst => pmst.ProjectId == project.Id)
+                .Include(pmst => pmst.Milestone)
+                .OrderBy(pmst => pmst.SequenceOrder)
+                .ToListAsync();
+
+            project.Members = members
+                .Select(m => new MemberViewModel
+                {
+                    Id = m.Id,
+                    EmployeeId = m.EmployeeId,
+                    EmployeeName = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A",
+                    ProjectRoleId = m.ProjectRoleId,
+                    ProjectRoleName = m.ProjectRole != null ? m.ProjectRole.Name : "N/A"
+                })
+                .ToList();
+
+            project.Milestones = milestones
+                .Select(ms => new ProjectMilestoneViewModel
+                {
+                    Id = ms.Id,
+                    MilestoneId = ms.MilestoneId,
+                    MilestoneName = ms.Milestone != null ? ms.Milestone.Name : "N/A",
+                    SequenceOrder = ms.SequenceOrder,
+                    Status = ms.Status
+                })
+                .ToList();
+
+            var employeeRows = await _context.Employees
+                .Where(e => e.DepartmentId == pm.DepartmentId)
+                .OrderBy(e => e.LastName).ThenBy(e => e.FirstName)
+                .Select(e => new { e.Id, e.FirstName, e.MiddleName, e.LastName })
+                .ToListAsync();
+
+            var vm = new project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
+            {
+                Project = project,
+                AvailableEmployees = employeeRows
+                    .Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                    {
+                        Value = e.Id.ToString(),
+                        Text = string.Join(" ", new[] { e.FirstName, e.MiddleName, e.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    })
+                    .ToList(),
+                AvailableProjectRoles = await _context.ProjectRoles
+                    .OrderBy(r => r.Name)
+                    .Select(r => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = r.Id.ToString(), Text = r.Name })
+                    .ToListAsync(),
+                AvailableMilestones = await _context.Milestones
+                    .OrderBy(m => m.Name)
+                    .Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = m.Id.ToString(), Text = m.Name })
+                    .ToListAsync()
+            };
+
+            return View("Create", vm);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Milestone(int projectMilestoneId)
         {
             var pm = await GetCurrentProjectManagerAsync();

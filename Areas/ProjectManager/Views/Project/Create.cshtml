@@ -1,50 +1,10 @@
 ﻿@model project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
 @{
-    ViewData["Title"] = Model.Project.Name;
-    var duration = (Model.Project.EndDate - Model.Project.StartDate).Days;
+    ViewData["Title"] = "Create Task — " + Model.Project.Name;
     var _milestonesTyped = Model.Project.Milestones.Cast<project_lifecycle.ViewModels.ProjectManager.ProjectMilestoneViewModel>().ToList();
-    var finishedMs = _milestonesTyped.Count(m => m.Status == "Finished");
-    var nextOrder  = _milestonesTyped.Any() ? _milestonesTyped.Max(m => m.SequenceOrder) + 1 : 1;
 }
 
 <style>
-    .det-info-strip { display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; padding:1rem 1.5rem; background:#fff; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:1.5rem; }
-    .det-info-item  { display:flex; align-items:center; gap:.45rem; font-size:.82rem; color:#475569; }
-    .det-info-item i { color:#6366f1; width:14px; text-align:center; }
-    .det-info-item strong { color:#1e293b; }
-    .det-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
-    @@media(max-width:800px){ .det-grid{grid-template-columns:1fr;} }
-    .det-panel { background:#fff; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden; }
-    .det-panel-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #f1f5f9; }
-    .det-panel-title { font-weight:700; font-size:.95rem; color:#1e293b; display:flex; align-items:center; gap:.5rem; }
-    .det-panel-body  { padding:1rem 1.25rem; }
-    .det-member-row { display:flex; align-items:center; gap:.75rem; padding:.65rem 0; border-bottom:1px solid #f8fafc; }
-    .det-member-row:last-child { border-bottom:none; }
-    .det-member-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.82rem; flex-shrink:0; }
-    .det-member-info { flex:1; min-width:0; }
-    .det-member-name { font-weight:600; font-size:.85rem; color:#1e293b; }
-    .det-member-role { font-size:.73rem; color:#6366f1; font-weight:600; }
-    .det-ms-row { display:flex; align-items:flex-start; gap:.75rem; padding:.75rem 0; border-bottom:1px solid #f8fafc; }
-    .det-ms-row:last-child { border-bottom:none; }
-    .det-ms-num { width:24px; height:24px; border-radius:50%; background:#f1f5f9; color:#6366f1; font-weight:700; font-size:.72rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:.1rem; }
-    .det-ms-body { flex:1; min-width:0; }
-    .det-ms-name { font-weight:600; font-size:.87rem; color:#1e293b; }
-    .det-ms-status { display:inline-block; font-size:.68rem; font-weight:700; text-transform:uppercase; padding:.15rem .5rem; border-radius:20px; margin-top:.2rem; background:#f1f5f9; color:#64748b; }
-    .det-ms-status.finished { background:#dcfce7; color:#16a34a; }
-    .det-ms-status.unfinished { background:#fef3c7; color:#d97706; }
-    .det-ms-status.in_progress { background:#ede9fe; color:#7c3aed; }
-    .det-empty { text-align:center; padding:2rem 1rem; color:#94a3b8; }
-    .det-empty i { font-size:1.8rem; display:block; margin-bottom:.4rem; }
-    .det-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1040; align-items:center; justify-content:center; }
-    .det-modal-backdrop.open { display:flex; }
-    .det-modal { background:#fff; border-radius:16px; width:100%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,.18); overflow:hidden; animation:detModalIn .2s ease; }
-    @@keyframes detModalIn { from{opacity:0;transform:translateY(-18px)} to{opacity:1;transform:translateY(0)} }
-    .det-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.5rem; border-bottom:1px solid #f1f5f9; }
-    .det-modal-title { font-weight:700; font-size:1rem; color:#1e293b; display:flex; align-items:center; gap:.5rem; }
-    .det-modal-close { background:none; border:none; font-size:1.15rem; color:#94a3b8; cursor:pointer; line-height:1; padding:.2rem .4rem; border-radius:6px; }
-    .det-modal-close:hover { background:#f1f5f9; color:#64748b; }
-    .det-modal-body { padding:1.5rem; }
-    .det-modal-footer { padding:.75rem 1.5rem 1.25rem; display:flex; gap:.6rem; justify-content:flex-end; }
     .milestone-member-check { display:flex; align-items:center; gap:.6rem; padding:.3rem 0; border-bottom:1px solid #f1f5f9; }
     .milestone-member-check:last-child { border-bottom:none; }
     .milestone-member-check input[type="checkbox"] { width:15px; height:15px; accent-color:#6366f1; cursor:pointer; flex-shrink:0; }
@@ -55,21 +15,17 @@
 <div class="emp-page-hero">
     <div class="emp-page-hero-content">
         <div class="emp-page-hero-left">
-            <div class="emp-page-title-icon"><i class="fas fa-diagram-project"></i></div>
-            <div>
-                <h1 class="emp-page-title">@Model.Project.Name</h1>
-                <p class="emp-page-subtitle">@Model.Project.ProposalTitle</p>
-            </div>
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-plus-circle"></i></span>
+                Create Task
+            </h1>
+            <p class="emp-page-subtitle">Project: @Model.Project.Name</p>
         </div>
-        <div class="emp-page-hero-right" style="display:flex;gap:.6rem;flex-wrap:wrap;">
-            <button type="button" class="emp-btn emp-btn-outline" onclick="openModal('membersModal')">
-                <i class="fas fa-users me-1"></i>Members
-            </button>
-            <button type="button" class="emp-btn emp-btn-outline" onclick="openModal('milestonesModal')">
-                <i class="fas fa-flag-checkered me-1"></i>Milestones
-            </button>
-            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Index" class="emp-btn emp-btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i>Back to Projects
+        <div class="emp-page-hero-right">
+            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Details"
+               asp-route-id="@Model.Project.Id" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Project</span>
             </a>
         </div>
     </div>
@@ -92,278 +48,84 @@
     </div>
 }
 
-<!-- ===== Info Strip ===== -->
-<div class="det-info-strip">
-    <div class="det-info-item"><i class="fas fa-calendar-alt"></i><span><strong>Start:</strong> @Model.Project.StartDate.ToString("MMM d, yyyy")</span></div>
-    <div class="det-info-item"><i class="fas fa-calendar-check"></i><span><strong>End:</strong> @Model.Project.EndDate.ToString("MMM d, yyyy")</span></div>
-    <div class="det-info-item"><i class="fas fa-clock"></i><span><strong>Duration:</strong> @duration days</span></div>
-    <div class="det-info-item"><i class="fas fa-users"></i><span><strong>Members:</strong> @Model.Project.Members.Count</span></div>
-    <div class="det-info-item"><i class="fas fa-flag-checkered"></i><span><strong>Milestones:</strong> @_milestonesTyped.Count (@finishedMs finished)</span></div>
-</div>
+<!-- ===== Form Card ===== -->
+<div class="emp-form-card">
+    <div class="emp-form-section">
+        <div class="emp-form-section-title"><i class="fas fa-list-check"></i> Task Details</div>
 
-<!-- ===== Create Task Panel ===== -->
-<div class="det-panel" style="margin-bottom:1.5rem;">
-    <div class="det-panel-head">
-        <div class="det-panel-title">
-            <i class="fas fa-plus-circle" style="color:#6366f1;"></i>Create Task
-        </div>
-    </div>
-    <div class="det-panel-body">
-        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddTask" method="post" class="emp-create-task-form">
+        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddTask" method="post" class="emp-form emp-create-task-form">
             @Html.AntiForgeryToken()
 
             <div class="emp-form-row">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Milestone</label>
-                    <select name="projectMilestoneId" class="emp-form-control" required>
-                        <option value="">-- Select Milestone --</option>
-                        @foreach (var ms in _milestonesTyped.OrderBy(m => m.SequenceOrder))
-                        {
-                            <option value="@ms.Id">@ms.SequenceOrder - @ms.MilestoneName</option>
-                        }
-                    </select>
-                </div>
+                <label class="emp-form-label">Milestone</label>
+                <select name="projectMilestoneId" class="emp-form-control" required>
+                    <option value="">-- Select Milestone --</option>
+                    @foreach (var ms in _milestonesTyped.OrderBy(m => m.SequenceOrder))
+                    {
+                        <option value="@ms.Id">@ms.SequenceOrder — @ms.MilestoneName</option>
+                    }
+                </select>
             </div>
 
-            <div class="emp-form-row" style="margin-top:.85rem;">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Task Name</label>
-                    <input name="Name" class="emp-form-control" required />
-                </div>
+            <div class="emp-form-row">
+                <label class="emp-form-label">Task Name</label>
+                <input name="Name" id="taskName" class="emp-form-control" placeholder="Enter a descriptive task name…" required />
             </div>
 
-            <div class="emp-form-row" style="margin-top:.85rem;">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Assign To (select one or more)</label>
-                    <div style="margin-top:.5rem;">
-                        @if (!Model.Project.Members.Any())
+            <div class="emp-form-row">
+                <label class="emp-form-label">Assign To</label>
+                @if (!Model.Project.Members.Any())
+                {
+                    <div class="emp-form-control" style="color:#94a3b8;cursor:default;">No project members yet. Add members from the project details page first.</div>
+                }
+                else
+                {
+                    <div class="emp-form-control" style="padding:.6rem .85rem;height:auto;">
+                        @foreach (var m in Model.Project.Members)
                         {
-                            <div style="color:#94a3b8; font-size:.85rem;">No project members yet. Add members first.</div>
-                        }
-                        else
-                        {
-                            foreach (var m in Model.Project.Members)
-                            {
-                                <div class="milestone-member-check">
-                                    <input type="checkbox" name="assignedMemberIds" id="ctmember_@m.Id" value="@m.Id" />
-                                    <label for="ctmember_@m.Id">@m.EmployeeName (@m.ProjectRoleName)</label>
-                                </div>
-                            }
+                            <div class="milestone-member-check">
+                                <input type="checkbox" name="assignedMemberIds" id="ctmember_@m.Id" value="@m.Id" />
+                                <label for="ctmember_@m.Id">@m.EmployeeName <span style="color:#6366f1;font-size:.8rem;">(@m.ProjectRoleName)</span></label>
+                            </div>
                         }
                     </div>
-                    <div class="form-text" style="margin-top:.4rem;">Selected members will share the same task submission.</div>
-                </div>
+                }
+                <span class="emp-form-hint">Selected members will share the same task submission.</span>
             </div>
 
-            <div class="emp-form-row" style="margin-top:.85rem;">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Start Date</label>
-                    <input name="StartDate" type="date" class="emp-form-control" required />
-                </div>
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">End Date</label>
-                    <input name="EndDate" type="date" class="emp-form-control" required />
-                </div>
-            </div>
-
-            <div class="emp-form-row" style="margin-top:.85rem;">
-                <div class="emp-form-group" style="flex:1">
-                    <label class="emp-form-label">Instructions</label>
-                    <textarea id="CreateTaskInstructions" name="Instructions" class="emp-form-control"></textarea>
-                    <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-                        <button type="button" id="insertCreateTaskFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
-                            <i class="fas fa-paperclip"></i> Add file/image to instructions
-                        </button>
-                        <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
+            <div class="emp-form-row">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                        <label class="emp-form-label">Start Date</label>
+                        <input name="StartDate" type="date" class="emp-form-control" required />
                     </div>
-                    <input type="file" id="createTaskRichFileInput" style="display:none;" />
+                    <div>
+                        <label class="emp-form-label">End Date</label>
+                        <input name="EndDate" type="date" class="emp-form-control" required />
+                    </div>
                 </div>
             </div>
 
-            <div style="margin-top:1rem; text-align:right;">
-                <button id="submitCreateTaskBtn" class="emp-btn emp-btn-primary" type="submit">
-                    <i class="fas fa-plus me-1"></i>Create Task
+            <div class="emp-form-row">
+                <label class="emp-form-label">Instructions</label>
+                <textarea id="CreateTaskInstructions" name="Instructions" class="emp-form-control" placeholder="Enter task instructions…"></textarea>
+                <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+                    <button type="button" id="insertCreateTaskFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
+                        <i class="fas fa-paperclip"></i> Add file/image
+                    </button>
+                    <span style="font-size:12px;opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
+                </div>
+                <input type="file" id="createTaskRichFileInput" style="display:none;" />
+            </div>
+
+            <div class="emp-form-actions" style="justify-content:flex-end;">
+                <a asp-area="ProjectManager" asp-controller="Project" asp-action="Details"
+                   asp-route-id="@Model.Project.Id" class="emp-btn emp-btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button id="submitCreateTaskBtn" type="submit" class="emp-btn emp-btn-primary">
+                    <i class="fas fa-plus"></i> Create Task
                 </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- ===== Two-Column Grid ===== -->
-<div class="det-grid">
-    <!-- Members Panel -->
-    <div class="det-panel">
-        <div class="det-panel-head">
-            <div class="det-panel-title">
-                <i class="fas fa-users" style="color:#6366f1;"></i>Team Members
-                <span class="emp-count-chip">@Model.Project.Members.Count</span>
-            </div>
-            <button type="button" class="emp-btn-xs" onclick="openModal('membersModal')">
-                <i class="fas fa-plus me-1"></i>Add
-            </button>
-        </div>
-        <div class="det-panel-body">
-            @if (!Model.Project.Members.Any())
-            {
-                <div class="det-empty">
-                    <i class="fas fa-user-slash"></i>
-                    <span>No members yet. Add team members using the button above.</span>
-                </div>
-            }
-            else
-            {
-                foreach (var m in Model.Project.Members)
-                {
-                    var initials = string.Concat(m.EmployeeName.Split(' ').Take(2).Select(s => s.Length > 0 ? s[0].ToString() : ""));
-                    <div class="det-member-row">
-                        <div class="det-member-avatar">@initials</div>
-                        <div class="det-member-info">
-                            <div class="det-member-name">@m.EmployeeName</div>
-                            <div class="det-member-role">@m.ProjectRoleName</div>
-                        </div>
-                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="memberId" value="@m.Id" />
-                            <button type="submit" class="emp-btn-xs" style="background:#fee2e2;color:#dc2626;border:none;"
-                                    onclick="return confirm('Remove @m.EmployeeName from this project?')">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </form>
-                    </div>
-                }
-            }
-        </div>
-    </div>
-
-    <!-- Milestones Panel -->
-    <div class="det-panel">
-        <div class="det-panel-head">
-            <div class="det-panel-title">
-                <i class="fas fa-flag-checkered" style="color:#6366f1;"></i>Milestones
-                <span class="emp-count-chip">@_milestonesTyped.Count</span>
-            </div>
-            <button type="button" class="emp-btn-xs" onclick="openModal('milestonesModal')">
-                <i class="fas fa-plus me-1"></i>Add
-            </button>
-        </div>
-        <div class="det-panel-body">
-            @if (!_milestonesTyped.Any())
-            {
-                <div class="det-empty">
-                    <i class="fas fa-inbox"></i>
-                    <span>No milestones yet. Add milestones using the button above.</span>
-                </div>
-            }
-            else
-            {
-                foreach (var ms in _milestonesTyped.OrderBy(m => m.SequenceOrder))
-                {
-                    var statusClass = ms.Status?.ToLower().Replace(" ", "_") ?? "unfinished";
-                    <div class="det-ms-row">
-                        <div class="det-ms-num">@ms.SequenceOrder</div>
-                        <div class="det-ms-body">
-                            <div class="det-ms-name">@ms.MilestoneName</div>
-                            <span class="det-ms-status @statusClass">@ms.Status</span>
-                        </div>
-                        <div style="display:flex;gap:.4rem;align-items:center;">
-                            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone"
-                               asp-route-projectMilestoneId="@ms.Id" class="emp-btn-xs" title="View Milestone">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" style="margin:0;">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
-                                <button type="submit" class="emp-btn-xs" style="background:#fee2e2;color:#dc2626;border:none;"
-                                        onclick="return confirm('Remove @ms.MilestoneName from this project?')">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-    </div>
-</div>
-
-<!-- ===== Members Modal ===== -->
-<div class="det-modal-backdrop" id="membersModal" onclick="closeOnBackdrop(event,'membersModal')">
-    <div class="det-modal">
-        <div class="det-modal-header">
-            <div class="det-modal-title"><i class="fas fa-user-plus" style="color:#6366f1;"></i>Add Team Member</div>
-            <button class="det-modal-close" onclick="closeModal('membersModal')">×</button>
-        </div>
-        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMember" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
-            <div class="det-modal-body">
-                <div class="emp-form-row">
-                    <div class="emp-form-group" style="flex:1">
-                        <label class="emp-form-label">Employee</label>
-                        <select name="EmployeeId" class="emp-form-control" required>
-                            <option value="">-- Select Employee --</option>
-                            @foreach (var e in Model.AvailableEmployees)
-                            {
-                                <option value="@e.Value">@e.Text</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="emp-form-row" style="margin-top:.85rem;">
-                    <div class="emp-form-group" style="flex:1">
-                        <label class="emp-form-label">Project Role</label>
-                        <select name="ProjectRoleId" class="emp-form-control" required>
-                            <option value="">-- Select Role --</option>
-                            @foreach (var r in Model.AvailableProjectRoles)
-                            {
-                                <option value="@r.Value">@r.Text</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="det-modal-footer">
-                <button type="button" class="emp-btn emp-btn-outline" onclick="closeModal('membersModal')">Cancel</button>
-                <button type="submit" class="emp-btn emp-btn-primary"><i class="fas fa-plus me-1"></i>Add Member</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- ===== Milestones Modal ===== -->
-<div class="det-modal-backdrop" id="milestonesModal" onclick="closeOnBackdrop(event,'milestonesModal')">
-    <div class="det-modal">
-        <div class="det-modal-header">
-            <div class="det-modal-title"><i class="fas fa-flag-checkered" style="color:#6366f1;"></i>Add Milestone</div>
-            <button class="det-modal-close" onclick="closeModal('milestonesModal')">×</button>
-        </div>
-        <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMilestone" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
-            <div class="det-modal-body">
-                <div class="emp-form-row">
-                    <div class="emp-form-group" style="flex:1">
-                        <label class="emp-form-label">Milestone Template</label>
-                        <select name="MilestoneId" class="emp-form-control" required>
-                            <option value="">-- Select Milestone --</option>
-                            @foreach (var t in Model.AvailableMilestones)
-                            {
-                                <option value="@t.Value">@t.Text</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="emp-form-row" style="margin-top:.85rem;">
-                    <div class="emp-form-group" style="flex:1">
-                        <label class="emp-form-label">Sequence Order</label>
-                        <input name="SequenceOrder" type="number" min="1" class="emp-form-control" value="@nextOrder" required />
-                        <span style="font-size:.75rem;color:#64748b;margin-top:.3rem;display:block;">Order determines the milestone's position in the project timeline.</span>
-                    </div>
-                </div>
-            </div>
-            <div class="det-modal-footer">
-                <button type="button" class="emp-btn emp-btn-outline" onclick="closeModal('milestonesModal')">Cancel</button>
-                <button type="submit" class="emp-btn emp-btn-primary"><i class="fas fa-plus me-1"></i>Add Milestone</button>
             </div>
         </form>
     </div>
@@ -371,21 +133,12 @@
 
 @section Scripts {
 <script>
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-function closeOnBackdrop(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { document.querySelectorAll('.det-modal-backdrop.open').forEach(m => { m.classList.remove('open'); }); document.body.style.overflow = ''; }
-});
-</script>
-
-<script>
 document.addEventListener('DOMContentLoaded', function () {
     const editorSelector = '#CreateTaskInstructions';
     const uploadEndpoint = '@Url.Action("UploadRichText", "Project", new { area = "ProjectManager" })';
     const formElement = document.querySelector('form.emp-create-task-form');
     const submitButton = document.getElementById('submitCreateTaskBtn');
-    const taskNameInput = formElement ? formElement.querySelector('input[name="Name"]') : null;
+    const taskNameInput = document.getElementById('taskName');
     let editorInstance = null, pendingUploads = 0, explicitSubmitRequested = false, isSubmitting = false;
     const draftStorageKey = 'pm-create-task-draft';
 
@@ -421,18 +174,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function initEditor() {
         if(!window.CKEDITOR||!window.CKEDITOR.ClassicEditor) return;
-        const {ClassicEditor,Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,MediaEmbed,Alignment}=window.CKEDITOR;
+        const {ClassicEditor,Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,ImageResize,ImageResizeEditing,ImageResizeHandles,MediaEmbed,Alignment}=window.CKEDITOR;
         ClassicEditor.create(document.querySelector(editorSelector),{
             licenseKey:'GPL',
-            plugins:[Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,MediaEmbed,Alignment],
+            plugins:[Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,ImageResize,ImageResizeEditing,ImageResizeHandles,MediaEmbed,Alignment],
             extraPlugins:[CTUploadAdapterPlugin],
             toolbar:{items:['undo','redo','|','heading','|','bold','italic','link','|','alignment','|','bulletedList','numberedList','|','outdent','indent','|','imageUpload','insertTable','mediaEmbed','blockQuote'],shouldNotGroupWhenFull:true},
-            image:{toolbar:['imageTextAlternative','toggleImageCaption','imageStyle:inline','imageStyle:block','imageStyle:side']},
+            image:{toolbar:['imageTextAlternative','toggleImageCaption','|','imageStyle:inline','imageStyle:block','imageStyle:side','|','resizeImage'],resizeOptions:[{name:'resizeImage:original',value:null,label:'Original'},{name:'resizeImage:50',value:'50',label:'50%'},{name:'resizeImage:75',value:'75',label:'75%'}],resizeUnit:'%'},
             alignment:{options:['left','center','right','justify']},
             table:{contentToolbar:['tableColumn','tableRow','mergeTableCells']}
         }).then(ed=>{
             editorInstance=ed;
-            const draft=restoreDraft(); if(draft&&typeof draft.inputHtml==='string'&&draft.inputHtml.length>0) ed.setData(draft.inputHtml);
+            const draft=restoreDraft();
+            if(draft&&typeof draft.inputHtml==='string'&&draft.inputHtml.length>0) ed.setData(draft.inputHtml);
             if(draft&&taskNameInput&&draft.name&&taskNameInput.value.trim()==='') taskNameInput.value=draft.name;
             ed.model.document.on('change:data',saveDraft);
             wireFileInsertButton();
