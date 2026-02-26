@@ -42,6 +42,13 @@
             <input id="projectSearch" type="text" class="emp-search-input" placeholder="Search projects…" autocomplete="off" />
         </div>
         <div class="emp-select-group">
+            <select id="archiveFilter" class="emp-select">
+                <option value="active" selected>Active</option>
+                <option value="inactive">Archived</option>
+                <option value="all">All</option>
+            </select>
+        </div>
+        <div class="emp-select-group">
             <label for="pageSizeSelect" style="font-size:.82rem;color:#64748b;margin-right:.4rem;">Show</label>
             <select id="pageSizeSelect" class="emp-select" style="width:92px;">
                 <option value="5">5</option>
@@ -75,7 +82,7 @@
                         {
                             var duration = (project.EndDate - project.StartDate).Days;
                             var activeProjMilestones = project.Milestones.Count(m => m.Status == "In Progress");
-                            <tr class="emp-row" data-name="@project.Name.ToLower()">
+                            <tr class="emp-row" data-name="@project.Name.ToLower()" data-archived="@(project.IsArchived ? "true" : "false")">
                                 <td>
                                     <div class="project-name-cell">
                                         <div class="project-name-icon">
@@ -101,7 +108,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div style="display:flex;flex-direction:column;gap:.2rem;">
+                                    <div style="display:flex;flex-direction:column;gap:.2rem;width:fit-content;">
                                         <span class="project-member-count">
                                             <i class="fas fa-flag-checkered"></i> @project.Milestones.Count total
                                         </span>
@@ -114,12 +121,34 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+                                    <div style="display:inline-flex;align-items:center;gap:.35rem;">
                                         <a asp-area="ProjectManager" asp-controller="Project" asp-action="Details" asp-route-id="@project.Id"
-                                           class="emp-btn emp-btn-xs emp-btn-outline" title="View Details"
-                                           style="display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1rem;border:1px solid #4CA3DD;border-radius:8px;color:#4CA3DD;text-decoration:none;cursor:pointer;background:white;font-size:.875rem;font-weight:600;transition:all 0.2s ease;">
-                                            <i class="fas fa-eye"></i> Details
+                                           class="emp-action-btn emp-action-view" title="View details"
+                                           style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#3b82f6;text-decoration:none;cursor:pointer;transition:all 0.2s ease;">
+                                            <i class="fas fa-magnifying-glass"></i>
                                         </a>
+                                        @if (!project.IsArchived)
+                                        {
+                                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="Archive" method="post" class="emp-action-form" onclick="return confirm('Archive this project?');" style="margin:0;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@project.Id" />
+                                                <button type="submit" class="emp-action-btn emp-action-archive" title="Archive"
+                                                        style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#ea580c;border:none;cursor:pointer;transition:all 0.2s ease;">
+                                                    <i class="fas fa-box-archive"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="Unarchive" method="post" class="emp-action-form" onclick="return confirm('Unarchive this project?');" style="margin:0;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@project.Id" />
+                                                <button type="submit" class="emp-action-btn emp-action-unarchive" title="Unarchive"
+                                                        style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#059669;border:none;cursor:pointer;transition:all 0.2s ease;">
+                                                    <i class="fas fa-box-open"></i>
+                                                </button>
+                                            </form>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -163,10 +192,19 @@
     const pageInfo       = document.getElementById('paginationInfo');
     const pageControls   = document.getElementById('paginationControls');
     const pageSizeSelect = document.getElementById('pageSizeSelect');
+    const archiveSelect  = document.getElementById('archiveFilter');
 
     function applyFilters() {
         const query = (searchInput?.value ?? '').toLowerCase().trim();
-        filteredRows = allRows.filter(row => !query || (row.dataset.name || '').includes(query));
+        const archiveFilter = archiveSelect?.value ?? 'active';
+        filteredRows = allRows.filter(row => {
+            const nameMatch = !query || (row.dataset.name || '').includes(query);
+            const isArchived = row.dataset.archived === 'true';
+            let archiveMatch = true;
+            if (archiveFilter === 'active') archiveMatch = !isArchived;
+            else if (archiveFilter === 'inactive') archiveMatch = isArchived;
+            return nameMatch && archiveMatch;
+        });
         currentPage = 1;
         render();
     }
@@ -211,6 +249,7 @@
     }
 
     if (searchInput)    searchInput.addEventListener('input', applyFilters);
+    if (archiveSelect)  archiveSelect.addEventListener('change', applyFilters);
     if (pageSizeSelect) {
         pageSizeSelect.value = String(PAGE_SIZE);
         pageSizeSelect.addEventListener('change', function () {
@@ -221,7 +260,7 @@
     }
 
     filteredRows = allRows.slice();
-    render();
+    applyFilters();  // Apply default "Active" filter on page load
 })();
 </script>
 }

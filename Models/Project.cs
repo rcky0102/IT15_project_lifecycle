@@ -34,5 +34,8 @@ namespace project_lifecycle.Models
 
         [Required]
         public DateTime DateCreated { get; set; } = DateTime.Now;
+
+        // Indicates whether the project has been archived and should be hidden from active lists
+        public bool IsArchived { get; set; } = false;
     }
 }

@@ -49,7 +49,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     Name = p.Name,
                     ProposalTitle = p.ProjectProposal != null ? p.ProjectProposal.Title : string.Empty,
                     StartDate = p.StartDate,
-                    EndDate = p.EndDate
+                    EndDate = p.EndDate,
+                    IsArchived = p.IsArchived
                 })
                 .ToListAsync();
 
@@ -855,6 +856,40 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             TempData["SuccessMessage"] = "Milestone removed from project.";
             return RedirectToAction(nameof(Details), new { id = pmst.Project!.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Archive(int id)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id && p.ProjectManagerId == pm.Id);
+            if (project == null) return NotFound();
+
+            project.IsArchived = true;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Project archived successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Unarchive(int id)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id && p.ProjectManagerId == pm.Id);
+            if (project == null) return NotFound();
+
+            project.IsArchived = false;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Project unarchived successfully.";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
