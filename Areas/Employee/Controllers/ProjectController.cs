@@ -172,11 +172,26 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 .FirstOrDefaultAsync(t => t.Id == id);
             if (task == null) return NotFound();
 
+            var versions = await _context.ProjectTaskVersions
+                .Where(v => v.ProjectTaskId == id)
+                .OrderByDescending(v => v.VersionNumber)
+                .ToListAsync();
+
+            var noteVersions = await _context.TaskNoteVersions
+                .Where(n => n.ProjectTaskId == id)
+                .OrderByDescending(n => n.VersionNumber)
+                .ToListAsync();
+
+            ViewBag.ProjectTaskVersions = versions;
+            ViewBag.TaskNoteVersions = noteVersions;
+
             ViewData["TaskId"] = id;
             ViewData["TaskName"] = task.Name;
             ViewData["ProjectId"] = task.ProjectMilestone?.ProjectId;
             ViewData["Instructions"] = task.Instructions ?? string.Empty;
             ViewData["ExistingInput"] = task.Input ?? string.Empty;
+            ViewData["TaskStatus"] = task.Status;
+            ViewData["TaskNotes"] = task.Notes ?? string.Empty;
             return View();
         }
 
@@ -197,11 +212,75 @@ namespace project_lifecycle.EmployeeArea.Controllers
             var task = await _context.ProjectTasks.FirstOrDefaultAsync(t => t.Id == id);
             if (task == null) return NotFound();
 
+            // Save current input as a version before overwriting
+            if (!string.IsNullOrWhiteSpace(task.Input))
+            {
+                var existingVersions = await _context.ProjectTaskVersions
+                    .Where(v => v.ProjectTaskId == id)
+                    .ToListAsync();
+                var nextVersion = (existingVersions.Any() ? existingVersions.Max(v => v.VersionNumber) : 0) + 1;
+
+                _context.ProjectTaskVersions.Add(new project_lifecycle.Models.ProjectTaskVersion
+                {
+                    ProjectTaskId = id,
+                    VersionNumber = nextVersion,
+                    Input = task.Input,
+                    TaskMemberId = taskMember.Id,
+                    DateCreated = DateTime.Now
+                });
+            }
+
             task.Input = Input;
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Task input submitted.";
             return RedirectToAction(nameof(Task), new { id });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TaskVersion(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var version = await _context.ProjectTaskVersions
+                .Include(v => v.ProjectTask)
+                    .ThenInclude(t => t!.ProjectMilestone)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (version == null) return NotFound();
+
+            // Verify user is assigned to this task
+            var taskMember = await _context.TaskMembers
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .FirstOrDefaultAsync(tm => tm.ProjectTaskId == version.ProjectTaskId && tm.Member != null && tm.Member.Employee != null && tm.Member.Employee.UserId == userId);
+
+            if (taskMember == null) return Forbid();
+
+            return View(version);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TaskNote(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var note = await _context.TaskNoteVersions
+                .Include(n => n.ProjectTask)
+                    .ThenInclude(t => t!.ProjectMilestone)
+                .FirstOrDefaultAsync(n => n.Id == id);
+
+            if (note == null) return NotFound();
+
+            // Verify user is assigned to this task
+            var taskMember = await _context.TaskMembers
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .FirstOrDefaultAsync(tm => tm.ProjectTaskId == note.ProjectTaskId && tm.Member != null && tm.Member.Employee != null && tm.Member.Employee.UserId == userId);
+
+            if (taskMember == null) return Forbid();
+
+            return View(note);
         }
     }
 }

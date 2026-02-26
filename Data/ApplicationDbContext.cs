@@ -19,6 +19,8 @@ namespace project_lifecycle.Data
         public DbSet<Member> Members { get; set; }
         public DbSet<ProjectTask> ProjectTasks { get; set; }
         public DbSet<TaskMember> TaskMembers { get; set; }
+        public DbSet<ProjectTaskVersion> ProjectTaskVersions { get; set; }
+        public DbSet<TaskNoteVersion> TaskNoteVersions { get; set; }
         public DbSet<Executive> Executives { get; set; }
         public DbSet<ProjectProposal> ProjectProposals { get; set; }
         public DbSet<ProjectProposalVersion> ProjectProposalVersions { get; set; }
@@ -121,6 +123,30 @@ namespace project_lifecycle.Data
                 .HasOne(pnv => pnv.DepartmentHead)
                 .WithMany()
                 .HasForeignKey(pnv => pnv.DepartmentHeadId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProjectTaskVersion>()
+                .HasOne(ptv => ptv.ProjectTask)
+                .WithMany()
+                .HasForeignKey(ptv => ptv.ProjectTaskId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProjectTaskVersion>()
+                .HasOne(ptv => ptv.TaskMember)
+                .WithMany()
+                .HasForeignKey(ptv => ptv.TaskMemberId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<TaskNoteVersion>()
+                .HasOne(tnv => tnv.ProjectTask)
+                .WithMany()
+                .HasForeignKey(tnv => tnv.ProjectTaskId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<TaskNoteVersion>()
+                .HasOne(tnv => tnv.ProjectManager)
+                .WithMany()
+                .HasForeignKey(tnv => tnv.ProjectManagerId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }

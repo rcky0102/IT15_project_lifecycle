@@ -392,6 +392,19 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             var assignedName = taskMember?.Member?.Employee != null ? string.Join(" ", new[] { taskMember.Member.Employee.FirstName, taskMember.Member.Employee.MiddleName, taskMember.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null;
 
+            var inputVersions = await _context.ProjectTaskVersions
+                .Where(v => v.ProjectTaskId == id)
+                .OrderByDescending(v => v.VersionNumber)
+                .ToListAsync();
+
+            var noteVersions = await _context.TaskNoteVersions
+                .Where(n => n.ProjectTaskId == id)
+                .OrderByDescending(n => n.VersionNumber)
+                .ToListAsync();
+
+            ViewBag.ProjectTaskVersions = inputVersions;
+            ViewBag.TaskNoteVersions = noteVersions;
+
             var vm = new project_lifecycle.ViewModels.ProjectManager.ProjectTaskReviewViewModel
             {
                 Id = task.Id,
@@ -424,6 +437,24 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             if (task.ProjectMilestone == null || task.ProjectMilestone.Project == null || task.ProjectMilestone.Project.ProjectManagerId != pm.Id)
             {
                 return Forbid();
+            }
+
+            // Save old note as a version before overwriting
+            if (!string.IsNullOrWhiteSpace(task.Notes) && task.Notes != Notes)
+            {
+                var existingNoteVersions = await _context.TaskNoteVersions
+                    .Where(n => n.ProjectTaskId == id)
+                    .ToListAsync();
+                var nextNoteVersion = (existingNoteVersions.Any() ? existingNoteVersions.Max(n => n.VersionNumber) : 0) + 1;
+
+                _context.TaskNoteVersions.Add(new project_lifecycle.Models.TaskNoteVersion
+                {
+                    ProjectTaskId = id,
+                    VersionNumber = nextNoteVersion,
+                    Note = task.Notes,
+                    ProjectManagerId = pm.Id,
+                    DateCreated = DateTime.Now
+                });
             }
 
             // Update notes
@@ -478,6 +509,44 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             TempData["SuccessMessage"] = "Task updated.";
             return RedirectToAction(nameof(Milestone), new { projectMilestoneId = task.ProjectMilestoneId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TaskVersion(int id)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var version = await _context.ProjectTaskVersions
+                .Include(v => v.ProjectTask)
+                    .ThenInclude(t => t!.ProjectMilestone).ThenInclude(ms => ms!.Project)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (version == null) return NotFound();
+
+            if (version.ProjectTask?.ProjectMilestone?.Project?.ProjectManagerId != pm.Id)
+                return Forbid();
+
+            return View(version);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TaskNote(int id)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var note = await _context.TaskNoteVersions
+                .Include(n => n.ProjectTask)
+                    .ThenInclude(t => t!.ProjectMilestone).ThenInclude(ms => ms!.Project)
+                .FirstOrDefaultAsync(n => n.Id == id);
+
+            if (note == null) return NotFound();
+
+            if (note.ProjectTask?.ProjectMilestone?.Project?.ProjectManagerId != pm.Id)
+                return Forbid();
+
+            return View(note);
         }
 
         [HttpPost]
