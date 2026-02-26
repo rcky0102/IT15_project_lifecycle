@@ -7,40 +7,66 @@
     Layout = "~/Areas/ProjectManager/Layout.cshtml";
 }
 
-<div class="container-fluid user-management-container">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center user-management-header">
-                <div>
-                    <h1 class="user-management-title">Project Role Management</h1>
-                    <p class="user-management-subtitle">Manage roles used in projects</p>
-                </div>
-                <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createRoleModal">
-                    <i class="fas fa-user-tag"></i> Add Role
-                </button>
-            </div>
-            
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success-ocean alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i>
-                    @TempData["Success"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-user-tag"></i></span>
+                Project Role Management
+            </h1>
+            <p class="emp-page-subtitle">Manage roles used in projects</p>
+        </div>
+        <div class="emp-page-hero-right">
+            <button type="button" class="emp-btn emp-btn-primary" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                <i class="fas fa-plus"></i>
+                <span>Add Role</span>
+            </button>
+        </div>
+    </div>
+</div>
 
-            <div class="card users-card">
-                <div class="card-header users-card-header">
-                    <h5>
-                        <i class="fas fa-user-tag"></i>
-                        Existing Project Roles
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    @if (Model.Any())
+<!-- ===== Alerts ===== -->
+<!-- ===== Alerts ===== -->
+@if (TempData["Success"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <div class="emp-alert-icon"><i class="fas fa-check-circle"></i></div>
+        <span>@TempData["Success"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+
+<!-- ===== Stats Bar ===== -->
+<div class="project-stats-bar">
+    <div class="project-stat-card">
+        <div class="project-stat-icon blue">
+            <i class="fas fa-user-tag"></i>
+        </div>
+        <div class="project-stat-info">
+            <span class="project-stat-value">@Model.Count()</span>
+            <span class="project-stat-label">Total Roles</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Filters ===== -->
+<div class="emp-filters-card">
+    <div class="emp-filters-row">
+        <div class="emp-search-group">
+            <i class="fas fa-magnifying-glass emp-search-icon"></i>
+            <input id="rolesSearch" type="text" class="emp-search-input" placeholder="Search roles…" autocomplete="off" />
+        </div>
+    </div>
+</div>
+
+<!-- ===== Table ===== -->
+<div class="project-table-section">
+    <div class="project-table-card">
+        @if (Model.Any())
                     {
-                        <div class="table-responsive users-table-wrapper">
-                            <table class="table table-users mb-0">
+                        <div class="project-table-responsive">
+                            <table class="project-table" id="rolesTable">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
@@ -49,20 +75,24 @@
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="rolesBody">
                                     @foreach (var item in Model)
                                     {
-                                        <tr class="user-row">
+                                        <tr class="emp-row" data-name="@item.Name.ToLower()">
                                             <td>
-                                                <div class="user-email">
-                                                    <i class="fas fa-user-tag text-muted"></i>
-                                                    <strong>@Html.DisplayFor(modelItem => item.Name)</strong>
+                                                <div class="project-name-cell">
+                                                    <div class="project-name-icon">
+                                                        <i class="fas fa-user-tag"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="project-name-text">@item.Name</div>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td>
                                                 @if (!string.IsNullOrEmpty(item.Description))
                                                 {
-                                                    @Html.DisplayFor(modelItem => item.Description)
+                                                    @item.Description
                                                 }
                                                 else
                                                 {
@@ -71,12 +101,12 @@
                                             </td>
                                             <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
                                             <td>
-                                                <div class="btn-group-actions">
-                                                    <button type="button" class="btn-icon-edit" onclick="editRole(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')" title="Edit Role">
-                                                        <i class="fas fa-edit"></i>
+                                                <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+                                                    <button type="button" class="emp-btn emp-btn-xs emp-btn-outline" onclick="editRole(@item.Id)" title="Edit">
+                                                        <i class="fas fa-edit"></i> Edit
                                                     </button>
-                                                    <button type="button" class="btn-icon-delete" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')" title="Delete Role">
-                                                        <i class="fas fa-trash"></i>
+                                                    <button type="button" class="emp-btn emp-btn-xs emp-btn-danger" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')" title="Delete">
+                                                        <i class="fas fa-trash"></i> Delete
                                                     </button>
                                                 </div>
                                             </td>
@@ -85,16 +115,19 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <div id="noFilterResults" class="project-empty-state" style="display:none;">
+                            <div class="project-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                            <div class="project-empty-title">No matching roles</div>
+                            <div class="project-empty-text">Try adjusting your search.</div>
+                        </div>
                     }
                     else
                     {
-                        <div class="text-center py-5">
-                            <i class="fas fa-user-tag fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No roles found</h5>
-                            <p class="text-muted">Create your first project role to get started.</p>
-                            <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createRoleModal">
-                                <i class="fas fa-plus"></i> Add Role
-                            </button>
+                        <div class="project-empty-state">
+                            <div class="project-empty-icon"><i class="fas fa-user-tag"></i></div>
+                            <div class="project-empty-title">No roles created</div>
+                            <div class="project-empty-text">Create your first project role to get started.</div>
                         </div>
                     }
                 </div>
@@ -106,41 +139,34 @@
 <!-- Create Role Modal -->
 <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content modal-modern">
-            <div class="modal-header modal-header-ocean">
-                <h5 class="modal-title" id="createRoleModalLabel">
+        <div class="modal-content emp-modal-modern">
+            <div class="emp-modal-header">
+                <h5 class="emp-modal-title" id="createRoleModalLabel">
                     <i class="fas fa-user-tag"></i> Create New Project Role
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="emp-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body modal-body-custom">
+            <div class="emp-modal-body">
                 <form id="createRoleForm">
                     @Html.AntiForgeryToken()
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label-custom">Role Name</label>
-                                <input name="Name" class="form-control-custom" id="roleName" placeholder="Enter role name" />
-                                <span class="text-danger" data-valmsg-for="Name"></span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label class="form-label-custom">Description</label>
-                                <textarea name="Description" class="form-control-custom" id="roleDescription" rows="4" placeholder="Enter role description (optional)"></textarea>
-                                <span class="text-danger" data-valmsg-for="Description"></span>
-                            </div>
-                        </div>
+                    <div class="mb-4">
+                        <label class="emp-form-label">Role Name <span class="text-danger">*</span></label>
+                        <input name="Name" class="emp-form-control" id="roleName" placeholder="Enter role name" />
+                        <span class="emp-form-error" data-valmsg-for="Name"></span>
+                    </div>
+                    <div class="mb-0">
+                        <label class="emp-form-label">Description</label>
+                        <textarea name="Description" class="emp-form-control" id="roleDescription" rows="4" placeholder="Enter role description (optional)"></textarea>
+                        <span class="emp-form-error" data-valmsg-for="Description"></span>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer modal-footer-custom">
-                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+            <div class="emp-modal-footer">
+                <button type="button" class="emp-btn emp-btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button type="button" class="btn-save-user" id="saveRoleBtn">
-                    <i class="fas fa-save"></i> Create Role
+                <button type="button" class="emp-btn emp-btn-primary" id="saveRoleBtn">
+                    <i class="fas fa-plus"></i> Create Role
                 </button>
             </div>
         </div>
@@ -150,42 +176,35 @@
 <!-- Edit Role Modal -->
 <div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content modal-modern">
-            <div class="modal-header modal-header-ocean">
-                <h5 class="modal-title" id="editRoleModalLabel">
+        <div class="modal-content emp-modal-modern">
+            <div class="emp-modal-header">
+                <h5 class="emp-modal-title" id="editRoleModalLabel">
                     <i class="fas fa-edit"></i> Edit Project Role
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="emp-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body modal-body-custom">
+            <div class="emp-modal-body">
                 <form id="editRoleForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="editRoleId" />
                     <input type="hidden" id="editRoleDateCreated" />
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label-custom">Role Name</label>
-                                <input name="Name" class="form-control-custom" id="editRoleName" placeholder="Enter role name" />
-                                <span class="text-danger" data-valmsg-for="Name"></span>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label class="form-label-custom">Description</label>
-                                <textarea name="Description" class="form-control-custom" id="editRoleDescription" rows="4" placeholder="Enter role description (optional)"></textarea>
-                                <span class="text-danger" data-valmsg-for="Description"></span>
-                            </div>
-                        </div>
+                    <div class="mb-4">
+                        <label class="emp-form-label">Role Name <span class="text-danger">*</span></label>
+                        <input name="Name" class="emp-form-control" id="editRoleName" placeholder="Enter role name" />
+                        <span class="emp-form-error" data-valmsg-for="Name"></span>
+                    </div>
+                    <div class="mb-0">
+                        <label class="emp-form-label">Description</label>
+                        <textarea name="Description" class="emp-form-control" id="editRoleDescription" rows="4" placeholder="Enter role description (optional)"></textarea>
+                        <span class="emp-form-error" data-valmsg-for="Description"></span>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer modal-footer-custom">
-                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+            <div class="emp-modal-footer">
+                <button type="button" class="emp-btn emp-btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button type="button" class="btn-save-user" id="updateRoleBtn">
+                <button type="button" class="emp-btn emp-btn-primary" id="updateRoleBtn">
                     <i class="fas fa-save"></i> Update Role
                 </button>
             </div>
@@ -196,21 +215,23 @@
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteRoleModal" tabindex="-1" aria-labelledby="deleteRoleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content modal-modern">
-            <div class="modal-header modal-header-ocean">
-                <h5 class="modal-title" id="deleteRoleModalLabel">
+        <div class="modal-content emp-modal-modern">
+            <div class="emp-modal-header emp-modal-header-danger">
+                <h5 class="emp-modal-title" id="deleteRoleModalLabel">
                     <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="emp-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body modal-body-custom">
-                <div class="alert alert-danger-custom" role="alert">
+            <div class="emp-modal-body">
+                <div class="emp-danger-alert">
                     <i class="fas fa-exclamation-circle"></i>
-                    <strong>Warning:</strong> Are you sure you want to delete this project role? This action cannot be undone.
+                    <div>
+                        <strong>Warning:</strong> Are you sure you want to delete this project role? This action cannot be undone.
+                    </div>
                 </div>
                 
-                <div class="mb-3">
-                    <strong>Role Name:</strong> <span id="deleteRoleName"></span>
+                <div class="emp-info-box mt-4">
+                    <strong>Role Name:</strong> <span id="deleteRoleName" class="emp-highlight-text"></span>
                 </div>
                 
                 <form id="deleteRoleForm">
@@ -218,11 +239,11 @@
                     <input type="hidden" id="deleteRoleId" />
                 </form>
             </div>
-            <div class="modal-footer modal-footer-custom">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <div class="emp-modal-footer">
+                <button type="button" class="emp-btn emp-btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteRoleBtn">
+                <button type="button" class="emp-btn emp-btn-danger" id="confirmDeleteRoleBtn">
                     <i class="fas fa-trash"></i> Delete Role
                 </button>
             </div>
@@ -233,7 +254,178 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <style>
-        /* reuse styles from user management */
+        /* Modern Modal Styling */
+        .emp-modal-modern {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(2, 6, 23, 0.15);
+            overflow: hidden;
+        }
+
+        .emp-modal-header {
+            background: linear-gradient(135deg, #006994, #4CA3DD);
+            border: none;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .emp-modal-header-danger {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+        }
+
+        .emp-modal-title {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .emp-modal-close {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .emp-modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .emp-modal-body {
+            padding: 2rem;
+        }
+
+        .emp-modal-footer {
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 1.25rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        /* Form Styling in Modals */
+        .emp-form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .emp-form-control {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-family: inherit;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .emp-form-control:focus {
+            border-color: #4CA3DD;
+            box-shadow: 0 0 0 3px rgba(76, 163, 221, 0.1);
+        }
+
+        .emp-form-error {
+            display: block;
+            font-size: 0.75rem;
+            color: #dc2626;
+            margin-top: 0.25rem;
+        }
+
+        /* Alert and Info Styling */
+        .emp-danger-alert {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            padding: 1rem;
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            color: #991b1b;
+            font-size: 0.875rem;
+        }
+
+        .emp-danger-alert i {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .emp-info-box {
+            padding: 1rem;
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: #0c4a6e;
+        }
+
+        .emp-highlight-text {
+            font-weight: 600;
+            color: #006994;
+        }
+
+        /* Button Styling */
+        .emp-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .emp-btn-primary {
+            background: linear-gradient(135deg, #006994, #4CA3DD);
+            color: #fff;
+        }
+
+        .emp-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 105, 148, 0.3);
+        }
+
+        .emp-btn-secondary {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+
+        .emp-btn-secondary:hover {
+            background-color: #cbd5e1;
+        }
+
+        .emp-btn-danger {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: #fff;
+        }
+
+        .emp-btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(220, 38, 38, 0.3);
+        }
     </style>
     <script>
         $(document).ready(function() {
@@ -254,7 +446,7 @@
                     success: function(res) {
                         if (res.success) location.reload();
                         else if (res.errors) {
-                            $('.text-danger').text('');
+                            $('.emp-form-error').text('');
                             for (var key in res.errors) {
                                 var msgs = res.errors[key];
                                 $('[data-valmsg-for="' + key.split('.').pop() + '"]').text(msgs.join(', '));
@@ -264,13 +456,28 @@
                 });
             });
 
-            $('#createRoleModal').on('hidden.bs.modal', function () { $('#createRoleForm')[0].reset(); $('.text-danger').text(''); });
+            $('#createRoleModal').on('hidden.bs.modal', function () { $('#createRoleForm')[0].reset(); $('.emp-form-error').text(''); });
 
-            window.editRole = function(id, name, description) {
-                $('#editRoleId').val(id);
-                $('#editRoleName').val(name);
-                $('#editRoleDescription').val(description);
-                $('#editRoleModal').modal('show');
+            window.editRole = function(id) {
+                var token = $('input[name="__RequestVerificationToken"]').first().val();
+                $.ajax({
+                    url: '@Url.Action("GetProjectRoleById", "Management", new { area = "ProjectManager" })',
+                    method: 'GET',
+                    data: { id: id },
+                    headers: { 'RequestVerificationToken': token },
+                    success: function(res) {
+                        if (res && res.success) {
+                            $('#editRoleId').val(res.id);
+                            $('#editRoleName').val(res.name);
+                            $('#editRoleDescription').val(res.description);
+                            $('#editRoleDateCreated').val(res.dateCreated);
+                            $('#editRoleModal').modal('show');
+                        } else {
+                            alert(res.message || 'Unable to load role details.');
+                        }
+                    },
+                    error: function() { alert('Unable to load role details.'); }
+                });
             };
 
             $('#updateRoleBtn').click(function() {
@@ -292,7 +499,7 @@
                     success: function(res) {
                         if (res.success) location.reload();
                         else if (res.errors) {
-                            $('.text-danger').text('');
+                            $('.emp-form-error').text('');
                             for (var key in res.errors) {
                                 var msgs = res.errors[key];
                                 $('[data-valmsg-for="' + key.split('.').pop() + '"]').text(msgs.join(', '));
@@ -326,4 +533,32 @@
             });
         });
     </script>
-}
+
+    <script>
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('rolesSearch');
+            const table = document.getElementById('rolesTable');
+            const noResults = document.getElementById('noFilterResults');
+            const tbody = document.getElementById('rolesBody');
+
+            if (searchInput && table) {
+                searchInput.addEventListener('keyup', function () {
+                    const filter = this.value.toLowerCase();
+                    let visibleCount = 0;
+
+                    Array.from(tbody.getElementsByTagName('tr')).forEach(row => {
+                        const name = row.getAttribute('data-name') || '';
+                        if (name.includes(filter)) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+
+                    noResults.style.display = visibleCount === 0 && filter ? '' : 'none';
+                });
+            }
+        });
+    </script>
