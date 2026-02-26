@@ -440,7 +440,9 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             }
 
             // Save old note as a version before overwriting
-            if (!string.IsNullOrWhiteSpace(task.Notes) && task.Notes != Notes)
+            var trimmedOld = (task.Notes ?? string.Empty).Trim();
+            var trimmedNew = (Notes ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(trimmedOld) && trimmedOld != trimmedNew)
             {
                 var existingNoteVersions = await _context.TaskNoteVersions
                     .Where(n => n.ProjectTaskId == id)
@@ -508,6 +510,11 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             }
 
             TempData["SuccessMessage"] = "Task updated.";
+
+            // Note-only save: stay on the task page so the PM can see the updated note/version history
+            if (string.IsNullOrEmpty(action))
+                return RedirectToAction(nameof(Task), new { id });
+
             return RedirectToAction(nameof(Milestone), new { projectMilestoneId = task.ProjectMilestoneId });
         }
 

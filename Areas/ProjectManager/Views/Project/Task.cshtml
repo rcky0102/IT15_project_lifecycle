@@ -196,17 +196,16 @@ function confirmUpdateStatus() {
             <button class="emp-modal-close" onclick="empModalClose('notesModal')" aria-label="Close"><i class="fas fa-times"></i></button>
         </div>
         <div class="emp-modal-body">
-            @if (orderedNotes.Any())
+            @if (!string.IsNullOrWhiteSpace(Model.Notes) || orderedNotes.Any())
             {
-                var current = orderedNotes.First();
-                <div class="emp-note-item emp-note-current mb-2">
-                    <strong>
-                        <a asp-area="ProjectManager" asp-controller="Project" asp-action="TaskNote" asp-route-id="@current.Id">Current version</a>
-                    </strong>@(current.VersionNumber > 0 ? (" (v" + current.VersionNumber + ")") : "")
-                    <div class="emp-modal-meta"><i class="far fa-calendar"></i> Saved @current.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
-                    <div class="emp-note-content mt-2">@Html.Raw(current.Note)</div>
-                </div>
-                @foreach (var n in orderedNotes.Skip(1))
+                @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                {
+                    <div class="emp-note-item emp-note-current mb-2">
+                        <strong>Current</strong>
+                        <div class="emp-note-content mt-2">@Html.Raw(Model.Notes)</div>
+                    </div>
+                }
+                @foreach (var n in orderedNotes)
                 {
                     <div class="emp-note-item mb-2">
                         <strong>
@@ -216,13 +215,6 @@ function confirmUpdateStatus() {
                         <div class="emp-note-content mt-2">@Html.Raw(n.Note)</div>
                     </div>
                 }
-            }
-            else if (!string.IsNullOrWhiteSpace(Model.Notes))
-            {
-                <div class="emp-note-item emp-note-current mb-2">
-                    <strong>Current version</strong>
-                    <div class="emp-note-content mt-2">@Html.Raw(Model.Notes)</div>
-                </div>
             }
             else
             {
