@@ -126,9 +126,6 @@
                 <i class="fas fa-users" style="color:#6366f1;"></i>Team Members
                 <span class="emp-count-chip">@Model.Project.Members.Count</span>
             </div>
-            <button type="button" class="emp-btn-xs" onclick="openModal('membersModal')">
-                <i class="fas fa-plus me-1"></i>Add
-            </button>
         </div>
         <div class="det-panel-body">
             @if (!Model.Project.Members.Any())
@@ -170,9 +167,6 @@
                 <i class="fas fa-flag-checkered" style="color:#6366f1;"></i>Milestones
                 <span class="emp-count-chip">@Model.Project.Milestones.Count</span>
             </div>
-            <button type="button" class="emp-btn-xs" onclick="openModal('milestonesModal')">
-                <i class="fas fa-plus me-1"></i>Add
-            </button>
         </div>
         <div class="det-panel-body">
             @if (!Model.Project.Milestones.Any())
