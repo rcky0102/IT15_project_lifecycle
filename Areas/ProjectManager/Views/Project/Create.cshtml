@@ -114,11 +114,11 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
                     <div>
                         <label class="emp-form-label">Start Date</label>
-                        <input name="StartDate" type="date" class="emp-form-control" required />
+                        <input name="StartDate" id="taskStartDate" type="date" class="emp-form-control" required />
                     </div>
                     <div>
                         <label class="emp-form-label">End Date</label>
-                        <input name="EndDate" type="date" class="emp-form-control" required />
+                        <input name="EndDate" id="taskEndDate" type="date" class="emp-form-control" required />
                     </div>
                 </div>
             </div>
@@ -158,7 +158,22 @@ document.addEventListener('DOMContentLoaded', function () {
     let editorInstance = null, pendingUploads = 0, explicitSubmitRequested = false, isSubmitting = false;
     const draftStorageKey = 'pm-create-task-draft';
 
-    function saveDraft() { if (isSubmitting) return; const el = document.querySelector(editorSelector); try { sessionStorage.setItem(draftStorageKey, JSON.stringify({ name: taskNameInput ? taskNameInput.value : '', inputHtml: editorInstance ? editorInstance.getData() : (el ? el.value : '') })); } catch {} }
+    function saveDraft() {
+        if (isSubmitting) return;
+        const el = document.querySelector(editorSelector);
+        const startDateInput = document.getElementById('taskStartDate');
+        const endDateInput = document.getElementById('taskEndDate');
+        const checkedIds = Array.from(document.querySelectorAll('input[name="assignedMemberIds"]:checked')).map(cb => cb.value);
+        try {
+            sessionStorage.setItem(draftStorageKey, JSON.stringify({
+                name: taskNameInput ? taskNameInput.value : '',
+                inputHtml: editorInstance ? editorInstance.getData() : (el ? el.value : ''),
+                assignedMemberIds: checkedIds,
+                startDate: startDateInput ? startDateInput.value : '',
+                endDate: endDateInput ? endDateInput.value : ''
+            }));
+        } catch {}
+    }
     function restoreDraft() { try { const r = sessionStorage.getItem(draftStorageKey); return r ? JSON.parse(r) : null; } catch { return null; } }
     function clearDraft() { try { sessionStorage.removeItem(draftStorageKey); } catch {} }
     function beginUpload() { pendingUploads += 1; if (submitButton) submitButton.disabled = true; }
@@ -222,6 +237,17 @@ document.addEventListener('DOMContentLoaded', function () {
             const draft=restoreDraft();
             if(draft&&typeof draft.inputHtml==='string'&&draft.inputHtml.length>0) ed.setData(draft.inputHtml);
             if(draft&&taskNameInput&&draft.name&&taskNameInput.value.trim()==='') taskNameInput.value=draft.name;
+            // Restore assigned members
+            if(draft&&draft.assignedMemberIds&&draft.assignedMemberIds.length>0){
+                document.querySelectorAll('input[name="assignedMemberIds"]').forEach(cb=>{
+                    if(draft.assignedMemberIds.includes(cb.value)) cb.checked=true;
+                });
+            }
+            // Restore start/end dates
+            const startDateInput=document.getElementById('taskStartDate');
+            const endDateInput=document.getElementById('taskEndDate');
+            if(draft&&draft.startDate&&startDateInput&&!startDateInput.value) startDateInput.value=draft.startDate;
+            if(draft&&draft.endDate&&endDateInput&&!endDateInput.value) endDateInput.value=draft.endDate;
             ed.model.document.on('change:data',saveDraft);
             wireFileInsertButton();
         }).catch(err=>console.error('CKEditor init error:',err));
@@ -243,6 +269,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if(taskNameInput) taskNameInput.addEventListener('input',saveDraft);
+    // Save draft when assign-to checkboxes or date fields change
+    document.querySelectorAll('input[name="assignedMemberIds"]').forEach(cb=>cb.addEventListener('change',saveDraft));
+    const _sd=document.getElementById('taskStartDate'); if(_sd) _sd.addEventListener('change',saveDraft);
+    const _ed=document.getElementById('taskEndDate'); if(_ed) _ed.addEventListener('change',saveDraft);
 
     function loadScript(i){ if(window.CKEDITOR&&window.CKEDITOR.ClassicEditor){initEditor();return;} if(i>=scriptCdn.length){initEditor();return;} const s=document.createElement('script');s.src=scriptCdn[i];s.async=true;s.onload=()=>initEditor();s.onerror=()=>loadScript(i+1);document.head.appendChild(s); }
     function loadStyle(i){ if(document.querySelector('link[data-ckeditor-style="true"]')){loadScript(0);return;} if(i>=styleCdn.length){loadScript(0);return;} const l=document.createElement('link');l.rel='stylesheet';l.href=styleCdn[i];l.setAttribute('data-ckeditor-style','true');l.onload=()=>loadScript(0);l.onerror=()=>{l.remove();loadStyle(i+1);};document.head.appendChild(l); }
