@@ -2,52 +2,123 @@
 @{
     ViewData["Title"] = Model.Project.Name;
     var duration = (Model.Project.EndDate - Model.Project.StartDate).Days;
+    var totalMs = Model.Project.Milestones.Count;
     var finishedMs = Model.Project.Milestones.Count(m => m.Status == "Finished");
+    var progressPct = totalMs > 0 ? (int)Math.Round((double)finishedMs / totalMs * 100) : 0;
     var nextOrder  = Model.Project.Milestones.Any() ? Model.Project.Milestones.Max(m => m.SequenceOrder) + 1 : 1;
 }
 
 <style>
-    /* ---- detail info strip ---- */
-    .det-info-strip { display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; padding:1rem 1.5rem; background:#fff; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:1.5rem; }
+    /* ---- info strip ---- */
+    .det-info-strip { display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; padding:1rem 1.5rem; background:#fff; border-radius:12px; border:1px solid #e0f2fe; margin-bottom:1.75rem; }
     .det-info-item  { display:flex; align-items:center; gap:.45rem; font-size:.82rem; color:#475569; }
-    .det-info-item i { color:#6366f1; width:14px; text-align:center; }
+    .det-info-item i { color:#0284c7; width:14px; text-align:center; }
     .det-info-item strong { color:#1e293b; }
-    /* ---- two-col grid ---- */
-    .det-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+
+    /* ---- asymmetric grid ---- */
+    .det-grid { display:grid; grid-template-columns:5fr 3fr; gap:1.75rem; align-items:start; }
+    @@media(max-width:1024px){ .det-grid{grid-template-columns:1.4fr 1fr;} }
     @@media(max-width:800px){ .det-grid{grid-template-columns:1fr;} }
-    /* ---- panel card ---- */
-    .det-panel { background:#fff; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden; }
-    .det-panel-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #f1f5f9; }
-    .det-panel-title { font-weight:700; font-size:.95rem; color:#1e293b; display:flex; align-items:center; gap:.5rem; }
-    .det-panel-body  { padding:1rem 1.25rem; }
-    /* ---- member row ---- */
-    .det-member-row { display:flex; align-items:center; gap:.75rem; padding:.65rem 0; border-bottom:1px solid #f8fafc; }
-    .det-member-row:last-child { border-bottom:none; }
-    .det-member-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.82rem; flex-shrink:0; }
+
+    /* ---- glass panel card ---- */
+    .det-panel { background:#fff; border-radius:16px; border:1px solid #e0f2fe; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .det-panel-head { display:flex; align-items:center; justify-content:space-between; padding:1.15rem 1.5rem; background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%); border-bottom:1px solid #bae6fd; }
+    .det-panel-title { font-weight:800; font-size:1rem; color:#0c4a6e; display:flex; align-items:center; gap:.55rem; }
+    .det-panel-title i { font-size:.9rem; color:#0284c7; }
+    .det-panel-body  { padding:1.25rem 1.5rem; }
+    .det-panel-add-btn { display:inline-flex; align-items:center; gap:.35rem; background:linear-gradient(135deg,#0284c7,#0ea5e9); color:#fff; border:none; padding:.45rem .9rem; font-size:.76rem; font-weight:700; border-radius:8px; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(2,132,199,.25); }
+    .det-panel-add-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(2,132,199,.35); }
+
+    /* ---- progress summary bar ---- */
+    .det-progress-wrap { display:flex; align-items:center; gap:1rem; padding:.85rem 0 .5rem; margin-bottom:.5rem; }
+    .det-progress-bar-bg { flex:1; height:6px; background:#e0f2fe; border-radius:3px; overflow:hidden; }
+    .det-progress-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#0284c7,#38bdf8); transition:width .5s ease; }
+    .det-progress-label { font-size:.72rem; font-weight:700; color:#0284c7; white-space:nowrap; }
+
+    /* ========== TIMELINE ========== */
+    .det-timeline { position:relative; padding:.25rem 0 .25rem 0; }
+    .det-timeline::before { content:''; position:absolute; left:15px; top:0; bottom:0; width:2.5px; background:linear-gradient(180deg,#bae6fd 0%,#0284c7 30%,#0284c7 70%,#bae6fd 100%); border-radius:2px; }
+
+    /* timeline node row */
+    .det-tl-node { display:flex; align-items:stretch; gap:0; padding:0; position:relative; margin-bottom:6px; }
+    .det-tl-node:last-child { margin-bottom:0; }
+
+    /* left connector column */
+    .det-tl-left { width:32px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; position:relative; z-index:2; padding-top:1.35rem; }
+
+    /* dot */
+    .det-tl-dot { width:14px; height:14px; border-radius:50%; border:2.5px solid #bae6fd; background:#fff; flex-shrink:0; transition:all .3s; position:relative; }
+    .det-tl-dot::after { content:''; position:absolute; inset:-4px; border-radius:50%; transition:box-shadow .3s; }
+    .det-tl-node.finished .det-tl-dot { border-color:#0284c7; background:#0284c7; }
+    .det-tl-node.finished .det-tl-dot::after { box-shadow:0 0 0 4px rgba(2,132,199,.15); }
+    .det-tl-node.in_progress .det-tl-dot { border-color:#0ea5e9; background:#0ea5e9; animation:tlPulse 2s infinite; }
+    .det-tl-node.in_progress .det-tl-dot::after { box-shadow:0 0 0 4px rgba(14,165,233,.15); }
+    .det-tl-node.unfinished .det-tl-dot { border-color:#7dd3fc; background:#fff; }
+    @@keyframes tlPulse { 0%,100%{box-shadow:0 0 0 0 rgba(14,165,233,.3)} 50%{box-shadow:0 0 0 6px rgba(14,165,233,0)} }
+
+    /* right card */
+    .det-tl-card { flex:1; min-width:0; background:#fff; border:1px solid #e0f2fe; border-radius:12px; padding:1rem 1.15rem; margin-left:.55rem; transition:all .25s ease; position:relative; }
+    .det-tl-card::before { content:''; position:absolute; left:-7px; top:1.35rem; width:12px; height:12px; background:#fff; border-left:1px solid #e0f2fe; border-bottom:1px solid #e0f2fe; transform:rotate(45deg); }
+    .det-tl-card:hover { border-color:#7dd3fc; box-shadow:0 6px 20px rgba(2,132,199,.08); transform:translateX(3px); }
+    .det-tl-node.finished .det-tl-card { border-left:3px solid #0284c7; }
+    .det-tl-node.in_progress .det-tl-card { border-left:3px solid #0ea5e9; background:linear-gradient(135deg,#f0f9ff 0%,#fff 100%); }
+    .det-tl-node.unfinished .det-tl-card { border-left:3px solid #7dd3fc; }
+
+    /* card internals */
+    .det-tl-card-header { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.5rem; }
+    .det-tl-card-order { font-size:.65rem; font-weight:800; color:#0369a1; background:#e0f2fe; padding:.2rem .5rem; border-radius:5px; letter-spacing:.5px; }
+    .det-tl-card-name { font-weight:700; font-size:.92rem; color:#1e293b; line-height:1.35; }
+    .det-tl-status { display:inline-flex; align-items:center; gap:.3rem; font-size:.65rem; font-weight:800; text-transform:uppercase; padding:.25rem .6rem; border-radius:6px; letter-spacing:.4px; margin-top:.35rem; }
+    .det-tl-status i { font-size:.55rem; }
+    .det-tl-status.finished { background:#e0f2fe; color:#0369a1; }
+    .det-tl-status.in_progress { background:#bae6fd; color:#0c4a6e; }
+    .det-tl-status.unfinished { background:#f0f9ff; color:#0284c7; }
+    .det-tl-actions { display:flex; gap:.35rem; align-items:center; margin-top:.7rem; padding-top:.65rem; border-top:1px dashed #e0f2fe; }
+
+    /* ---- compact badge accents (ocean blue) ---- */
+    .badge-accent { display:inline-block; padding:.18rem .55rem; border-radius:999px; font-weight:800; font-size:.72rem; color:#fff; background:linear-gradient(90deg,#0369a1,#0284c7); box-shadow:0 6px 18px rgba(2,132,199,.08); }
+    .role-badge { display:inline-flex; align-items:center; gap:.35rem; padding:.15rem .55rem; border-radius:999px; font-weight:700; font-size:.72rem; color:#023e5a; background:linear-gradient(90deg,#e6f9ff,#dff6ff); border:1px solid rgba(2,132,199,.12); }
+    .det-tl-action-btn { display:inline-flex; align-items:center; gap:.3rem; padding:.3rem .55rem; border:none; border-radius:6px; font-size:.7rem; font-weight:600; cursor:pointer; transition:all .2s; }
+    .det-tl-action-btn.view { background:#0284c7; color:#fff; }
+    .det-tl-action-btn.view:hover { background:#0369a1; }
+    .det-tl-action-btn.edit { background:#0ea5e9; color:#fff; }
+    .det-tl-action-btn.edit:hover { background:#0284c7; }
+    .det-tl-action-btn.delete { background:#f87171; color:#fff; }
+    .det-tl-action-btn.delete:hover { background:#ef4444; }
+
+    /* ========== TEAM MEMBERS ========== */
+    .det-member-card { display:flex; align-items:center; gap:.85rem; padding:.85rem; background:#f0f9ff; border:1px solid #e0f2fe; border-radius:12px; margin-bottom:.55rem; transition:all .25s ease; }
+    .det-member-card:last-child { margin-bottom:0; }
+    .det-member-card:hover { border-color:#7dd3fc; background:#fff; box-shadow:0 4px 14px rgba(2,132,199,.06); transform:translateY(-1px); }
+    .det-member-avatar { width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg,#0284c7,#38bdf8); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:.82rem; flex-shrink:0; box-shadow:0 2px 8px rgba(2,132,199,.2); }
     .det-member-info { flex:1; min-width:0; }
-    .det-member-name { font-weight:600; font-size:.85rem; color:#1e293b; }
-    .det-member-role { font-size:.73rem; color:#6366f1; font-weight:600; }
-    /* ---- milestone row ---- */
-    .det-ms-row { display:flex; align-items:flex-start; gap:.75rem; padding:.75rem 0; border-bottom:1px solid #f8fafc; }
-    .det-ms-row:last-child { border-bottom:none; }
-    .det-ms-num { width:24px; height:24px; border-radius:50%; background:#f1f5f9; color:#6366f1; font-weight:700; font-size:.72rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:.1rem; }
-    .det-ms-body { flex:1; min-width:0; }
-    .det-ms-name { font-weight:600; font-size:.87rem; color:#1e293b; }
-    .det-ms-status { display:inline-block; font-size:.68rem; font-weight:700; text-transform:uppercase; padding:.15rem .5rem; border-radius:20px; margin-top:.2rem; background:#f1f5f9; color:#64748b; }
-    .det-ms-status.finished { background:#dcfce7; color:#16a34a; }
-    .det-ms-status.unfinished { background:#fef3c7; color:#d97706; }
-    .det-ms-status.in_progress { background:#ede9fe; color:#7c3aed; }
-    .det-empty { text-align:center; padding:2rem 1rem; color:#94a3b8; }
-    .det-empty i { font-size:1.8rem; display:block; margin-bottom:.4rem; }
+    .det-member-name { font-weight:700; font-size:.85rem; color:#1e293b; margin-bottom:.15rem; }
+    .det-member-role { display:inline-flex; align-items:center; gap:.25rem; font-size:.68rem; color:#0369a1; font-weight:700; background:#e0f2fe; padding:.15rem .5rem; border-radius:5px; }
+    .det-member-actions { display:flex; gap:.3rem; flex-shrink:0; }
+    .det-member-action { width:28px; height:28px; border:none; border-radius:7px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; font-size:.72rem; }
+    .det-member-action.edit { background:#0ea5e9; color:#fff; }
+    .det-member-action.edit:hover { background:#0284c7; }
+    .det-member-action.delete { background:#f87171; color:#fff; }
+    .det-member-action.delete:hover { background:#ef4444; }
+    .det-member-count { display:flex; align-items:center; gap:.5rem; padding:.65rem .85rem; background:#f0f9ff; border:1px dashed #bae6fd; border-radius:10px; margin-bottom:.85rem; }
+    .det-member-count-icon { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,#0284c7,#0ea5e9); display:flex; align-items:center; justify-content:center; color:#fff; font-size:.7rem; }
+    .det-member-count-text { font-size:.76rem; color:#64748b; }
+    .det-member-count-text strong { color:#0c4a6e; font-weight:800; }
+
+    /* ---- empty states ---- */
+    .det-empty { text-align:center; padding:2.5rem 1.5rem; color:#94a3b8; }
+    .det-empty i { font-size:2.2rem; display:block; margin-bottom:.6rem; opacity:.5; }
+    .det-empty span { font-size:.85rem; }
+
     /* ---- modal ---- */
-    .det-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1040; align-items:center; justify-content:center; }
+    .det-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(12,74,110,.35); backdrop-filter:blur(4px); z-index:1040; align-items:center; justify-content:center; }
     .det-modal-backdrop.open { display:flex; }
-    .det-modal { background:#fff; border-radius:16px; width:100%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,.18); overflow:hidden; animation:detModalIn .2s ease; }
-    @@keyframes detModalIn { from{opacity:0;transform:translateY(-18px)} to{opacity:1;transform:translateY(0)} }
-    .det-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.5rem; border-bottom:1px solid #f1f5f9; }
-    .det-modal-title { font-weight:700; font-size:1rem; color:#1e293b; display:flex; align-items:center; gap:.5rem; }
-    .det-modal-close { background:none; border:none; font-size:1.15rem; color:#94a3b8; cursor:pointer; line-height:1; padding:.2rem .4rem; border-radius:6px; }
-    .det-modal-close:hover { background:#f1f5f9; color:#64748b; }
+    .det-modal { background:#fff; border-radius:18px; width:100%; max-width:480px; box-shadow:0 25px 60px rgba(2,132,199,.15); overflow:hidden; animation:detModalIn .25s ease; }
+    @@keyframes detModalIn { from{opacity:0;transform:translateY(-20px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .det-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.5rem; background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border-bottom:1px solid #bae6fd; }
+    .det-modal-title { font-weight:800; font-size:1rem; color:#0c4a6e; display:flex; align-items:center; gap:.5rem; }
+    .det-modal-close { background:none; border:none; font-size:1.15rem; color:#94a3b8; cursor:pointer; line-height:1; padding:.35rem .5rem; border-radius:8px; transition:all .2s; }
+    .det-modal-close:hover { background:#e0f2fe; color:#0369a1; }
     .det-modal-body { padding:1.5rem; }
     .det-modal-footer { padding:.75rem 1.5rem 1.25rem; display:flex; gap:.6rem; justify-content:flex-end; }
 </style>
@@ -119,95 +190,121 @@
 
 <!-- ===== Two-Column Grid ===== -->
 <div class="det-grid">
-    <!-- Members Panel -->
+    <!-- ===== Project Timeline (Left - Larger) ===== -->
     <div class="det-panel">
         <div class="det-panel-head">
             <div class="det-panel-title">
-                <i class="fas fa-users" style="color:#6366f1;"></i>Team Members
-                <span class="emp-count-chip">@Model.Project.Members.Count</span>
+                <i class="fas fa-stream" style="color:#0284c7;"></i>Project Timeline
             </div>
-        </div>
-        <div class="det-panel-body">
-            @if (!Model.Project.Members.Any())
-            {
-                <div class="det-empty">
-                    <i class="fas fa-user-slash"></i>
-                    <span>No members yet. Add team members using the button above.</span>
-                </div>
-            }
-            else
-            {
-                foreach (var m in Model.Project.Members)
-                {
-                    var initials = string.Concat(m.EmployeeName.Split(' ').Take(2).Select(s => s.Length > 0 ? s[0].ToString() : ""));
-                    <div class="det-member-row">
-                        <div class="det-member-avatar">@initials</div>
-                        <div class="det-member-info">
-                            <div class="det-member-name">@m.EmployeeName</div>
-                            <div class="det-member-role">@m.ProjectRoleName</div>
-                        </div>
-                        <button type="button" class="emp-btn-xs" style="background:#e0e7ff;color:#6366f1;border:none;"
-                                onclick="editMember(@m.Id, '@m.EmployeeId', '@m.ProjectRoleId', 'membersModal')" title="Edit">
-                            <i class="fas fa-pencil"></i>
-                        </button>
-                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="memberId" value="@m.Id" />
-                            <button type="submit" class="emp-btn-xs" style="background:#fee2e2;color:#dc2626;border:none;"
-                                    onclick="return confirm('Remove @m.EmployeeName from this project?')">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </form>
-                    </div>
-                }
-            }
-        </div>
-    </div>
-
-    <!-- Milestones Panel -->
-    <div class="det-panel">
-        <div class="det-panel-head">
-            <div class="det-panel-title">
-                <i class="fas fa-flag-checkered" style="color:#6366f1;"></i>Milestones
-                <span class="emp-count-chip">@Model.Project.Milestones.Count</span>
-            </div>
+            <button type="button" class="det-panel-add-btn" onclick="openModal('milestonesModal')">
+                <i class="fas fa-plus"></i>Add Milestone
+            </button>
         </div>
         <div class="det-panel-body">
             @if (!Model.Project.Milestones.Any())
             {
                 <div class="det-empty">
-                    <i class="fas fa-inbox"></i>
-                    <span>No milestones yet. Add milestones using the button above.</span>
+                    <i class="fas fa-route"></i>
+                    <span>No milestones yet. Start building your project timeline.</span>
                 </div>
             }
             else
             {
-                foreach (var ms in Model.Project.Milestones.OrderBy(m => m.SequenceOrder))
-                {
-                    var statusClass = ms.Status?.ToLower().Replace(" ", "_") ?? "unfinished";
-                    <div class="det-ms-row">
-                        <div class="det-ms-num">@ms.SequenceOrder</div>
-                        <div class="det-ms-body">
-                            <div class="det-ms-name">@ms.MilestoneName</div>
-                            <span class="det-ms-status @statusClass">@ms.Status</span>
+                <div class="det-progress-wrap">
+                    <div class="det-progress-bar-bg">
+                        <div class="det-progress-bar-fill" style="width:@(progressPct)%"></div>
+                    </div>
+                    <span class="det-progress-label">@finishedMs / @totalMs completed</span>
+                </div>
+
+                <div class="det-timeline">
+                    @foreach (var ms in Model.Project.Milestones.OrderBy(m => m.SequenceOrder))
+                    {
+                        var statusClass = ms.Status?.ToLower().Replace(" ", "_") ?? "unfinished";
+                        var statusIcon = statusClass == "finished" ? "fa-check-circle" : statusClass == "in_progress" ? "fa-spinner" : "fa-circle";
+                        <div class="det-tl-node @statusClass">
+                            <div class="det-tl-left">
+                                <div class="det-tl-dot"></div>
+                            </div>
+                            <div class="det-tl-card">
+                                <div class="det-tl-card-header">
+                                    <span class="det-tl-card-order">STEP @ms.SequenceOrder</span>
+                                    <span class="det-tl-status @statusClass badge-accent"><i class="fas @statusIcon"></i> @ms.Status</span>
+                                </div>
+                                <div class="det-tl-card-name">@ms.MilestoneName</div>
+                                <div class="det-tl-actions">
+                                    <a asp-area="ProjectManager"
+                                       asp-controller="Project"
+                                       asp-action="Milestone"
+                                       asp-route-projectMilestoneId="@ms.Id"
+                                       class="det-tl-action-btn view" title="View Milestone">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <button type="button" class="det-tl-action-btn edit"
+                                            onclick="editMilestone(@ms.Id, '@ms.MilestoneId', '@ms.SequenceOrder', 'milestonesModal')" title="Edit">
+                                        <i class="fas fa-pencil"></i> Edit
+                                    </button>
+                                    <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" style="margin:0;display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
+                                        <button type="submit" class="det-tl-action-btn delete"
+                                                onclick="return confirm('Remove @ms.MilestoneName from this project?')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
-                        <div style="display:flex;gap:.4rem;align-items:center;">
-                            <a asp-area="ProjectManager"
-                               asp-controller="Project"
-                               asp-action="Milestone"
-                               asp-route-projectMilestoneId="@ms.Id"
-                               class="emp-btn-xs" title="View Milestone">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <button type="button" class="emp-btn-xs" style="background:#e0e7ff;color:#6366f1;border:none;"
-                                    onclick="editMilestone(@ms.Id, '@ms.MilestoneId', '@ms.SequenceOrder', 'milestonesModal')" title="Edit">
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ===== Team Members (Right - Smaller) ===== -->
+    <div class="det-panel">
+        <div class="det-panel-head">
+            <div class="det-panel-title">
+                <i class="fas fa-users" style="color:#0284c7;"></i>Team
+            </div>
+            <button type="button" class="det-panel-add-btn" onclick="openModal('membersModal')">
+                <i class="fas fa-plus"></i>Add
+            </button>
+        </div>
+        <div class="det-panel-body">
+            @if (!Model.Project.Members.Any())
+            {
+                <div class="det-empty">
+                    <i class="fas fa-user-plus"></i>
+                    <span>No team members yet. Add people to get started.</span>
+                </div>
+            }
+            else
+            {
+                <div class="det-member-count">
+                    <div class="det-member-count-icon"><i class="fas fa-user-group"></i></div>
+                    <div class="det-member-count-text"><strong>@Model.Project.Members.Count</strong> member@(Model.Project.Members.Count != 1 ? "s" : "") assigned</div>
+                </div>
+
+                foreach (var m in Model.Project.Members)
+                {
+                    var initials = string.Concat(m.EmployeeName.Split(' ').Take(2).Select(s => s.Length > 0 ? s[0].ToString() : ""));
+                    <div class="det-member-card">
+                        <div class="det-member-avatar">@initials</div>
+                        <div class="det-member-info">
+                            <div class="det-member-name">@m.EmployeeName</div>
+                            <div class="det-member-role role-badge"><i class="fas fa-shield-halved"></i> @m.ProjectRoleName</div>
+                        </div>
+                        <div class="det-member-actions">
+                            <button type="button" class="det-member-action edit"
+                                    onclick="editMember(@m.Id, '@m.EmployeeId', '@m.ProjectRoleId', 'membersModal')" title="Edit">
                                 <i class="fas fa-pencil"></i>
                             </button>
-                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" style="margin:0;">
+                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;">
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
-                                <button type="submit" class="emp-btn-xs" style="background:#fee2e2;color:#dc2626;border:none;"
-                                        onclick="return confirm('Remove @ms.MilestoneName from this project?')">
+                                <input type="hidden" name="memberId" value="@m.Id" />
+                                <button type="submit" class="det-member-action delete"
+                                        onclick="return confirm('Remove @m.EmployeeName from this project?')">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
@@ -223,8 +320,8 @@
 <div class="det-modal-backdrop" id="membersModal" onclick="closeOnBackdrop(event,'membersModal')">
     <div class="det-modal">
         <div class="det-modal-header">
-            <div class="det-modal-title"><i class="fas fa-user-plus" style="color:#6366f1;"></i><span id="memberModalTitle">Add Team Member</span></div>
-            <button class="det-modal-close" onclick="closeModal('membersModal')">×</button>
+            <div class="det-modal-title"><i class="fas fa-user-plus" style="color:#0284c7;"></i><span id="memberModalTitle">Add Team Member</span></div>
+            <button class="det-modal-close" onclick="closeModal('membersModal')">&times;</button>
         </div>
         <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMember" method="post">
             @Html.AntiForgeryToken()
@@ -268,8 +365,8 @@
 <div class="det-modal-backdrop" id="milestonesModal" onclick="closeOnBackdrop(event,'milestonesModal')">
     <div class="det-modal">
         <div class="det-modal-header">
-            <div class="det-modal-title"><i class="fas fa-flag-checkered" style="color:#6366f1;"></i><span id="milestoneModalTitle">Add Milestone</span></div>
-            <button class="det-modal-close" onclick="closeModal('milestonesModal')">×</button>
+            <div class="det-modal-title"><i class="fas fa-flag-checkered" style="color:#0284c7;"></i><span id="milestoneModalTitle">Add Milestone</span></div>
+            <button class="det-modal-close" onclick="closeModal('milestonesModal')">&times;</button>
         </div>
         <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMilestone" method="post">
             @Html.AntiForgeryToken()
