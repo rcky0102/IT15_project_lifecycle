@@ -146,6 +146,10 @@
                             <div class="det-member-name">@m.EmployeeName</div>
                             <div class="det-member-role">@m.ProjectRoleName</div>
                         </div>
+                        <button type="button" class="emp-btn-xs" style="background:#e0e7ff;color:#6366f1;border:none;"
+                                onclick="editMember(@m.Id, '@m.EmployeeId', '@m.ProjectRoleId', 'membersModal')" title="Edit">
+                            <i class="fas fa-pencil"></i>
+                        </button>
                         <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="memberId" value="@m.Id" />
@@ -195,6 +199,10 @@
                                class="emp-btn-xs" title="View Milestone">
                                 <i class="fas fa-eye"></i>
                             </a>
+                            <button type="button" class="emp-btn-xs" style="background:#e0e7ff;color:#6366f1;border:none;"
+                                    onclick="editMilestone(@ms.Id, '@ms.MilestoneId', '@ms.SequenceOrder', 'milestonesModal')" title="Edit">
+                                <i class="fas fa-pencil"></i>
+                            </button>
                             <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" style="margin:0;">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
@@ -215,17 +223,18 @@
 <div class="det-modal-backdrop" id="membersModal" onclick="closeOnBackdrop(event,'membersModal')">
     <div class="det-modal">
         <div class="det-modal-header">
-            <div class="det-modal-title"><i class="fas fa-user-plus" style="color:#6366f1;"></i>Add Team Member</div>
+            <div class="det-modal-title"><i class="fas fa-user-plus" style="color:#6366f1;"></i><span id="memberModalTitle">Add Team Member</span></div>
             <button class="det-modal-close" onclick="closeModal('membersModal')">×</button>
         </div>
         <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMember" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
+            <input type="hidden" id="editMemberId" name="MemberId" value="" />
             <div class="det-modal-body">
                 <div class="emp-form-row">
                     <div class="emp-form-group" style="flex:1">
                         <label class="emp-form-label">Employee</label>
-                        <select name="EmployeeId" class="emp-form-control" required>
+                        <select id="memberEmployeeSelect" name="EmployeeId" class="emp-form-control" required>
                             <option value="">-- Select Employee --</option>
                             @foreach (var e in Model.AvailableEmployees)
                             {
@@ -237,7 +246,7 @@
                 <div class="emp-form-row" style="margin-top:.85rem;">
                     <div class="emp-form-group" style="flex:1">
                         <label class="emp-form-label">Project Role</label>
-                        <select name="ProjectRoleId" class="emp-form-control" required>
+                        <select id="memberRoleSelect" name="ProjectRoleId" class="emp-form-control" required>
                             <option value="">-- Select Role --</option>
                             @foreach (var r in Model.AvailableProjectRoles)
                             {
@@ -249,7 +258,7 @@
             </div>
             <div class="det-modal-footer">
                 <button type="button" class="emp-btn emp-btn-outline" onclick="closeModal('membersModal')">Cancel</button>
-                <button type="submit" class="emp-btn emp-btn-primary"><i class="fas fa-plus me-1"></i>Add Member</button>
+                <button type="submit" id="memberSubmitBtn" class="emp-btn emp-btn-primary"><i class="fas fa-plus me-1"></i><span id="memberSubmitText">Add Member</span></button>
             </div>
         </form>
     </div>
@@ -259,17 +268,18 @@
 <div class="det-modal-backdrop" id="milestonesModal" onclick="closeOnBackdrop(event,'milestonesModal')">
     <div class="det-modal">
         <div class="det-modal-header">
-            <div class="det-modal-title"><i class="fas fa-flag-checkered" style="color:#6366f1;"></i>Add Milestone</div>
+            <div class="det-modal-title"><i class="fas fa-flag-checkered" style="color:#6366f1;"></i><span id="milestoneModalTitle">Add Milestone</span></div>
             <button class="det-modal-close" onclick="closeModal('milestonesModal')">×</button>
         </div>
         <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMilestone" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
+            <input type="hidden" id="editProjectMilestoneId" name="ProjectMilestoneId" value="" />
             <div class="det-modal-body">
                 <div class="emp-form-row">
                     <div class="emp-form-group" style="flex:1">
                         <label class="emp-form-label">Milestone Template</label>
-                        <select name="MilestoneId" class="emp-form-control" required>
+                        <select id="milestoneSelect" name="MilestoneId" class="emp-form-control" required>
                             <option value="">-- Select Milestone --</option>
                             @foreach (var t in Model.AvailableMilestones)
                             {
@@ -281,7 +291,7 @@
                 <div class="emp-form-row" style="margin-top:.85rem;">
                     <div class="emp-form-group" style="flex:1">
                         <label class="emp-form-label">Sequence Order</label>
-                        <input name="SequenceOrder" type="number" min="1" class="emp-form-control"
+                        <input id="sequenceOrderInput" name="SequenceOrder" type="number" min="1" class="emp-form-control"
                                value="@nextOrder" required />
                         <span style="font-size:.75rem;color:#64748b;margin-top:.3rem;display:block;">Order determines the milestone's position in the project timeline.</span>
                     </div>
@@ -289,7 +299,7 @@
             </div>
             <div class="det-modal-footer">
                 <button type="button" class="emp-btn emp-btn-outline" onclick="closeModal('milestonesModal')">Cancel</button>
-                <button type="submit" class="emp-btn emp-btn-primary"><i class="fas fa-plus me-1"></i>Add Milestone</button>
+                <button type="submit" id="milestoneSubmitBtn" class="emp-btn emp-btn-primary"><i class="fas fa-plus me-1"></i><span id="milestoneSubmitText">Add Milestone</span></button>
             </div>
         </form>
     </div>
@@ -301,19 +311,62 @@ function openModal(id) {
     document.getElementById(id).classList.add('open');
     document.body.style.overflow = 'hidden';
 }
+
 function closeModal(id) {
     document.getElementById(id).classList.remove('open');
     document.body.style.overflow = '';
+    resetModals();
 }
+
 function closeOnBackdrop(e, id) {
     if (e.target === document.getElementById(id)) closeModal(id);
 }
+
+function resetModals() {
+    // Reset members modal
+    document.getElementById('editMemberId').value = '';
+    document.getElementById('memberEmployeeSelect').value = '';
+    document.getElementById('memberRoleSelect').value = '';
+    document.getElementById('memberSubmitText').textContent = 'Add Member';
+    document.getElementById('memberModalTitle').textContent = 'Add Team Member';
+    document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-plus me-1"></i><span id="memberSubmitText">Add Member</span>';
+    
+    // Reset milestones modal
+    document.getElementById('editProjectMilestoneId').value = '';
+    document.getElementById('milestoneSelect').value = '';
+    document.getElementById('sequenceOrderInput').value = '@nextOrder';
+    document.getElementById('milestoneSubmitText').textContent = 'Add Milestone';
+    document.getElementById('milestoneModalTitle').textContent = 'Add Milestone';
+    document.getElementById('milestoneSubmitBtn').innerHTML = '<i class="fas fa-plus me-1"></i><span id="milestoneSubmitText">Add Milestone</span>';
+}
+
+function editMember(memberId, employeeId, projectRoleId, modalId) {
+    document.getElementById('editMemberId').value = memberId;
+    document.getElementById('memberEmployeeSelect').value = employeeId;
+    document.getElementById('memberRoleSelect').value = projectRoleId;
+    document.getElementById('memberSubmitText').textContent = 'Update Member';
+    document.getElementById('memberModalTitle').textContent = 'Edit Team Member';
+    document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-check me-1"></i><span id="memberSubmitText">Update Member</span>';
+    openModal(modalId);
+}
+
+function editMilestone(projectMilestoneId, milestoneId, sequenceOrder, modalId) {
+    document.getElementById('editProjectMilestoneId').value = projectMilestoneId;
+    document.getElementById('milestoneSelect').value = milestoneId;
+    document.getElementById('sequenceOrderInput').value = sequenceOrder;
+    document.getElementById('milestoneSubmitText').textContent = 'Update Milestone';
+    document.getElementById('milestoneModalTitle').textContent = 'Edit Milestone';
+    document.getElementById('milestoneSubmitBtn').innerHTML = '<i class="fas fa-check me-1"></i><span id="milestoneSubmitText">Update Milestone</span>';
+    openModal(modalId);
+}
+
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.querySelectorAll('.det-modal-backdrop.open').forEach(m => {
             m.classList.remove('open');
         });
         document.body.style.overflow = '';
+        resetModals();
     }
 });
 </script>

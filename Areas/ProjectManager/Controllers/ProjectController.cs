@@ -635,8 +635,9 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var resolvedProjectId = GetPostedInt("ProjectId", "projectId") ?? input.ProjectId;
             var resolvedEmployeeId = GetPostedInt("EmployeeId", "employeeId") ?? input.EmployeeId;
             var resolvedProjectRoleId = GetPostedInt("ProjectRoleId", "projectRoleId") ?? input.ProjectRoleId;
+            var resolvedMemberId = GetPostedInt("MemberId", "memberId") ?? input.Id;
 
-            _logger.LogInformation("AddMember called with projectId={ProjectId}, employeeId={EmployeeId}, projectRoleId={RoleId}", resolvedProjectId, resolvedEmployeeId, resolvedProjectRoleId);
+            _logger.LogInformation("AddMember called with projectId={ProjectId}, employeeId={EmployeeId}, projectRoleId={RoleId}, memberId={MemberId}", resolvedProjectId, resolvedEmployeeId, resolvedProjectRoleId, resolvedMemberId);
             var pm = await GetCurrentProjectManagerAsync();
             _logger.LogDebug("Current PM: {PMId}", pm?.Id);
             if (pm == null) return Challenge();
@@ -664,39 +665,77 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
             }
 
-            var exists = await _context.Members.AnyAsync(m => m.ProjectId == resolvedProjectId && m.EmployeeId == resolvedEmployeeId);
-            if (exists)
+            // Check if editing or creating
+            if (resolvedMemberId > 0)
             {
-                TempData["ErrorMessage"] = "Employee is already a member of the project.";
-                return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
-            }
+                // Edit mode
+                var member = await _context.Members.FirstOrDefaultAsync(m => m.Id == resolvedMemberId && m.ProjectId == resolvedProjectId);
+                if (member == null)
+                {
+                    TempData["ErrorMessage"] = "Member not found.";
+                    return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
+                }
 
-            var member = new Member
-            {
-                ProjectId = resolvedProjectId,
-                EmployeeId = resolvedEmployeeId,
-                ProjectRoleId = resolvedProjectRoleId,
-                DateCreated = DateTime.Now
-            };
+                member.EmployeeId = resolvedEmployeeId;
+                member.ProjectRoleId = resolvedProjectRoleId;
 
-            try
-            {
-                _context.Members.Add(member);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Member added to project.";
-                _logger.LogInformation("Member {MemberId} added to project {ProjectId} (employee {EmployeeId})", member.Id, member.ProjectId, member.EmployeeId);
+                try
+                {
+                    _context.Members.Update(member);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Member updated successfully.";
+                    _logger.LogInformation("Member {MemberId} updated in project {ProjectId}", member.Id, member.ProjectId);
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    var detail = BuildExceptionDetails(dbEx);
+                    _logger.LogError(dbEx, "Error updating member {MemberId}. Details: {Details}", resolvedMemberId, detail);
+                    TempData["ErrorMessage"] = "Failed to update member: " + detail;
+                }
+                catch (Exception ex)
+                {
+                    var detail = BuildExceptionDetails(ex);
+                    _logger.LogError(ex, "Error updating member {MemberId}. Details: {Details}", resolvedMemberId, detail);
+                    TempData["ErrorMessage"] = "Failed to update member: " + detail;
+                }
             }
-            catch (DbUpdateException dbEx)
+            else
             {
-                var detail = BuildExceptionDetails(dbEx);
-                _logger.LogError(dbEx, "Error adding member to project {ProjectId}. Details: {Details}", resolvedProjectId, detail);
-                TempData["ErrorMessage"] = "Failed to add member: " + detail;
-            }
-            catch (Exception ex)
-            {
-                var detail = BuildExceptionDetails(ex);
-                _logger.LogError(ex, "Error adding member to project {ProjectId}. Details: {Details}", resolvedProjectId, detail);
-                TempData["ErrorMessage"] = "Failed to add member: " + detail;
+                // Create mode
+                var exists = await _context.Members.AnyAsync(m => m.ProjectId == resolvedProjectId && m.EmployeeId == resolvedEmployeeId);
+                if (exists)
+                {
+                    TempData["ErrorMessage"] = "Employee is already a member of the project.";
+                    return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
+                }
+
+                var member = new Member
+                {
+                    ProjectId = resolvedProjectId,
+                    EmployeeId = resolvedEmployeeId,
+                    ProjectRoleId = resolvedProjectRoleId,
+                    DateCreated = DateTime.Now
+                };
+
+                try
+                {
+                    _context.Members.Add(member);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Member added to project.";
+                    _logger.LogInformation("Member {MemberId} added to project {ProjectId} (employee {EmployeeId})", member.Id, member.ProjectId, member.EmployeeId);
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    var detail = BuildExceptionDetails(dbEx);
+                    _logger.LogError(dbEx, "Error adding member to project {ProjectId}. Details: {Details}", resolvedProjectId, detail);
+                    TempData["ErrorMessage"] = "Failed to add member: " + detail;
+                }
+                catch (Exception ex)
+                {
+                    var detail = BuildExceptionDetails(ex);
+                    _logger.LogError(ex, "Error adding member to project {ProjectId}. Details: {Details}", resolvedProjectId, detail);
+                    TempData["ErrorMessage"] = "Failed to add member: " + detail;
+                }
             }
 
             return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
@@ -737,8 +776,9 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var resolvedProjectId = GetPostedInt("ProjectId", "projectId") ?? input.ProjectId;
             var resolvedMilestoneId = GetPostedInt("MilestoneId", "milestoneId") ?? input.MilestoneId;
             var resolvedSequenceOrder = GetPostedInt("SequenceOrder", "sequenceOrder") ?? input.SequenceOrder;
+            var resolvedProjectMilestoneId = GetPostedInt("ProjectMilestoneId", "projectMilestoneId") ?? input.Id;
 
-            _logger.LogInformation("AddMilestone called with projectId={ProjectId}, milestoneId={MilestoneId}, sequenceOrder={Sequence}", resolvedProjectId, resolvedMilestoneId, resolvedSequenceOrder);
+            _logger.LogInformation("AddMilestone called with projectId={ProjectId}, milestoneId={MilestoneId}, sequenceOrder={Sequence}, projectMilestoneId={ProjectMilestoneId}", resolvedProjectId, resolvedMilestoneId, resolvedSequenceOrder, resolvedProjectMilestoneId);
             var pm = await GetCurrentProjectManagerAsync();
             _logger.LogDebug("Current PM: {PMId}", pm?.Id);
             if (pm == null) return Challenge();
@@ -760,40 +800,78 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
             }
 
-            var duplicate = await _context.ProjectMilestones.AnyAsync(pmst => pmst.ProjectId == resolvedProjectId && pmst.MilestoneId == resolvedMilestoneId);
-            if (duplicate)
+            // Check if editing or creating
+            if (resolvedProjectMilestoneId > 0)
             {
-                TempData["ErrorMessage"] = "Milestone already added to this project.";
-                return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
-            }
+                // Edit mode
+                var projectMilestone = await _context.ProjectMilestones.FirstOrDefaultAsync(pm => pm.Id == resolvedProjectMilestoneId && pm.ProjectId == resolvedProjectId);
+                if (projectMilestone == null)
+                {
+                    TempData["ErrorMessage"] = "Milestone not found in project.";
+                    return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
+                }
 
-            var projectMilestone = new ProjectMilestone
-            {
-                ProjectId = resolvedProjectId,
-                MilestoneId = resolvedMilestoneId,
-                SequenceOrder = resolvedSequenceOrder,
-                Status = "Unfinished",
-                DateCreated = DateTime.Now
-            };
+                projectMilestone.MilestoneId = resolvedMilestoneId;
+                projectMilestone.SequenceOrder = resolvedSequenceOrder;
 
-            try
-            {
-                _context.ProjectMilestones.Add(projectMilestone);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Milestone added to project.";
-                _logger.LogInformation("ProjectMilestone {Id} added to project {ProjectId} (milestone {MilestoneId})", projectMilestone.Id, projectMilestone.ProjectId, projectMilestone.MilestoneId);
+                try
+                {
+                    _context.ProjectMilestones.Update(projectMilestone);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Milestone updated successfully.";
+                    _logger.LogInformation("ProjectMilestone {Id} updated in project {ProjectId}", projectMilestone.Id, projectMilestone.ProjectId);
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    var detail = BuildExceptionDetails(dbEx);
+                    _logger.LogError(dbEx, "Error updating milestone {MilestoneId}. Details: {Details}", resolvedProjectMilestoneId, detail);
+                    TempData["ErrorMessage"] = "Failed to update milestone: " + detail;
+                }
+                catch (Exception ex)
+                {
+                    var detail = BuildExceptionDetails(ex);
+                    _logger.LogError(ex, "Error updating milestone {MilestoneId}. Details: {Details}", resolvedProjectMilestoneId, detail);
+                    TempData["ErrorMessage"] = "Failed to update milestone: " + detail;
+                }
             }
-            catch (DbUpdateException dbEx)
+            else
             {
-                var detail = BuildExceptionDetails(dbEx);
-                _logger.LogError(dbEx, "Error adding milestone to project {ProjectId}. Details: {Details}", resolvedProjectId, detail);
-                TempData["ErrorMessage"] = "Failed to add milestone: " + detail;
-            }
-            catch (Exception ex)
-            {
-                var detail = BuildExceptionDetails(ex);
-                _logger.LogError(ex, "Error adding milestone to project {ProjectId}. Details: {Details}", resolvedProjectId, detail);
-                TempData["ErrorMessage"] = "Failed to add milestone: " + detail;
+                // Create mode
+                var duplicate = await _context.ProjectMilestones.AnyAsync(pmst => pmst.ProjectId == resolvedProjectId && pmst.MilestoneId == resolvedMilestoneId);
+                if (duplicate)
+                {
+                    TempData["ErrorMessage"] = "Milestone already added to this project.";
+                    return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
+                }
+
+                var projectMilestone = new ProjectMilestone
+                {
+                    ProjectId = resolvedProjectId,
+                    MilestoneId = resolvedMilestoneId,
+                    SequenceOrder = resolvedSequenceOrder,
+                    Status = "Unfinished",
+                    DateCreated = DateTime.Now
+                };
+
+                try
+                {
+                    _context.ProjectMilestones.Add(projectMilestone);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Milestone added to project.";
+                    _logger.LogInformation("ProjectMilestone {Id} added to project {ProjectId} (milestone {MilestoneId})", projectMilestone.Id, projectMilestone.ProjectId, projectMilestone.MilestoneId);
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    var detail = BuildExceptionDetails(dbEx);
+                    _logger.LogError(dbEx, "Error adding milestone to project {ProjectId}. Details: {Details}", resolvedProjectId, detail);
+                    TempData["ErrorMessage"] = "Failed to add milestone: " + detail;
+                }
+                catch (Exception ex)
+                {
+                    var detail = BuildExceptionDetails(ex);
+                    _logger.LogError(ex, "Error adding milestone to project {ProjectId}. Details: {Details}", resolvedProjectId, detail);
+                    TempData["ErrorMessage"] = "Failed to add milestone: " + detail;
+                }
             }
 
             return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
