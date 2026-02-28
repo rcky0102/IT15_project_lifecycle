@@ -5,6 +5,7 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,7 +14,8 @@
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
     <!-- Stylesheets -->
@@ -43,12 +45,12 @@
             <div class="emp-sidebar-header">
                 <a href="@Url.Action("Index", "Dashboard", new { area = "Employee" })" class="emp-sidebar-brand">
                     <div class="emp-brand-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="7.5" r="3.5" fill="currentColor"/>
-                            <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+                        <img src="~/css/Images/LOGO (final).png" asp-append-version="true" alt="Project Lifecycle Logo" class="brand-logo emp-brand-logo" />
                     </div>
-                    <span class="emp-brand-text">Employee</span>
+                    <span class="emp-brand-text">
+                        Project <br />
+                        Lifecycle
+                    </span>
                 </a>
                 <button class="emp-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
                     <i class="fas fa-bars fa-sm"></i>
@@ -61,32 +63,31 @@
                 <ul class="emp-nav-list">
                     <li class="emp-nav-item">
                         <a href="@Url.Action("Index", "Dashboard", new { area = "Employee" })"
-                           class="emp-nav-link @(currentController == "Dashboard" ? "active" : "")"
-                           data-tooltip="Dashboard">
+                               class="emp-nav-link @(currentController == "Dashboard" ? "active" : "")"
+                               data-tooltip="Dashboard">
                             <i class="fas fa-th-large"></i>
                             <span class="emp-nav-text">Dashboard</span>
                         </a>
                     </li>
                     <li class="emp-nav-item">
                         <a href="@Url.Action("Index", "Project", new { area = "Employee" })"
-                           class="emp-nav-link @(currentController == "Project" ? "active" : "")"
-                           data-tooltip="Projects">
+                               class="emp-nav-link @(currentController == "Project" ? "active" : "")"
+                               data-tooltip="Projects">
                             <i class="fas fa-diagram-project"></i>
                             <span class="emp-nav-text">Projects</span>
                         </a>
                     </li>
                     <li class="emp-nav-item">
                         <a href="@Url.Action("Index", "Proposal", new { area = "Employee" })"
-                           class="emp-nav-link @(currentController == "Proposal" ? "active" : "")"
-                           data-tooltip="Proposals">
+                               class="emp-nav-link @(currentController == "Proposal" ? "active" : "")"
+                               data-tooltip="Proposals">
                             <i class="fas fa-file-lines"></i>
                             <span class="emp-nav-text">Proposals</span>
                         </a>
                     </li>
                     <li class="emp-nav-item">
                         <a href="@Url.Action("Index", "News", new { area = "Employee" })"
-                           class="emp-nav-link @(currentController == "News" ? "active" : "")"
-                           data-tooltip="News">
+                               class="emp-nav-link @(currentController == "News" ? "active" : "")"           data-tooltip="News">
                             <i class="fas fa-newspaper"></i>
                             <span class="emp-nav-text">News</span>
                         </a>
@@ -124,7 +125,8 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <nav class="emp-breadcrumb" aria-label="Breadcrumb">
-                        <a href="@Url.Action("Index", "Dashboard", new { area = "Employee" })" class="emp-breadcrumb-home">
+                        <a href="@Url.Action("Index", "Dashboard", new { area = "Employee" })"
+                               class="emp-breadcrumb-home">
                             <i class="fas fa-home"></i>
                         </a>
                         <span class="emp-breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
@@ -134,7 +136,8 @@
 
                 <div class="emp-header-right">
                     <div class="notif-wrapper">
-                        <button class="emp-header-btn notif-bell-btn" id="notifBellBtn" title="Notifications" aria-expanded="false">
+                        <button class="emp-header-btn notif-bell-btn" id="notifBellBtn" title="Notifications"
+                                aria-expanded="false">
                             <i class="fas fa-bell"></i>
                             <span class="notif-badge" id="notifBadge">0</span>
                             <span class="emp-notif-dot" id="notifDot" style="display:none"></span>
@@ -142,163 +145,207 @@
                         <div class="notif-dropdown" id="notifDropdown">
                             <div class="notif-dropdown-header">
                                 <h6><i class="fas fa-bell"></i> Notifications</h6>
-                                <button class="notif-mark-all" id="notifMarkAllRead" style="display:none">Mark all read</button>
+                                <button class="notif-mark-all" id="notifMarkAllRead" style="display:none">Mark all
+                                    read</button>
+                                </div>
+                                <div class="notif-list" id="notifList"></div>
+                                <div class="notif-empty" id="notifEmpty">
+                                    <i class="fas fa-bell-slash"></i>
+                                    <span>No notifications yet</span>
+                                </div>
                             </div>
-                            <div class="notif-list" id="notifList"></div>
-                            <div class="notif-empty" id="notifEmpty">
-                                <i class="fas fa-bell-slash"></i>
-                                <span>No notifications yet</span>
+                        </div>
+
+                        <div class="emp-header-divider"></div>
+
+                        <div class="emp-header-profile">
+                            <div class="emp-header-avatar">EM</div>
+                            <div class="emp-header-user-info">
+                                <div class="emp-header-greeting" id="headerGreeting">Welcome back</div>
+                                <div class="emp-header-name">Employee</div>
                             </div>
                         </div>
                     </div>
+                </header>
 
-                    <div class="emp-header-divider"></div>
+                <!-- Page Content -->
+                <main class="emp-content">
+                    @RenderBody()
+                </main>
+            </div>
 
-                    <div class="emp-header-profile">
-                        <div class="emp-header-avatar">EM</div>
-                        <div class="emp-header-user-info">
-                            <div class="emp-header-greeting" id="headerGreeting">Welcome back</div>
-                            <div class="emp-header-name">Employee</div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Page Content -->
-            <main class="emp-content">
-                @RenderBody()
-            </main>
         </div>
 
-    </div>
+        <!-- Logout confirmation modal + Scripts -->
 
-    <!-- Logout confirmation modal + Scripts -->
+        <style>
+            .emp-modal-backdrop {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(3, 7, 18, 0.6);
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                }
+            .emp-modal-backdrop.active {
+                    display: flex;
+                }
+            .emp-modal {
+                    background: #fff;
+                    border-radius: 12px;
+                    width: 94%;
+                    max-width: 420px;
+                    padding: 1.25rem;
+                    box-shadow: 0 10px 30px rgba(2, 6, 23, 0.35);
+                }
 
-    <style>
-    .emp-modal-backdrop { position: fixed; inset: 0; background: rgba(3,7,18,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
-    .emp-modal-backdrop.active { display: flex; }
-    .emp-modal { background: #fff; border-radius: 12px; width: 94%; max-width: 420px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(2,6,23,0.35); }
-    .emp-modal h4 { margin: 0 0 .5rem; font-size: 1.05rem; color: #0f172a; }
-    .emp-modal p { margin: 0 0 1rem; color: #64748b; font-size: .92rem; }
-    .emp-modal .emp-modal-actions { display:flex; gap:.5rem; justify-content:flex-end; }
-    .emp-modal .emp-btn { border-radius: 8px; padding: .5rem .85rem; font-weight:600; }
-    .emp-modal .emp-btn-cancel { background: transparent; border:1px solid #e6eef6; color:#475569; }
-    .emp-modal .emp-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color:#fff; border:none; }
-    </style>
+            .emp-modal h4 {
+                    margin: 0 0 .5rem;
+                    font-size: 1.05rem;
+                    color: #0f172a;
+                }
 
-    <div class="emp-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">
-        <div class="emp-modal" role="document">
-            <h4>Sign out</h4>
-            <p>Are you sure you want to sign out of your account?</p>
-            <div class="emp-modal-actions">
-                <button type="button" class="emp-btn emp-btn-cancel" id="cancelLogoutBtn">Cancel</button>
-                <button type="button" class="emp-btn emp-btn-confirm" id="confirmLogoutBtn">Sign out</button>
+            .emp-modal p {
+                    margin: 0 0 1rem;
+                    color: #64748b;
+                    font-size: .92rem;
+                }
+            .emp-modal .emp-modal-actions {
+                    display: flex;
+                    gap: .5rem;
+                    justify-content: flex-end;
+                }
+            .emp-modal .emp-btn {
+                    border-radius: 8px;
+                    padding: .5rem .85rem;
+                    font-weight: 600;
+                }
+            .emp-modal .emp-btn-cancel {
+                    background: transparent;
+                    border: 1px solid #e6eef6;
+                    color: #475569;
+                }
+            .emp-modal .emp-btn-confirm {
+                    background: linear-gradient(90deg, #006994, #4CA3DD);
+                    color: #fff;
+                    border: none;
+                }
+        </style>
+
+        <div class="emp-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">
+            <div class="emp-modal" role="document">
+                <h4>Sign out</h4>
+                <p>Are you sure you want to sign out of your account?</p>
+                <div class="emp-modal-actions">
+                    <button type="button" class="emp-btn emp-btn-cancel" id="cancelLogoutBtn">Cancel</button>
+                    <button type="button" class="emp-btn emp-btn-confirm" id="confirmLogoutBtn">Sign out</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Scripts -->
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="~/js/notifications.js" asp-append-version="true"></script>
+        <!-- Scripts -->
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        <script src="~/js/notifications.js" asp-append-version="true"></script>
 
-    <script>
-    (function () {
-        const sidebar  = document.getElementById('empSidebar');
-        const toggle   = document.getElementById('sidebarToggle');
-        const mobile   = document.getElementById('mobileSidebarToggle');
-        const overlay  = document.getElementById('sidebarOverlay');
-        const header   = document.getElementById('empHeader');
-        const greeting = document.getElementById('headerGreeting');
+        <script>
+            (function () {
+                const sidebar = document.getElementById('empSidebar');
+                const toggle = document.getElementById('sidebarToggle');
+                const mobile = document.getElementById('mobileSidebarToggle');
+                const overlay = document.getElementById('sidebarOverlay');
+                const header = document.getElementById('empHeader');
+                const greeting = document.getElementById('headerGreeting');
 
-        /* --- Time-based greeting --- */
-        const hour = new Date().getHours();
-        if (greeting) {
-            greeting.textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-        }
+                /* --- Time-based greeting --- */
+                const hour = new Date().getHours();
+                if (greeting) {
+                    greeting.textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+                }
 
-        /* --- Sidebar collapse toggle (desktop) --- */
-        toggle?.addEventListener('click', function () {
-            const icon = this.querySelector('i');
-            const collapsed = sidebar.classList.toggle('collapsed');
-            icon.className = collapsed ? 'fas fa-chevron-right fa-sm' : 'fas fa-bars fa-sm';
-            this.setAttribute('title', collapsed ? 'Expand Sidebar' : 'Collapse Sidebar');
-            localStorage.setItem('empSidebarCollapsed', collapsed);
-        });
+                /* --- Sidebar collapse toggle (desktop) --- */
+                toggle?.addEventListener('click', function () {
+                    const icon = this.querySelector('i');
+                    const collapsed = sidebar.classList.toggle('collapsed');
+                    icon.className = collapsed ? 'fas fa-chevron-right fa-sm' : 'fas fa-bars fa-sm';
+                    this.setAttribute('title', collapsed ? 'Expand Sidebar' : 'Collapse Sidebar');
+                    localStorage.setItem('empSidebarCollapsed', collapsed);
+                });
 
-        /* --- Restore collapsed state --- */
-        if (localStorage.getItem('empSidebarCollapsed') === 'true') {
-            sidebar?.classList.add('collapsed');
-            const icon = toggle?.querySelector('i');
-            if (icon) {
-                icon.className = 'fas fa-chevron-right fa-sm';
-                toggle.setAttribute('title', 'Expand Sidebar');
-            }
-        }
+                /* --- Restore collapsed state --- */
+                if (localStorage.getItem('empSidebarCollapsed') === 'true') {
+                    sidebar?.classList.add('collapsed');
+                    const icon = toggle?.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas fa-chevron-right fa-sm';
+                        toggle.setAttribute('title', 'Expand Sidebar');
+                    }
+                }
 
-        /* --- Mobile sidebar --- */
-        function openMobile()  { sidebar?.classList.add('mobile-open');    overlay?.classList.add('active'); }
-        function closeMobile() { sidebar?.classList.remove('mobile-open'); overlay?.classList.remove('active'); }
+                /* --- Mobile sidebar --- */
+                function openMobile() { sidebar?.classList.add('mobile-open'); overlay?.classList.add('active'); }
+                function closeMobile() { sidebar?.classList.remove('mobile-open'); overlay?.classList.remove('active'); }
 
-        mobile?.addEventListener('click', function () {
-            sidebar?.classList.contains('mobile-open') ? closeMobile() : openMobile();
-        });
-        overlay?.addEventListener('click', closeMobile);
+                mobile?.addEventListener('click', function () {
+                    sidebar?.classList.contains('mobile-open') ? closeMobile() : openMobile();
+                });
+                overlay?.addEventListener('click', closeMobile);
 
-        document.addEventListener('click', function (e) {
-            if (window.innerWidth <= 768 &&
-                sidebar?.classList.contains('mobile-open') &&
-                !sidebar.contains(e.target) &&
-                !mobile?.contains(e.target)) {
-                closeMobile();
-            }
-        });
+                document.addEventListener('click', function (e) {
+                    if (window.innerWidth <= 768 &&
+                        sidebar?.classList.contains('mobile-open') &&
+                        !sidebar.contains(e.target) &&
+                        !mobile?.contains(e.target)) {
+                        closeMobile();
+                    }
+                });
 
-        /* --- Sticky header shadow on scroll --- */
-        window.addEventListener('scroll', function () {
-            header?.classList.toggle('scrolled', window.scrollY > 8);
-        }, { passive: true });
+                /* --- Sticky header shadow on scroll --- */
+                window.addEventListener('scroll', function () {
+                    header?.classList.toggle('scrolled', window.scrollY > 8);
+                }, { passive: true });
 
-        /* --- Notifications --- */
-        if (typeof initNotifications === 'function') initNotifications();
+                /* --- Notifications --- */
+                if (typeof initNotifications === 'function') initNotifications();
 
-        /* --- Logout confirmation modal --- */
-        const logoutForm = document.getElementById('logoutForm');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const logoutModal = document.getElementById('logoutModal');
-        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
-        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+                /* --- Logout confirmation modal --- */
+                const logoutForm = document.getElementById('logoutForm');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const logoutModal = document.getElementById('logoutModal');
+                const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+                const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
 
-        function showLogoutModal() {
-            if (!logoutModal) return;
-            logoutModal.classList.add('active');
-            logoutModal.setAttribute('aria-hidden', 'false');
-        }
-        function hideLogoutModal() {
-            if (!logoutModal) return;
-            logoutModal.classList.remove('active');
-            logoutModal.setAttribute('aria-hidden', 'true');
-        }
+                function showLogoutModal() {
+                    if (!logoutModal) return;
+                    logoutModal.classList.add('active');
+                    logoutModal.setAttribute('aria-hidden', 'false');
+                }
+                function hideLogoutModal() {
+                    if (!logoutModal) return;
+                    logoutModal.classList.remove('active');
+                    logoutModal.setAttribute('aria-hidden', 'true');
+                }
 
-        logoutBtn?.addEventListener('click', function (e) {
-            e.preventDefault();
-            showLogoutModal();
-        });
+                logoutBtn?.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    showLogoutModal();
+                });
 
-        cancelLogoutBtn?.addEventListener('click', function () { hideLogoutModal(); });
+                cancelLogoutBtn?.addEventListener('click', function () { hideLogoutModal(); });
 
-        // Close modal when clicking backdrop
-        logoutModal?.addEventListener('click', function (e) {
-            if (e.target === logoutModal) hideLogoutModal();
-        });
+                // Close modal when clicking backdrop
+                logoutModal?.addEventListener('click', function (e) {
+                    if (e.target === logoutModal) hideLogoutModal();
+                });
 
-        confirmLogoutBtn?.addEventListener('click', function () {
-            if (logoutForm) logoutForm.submit();
-        });
-    })();
-    </script>
+                confirmLogoutBtn?.addEventListener('click', function () {
+                    if (logoutForm) logoutForm.submit();
+                });
+            })();
+        </script>
 
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
+        @await RenderSectionAsync("Scripts", required: false)
+    </body>
 </html>

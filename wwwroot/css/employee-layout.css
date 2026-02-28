@@ -71,6 +71,7 @@
     padding: 1.25rem 1rem 1.25rem 1.25rem;
     border-bottom: 1px solid rgba(255,255,255,.06);
     min-height: 72px;
+    position: relative;
 }
 
 .emp-sidebar-brand {
@@ -101,6 +102,27 @@
 
 .emp-brand-icon svg {
     color: #fff;
+}
+
+/* When the brand icon contains the actual project logo image */
+.emp-brand-icon:has(img) {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 50%;
+}
+
+.emp-brand-logo {
+    width: 38px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 105, 148, 0.25);
+    background: #ffffff;
+    transition: transform .3s var(--emp-ease);
+}
+
+.emp-sidebar-brand:hover .emp-brand-logo {
+    transform: scale(1.08) rotate(-3deg);
 }
 
 .emp-brand-text {
@@ -323,50 +345,81 @@
     width: var(--emp-sidebar-collapsed);
 }
 
+/* Hide text elements: shrink to zero width so they don't push layout */
 .emp-sidebar.collapsed .emp-brand-text,
 .emp-sidebar.collapsed .emp-nav-text,
 .emp-sidebar.collapsed .emp-nav-section-title,
 .emp-sidebar.collapsed .emp-user-details {
     opacity: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
     visibility: hidden;
     pointer-events: none;
+    position: absolute;
 }
 
+/* Header: keep row direction, center content */
 .emp-sidebar.collapsed .emp-sidebar-header {
     justify-content: center;
     padding: 1.25rem .5rem;
-    flex-direction: column;
-    gap: .5rem;
+    gap: 0;
 }
 
+/* Brand: center the logo icon, remove gap */
 .emp-sidebar.collapsed .emp-sidebar-brand {
     justify-content: center;
+    gap: 0;
 }
 
+/* Toggle button: overlay top-right corner */
 .emp-sidebar.collapsed .emp-sidebar-toggle {
+    position: absolute;
+    top: 1.25rem;
+    right: .5rem;
+    width: 28px;
+    height: 28px;
     margin: 0;
 }
 
+/* Nav list: tighter padding for icon-only view */
 .emp-sidebar.collapsed .emp-nav-list {
     padding: 0 .35rem;
 }
 
+/* Nav links: center icon, remove gap */
 .emp-sidebar.collapsed .emp-nav-link {
     justify-content: center;
     padding: .75rem .5rem;
+    gap: 0;
+}
+
+.emp-sidebar.collapsed .emp-nav-link i {
+    margin: 0;
 }
 
 .emp-sidebar.collapsed .emp-nav-link.active::before {
     display: none;
 }
 
+/* User card: compact centered layout */
 .emp-sidebar.collapsed .emp-user-card {
     justify-content: center;
     padding: .5rem;
+    gap: 0;
+}
+
+.emp-sidebar.collapsed .emp-user-avatar {
+    margin: 0;
 }
 
 .emp-sidebar.collapsed .emp-logout-form {
     display: none;
+}
+
+/* Footer: center content */
+.emp-sidebar.collapsed .emp-sidebar-footer {
+    padding: .75rem .35rem;
 }
 
 /* Tooltip on collapsed hover */
