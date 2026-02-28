@@ -320,7 +320,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 {
                     try
                     {
-                        var executive = new Executive
+                        var executive = new global::project_lifecycle.Models.Executive
                         {
                             UserId = user.Id,
                             EmployeeNumber = model.EmployeeNumber,
@@ -343,7 +343,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 {
                     try
                     {
-                        var departmentHead = new DepartmentHead
+                        var departmentHead = new global::project_lifecycle.Models.DepartmentHead
                         {
                             UserId = user.Id,
                             EmployeeNumber = model.EmployeeNumber,
@@ -366,7 +366,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 {
                     try
                     {
-                        var projectManager = new ProjectManager
+                        var projectManager = new global::project_lifecycle.Models.ProjectManager
                         {
                             UserId = user.Id,
                             EmployeeNumber = model.EmployeeNumber,
@@ -803,7 +803,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == user.Id);
                     if (dh == null)
                     {
-                        dh = new DepartmentHead { UserId = user.Id };
+                        dh = new global::project_lifecycle.Models.DepartmentHead { UserId = user.Id };
                         _context.DepartmentHeads.Add(dh);
                     }
                     dh.EmployeeNumber = model.EmployeeNumber;
@@ -829,7 +829,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     var ex = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == user.Id);
                     if (ex == null)
                     {
-                        ex = new Executive { UserId = user.Id };
+                        ex = new global::project_lifecycle.Models.Executive { UserId = user.Id };
                         _context.Executives.Add(ex);
                     }
                     ex.EmployeeNumber = model.EmployeeNumber;
@@ -855,7 +855,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     var pm = await _context.ProjectManagers.FirstOrDefaultAsync(p => p.UserId == user.Id);
                     if (pm == null)
                     {
-                        pm = new ProjectManager { UserId = user.Id };
+                        pm = new global::project_lifecycle.Models.ProjectManager { UserId = user.Id };
                         _context.ProjectManagers.Add(pm);
                     }
                     pm.EmployeeNumber = model.EmployeeNumber;

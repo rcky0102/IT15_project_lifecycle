@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/executive-dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/executive-reports.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/messenger.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
 </head>
 <body class="executive-body">
@@ -69,6 +70,15 @@
                            data-tooltip="Reports">
                             <i class="fas fa-chart-bar"></i>
                             <span class="exec-nav-text">Reports</span>
+                        </a>
+                    </li>
+                    <li class="exec-nav-item">
+                        <a href="@Url.Action("Index", "Messages", new { area = "Executive" })"
+                           class="exec-nav-link @(currentController == "Messages" ? "active" : "")"
+                           data-tooltip="Messages">
+                            <i class="fas fa-comment-dots"></i>
+                            <span class="exec-nav-text">Messages</span>
+                            <span class="msg-nav-badge" style="display:none"></span>
                         </a>
                     </li>
                 </ul>
@@ -182,6 +192,8 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/notifications.js" asp-append-version="true"></script>
+    <script src="~/lib/microsoft-signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/messenger.js" asp-append-version="true"></script>
 
     <script>
     (function () {

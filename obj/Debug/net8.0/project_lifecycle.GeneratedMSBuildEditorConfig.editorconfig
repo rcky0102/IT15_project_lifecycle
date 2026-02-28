@@ -46,6 +46,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcRGFzaGJvYXJkXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/DepartmentHead/Views/Messages/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcTWVzc2FnZXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/DepartmentHead/Views/Project/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcUHJvamVjdFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -100,6 +104,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/Employee/Views/Document/Version.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRW1wbG95ZWVcVmlld3NcRG9jdW1lbnRcVmVyc2lvbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/Employee/Views/Messages/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRW1wbG95ZWVcVmlld3NcTWVzc2FnZXNcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/Employee/Views/News/Index.cshtml]
@@ -166,6 +174,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRXhlY3V0aXZlXFZpZXdzXERhc2hib2FyZFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/Executive/Views/Messages/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRXhlY3V0aXZlXFZpZXdzXE1lc3NhZ2VzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/Executive/Views/Reports/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRXhlY3V0aXZlXFZpZXdzXFJlcG9ydHNcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -188,6 +200,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/HumanResource/Views/Management/Position/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSHVtYW5SZXNvdXJjZVxWaWV3c1xNYW5hZ2VtZW50XFBvc2l0aW9uXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/HumanResource/Views/Messages/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSHVtYW5SZXNvdXJjZVxWaWV3c1xNZXNzYWdlc1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/HumanResource/Views/User/Index.cshtml]
@@ -280,6 +296,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/ProjectManager/Views/Management/ProjectRole/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUHJvamVjdE1hbmFnZXJcVmlld3NcTWFuYWdlbWVudFxQcm9qZWN0Um9sZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/ProjectManager/Views/Messages/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcUHJvamVjdE1hbmFnZXJcVmlld3NcTWVzc2FnZXNcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/ProjectManager/Views/Project/Create.cshtml]
@@ -376,6 +396,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Views/Shared/_LoginPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Mb2dpblBhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Views/Shared/_MessengerPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9NZXNzZW5nZXJQYXJ0aWFsLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Views/Shared/_ValidationScriptsPartial.cshtml]

@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="~/css/hr-layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/hr-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/messenger.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -89,6 +90,19 @@
                            data-tooltip="Position">
                             <i class="fas fa-briefcase"></i>
                             <span class="hr-nav-text">Position</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <span class="hr-nav-section-title">Communication</span>
+                <ul class="hr-nav-list">
+                    <li class="hr-nav-item">
+                        <a href="@Url.Action("Index", "Messages", new { area = "HumanResource" })"
+                           class="hr-nav-link @(currentController == "Messages" ? "active" : "")"
+                           data-tooltip="Messages">
+                            <i class="fas fa-comment-dots"></i>
+                            <span class="hr-nav-text">Messages</span>
+                            <span class="msg-nav-badge" style="display:none"></span>
                         </a>
                     </li>
                 </ul>
@@ -202,6 +216,8 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/notifications.js" asp-append-version="true"></script>
+    <script src="~/lib/microsoft-signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/messenger.js" asp-append-version="true"></script>
 
     <script>
     (function () {

@@ -1,0 +1,75 @@
+<meta name="current-user-id" content="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+
+<div class="messenger-container">
+
+    <!-- ========== SIDEBAR ========== -->
+    <div class="messenger-sidebar" id="messengerSidebar">
+        <div class="messenger-sidebar-header">
+            <h2><i class="fas fa-comment-dots" style="color:#0866ff;margin-right:8px;"></i>Chats</h2>
+            <div class="messenger-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="messengerSearch" placeholder="Search conversations..." autocomplete="off" />
+            </div>
+            <div class="messenger-tabs">
+                <button class="messenger-tab-btn active" id="tabChats">
+                    <i class="fas fa-comments"></i> Chats
+                </button>
+                <button class="messenger-tab-btn" id="tabPeople">
+                    <i class="fas fa-user-plus"></i> People
+                </button>
+            </div>
+        </div>
+
+        <!-- Conversation list -->
+        <div class="messenger-conv-list" id="convList">
+            <div class="messenger-loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- People list -->
+        <div class="messenger-people-list" id="peopleList">
+            <div class="messenger-loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== CHAT AREA ========== -->
+    <div class="messenger-chat" id="chatArea">
+
+        <!-- Placeholder (no chat selected) -->
+        <div class="messenger-placeholder" id="chatPlaceholder">
+            <i class="fab fa-facebook-messenger"></i>
+            <h3>Your Messages</h3>
+            <p>Select a conversation or start a new one</p>
+        </div>
+
+        <!-- Active chat (hidden initially) -->
+        <div id="chatActive" style="display:none; flex-direction:column; flex:1; min-height:0;">
+
+            <!-- Chat Header -->
+            <div class="messenger-chat-header">
+                <button class="back-btn" id="chatBackBtn" title="Back">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="messenger-chat-header-avatar" id="chatHeaderAvatar">??</div>
+                <div class="messenger-chat-header-info">
+                    <div class="messenger-chat-header-name" id="chatHeaderName">Select a chat</div>
+                    <div class="messenger-chat-header-status" id="chatHeaderStatus"></div>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="messenger-messages" id="messagesContainer"></div>
+
+            <!-- Input -->
+            <div class="messenger-input-area">
+                <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
+                <button class="messenger-send-btn" id="sendBtn" title="Send">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

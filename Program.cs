@@ -16,6 +16,9 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
+// SignalR for real-time messaging
+builder.Services.AddSignalR();
+
 // Audit & HTTP context
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
@@ -70,5 +73,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+
+// SignalR Chat Hub
+app.MapHub<project_lifecycle.Hubs.ChatHub>("/chatHub");
 
 app.Run();

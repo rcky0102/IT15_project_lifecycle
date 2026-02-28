@@ -30,6 +30,9 @@ namespace project_lifecycle.Data
         public DbSet<Document> Documents { get; set; }
         public DbSet<DocumentCollaborator> DocumentCollaborators { get; set; }
         public DbSet<DocumentVersion> DocumentVersions { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<ConversationParticipant> ConversationParticipants { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -182,6 +185,31 @@ namespace project_lifecycle.Data
                 .HasOne(dv => dv.Employee)
                 .WithMany()
                 .HasForeignKey(dv => dv.EmployeeId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // ── Messaging ──
+            builder.Entity<ConversationParticipant>()
+                .HasOne(cp => cp.Conversation)
+                .WithMany(c => c.Participants)
+                .HasForeignKey(cp => cp.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ConversationParticipant>()
+                .HasOne(cp => cp.User)
+                .WithMany()
+                .HasForeignKey(cp => cp.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ChatMessage>()
+                .HasOne(m => m.Conversation)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ChatMessage>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }
