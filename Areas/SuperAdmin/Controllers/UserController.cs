@@ -657,55 +657,167 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Get user roles to determine which role-specific record to delete
+                var userEmail = user.Email;
                 var roles = await _userManager.GetRolesAsync(user);
-                
-                // Delete role-specific records
+
+                // ── 1. Clean up records that reference IdentityUser (UserId/SenderId) ──
+                var chatMessages = await _context.ChatMessages.Where(m => m.SenderId == id).ToListAsync();
+                _context.ChatMessages.RemoveRange(chatMessages);
+
+                var convParticipants = await _context.ConversationParticipants.Where(p => p.UserId == id).ToListAsync();
+                _context.ConversationParticipants.RemoveRange(convParticipants);
+
+                var notifications = await _context.Notifications.Where(n => n.RecipientId == id).ToListAsync();
+                _context.Notifications.RemoveRange(notifications);
+
+                var auditLogs = await _context.AuditLogs.Where(a => a.UserId == id).ToListAsync();
+                _context.AuditLogs.RemoveRange(auditLogs);
+
+                // ── 2. Clean up role-specific child records, then remove the role record ──
                 if (roles.Contains(Roles.Employee.ToString()))
                 {
                     var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == id);
                     if (employee != null)
                     {
+                        var empId = employee.Id;
+
+                        // Document children (versions & collaborators reference EmployeeId)
+                        var docVersions = await _context.DocumentVersions.Where(v => v.EmployeeId == empId).ToListAsync();
+                        _context.DocumentVersions.RemoveRange(docVersions);
+
+                        var docCollabs = await _context.DocumentCollaborators.Where(c => c.EmployeeId == empId).ToListAsync();
+                        _context.DocumentCollaborators.RemoveRange(docCollabs);
+
+                        var docs = await _context.Documents.Where(d => d.OwnerEmployeeId == empId).ToListAsync();
+                        foreach (var doc in docs)
+                        {
+                            var childVersions = await _context.DocumentVersions.Where(v => v.DocumentId == doc.Id).ToListAsync();
+                            _context.DocumentVersions.RemoveRange(childVersions);
+                            var childCollabs = await _context.DocumentCollaborators.Where(c => c.DocumentId == doc.Id).ToListAsync();
+                            _context.DocumentCollaborators.RemoveRange(childCollabs);
+                        }
+                        _context.Documents.RemoveRange(docs);
+
+                        // Proposal children
+                        var proposalVersions = await _context.ProjectProposalVersions.Where(v => v.EmployeeId == empId).ToListAsync();
+                        _context.ProjectProposalVersions.RemoveRange(proposalVersions);
+
+                        var proposals = await _context.ProjectProposals.Where(p => p.EmployeeId == empId).ToListAsync();
+                        foreach (var prop in proposals)
+                        {
+                            var propVersions = await _context.ProjectProposalVersions.Where(v => v.ProjectProposalId == prop.Id).ToListAsync();
+                            _context.ProjectProposalVersions.RemoveRange(propVersions);
+                            var propNotes = await _context.ProposalNoteVersions.Where(n => n.ProjectProposalId == prop.Id).ToListAsync();
+                            _context.ProposalNoteVersions.RemoveRange(propNotes);
+                        }
+                        _context.ProjectProposals.RemoveRange(proposals);
+
+                        // Task members → members
+                        var members = await _context.Members.Where(m => m.EmployeeId == empId).ToListAsync();
+                        foreach (var member in members)
+                        {
+                            var taskMembers = await _context.TaskMembers.Where(t => t.MemberId == member.Id).ToListAsync();
+                            _context.TaskMembers.RemoveRange(taskMembers);
+                        }
+                        _context.Members.RemoveRange(members);
+
                         _context.Employees.Remove(employee);
-                    }
-                }
-                else if (roles.Contains(Roles.HumanResource.ToString()))
-                {
-                    var humanResource = await _context.HumanResources.FirstOrDefaultAsync(hr => hr.UserId == id);
-                    if (humanResource != null)
-                    {
-                        _context.HumanResources.Remove(humanResource);
-                    }
-                }
-                else if (roles.Contains(Roles.DepartmentHead.ToString()))
-                {
-                    var departmentHead = await _context.DepartmentHeads.FirstOrDefaultAsync(dh => dh.UserId == id);
-                    if (departmentHead != null)
-                    {
-                        _context.DepartmentHeads.Remove(departmentHead);
-                    }
-                }
-                else if (roles.Contains(Roles.Executive.ToString()))
-                {
-                    var executive = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == id);
-                    if (executive != null)
-                    {
-                        _context.Executives.Remove(executive);
                     }
                 }
                 else if (roles.Contains(Roles.ProjectManager.ToString()))
                 {
-                    var projectManager = await _context.ProjectManagers.FirstOrDefaultAsync(pm => pm.UserId == id);
-                    if (projectManager != null)
+                    var pm = await _context.ProjectManagers.FirstOrDefaultAsync(e => e.UserId == id);
+                    if (pm != null)
                     {
-                        _context.ProjectManagers.Remove(projectManager);
+                        var pmId = pm.Id;
+
+                        // Task note versions
+                        var taskNotes = await _context.TaskNoteVersions.Where(v => v.ProjectManagerId == pmId).ToListAsync();
+                        _context.TaskNoteVersions.RemoveRange(taskNotes);
+
+                        // Project tasks owned by this PM
+                        var tasks = await _context.ProjectTasks.Where(t => t.ProjectManagerId == pmId).ToListAsync();
+                        foreach (var task in tasks)
+                        {
+                            var tm = await _context.TaskMembers.Where(t => t.ProjectTaskId == task.Id).ToListAsync();
+                            _context.TaskMembers.RemoveRange(tm);
+                            var tv = await _context.ProjectTaskVersions.Where(v => v.ProjectTaskId == task.Id).ToListAsync();
+                            _context.ProjectTaskVersions.RemoveRange(tv);
+                            var tn = await _context.TaskNoteVersions.Where(v => v.ProjectTaskId == task.Id).ToListAsync();
+                            _context.TaskNoteVersions.RemoveRange(tn);
+                        }
+                        _context.ProjectTasks.RemoveRange(tasks);
+
+                        // Projects owned by this PM
+                        var projects = await _context.Projects.Where(p => p.ProjectManagerId == pmId).ToListAsync();
+                        foreach (var proj in projects)
+                        {
+                            // Project milestones
+                            var pms = await _context.ProjectMilestones.Where(m => m.ProjectId == proj.Id).ToListAsync();
+                            _context.ProjectMilestones.RemoveRange(pms);
+
+                            // Members & task members
+                            var projMembers = await _context.Members.Where(m => m.ProjectId == proj.Id).ToListAsync();
+                            foreach (var member in projMembers)
+                            {
+                                var tms = await _context.TaskMembers.Where(t => t.MemberId == member.Id).ToListAsync();
+                                _context.TaskMembers.RemoveRange(tms);
+                            }
+                            _context.Members.RemoveRange(projMembers);
+
+                            // Project tasks (via milestones)
+                            var milestoneIds = pms.Select(m => m.Id).ToList();
+                            var projTasks = await _context.ProjectTasks.Where(t => milestoneIds.Contains(t.ProjectMilestoneId)).ToListAsync();
+                            foreach (var task in projTasks)
+                            {
+                                var tm = await _context.TaskMembers.Where(t => t.ProjectTaskId == task.Id).ToListAsync();
+                                _context.TaskMembers.RemoveRange(tm);
+                                var tv = await _context.ProjectTaskVersions.Where(v => v.ProjectTaskId == task.Id).ToListAsync();
+                                _context.ProjectTaskVersions.RemoveRange(tv);
+                                var tn = await _context.TaskNoteVersions.Where(v => v.ProjectTaskId == task.Id).ToListAsync();
+                                _context.TaskNoteVersions.RemoveRange(tn);
+                            }
+                            _context.ProjectTasks.RemoveRange(projTasks);
+                        }
+                        _context.Projects.RemoveRange(projects);
+
+                        _context.ProjectManagers.Remove(pm);
                     }
                 }
+                else if (roles.Contains(Roles.DepartmentHead.ToString()))
+                {
+                    var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == id);
+                    if (dh != null)
+                    {
+                        var dhId = dh.Id;
 
-                // Save changes to delete role-specific records first
+                        // Proposal note versions
+                        var propNotes = await _context.ProposalNoteVersions.Where(n => n.DepartmentHeadId == dhId).ToListAsync();
+                        _context.ProposalNoteVersions.RemoveRange(propNotes);
+
+                        // Nullify DepartmentHeadId on proposals (nullable FK)
+                        var proposals = await _context.ProjectProposals.Where(p => p.DepartmentHeadId == dhId).ToListAsync();
+                        foreach (var prop in proposals)
+                            prop.DepartmentHeadId = null;
+
+                        _context.DepartmentHeads.Remove(dh);
+                    }
+                }
+                else if (roles.Contains(Roles.HumanResource.ToString()))
+                {
+                    var hr = await _context.HumanResources.FirstOrDefaultAsync(h => h.UserId == id);
+                    if (hr != null) _context.HumanResources.Remove(hr);
+                }
+                else if (roles.Contains(Roles.Executive.ToString()))
+                {
+                    var ex = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == id);
+                    if (ex != null) _context.Executives.Remove(ex);
+                }
+
+                // ── 3. Persist all child-record removals ──
                 await _context.SaveChangesAsync();
 
-                // Delete the user from Identity
+                // ── 4. Delete the Identity user ──
                 var result = await _userManager.DeleteAsync(user);
                 
                 if (!result.Succeeded)
@@ -719,7 +831,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                await _audit.LogAsync(User, "Delete", "User Management", $"Deleted user '{user.Email}'", "User", id);
+                await _audit.LogAsync(User, "Delete", "User Management", $"Deleted user '{userEmail}'", "User", id);
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
@@ -731,13 +843,13 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception
                 Console.WriteLine($"Error deleting user: {ex.Message}");
+                Console.WriteLine($"Inner: {ex.InnerException?.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
-                    return Json(new { success = false, message = "An error occurred while deleting the user. Please try again." });
+                    return Json(new { success = false, message = $"An error occurred: {ex.InnerException?.Message ?? ex.Message}" });
                 }
                 
                 TempData["Error"] = "An error occurred while deleting the user. Please try again.";
