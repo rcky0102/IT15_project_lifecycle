@@ -173,47 +173,58 @@
 
 <!-- Create User Modal -->
 <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content modal-modern">
-            <div class="modal-header modal-header-ocean">
-                <h5 class="modal-title" id="createUserModalLabel">
-                    <i class="fas fa-user-plus"></i> Create New User
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body modal-body-custom">
-                <!-- Stepper Navigation -->
-                <div class="stepper-wrapper-modern">
-                    <div class="stepper-item completed" data-step="1">
-                        <div class="step-counter">1</div>
-                        <div class="step-name">Role Selection</div>
-                    </div>
-                    <div class="stepper-item" data-step="2">
-                        <div class="step-counter">2</div>
-                        <div class="step-name">Account Info</div>
-                    </div>
-                    <div class="stepper-item" data-step="3">
-                        <div class="step-counter">3</div>
-                        <div class="step-name">Personal Details</div>
-                    </div>
-                    <div class="stepper-item" data-step="4">
-                        <div class="step-counter">4</div>
-                        <div class="step-name">Review & Create</div>
-                    </div>
+    <div class="modal-dialog modal-dialog-scrollable modal-xl">
+        <div class="modal-content cp-modal">
+            <!-- Gradient Header -->
+            <div class="cp-modal-header">
+                <div>
+                    <h5 class="cp-modal-title" id="createUserModalLabel">
+                        <i class="fas fa-user-plus"></i> Create New User
+                    </h5>
+                    <p class="cp-modal-subtitle" id="stepSubtitle">Step 1 of 4 &mdash; Role Selection</p>
                 </div>
+                <button type="button" class="btn-close btn-close-white mt-1" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
 
+            <!-- Stepper Track -->
+            <div class="cp-stepper">
+                <div class="cp-step active" data-step="1" role="button" tabindex="0" aria-label="Go to Role step">
+                    <div class="cp-step-circle"><i class="fas fa-user-tag"></i></div>
+                    <span class="cp-step-label">Role</span>
+                </div>
+                <div class="cp-step-line" id="stepLine1"></div>
+                <div class="cp-step" data-step="2" role="button" tabindex="0" aria-label="Go to Account step">
+                    <div class="cp-step-circle"><i class="fas fa-envelope"></i></div>
+                    <span class="cp-step-label">Account</span>
+                </div>
+                <div class="cp-step-line" id="stepLine2"></div>
+                <div class="cp-step" data-step="3" role="button" tabindex="0" aria-label="Go to Details step">
+                    <div class="cp-step-circle"><i class="fas fa-id-card"></i></div>
+                    <span class="cp-step-label">Details</span>
+                </div>
+                <div class="cp-step-line" id="stepLine3"></div>
+                <div class="cp-step" data-step="4" role="button" tabindex="0" aria-label="Go to Review step">
+                    <div class="cp-step-circle"><i class="fas fa-check-circle"></i></div>
+                    <span class="cp-step-label">Review</span>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body cp-modal-body">
                 <form id="createUserForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="editingUserId" name="UserId" />
-                    
+
                     <!-- Step 1: Role Selection -->
-                    <div class="step-content" id="step1">
-                        <h6 class="step-title">Role Selection</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.Role" class="form-label form-label-custom"></label>
-                                    <select asp-for="CreateUserViewModel.Role" class="form-select form-select-custom" id="roleSelect">
+                    <div class="cp-step-panel" id="stepPanel1">
+                        <div class="modal-form-section">
+                            <div class="modal-section-title">
+                                <i class="fas fa-user-tag"></i> Role Selection
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="CreateUserViewModel.Role" class="form-label"></label>
+                                    <select asp-for="CreateUserViewModel.Role" class="form-select" id="roleSelect">
                                         <option value="">Select Role</option>
                                         <option value="HumanResource">Human Resource</option>
                                         <option value="DepartmentHead">Department Head</option>
@@ -224,38 +235,34 @@
                                     <span asp-validation-for="CreateUserViewModel.Role" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="role-description mt-3" id="roleDescription" style="display: none;">
-                            <div class="alert alert-ocean-light">
-                                <i class="fas fa-info-circle"></i> <span id="roleDescriptionText"></span>
+                            <div class="role-description mt-3" id="roleDescription" style="display: none;">
+                                <div class="alert-ocean-light" style="padding:.75rem 1rem;border-radius:10px;">
+                                    <i class="fas fa-info-circle"></i> <span id="roleDescriptionText"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Step 2: Account Information -->
-                    <div class="step-content" id="step2" style="display: none;">
-                        <h6 class="step-title">Account Information</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.Email" class="form-label form-label-custom"></label>
-                                    <input asp-for="CreateUserViewModel.Email" class="form-control form-control-custom" id="userEmail" placeholder="Enter email address" />
+                    <div class="cp-step-panel" id="stepPanel2" style="display: none;">
+                        <div class="modal-form-section">
+                            <div class="modal-section-title">
+                                <i class="fas fa-envelope"></i> Account Information
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="CreateUserViewModel.Email" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.Email" class="form-control" id="userEmail" placeholder="Enter email address" />
                                     <span asp-validation-for="CreateUserViewModel.Email" class="text-danger"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.Password" class="form-label form-label-custom"></label>
-                                    <input asp-for="CreateUserViewModel.Password" type="password" class="form-control form-control-custom" id="userPassword" placeholder="Enter password" />
+                                <div class="col-md-6">
+                                    <label asp-for="CreateUserViewModel.Password" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.Password" type="password" class="form-control" id="userPassword" placeholder="Enter password" />
                                     <span asp-validation-for="CreateUserViewModel.Password" class="text-danger"></span>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.ConfirmPassword" class="form-label form-label-custom"></label>
-                                    <input asp-for="CreateUserViewModel.ConfirmPassword" type="password" class="form-control form-control-custom" id="userConfirmPassword" placeholder="Confirm password" />
+                                <div class="col-md-6">
+                                    <label asp-for="CreateUserViewModel.ConfirmPassword" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.ConfirmPassword" type="password" class="form-control" id="userConfirmPassword" placeholder="Confirm password" />
                                     <span asp-validation-for="CreateUserViewModel.ConfirmPassword" class="text-danger"></span>
                                 </div>
                             </div>
@@ -263,54 +270,46 @@
                     </div>
 
                     <!-- Step 3: Personal Details -->
-                    <div class="step-content" id="step3" style="display: none;">
-                        <h6 class="step-title" id="personalDetailsTitle">Personal Details</h6>
-                        <div class="row" id="personalFieldsContainer" style="display: none;">
-                            <div class="col-md-4">
-                                <div class="mb-3" id="employeeNumberField" style="display: none;">
-                                    <label asp-for="CreateUserViewModel.EmployeeNumber" class="form-label form-label-custom"></label>
-                                    <input asp-for="CreateUserViewModel.EmployeeNumber" class="form-control form-control-custom" id="userEmployeeNumber" placeholder="Enter employee number" readonly />
+                    <div class="cp-step-panel" id="stepPanel3" style="display: none;">
+                        <div class="modal-form-section">
+                            <div class="modal-section-title" id="personalDetailsTitle">
+                                <i class="fas fa-id-card"></i> Personal Details
+                            </div>
+                            <div class="row g-3" id="personalFieldsContainer" style="display: none;">
+                                <div class="col-md-4" id="employeeNumberField" style="display: none;">
+                                    <label asp-for="CreateUserViewModel.EmployeeNumber" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.EmployeeNumber" class="form-control" id="userEmployeeNumber" placeholder="Enter employee number" readonly />
                                     <span asp-validation-for="CreateUserViewModel.EmployeeNumber" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row" id="nameFieldsContainer" style="display: none;">
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.FirstName" class="form-label form-label-custom"></label>
-                                    <input asp-for="CreateUserViewModel.FirstName" class="form-control form-control-custom" id="userFirstName" placeholder="Enter first name" />
+                            <div class="row g-3" id="nameFieldsContainer" style="display: none;">
+                                <div class="col-md-4">
+                                    <label asp-for="CreateUserViewModel.FirstName" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.FirstName" class="form-control" id="userFirstName" placeholder="Enter first name" />
                                     <span asp-validation-for="CreateUserViewModel.FirstName" class="text-danger"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.MiddleName" class="form-label form-label-custom"></label>
-                                    <input asp-for="CreateUserViewModel.MiddleName" class="form-control form-control-custom" id="userMiddleName" placeholder="Enter middle name (optional)" />
+                                <div class="col-md-4">
+                                    <label asp-for="CreateUserViewModel.MiddleName" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.MiddleName" class="form-control" id="userMiddleName" placeholder="Enter middle name (optional)" />
                                     <span asp-validation-for="CreateUserViewModel.MiddleName" class="text-danger"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.LastName" class="form-label form-label-custom"></label>
-                                    <input asp-for="CreateUserViewModel.LastName" class="form-control form-control-custom" id="userLastName" placeholder="Enter last name" />
+                                <div class="col-md-4">
+                                    <label asp-for="CreateUserViewModel.LastName" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.LastName" class="form-control" id="userLastName" placeholder="Enter last name" />
                                     <span asp-validation-for="CreateUserViewModel.LastName" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row" id="contactFieldsContainer" style="display: none;">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.Contact" class="form-label form-label-custom"></label>
-                                    <input asp-for="CreateUserViewModel.Contact" class="form-control form-control-custom" id="userContact" placeholder="Enter contact number" />
+                            <div class="row g-3" id="contactFieldsContainer" style="display: none;">
+                                <div class="col-md-6">
+                                    <label asp-for="CreateUserViewModel.Contact" class="form-label"></label>
+                                    <input asp-for="CreateUserViewModel.Contact" class="form-control" id="userContact" placeholder="Enter contact number" />
                                     <span asp-validation-for="CreateUserViewModel.Contact" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row" id="employmentFieldsContainer" style="display: none;">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.DepartmentId" class="form-label form-label-custom"></label>
-                                    <select asp-for="CreateUserViewModel.DepartmentId" class="form-select form-select-custom" id="userDepartmentId">
+                            <div class="row g-3" id="employmentFieldsContainer" style="display: none;">
+                                <div class="col-md-6">
+                                    <label asp-for="CreateUserViewModel.DepartmentId" class="form-label"></label>
+                                    <select asp-for="CreateUserViewModel.DepartmentId" class="form-select" id="userDepartmentId">
                                         <option value="">Select Department</option>
                                         @foreach (var dept in Model.CreateUserViewModel.Departments)
                                         {
@@ -319,11 +318,9 @@
                                     </select>
                                     <span asp-validation-for="CreateUserViewModel.DepartmentId" class="text-danger"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="CreateUserViewModel.PositionId" class="form-label form-label-custom"></label>
-                                    <select asp-for="CreateUserViewModel.PositionId" class="form-select form-select-custom" id="userPositionId">
+                                <div class="col-md-6">
+                                    <label asp-for="CreateUserViewModel.PositionId" class="form-label"></label>
+                                    <select asp-for="CreateUserViewModel.PositionId" class="form-select" id="userPositionId">
                                         <option value="">Select Position</option>
                                         @foreach (var pos in Model.CreateUserViewModel.Positions)
                                         {
@@ -333,31 +330,32 @@
                                     <span asp-validation-for="CreateUserViewModel.PositionId" class="text-danger"></span>
                                 </div>
                             </div>
+                            <input type="hidden" asp-for="CreateUserViewModel.DateHired" id="userDateHired" />
                         </div>
-                        <!-- Hidden date field for automatic date setting -->
-                        <input type="hidden" asp-for="CreateUserViewModel.DateHired" id="userDateHired" />
                     </div>
 
                     <!-- Step 4: Review & Create -->
-                    <div class="step-content" id="step4" style="display: none;">
-                        <h6 class="step-title">Review User Information</h6>
-                        <div class="card review-card">
-                            <div class="card-body">
+                    <div class="cp-step-panel" id="stepPanel4" style="display: none;">
+                        <div class="modal-form-section">
+                            <div class="modal-section-title">
+                                <i class="fas fa-check-circle"></i> Review User Information
+                            </div>
+                            <div class="sa-review-card">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h6 class="review-section-title">Account Information</h6>
+                                        <h6 class="sa-review-section-title">Account Information</h6>
                                         <p><strong>Email:</strong> <span id="reviewEmail">-</span></p>
                                         <p><strong>Role:</strong> <span id="reviewRole">-</span></p>
                                     </div>
                                     <div class="col-md-6">
-                                        <h6 class="review-section-title">Personal Information</h6>
+                                        <h6 class="sa-review-section-title">Personal Information</h6>
                                         <p><strong>Name:</strong> <span id="reviewName">-</span></p>
                                         <p><strong>Contact:</strong> <span id="reviewContact">-</span></p>
                                     </div>
                                 </div>
                                 <div class="row mt-3" id="reviewEmploymentInfo" style="display: none;">
                                     <div class="col-md-6">
-                                        <h6 class="review-section-title">Employment Information</h6>
+                                        <h6 class="sa-review-section-title">Employment Information</h6>
                                         <p><strong>Employee Number:</strong> <span id="reviewEmployeeNumber">-</span></p>
                                         <p><strong>Department:</strong> <span id="reviewDepartment">-</span></p>
                                         <p><strong>Position:</strong> <span id="reviewPosition">-</span></p>
@@ -365,26 +363,28 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="alert alert-warning-custom mt-3">
-                            <i class="fas fa-exclamation-triangle"></i> Please review all information before creating the user. This action cannot be undone.
+                            <div class="sa-alert-warning mt-3">
+                                <i class="fas fa-exclamation-triangle"></i> Please review all information before creating the user. This action cannot be undone.
+                            </div>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer modal-footer-custom">
-                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal" id="cancelBtn">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-secondary-custom" id="prevBtn" style="display: none;">
-                    <i class="fas fa-arrow-left"></i> Previous
-                </button>
-                <button type="button" class="btn btn-next" id="nextBtn">
-                    <i class="fas fa-arrow-right"></i> Next
-                </button>
-                <button type="button" class="btn btn-save-user" id="saveUserBtn" style="display: none;">
-                    <i class="fas fa-user-plus"></i> Create User
-                </button>
+
+            <!-- Stepper Footer -->
+            <div class="cp-modal-footer">
+                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal" id="cancelBtn">Cancel</button>
+                <div class="cp-step-nav">
+                    <button type="button" class="btn-modal-prev" id="prevBtn" style="display: none;">
+                        <i class="fas fa-chevron-left"></i> Back
+                    </button>
+                    <button type="button" class="btn-modal-next" id="nextBtn">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button type="button" class="btn-modal-submit" id="saveUserBtn" style="display: none;">
+                        <i class="fas fa-user-plus"></i> Create User
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -393,35 +393,39 @@
 <!-- Delete User Confirmation Modal -->
 <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content modal-modern">
-            <div class="modal-header modal-header-danger">
-                <h5 class="modal-title" id="deleteUserModalLabel">
-                    <i class="fas fa-exclamation-triangle"></i> Confirm User Deletion
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content cp-modal">
+            <div class="cp-modal-header cp-modal-header-danger">
+                <div>
+                    <h5 class="cp-modal-title" id="deleteUserModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm User Deletion
+                    </h5>
+                    <p class="cp-modal-subtitle">This action is permanent and cannot be reversed</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white mt-1" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body modal-body-custom">
-                <div class="alert alert-danger-custom" role="alert">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <strong>Warning:</strong> Are you sure you want to delete this user? This action cannot be undone.
+            <div class="modal-body cp-modal-body">
+                <div class="modal-form-section">
+                    <div class="sa-delete-warning">
+                        <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                        <p class="mb-1"><strong>Warning:</strong> Are you sure you want to delete this user?</p>
+                        <p class="mb-0">All associated data will be permanently removed.</p>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <strong>User Email:</strong> <span id="deleteUserEmail" class="text-danger"></span>
+                    </div>
                 </div>
-                
-                <div class="mb-3">
-                    <strong>User Email:</strong> <span id="deleteUserEmail"></span>
-                </div>
-                
                 <form id="deleteUserForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="deleteUserId" />
                 </form>
             </div>
-            <div class="modal-footer modal-footer-custom">
-                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-delete" id="confirmDeleteUserBtn">
-                    <i class="fas fa-trash"></i> Delete User
-                </button>
+            <div class="cp-modal-footer">
+                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <div class="cp-step-nav">
+                    <button type="button" class="btn-modal-delete" id="confirmDeleteUserBtn">
+                        <i class="fas fa-trash"></i> Delete User
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -546,24 +550,39 @@
                 showStep(1);
             }
 
+            // Step subtitles
+            const stepSubtitles = {
+                1: 'Step 1 of 4 &mdash; Role Selection',
+                2: 'Step 2 of 4 &mdash; Account Information',
+                3: 'Step 3 of 4 &mdash; Personal Details',
+                4: 'Step 4 of 4 &mdash; Review & Create'
+            };
+
             // Update stepper UI
             function updateStepperUI() {
-                $('.stepper-item').removeClass('active completed');
+                $('.cp-step').removeClass('active completed');
+                $('.cp-step-line').removeClass('completed');
                 
                 for (let i = 1; i <= totalSteps; i++) {
-                    const $stepItem = $('.stepper-item[data-step="' + i + '"]');
+                    const $stepItem = $('.cp-step[data-step="' + i + '"]');
                     if (i < currentStep) {
                         $stepItem.addClass('completed');
                     } else if (i === currentStep) {
                         $stepItem.addClass('active');
                     }
                 }
+                // Mark step lines as completed
+                for (let i = 1; i < currentStep; i++) {
+                    $('#stepLine' + i).addClass('completed');
+                }
+                // Update subtitle
+                $('#stepSubtitle').html(stepSubtitles[currentStep] || '');
             }
 
             // Show specific step
             function showStep(step) {
-                $('.step-content').hide();
-                $('#step' + step).show();
+                $('.cp-step-panel').hide();
+                $('#stepPanel' + step).fadeIn(250);
                 currentStep = step;
                 updateStepperUI();
                 updateButtons();
@@ -582,7 +601,7 @@
 
                 if (currentStep === 1) {
                     $prevBtn.hide();
-                    $nextBtn.show().html('<i class="fas fa-arrow-right"></i> Next');
+                    $nextBtn.show().html('Next <i class="fas fa-chevron-right"></i>');
                     $saveBtn.hide();
                 } else if (currentStep === totalSteps) {
                     $prevBtn.show();
@@ -594,9 +613,9 @@
                     $saveBtn.hide();
                     
                     if (currentStep === 3) {
-                        $nextBtn.html('<i class="fas fa-arrow-right"></i> Review');
+                        $nextBtn.html('Review <i class="fas fa-chevron-right"></i>');
                     } else {
-                        $nextBtn.html('<i class="fas fa-arrow-right"></i> Next');
+                        $nextBtn.html('Next <i class="fas fa-chevron-right"></i>');
                     }
                 }
             }
@@ -746,11 +765,11 @@
                     $personalFieldsContainer.show();
                     $nameFieldsContainer.show();
                     $contactFieldsContainer.show();
-                    $personalDetailsTitle.text(selectedRole === 'Employee' ? 'Employee Information' : 
-                                                  selectedRole === 'DepartmentHead' ? 'Department Head Information' :
-                                                  selectedRole === 'ProjectManager' ? 'Project Manager Information' :
-                                                  selectedRole === 'HumanResource' ? 'Human Resource Information' :
-                                                  selectedRole === 'Executive' ? 'Executive Information' : 'Personal Details');
+                    $personalDetailsTitle.html(selectedRole === 'Employee' ? '<i class="fas fa-id-card"></i> Employee Information' : 
+                                                  selectedRole === 'DepartmentHead' ? '<i class="fas fa-id-card"></i> Department Head Information' :
+                                                  selectedRole === 'ProjectManager' ? '<i class="fas fa-id-card"></i> Project Manager Information' :
+                                                  selectedRole === 'HumanResource' ? '<i class="fas fa-id-card"></i> Human Resource Information' :
+                                                  selectedRole === 'Executive' ? '<i class="fas fa-id-card"></i> Executive Information' : '<i class="fas fa-id-card"></i> Personal Details');
 
                     // Set required fields based on role
                     $('#userFirstName').prop('required', true);
@@ -898,7 +917,7 @@
                             
                             // Reset form
                             form[0].reset();
-                            $('.step-content').hide();
+                            $('.cp-step-panel').hide();
                             $('.role-description').hide();
                             $('.text-danger').text('');
                             
@@ -1073,7 +1092,7 @@
             // Reset form when modal is hidden
             $('#createUserModal').on('hidden.bs.modal', function () {
                 $('#createUserForm')[0].reset();
-                $('.step-content').hide();
+                $('.cp-step-panel').hide();
                 $('.role-description').hide();
                 $('.text-danger').text('');
                 $('.alert').remove();
@@ -1119,8 +1138,9 @@
                 $('#userPassword').val('');
                 $('#userConfirmPassword').val('');
 
-                // Show modal and go to Review step (or step 2 to allow changes)
+                // Show modal and go to Account step for editing
                 $('#createUserModal').modal('show');
+                $('#createUserModalLabel').html('<i class="fas fa-user-edit"></i> Edit User');
                 showStep(2);
 
                 // Update buttons/UI to editing mode
@@ -1202,7 +1222,7 @@
             initStepper();
 
             // Allow clicking the stepper circles to jump to that step
-            $('.stepper-item').on('click', function() {
+            $(document).on('click', '.cp-step', function() {
                 const step = $(this).data('step');
                 if (!step) return;
                 // If modal is not open, open it first
