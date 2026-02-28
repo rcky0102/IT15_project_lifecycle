@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,10 +8,10 @@ using project_lifecycle.Models;
 using project_lifecycle.Services;
 using project_lifecycle.ViewModels;
 
-namespace project_lifecycle.Areas.SuperAdmin.Controllers
+namespace project_lifecycle.Areas.HumanResource.Controllers
 {
-    [Area("SuperAdmin")]
-    [Authorize(Roles = "SuperAdmin")]
+    [Area("HumanResource")]
+    [Authorize(Roles = "HumanResource")]
     public class UserController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
@@ -31,22 +31,18 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             _audit = audit;
         }
 
-        // GET: /SuperAdmin/User/Index
         public async Task<IActionResult> Index()
         {
-            var viewModel = new UserListViewModel();
-            
-            // Get all users with specific admin roles and Employee role
             var users = await _userManager.Users.ToListAsync();
             var userDetails = new List<UserDetailsViewModel>();
 
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                if (roles.Contains(Roles.HumanResource.ToString()) || 
-                    roles.Contains(Roles.DepartmentHead.ToString()) || 
-                    roles.Contains(Roles.Executive.ToString()) || 
-                    roles.Contains(Roles.ProjectManager.ToString()) || 
+                if (roles.Contains(Roles.HumanResource.ToString()) ||
+                    roles.Contains(Roles.DepartmentHead.ToString()) ||
+                    roles.Contains(Roles.Executive.ToString()) ||
+                    roles.Contains(Roles.ProjectManager.ToString()) ||
                     roles.Contains(Roles.Employee.ToString()))
                 {
                     var userDetail = new UserDetailsViewModel
@@ -56,7 +52,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         Role = roles.FirstOrDefault() ?? "No Role"
                     };
 
-                    // Get role-specific details
                     if (roles.Contains(Roles.Employee.ToString()))
                     {
                         var employee = await _context.Employees
@@ -78,19 +73,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     else if (roles.Contains(Roles.HumanResource.ToString()))
                     {
                         var humanResource = await _context.HumanResources
-                            .Include(hr => hr.Department)
                             .Include(hr => hr.Position)
                             .FirstOrDefaultAsync(hr => hr.UserId == user.Id);
 
                         if (humanResource != null)
                         {
-                            userDetail.EmployeeNumber = humanResource.EmployeeNumber;
                             userDetail.FirstName = humanResource.FirstName;
                             userDetail.MiddleName = humanResource.MiddleName;
                             userDetail.LastName = humanResource.LastName;
-                            userDetail.DepartmentName = humanResource.Department?.Name;
                             userDetail.PositionName = humanResource.Position?.Name;
-                            userDetail.DateHired = humanResource.CreatedDate;
                         }
                     }
                     else if (roles.Contains(Roles.DepartmentHead.ToString()))
@@ -102,31 +93,25 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                         if (departmentHead != null)
                         {
-                            userDetail.EmployeeNumber = departmentHead.EmployeeNumber;
                             userDetail.FirstName = departmentHead.FirstName;
                             userDetail.MiddleName = departmentHead.MiddleName;
                             userDetail.LastName = departmentHead.LastName;
                             userDetail.DepartmentName = departmentHead.Department?.Name;
                             userDetail.PositionName = departmentHead.Position?.Name;
-                            userDetail.DateHired = departmentHead.CreatedDate;
                         }
                     }
                     else if (roles.Contains(Roles.Executive.ToString()))
                     {
                         var executive = await _context.Executives
-                            .Include(e => e.Department)
                             .Include(e => e.Position)
                             .FirstOrDefaultAsync(e => e.UserId == user.Id);
 
                         if (executive != null)
                         {
-                            userDetail.EmployeeNumber = executive.EmployeeNumber;
                             userDetail.FirstName = executive.FirstName;
                             userDetail.MiddleName = executive.MiddleName;
                             userDetail.LastName = executive.LastName;
-                            userDetail.DepartmentName = executive.Department?.Name;
                             userDetail.PositionName = executive.Position?.Name;
-                            userDetail.DateHired = executive.CreatedDate;
                         }
                     }
                     else if (roles.Contains(Roles.ProjectManager.ToString()))
@@ -138,13 +123,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                         if (projectManager != null)
                         {
-                            userDetail.EmployeeNumber = projectManager.EmployeeNumber;
                             userDetail.FirstName = projectManager.FirstName;
                             userDetail.MiddleName = projectManager.MiddleName;
                             userDetail.LastName = projectManager.LastName;
                             userDetail.DepartmentName = projectManager.Department?.Name;
                             userDetail.PositionName = projectManager.Position?.Name;
-                            userDetail.DateHired = projectManager.CreatedDate;
                         }
                     }
 
@@ -152,38 +135,36 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 }
             }
 
-            viewModel.Users = userDetails;
-            
-            // Prepare create user form
             var departments = await _context.Departments.ToListAsync();
             var positions = await _context.Positions.ToListAsync();
-            
-            // Debug: Log counts
-            Console.WriteLine($"Departments count: {departments.Count}");
-            Console.WriteLine($"Positions count: {positions.Count}");
-            
-            viewModel.CreateUserViewModel = new CreateUserViewModel
+
+            var model = new UserListViewModel
             {
-                Departments = departments,
-                Positions = positions
+                Users = userDetails,
+                CreateUserViewModel = new CreateUserViewModel
+                {
+                    Departments = departments,
+                    Positions = positions
+                }
             };
 
-            return View(viewModel);
+            return View(model);
         }
 
-        // POST: /SuperAdmin/User/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateUserViewModel model)
         {
             try
             {
+                ModelState.Remove("UserId");
+                ModelState.Remove("ConfirmPassword");
+
                 if (!ModelState.IsValid)
                 {
-                    // Reload dropdown data
                     model.Departments = await _context.Departments.ToListAsync();
                     model.Positions = await _context.Positions.ToListAsync();
-                    
+
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
                         var errors = ModelState.ToDictionary(
@@ -192,24 +173,23 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         );
                         return Json(new { success = false, errors = errors });
                     }
-                    
+
                     var viewModel = new UserListViewModel
                     {
                         CreateUserViewModel = model,
                         Users = await GetUserListAsync()
                     };
-                    
+
                     return View("Index", viewModel);
                 }
 
-                // Check if email already exists
                 var existingUser = await _userManager.FindByEmailAsync(model.Email);
                 if (existingUser != null)
                 {
                     ModelState.AddModelError("Email", "Email already exists");
                     model.Departments = await _context.Departments.ToListAsync();
                     model.Positions = await _context.Positions.ToListAsync();
-                    
+
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
                         var errors = ModelState.ToDictionary(
@@ -218,17 +198,16 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         );
                         return Json(new { success = false, errors = errors });
                     }
-                    
+
                     var viewModel = new UserListViewModel
                     {
                         CreateUserViewModel = model,
                         Users = await GetUserListAsync()
                     };
-                    
+
                     return View("Index", viewModel);
                 }
 
-                // Create user
                 var user = new IdentityUser
                 {
                     UserName = model.Email,
@@ -237,17 +216,17 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
-                
+
                 if (!result.Succeeded)
                 {
                     foreach (var error in result.Errors)
                     {
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
-                    
+
                     model.Departments = await _context.Departments.ToListAsync();
                     model.Positions = await _context.Positions.ToListAsync();
-                    
+
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
                         var errors = ModelState.ToDictionary(
@@ -256,17 +235,16 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         );
                         return Json(new { success = false, errors = errors });
                     }
-                    
+
                     var viewModel = new UserListViewModel
                     {
                         CreateUserViewModel = model,
                         Users = await GetUserListAsync()
                     };
-                    
+
                     return View("Index", viewModel);
                 }
 
-                // Add role to user
                 if (!await _roleManager.RoleExistsAsync(model.Role))
                 {
                     await _roleManager.CreateAsync(new IdentityRole(model.Role));
@@ -274,7 +252,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                 await _userManager.AddToRoleAsync(user, model.Role);
 
-                // Create role-specific record using more robust comparison
                 if (model.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
                 {
                     var employee = new global::project_lifecycle.Models.Employee
@@ -383,10 +360,10 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     }
                 }
 
-                if (model.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase) || 
-                    model.Role.Equals("HumanResource", StringComparison.OrdinalIgnoreCase) || 
-                    model.Role.Equals("DepartmentHead", StringComparison.OrdinalIgnoreCase) || 
-                    model.Role.Equals("Executive", StringComparison.OrdinalIgnoreCase) || 
+                if (model.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase) ||
+                    model.Role.Equals("HumanResource", StringComparison.OrdinalIgnoreCase) ||
+                    model.Role.Equals("DepartmentHead", StringComparison.OrdinalIgnoreCase) ||
+                    model.Role.Equals("Executive", StringComparison.OrdinalIgnoreCase) ||
                     model.Role.Equals("ProjectManager", StringComparison.OrdinalIgnoreCase))
                 {
                     await _context.SaveChangesAsync();
@@ -404,54 +381,48 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception details
                 Console.WriteLine($"Error creating user: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 if (ex.InnerException != null)
                 {
                     Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
-                    Console.WriteLine($"Inner exception stack trace: {ex.InnerException.StackTrace}");
                 }
 
-                // Build detailed error message
                 var errorMessage = ex.Message;
                 if (ex.InnerException != null)
                 {
                     errorMessage = $"{ex.Message} - {ex.InnerException.Message}";
-                    // Check for database errors
                     if (ex.InnerException.InnerException != null)
                     {
                         errorMessage = $"{errorMessage} - {ex.InnerException.InnerException.Message}";
                     }
                 }
 
-                // Handle AJAX requests with error response
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     var errorDict = new Dictionary<string, string[]>
                     {
                         { "General", new[] { errorMessage } }
                     };
-                    return Json(new { 
-                        success = false, 
+                    return Json(new {
+                        success = false,
                         message = "Error creating user",
                         detailedMessage = errorMessage,
                         errors = errorDict
                     });
                 }
 
-                // For non-AJAX requests, add error to ModelState and return the view
                 ModelState.AddModelError("", $"An error occurred: {errorMessage}");
                 model.Departments = await _context.Departments.ToListAsync();
                 model.Positions = await _context.Positions.ToListAsync();
-                
-                var viewModel = new UserListViewModel
+
+                var vm = new UserListViewModel
                 {
                     CreateUserViewModel = model,
                     Users = await GetUserListAsync()
                 };
-                
-                return View("Index", viewModel);
+
+                return View("Index", vm);
             }
         }
 
@@ -463,10 +434,10 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                if (roles.Contains(Roles.HumanResource.ToString()) || 
-                    roles.Contains(Roles.DepartmentHead.ToString()) || 
-                    roles.Contains(Roles.Executive.ToString()) || 
-                    roles.Contains(Roles.ProjectManager.ToString()) || 
+                if (roles.Contains(Roles.HumanResource.ToString()) ||
+                    roles.Contains(Roles.DepartmentHead.ToString()) ||
+                    roles.Contains(Roles.Executive.ToString()) ||
+                    roles.Contains(Roles.ProjectManager.ToString()) ||
                     roles.Contains(Roles.Employee.ToString()))
                 {
                     var userDetail = new UserDetailsViewModel
@@ -476,7 +447,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         Role = roles.FirstOrDefault() ?? "No Role"
                     };
 
-                    // Get role-specific details
                     if (roles.Contains(Roles.Employee.ToString()))
                     {
                         var employee = await _context.Employees
@@ -563,7 +533,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             return userDetails;
         }
 
-        // POST: /SuperAdmin/User/Delete
+        // POST: /HumanResource/User/Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string id)
@@ -591,57 +561,38 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Get user roles to determine which role-specific record to delete
                 var roles = await _userManager.GetRolesAsync(user);
-                
-                // Delete role-specific records
+
                 if (roles.Contains(Roles.Employee.ToString()))
                 {
                     var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == id);
-                    if (employee != null)
-                    {
-                        _context.Employees.Remove(employee);
-                    }
+                    if (employee != null) _context.Employees.Remove(employee);
                 }
                 else if (roles.Contains(Roles.HumanResource.ToString()))
                 {
                     var humanResource = await _context.HumanResources.FirstOrDefaultAsync(hr => hr.UserId == id);
-                    if (humanResource != null)
-                    {
-                        _context.HumanResources.Remove(humanResource);
-                    }
+                    if (humanResource != null) _context.HumanResources.Remove(humanResource);
                 }
                 else if (roles.Contains(Roles.DepartmentHead.ToString()))
                 {
                     var departmentHead = await _context.DepartmentHeads.FirstOrDefaultAsync(dh => dh.UserId == id);
-                    if (departmentHead != null)
-                    {
-                        _context.DepartmentHeads.Remove(departmentHead);
-                    }
+                    if (departmentHead != null) _context.DepartmentHeads.Remove(departmentHead);
                 }
                 else if (roles.Contains(Roles.Executive.ToString()))
                 {
                     var executive = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == id);
-                    if (executive != null)
-                    {
-                        _context.Executives.Remove(executive);
-                    }
+                    if (executive != null) _context.Executives.Remove(executive);
                 }
                 else if (roles.Contains(Roles.ProjectManager.ToString()))
                 {
                     var projectManager = await _context.ProjectManagers.FirstOrDefaultAsync(pm => pm.UserId == id);
-                    if (projectManager != null)
-                    {
-                        _context.ProjectManagers.Remove(projectManager);
-                    }
+                    if (projectManager != null) _context.ProjectManagers.Remove(projectManager);
                 }
 
-                // Save changes to delete role-specific records first
                 await _context.SaveChangesAsync();
 
-                // Delete the user from Identity
                 var result = await _userManager.DeleteAsync(user);
-                
+
                 if (!result.Succeeded)
                 {
                     var errorMessages = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -665,21 +616,19 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception
                 Console.WriteLine($"Error deleting user: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                
+
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     return Json(new { success = false, message = "An error occurred while deleting the user. Please try again." });
                 }
-                
+
                 TempData["Error"] = "An error occurred while deleting the user. Please try again.";
                 return RedirectToAction(nameof(Index));
             }
         }
 
-        // POST: /SuperAdmin/User/Update
+        // POST: /HumanResource/User/Update
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Update(CreateUserViewModel model)
@@ -707,7 +656,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Update email if changed
                 if (!string.IsNullOrEmpty(model.Email) && !string.Equals(user.Email, model.Email, StringComparison.OrdinalIgnoreCase))
                 {
                     user.Email = model.Email;
@@ -715,11 +663,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     await _userManager.UpdateAsync(user);
                 }
 
-                // Update role if necessary
                 var currentRoles = await _userManager.GetRolesAsync(user);
                 if (!currentRoles.Contains(model.Role))
                 {
-                    // Remove all and add the new role
                     if (currentRoles.Any())
                     {
                         await _userManager.RemoveFromRolesAsync(user, currentRoles);
@@ -731,8 +677,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     await _userManager.AddToRoleAsync(user, model.Role);
                 }
 
-                // Update role-specific records: update if exists, create if missing
-                // Employee
                 if (model.Role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
                 {
                     var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
@@ -741,7 +685,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         employee = new global::project_lifecycle.Models.Employee { UserId = user.Id };
                         _context.Employees.Add(employee);
                     }
-
                     employee.EmployeeNumber = model.EmployeeNumber;
                     employee.FirstName = model.FirstName;
                     employee.MiddleName = model.MiddleName;
@@ -752,15 +695,10 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 }
                 else
                 {
-                    // Remove employee record if role changed away from Employee
                     var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
-                    if (employee != null)
-                    {
-                        _context.Employees.Remove(employee);
-                    }
+                    if (employee != null) _context.Employees.Remove(employee);
                 }
 
-                // HumanResource
                 if (model.Role.Equals("HumanResource", StringComparison.OrdinalIgnoreCase))
                 {
                     var hr = await _context.HumanResources.FirstOrDefaultAsync(h => h.UserId == user.Id);
@@ -779,13 +717,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 else
                 {
                     var hr = await _context.HumanResources.FirstOrDefaultAsync(h => h.UserId == user.Id);
-                    if (hr != null)
-                    {
-                        _context.HumanResources.Remove(hr);
-                    }
+                    if (hr != null) _context.HumanResources.Remove(hr);
                 }
 
-                // DepartmentHead
                 if (model.Role.Equals("DepartmentHead", StringComparison.OrdinalIgnoreCase))
                 {
                     var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == user.Id);
@@ -805,13 +739,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 else
                 {
                     var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == user.Id);
-                    if (dh != null)
-                    {
-                        _context.DepartmentHeads.Remove(dh);
-                    }
+                    if (dh != null) _context.DepartmentHeads.Remove(dh);
                 }
 
-                // Executive
                 if (model.Role.Equals("Executive", StringComparison.OrdinalIgnoreCase))
                 {
                     var ex = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == user.Id);
@@ -831,13 +761,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 else
                 {
                     var ex = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == user.Id);
-                    if (ex != null)
-                    {
-                        _context.Executives.Remove(ex);
-                    }
+                    if (ex != null) _context.Executives.Remove(ex);
                 }
 
-                // ProjectManager
                 if (model.Role.Equals("ProjectManager", StringComparison.OrdinalIgnoreCase))
                 {
                     var pm = await _context.ProjectManagers.FirstOrDefaultAsync(p => p.UserId == user.Id);
@@ -857,13 +783,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 else
                 {
                     var pm = await _context.ProjectManagers.FirstOrDefaultAsync(p => p.UserId == user.Id);
-                    if (pm != null)
-                    {
-                        _context.ProjectManagers.Remove(pm);
-                    }
+                    if (pm != null) _context.ProjectManagers.Remove(pm);
                 }
 
-                // Update password if provided (admin reset)
                 if (!string.IsNullOrEmpty(model.Password))
                 {
                     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -875,7 +797,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             ModelState.AddModelError(string.Empty, error.Description);
                         }
 
-                        // Return validation errors for AJAX requests
                         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                         {
                             var errors = ModelState.ToDictionary(
@@ -885,7 +806,6 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             return Json(new { success = false, errors = errors });
                         }
 
-                        // For non-AJAX, reload dropdowns and return to Index with model errors
                         model.Departments = await _context.Departments.ToListAsync();
                         model.Positions = await _context.Positions.ToListAsync();
                         var viewModel = new UserListViewModel
