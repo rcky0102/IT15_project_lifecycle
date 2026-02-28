@@ -18,17 +18,20 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogService _audit;
+        private readonly INotificationService _notif;
 
         public UserController(
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
             ApplicationDbContext context,
-            IAuditLogService audit)
+            IAuditLogService audit,
+            INotificationService notif)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
             _audit = audit;
+            _notif = notif;
         }
 
         // GET: /SuperAdmin/User/Index
@@ -393,6 +396,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 }
 
                 await _audit.LogAsync(User, "Create", "User Management", $"Created user '{model.FirstName} {model.LastName}' ({model.Email}) with role {model.Role}", "User", user.Id);
+
+                await _notif.CreateAsync(
+                    recipientId: user.Id,
+                    title: "Welcome!",
+                    message: $"Your account has been created with the role {model.Role}.",
+                    type: "Success",
+                    link: "/",
+                    module: "User Management"
+                );
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
@@ -900,6 +912,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 await _context.SaveChangesAsync();
 
                 await _audit.LogAsync(User, "Update", "User Management", $"Updated user '{model.FirstName} {model.LastName}' ({model.Email}) – role: {model.Role}", "User", model.UserId);
+
+                await _notif.CreateAsync(
+                    recipientId: model.UserId,
+                    title: "Account Updated",
+                    message: "Your account details have been updated by an administrator.",
+                    type: "Info",
+                    link: "/",
+                    module: "User Management"
+                );
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {

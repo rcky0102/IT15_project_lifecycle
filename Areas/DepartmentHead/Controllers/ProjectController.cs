@@ -22,12 +22,14 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
         private readonly ApplicationDbContext _context;
         private readonly INagerHolidayService _holidayService;
         private readonly IAuditLogService _audit;
+        private readonly INotificationService _notif;
 
-        public ProjectController(ApplicationDbContext context, INagerHolidayService holidayService, IAuditLogService audit)
+        public ProjectController(ApplicationDbContext context, INagerHolidayService holidayService, IAuditLogService audit, INotificationService notif)
         {
             _context = context;
             _holidayService = holidayService;
             _audit = audit;
+            _notif = notif;
         }
 
         [HttpGet]
@@ -175,6 +177,34 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             TempData["SuccessMessage"] = "Project created successfully.";
             await _audit.LogAsync(User, "Create", "Projects", $"Created project '{project.Name}' (ID: {project.Id})", "Project", project.Id.ToString());
+
+            // Notify the assigned project manager
+            var pmEntity = await _context.ProjectManagers.FirstOrDefaultAsync(p => p.Id == project.ProjectManagerId);
+            if (pmEntity != null && !string.IsNullOrEmpty(pmEntity.UserId))
+            {
+                await _notif.CreateAsync(pmEntity.UserId,
+                    "New Project Assigned",
+                    $"You have been assigned as project manager for '{project.Name}'.",
+                    "Success", "fas fa-diagram-project",
+                    $"/ProjectManager/Project/Details/{project.Id}",
+                    "Project");
+            }
+
+            // Notify team members added to the project
+            foreach (var mp in uniqueMembers)
+            {
+                var emp = await _context.Employees.FirstOrDefaultAsync(e => e.Id == mp.EmployeeId);
+                if (emp != null && !string.IsNullOrEmpty(emp.UserId))
+                {
+                    await _notif.CreateAsync(emp.UserId,
+                        "Added to Project",
+                        $"You have been added to project '{project.Name}'.",
+                        "Info", "fas fa-users",
+                        $"/Employee/Project/Details/{project.Id}",
+                        "Project");
+                }
+            }
+
             return RedirectToAction(nameof(Index));
         }
 

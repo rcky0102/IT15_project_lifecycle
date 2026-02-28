@@ -19,6 +19,7 @@ builder.Services.AddControllersWithViews();
 // Audit & HTTP context
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Nager.Date holiday API service
 builder.Services.AddHttpClient<INagerHolidayService, NagerHolidayService>();

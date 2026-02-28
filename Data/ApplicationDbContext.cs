@@ -26,6 +26,7 @@ namespace project_lifecycle.Data
         public DbSet<ProjectProposalVersion> ProjectProposalVersions { get; set; }
         public DbSet<ProposalNoteVersion> ProposalNoteVersions { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

@@ -17,13 +17,15 @@ namespace project_lifecycle.EmployeeArea.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<ProposalController> _logger;
         private readonly IAuditLogService _audit;
+        private readonly INotificationService _notif;
 
-        public ProposalController(ApplicationDbContext context, UserManager<IdentityUser> userManager, ILogger<ProposalController> logger, IAuditLogService audit)
+        public ProposalController(ApplicationDbContext context, UserManager<IdentityUser> userManager, ILogger<ProposalController> logger, IAuditLogService audit, INotificationService notif)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
             _audit = audit;
+            _notif = notif;
         }
 
         public IActionResult Index(string archiveFilter = "active")
@@ -158,6 +160,21 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     _logger.LogInformation($"Proposal saved successfully. ProposalId: {proposal.Id}");
                     TempData["SuccessMessage"] = $"Proposal '{proposal.Title}' submitted successfully.";
                     await _audit.LogAsync(User, "Create", "Proposals", $"Created proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
+
+                    // Notify department head(s) of the employee's department
+                    var dhUsers = await _context.DepartmentHeads
+                        .Where(d => d.DepartmentId == employee.DepartmentId && !string.IsNullOrEmpty(d.UserId))
+                        .Select(d => d.UserId)
+                        .ToListAsync();
+                    foreach (var dhUserId in dhUsers)
+                    {
+                        await _notif.CreateAsync(dhUserId!,
+                            "New Proposal Submitted",
+                            $"A new proposal '{proposal.Title}' has been submitted for review.",
+                            "Info", "fas fa-file-circle-plus",
+                            $"/DepartmentHead/Proposal/Details/{proposal.Id}",
+                            "Proposal");
+                    }
                 }
                 else
                 {
@@ -400,6 +417,21 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 await _context.SaveChangesAsync();
 
                 await _audit.LogAsync(User, "Update", "Proposals", $"Edited proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
+
+                // Notify department head(s) that a proposal was revised
+                var dhUsers = await _context.DepartmentHeads
+                    .Where(d => d.DepartmentId == employee.DepartmentId && !string.IsNullOrEmpty(d.UserId))
+                    .Select(d => d.UserId)
+                    .ToListAsync();
+                foreach (var dhUserId in dhUsers)
+                {
+                    await _notif.CreateAsync(dhUserId!,
+                        "Proposal Revised",
+                        $"Proposal '{proposal.Title}' has been revised and is ready for review.",
+                        "Info", "fas fa-pen-to-square",
+                        $"/DepartmentHead/Proposal/Details/{proposal.Id}",
+                        "Proposal");
+                }
 
                 TempData["SuccessMessage"] = "Proposal updated and previous version saved.";
                 return RedirectToAction("Details", new { id = proposal.Id });

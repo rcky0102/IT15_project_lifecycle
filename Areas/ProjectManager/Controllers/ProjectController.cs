@@ -23,12 +23,14 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         private readonly ApplicationDbContext _context;
         private readonly Microsoft.Extensions.Logging.ILogger<ProjectController> _logger;
         private readonly IAuditLogService _audit;
+        private readonly INotificationService _notif;
 
-        public ProjectController(ApplicationDbContext context, Microsoft.Extensions.Logging.ILogger<ProjectController> logger, IAuditLogService audit)
+        public ProjectController(ApplicationDbContext context, Microsoft.Extensions.Logging.ILogger<ProjectController> logger, IAuditLogService audit, INotificationService notif)
         {
             _context = context;
             _logger = logger;
             _audit = audit;
+            _notif = notif;
         }
 
         private async Task<ProjectManager?> GetCurrentProjectManagerAsync()
@@ -516,6 +518,29 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             TempData["SuccessMessage"] = "Task updated.";
             await _audit.LogAsync(User, "Update", "Tasks", $"Updated task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
 
+            // Notify assigned employee(s) about the task review
+            if (!string.IsNullOrEmpty(action))
+            {
+                var assignedMembers = await _context.TaskMembers
+                    .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                    .Where(tm => tm.ProjectTaskId == id)
+                    .ToListAsync();
+
+                var (nTitle, nMsg, nType, nIcon) = action == "Checked"
+                    ? ("Task Approved", $"Your task '{task.Name}' has been marked as checked.", "Success", "fas fa-circle-check")
+                    : ("Revision Required", $"Your task '{task.Name}' requires revision.", "Warning", "fas fa-exclamation-triangle");
+
+                foreach (var tm in assignedMembers)
+                {
+                    var empUserId = tm.Member?.Employee?.UserId;
+                    if (!string.IsNullOrEmpty(empUserId))
+                    {
+                        await _notif.CreateAsync(empUserId, nTitle, nMsg, nType, nIcon,
+                            $"/Employee/Project/Task/{task.Id}", "Task");
+                    }
+                }
+            }
+
             // Note-only save: stay on the task page so the PM can see the updated note/version history
             if (string.IsNullOrEmpty(action))
                 return RedirectToAction(nameof(Task), new { id });
@@ -630,6 +655,22 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             TempData["SuccessMessage"] = "Task created and assigned.";
             await _audit.LogAsync(User, "Create", "Tasks", $"Created task '{input.Name}' (ID: {input.Id}) in milestone {projectMilestoneId}", "ProjectTask", input.Id.ToString());
+
+            // Notify assigned members about the new task
+            foreach (var m in members)
+            {
+                var emp = await _context.Employees.FirstOrDefaultAsync(e => e.Id == m.EmployeeId);
+                if (emp != null && !string.IsNullOrEmpty(emp.UserId))
+                {
+                    await _notif.CreateAsync(emp.UserId,
+                        "New Task Assigned",
+                        $"You have been assigned to task '{task.Name}' in project.",
+                        "Info", "fas fa-clipboard-list",
+                        $"/Employee/Project/Task/{task.Id}",
+                        "Task");
+                }
+            }
+
             return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
         }
 
@@ -729,6 +770,18 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Member added to project.";
                     await _audit.LogAsync(User, "Create", "Project Members", $"Added member (ID: {member.Id}) to project {member.ProjectId}", "Member", member.Id.ToString());
+
+                    // Notify the added employee
+                    if (employee != null && !string.IsNullOrEmpty(employee.UserId))
+                    {
+                        await _notif.CreateAsync(employee.UserId,
+                            "Added to Project",
+                            $"You have been added to project '{project.Name}'.",
+                            "Info", "fas fa-user-plus",
+                            $"/Employee/Project/Details/{project.Id}",
+                            "Project");
+                    }
+
                     _logger.LogInformation("Member {MemberId} added to project {ProjectId} (employee {EmployeeId})", member.Id, member.ProjectId, member.EmployeeId);
                 }
                 catch (DbUpdateException dbEx)

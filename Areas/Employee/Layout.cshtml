@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="~/css/depthead-project.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/employee-proposal.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/employee-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/employee-dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/employee-news.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/employee-project.css" asp-append-version="true" />
@@ -132,10 +133,24 @@
                 </div>
 
                 <div class="emp-header-right">
-                    <button class="emp-header-btn" title="Notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="emp-notif-dot"></span>
-                    </button>
+                    <div class="notif-wrapper">
+                        <button class="emp-header-btn notif-bell-btn" id="notifBellBtn" title="Notifications" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            <span class="notif-badge" id="notifBadge">0</span>
+                            <span class="emp-notif-dot" id="notifDot" style="display:none"></span>
+                        </button>
+                        <div class="notif-dropdown" id="notifDropdown">
+                            <div class="notif-dropdown-header">
+                                <h6><i class="fas fa-bell"></i> Notifications</h6>
+                                <button class="notif-mark-all" id="notifMarkAllRead" style="display:none">Mark all read</button>
+                            </div>
+                            <div class="notif-list" id="notifList"></div>
+                            <div class="notif-empty" id="notifEmpty">
+                                <i class="fas fa-bell-slash"></i>
+                                <span>No notifications yet</span>
+                            </div>
+                        </div>
+                    </div>
                     <button class="emp-header-btn" title="Search">
                         <i class="fas fa-magnifying-glass"></i>
                     </button>
@@ -189,6 +204,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/notifications.js" asp-append-version="true"></script>
 
     <script>
     (function () {
@@ -246,6 +262,9 @@
         window.addEventListener('scroll', function () {
             header?.classList.toggle('scrolled', window.scrollY > 8);
         }, { passive: true });
+
+        /* --- Notifications --- */
+        if (typeof initNotifications === 'function') initNotifications();
 
         /* --- Logout confirmation modal --- */
         const logoutForm = document.getElementById('logoutForm');

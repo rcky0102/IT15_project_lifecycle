@@ -18,17 +18,20 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogService _audit;
+        private readonly INotificationService _notif;
 
         public UserController(
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
             ApplicationDbContext context,
-            IAuditLogService audit)
+            IAuditLogService audit,
+            INotificationService notif)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
             _audit = audit;
+            _notif = notif;
         }
 
         public async Task<IActionResult> Index()
@@ -370,6 +373,12 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                 }
 
                 await _audit.LogAsync(User, "Create", "User Management", $"Created user '{model.FirstName} {model.LastName}' ({model.Email}) with role {model.Role}", "User", user.Id);
+
+                // Notify the newly created user
+                await _notif.CreateAsync(user.Id,
+                    "Welcome!",
+                    $"Your account has been created with the role '{model.Role}'. Welcome aboard!",
+                    "Success", "fas fa-user-check", null, "User");
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
@@ -820,6 +829,15 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                 await _context.SaveChangesAsync();
 
                 await _audit.LogAsync(User, "Update", "User Management", $"Updated user '{model.FirstName} {model.LastName}' ({model.Email}) – role: {model.Role}", "User", model.UserId);
+
+                // Notify the updated user
+                if (!string.IsNullOrEmpty(model.UserId))
+                {
+                    await _notif.CreateAsync(model.UserId,
+                        "Account Updated",
+                        "Your account information has been updated by HR.",
+                        "Info", "fas fa-user-pen", null, "User");
+                }
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {

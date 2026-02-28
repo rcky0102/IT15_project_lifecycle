@@ -16,11 +16,13 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogService _audit;
+        private readonly INotificationService _notif;
 
-        public ProposalController(ApplicationDbContext context, IAuditLogService audit)
+        public ProposalController(ApplicationDbContext context, IAuditLogService audit, INotificationService notif)
         {
             _context = context;
             _audit = audit;
+            _notif = notif;
         }
 
         [HttpGet]
@@ -236,6 +238,26 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             TempData["SuccessMessage"] = "Proposal updated.";
             await _audit.LogAsync(User, actionType, "Proposal Review", $"{actionType} proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
+
+            // Notify the proposal's employee
+            if (proposal.Employee != null && !string.IsNullOrEmpty(proposal.Employee.UserId))
+            {
+                var (notifTitle, notifMsg, notifType, notifIcon) = actionType?.ToLower() switch
+                {
+                    "approve" => ("Proposal Approved", $"Your proposal '{proposal.Title}' has been approved.", "Success", "fas fa-check-circle"),
+                    "reject" => ("Proposal Rejected", $"Your proposal '{proposal.Title}' has been rejected.", "Error", "fas fa-times-circle"),
+                    "returnforrevision" => ("Revision Required", $"Your proposal '{proposal.Title}' requires revision.", "Warning", "fas fa-exclamation-triangle"),
+                    "sendfeedback" => ("New Feedback", $"You received feedback on your proposal '{proposal.Title}'.", "Info", "fas fa-comment-dots"),
+                    _ => ("Proposal Updated", $"Your proposal '{proposal.Title}' has been updated.", "Info", "fas fa-info-circle")
+                };
+
+                await _notif.CreateAsync(
+                    proposal.Employee.UserId,
+                    notifTitle, notifMsg, notifType, notifIcon,
+                    $"/Employee/Proposal/Details/{proposal.Id}",
+                    "Proposal");
+            }
+
             return RedirectToAction(nameof(Details), new { id = proposal.Id });
         }
 
@@ -261,6 +283,13 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(User, "Archive", "Proposals", $"Archived proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
+
+            if (proposal.Employee != null && !string.IsNullOrEmpty(proposal.Employee.UserId))
+            {
+                await _notif.CreateAsync(proposal.Employee.UserId,
+                    "Proposal Archived", $"Your proposal '{proposal.Title}' has been archived.",
+                    "Warning", "fas fa-archive", $"/Employee/Proposal", "Proposal");
+            }
 
             TempData["SuccessMessage"] = "Proposal archived.";
             return RedirectToAction(nameof(Index));
@@ -288,6 +317,13 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(User, "Unarchive", "Proposals", $"Unarchived proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
+
+            if (proposal.Employee != null && !string.IsNullOrEmpty(proposal.Employee.UserId))
+            {
+                await _notif.CreateAsync(proposal.Employee.UserId,
+                    "Proposal Restored", $"Your proposal '{proposal.Title}' has been unarchived.",
+                    "Info", "fas fa-box-open", $"/Employee/Proposal/Details/{proposal.Id}", "Proposal");
+            }
 
             TempData["SuccessMessage"] = "Proposal unarchived.";
             return RedirectToAction(nameof(Index));

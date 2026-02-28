@@ -18,12 +18,14 @@ namespace project_lifecycle.EmployeeArea.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IAuditLogService _audit;
+        private readonly INotificationService _notif;
 
-        public ProjectController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IAuditLogService audit)
+        public ProjectController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IAuditLogService audit, INotificationService notif)
         {
             _context = context;
             _userManager = userManager;
             _audit = audit;
+            _notif = notif;
         }
 
         public async Task<IActionResult> Index()
@@ -237,6 +239,21 @@ namespace project_lifecycle.EmployeeArea.Controllers
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(User, "Update", "Tasks", $"Submitted input for task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
+
+            // Notify the project manager that an employee submitted task input
+            var taskWithPM = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone).ThenInclude(pms => pms.Project).ThenInclude(p => p.ProjectManager)
+                .FirstOrDefaultAsync(t => t.Id == id);
+            var pmUserId = taskWithPM?.ProjectMilestone?.Project?.ProjectManager?.UserId;
+            if (!string.IsNullOrEmpty(pmUserId))
+            {
+                await _notif.CreateAsync(pmUserId,
+                    "Task Input Submitted",
+                    $"An employee has submitted input for task '{task.Name}'.",
+                    "Info", "fas fa-file-circle-check",
+                    $"/ProjectManager/Project/Task/{task.Id}",
+                    "Task");
+            }
 
             TempData["SuccessMessage"] = "Task input submitted.";
             return RedirectToAction(nameof(Task), new { id });
