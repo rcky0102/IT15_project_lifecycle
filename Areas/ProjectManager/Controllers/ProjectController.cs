@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.Services;
 using project_lifecycle.ViewModels.ProjectManager;
 
 namespace project_lifecycle.ProjectManagerArea.Controllers
@@ -21,11 +22,13 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly Microsoft.Extensions.Logging.ILogger<ProjectController> _logger;
+        private readonly IAuditLogService _audit;
 
-        public ProjectController(ApplicationDbContext context, Microsoft.Extensions.Logging.ILogger<ProjectController> logger)
+        public ProjectController(ApplicationDbContext context, Microsoft.Extensions.Logging.ILogger<ProjectController> logger, IAuditLogService audit)
         {
             _context = context;
             _logger = logger;
+            _audit = audit;
         }
 
         private async Task<ProjectManager?> GetCurrentProjectManagerAsync()
@@ -511,6 +514,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             }
 
             TempData["SuccessMessage"] = "Task updated.";
+            await _audit.LogAsync(User, "Update", "Tasks", $"Updated task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
 
             // Note-only save: stay on the task page so the PM can see the updated note/version history
             if (string.IsNullOrEmpty(action))
@@ -625,6 +629,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             }
 
             TempData["SuccessMessage"] = "Task created and assigned.";
+            await _audit.LogAsync(User, "Create", "Tasks", $"Created task '{input.Name}' (ID: {input.Id}) in milestone {projectMilestoneId}", "ProjectTask", input.Id.ToString());
             return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
         }
 
@@ -684,6 +689,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     _context.Members.Update(member);
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Member updated successfully.";
+                    await _audit.LogAsync(User, "Update", "Project Members", $"Updated member (ID: {member.Id}) in project {member.ProjectId}", "Member", member.Id.ToString());
                     _logger.LogInformation("Member {MemberId} updated in project {ProjectId}", member.Id, member.ProjectId);
                 }
                 catch (DbUpdateException dbEx)
@@ -722,6 +728,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     _context.Members.Add(member);
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Member added to project.";
+                    await _audit.LogAsync(User, "Create", "Project Members", $"Added member (ID: {member.Id}) to project {member.ProjectId}", "Member", member.Id.ToString());
                     _logger.LogInformation("Member {MemberId} added to project {ProjectId} (employee {EmployeeId})", member.Id, member.ProjectId, member.EmployeeId);
                 }
                 catch (DbUpdateException dbEx)
@@ -819,6 +826,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     _context.ProjectMilestones.Update(projectMilestone);
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Milestone updated successfully.";
+                    await _audit.LogAsync(User, "Update", "Project Milestones", $"Updated milestone (ID: {projectMilestone.Id}) in project {projectMilestone.ProjectId}", "ProjectMilestone", projectMilestone.Id.ToString());
                     _logger.LogInformation("ProjectMilestone {Id} updated in project {ProjectId}", projectMilestone.Id, projectMilestone.ProjectId);
                 }
                 catch (DbUpdateException dbEx)
@@ -858,6 +866,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     _context.ProjectMilestones.Add(projectMilestone);
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Milestone added to project.";
+                    await _audit.LogAsync(User, "Create", "Project Milestones", $"Added milestone (ID: {projectMilestone.Id}) to project {projectMilestone.ProjectId}", "ProjectMilestone", projectMilestone.Id.ToString());
                     _logger.LogInformation("ProjectMilestone {Id} added to project {ProjectId} (milestone {MilestoneId})", projectMilestone.Id, projectMilestone.ProjectId, projectMilestone.MilestoneId);
                 }
                 catch (DbUpdateException dbEx)
@@ -910,6 +919,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             _context.Members.Remove(member);
             await _context.SaveChangesAsync();
 
+            await _audit.LogAsync(User, "Delete", "Project Members", $"Removed member (ID: {memberId}) from project {member.Project!.Id}", "Member", memberId.ToString());
+
             TempData["SuccessMessage"] = "Member removed from project.";
             return RedirectToAction(nameof(Details), new { id = member.Project!.Id });
         }
@@ -932,6 +943,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             _context.ProjectMilestones.Remove(pmst);
             await _context.SaveChangesAsync();
 
+            await _audit.LogAsync(User, "Delete", "Project Milestones", $"Removed milestone (ID: {projectMilestoneId}) from project {pmst.Project!.Id}", "ProjectMilestone", projectMilestoneId.ToString());
+
             TempData["SuccessMessage"] = "Milestone removed from project.";
             return RedirectToAction(nameof(Details), new { id = pmst.Project!.Id });
         }
@@ -949,6 +962,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             project.IsArchived = true;
             await _context.SaveChangesAsync();
 
+            await _audit.LogAsync(User, "Archive", "Projects", $"Archived project '{project.Name}' (ID: {project.Id})", "Project", project.Id.ToString());
+
             TempData["SuccessMessage"] = "Project archived successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -965,6 +980,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             project.IsArchived = false;
             await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Unarchive", "Projects", $"Unarchived project '{project.Name}' (ID: {project.Id})", "Project", project.Id.ToString());
 
             TempData["SuccessMessage"] = "Project unarchived successfully.";
             return RedirectToAction(nameof(Index));

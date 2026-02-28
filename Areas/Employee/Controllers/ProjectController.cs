@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
+using project_lifecycle.Services;
 using project_lifecycle.ViewModels.ProjectManager;
 
 namespace project_lifecycle.EmployeeArea.Controllers
@@ -16,11 +17,13 @@ namespace project_lifecycle.EmployeeArea.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IAuditLogService _audit;
 
-        public ProjectController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public ProjectController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IAuditLogService audit)
         {
             _context = context;
             _userManager = userManager;
+            _audit = audit;
         }
 
         public async Task<IActionResult> Index()
@@ -232,6 +235,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
             task.Input = Input;
             await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Update", "Tasks", $"Submitted input for task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
 
             TempData["SuccessMessage"] = "Task input submitted.";
             return RedirectToAction(nameof(Task), new { id });

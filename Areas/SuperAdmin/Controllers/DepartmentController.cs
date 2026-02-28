@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.Services;
 
 namespace project_lifecycle.Areas.SuperAdmin.Controllers
 {
@@ -11,10 +12,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
     public class DepartmentController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuditLogService _audit;
 
-        public DepartmentController(ApplicationDbContext context)
+        public DepartmentController(ApplicationDbContext context, IAuditLogService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
         // GET: /SuperAdmin/Department/Index
@@ -64,7 +67,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     department.DateCreated = DateTime.Now;
                     _context.Add(department);
                     await _context.SaveChangesAsync();
-                    
+
+                    await _audit.LogAsync(User, "Create", "Department Management", $"Created department '{department.Name}'", "Department", department.Id.ToString());
+
                     // Check if request is AJAX
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -143,7 +148,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 {
                     _context.Update(department);
                     await _context.SaveChangesAsync();
-                    
+
+                    await _audit.LogAsync(User, "Update", "Department Management", $"Updated department '{department.Name}' (ID: {department.Id})", "Department", department.Id.ToString());
+
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
                         return Json(new { success = true, message = "Department updated successfully!" });
@@ -209,7 +216,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             {
                 _context.Departments.Remove(department);
                 await _context.SaveChangesAsync();
-                
+
+                await _audit.LogAsync(User, "Delete", "Department Management", $"Deleted department '{department.Name}' (ID: {department.Id})", "Department", department.Id.ToString());
+
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     return Json(new { success = true, message = "Department deleted successfully!" });

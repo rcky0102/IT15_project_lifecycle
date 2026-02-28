@@ -1,6 +1,40 @@
-﻿@{
+﻿@using System.Text.Json
+@{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Areas/SuperAdmin/Layout.cshtml";
+
+    /* ── Primary stats ── */
+    var totalUsers      = ViewData["TotalUsers"] ?? 0;
+    var totalEmployees  = ViewData["TotalEmployees"] ?? 0;
+    var totalProjects   = ViewData["TotalProjects"] ?? 0;
+    var totalDepts      = ViewData["TotalDepartments"] ?? 0;
+
+    /* ── Secondary stats ── */
+    var totalTasks       = ViewData["TotalTasks"] ?? 0;
+    var completedTasks   = ViewData["CompletedTasks"] ?? 0;
+    var pendingProposals = ViewData["PendingProposals"] ?? 0;
+    var totalPositions   = ViewData["TotalPositions"] ?? 0;
+
+    /* ── Chart data ── */
+    var deptNames  = ViewData["DeptNames"] as List<string> ?? new List<string>();
+    var deptCounts = ViewData["DeptCounts"] as List<int> ?? new List<int>();
+
+    var proposalApproved = ViewData["ProposalApproved"] ?? 0;
+    var proposalPending  = ViewData["ProposalPending"] ?? 0;
+    var proposalRejected = ViewData["ProposalRejected"] ?? 0;
+    var proposalRevision = ViewData["ProposalRevision"] ?? 0;
+
+    var taskPending   = ViewData["TaskPending"] ?? 0;
+    var taskChecked   = ViewData["TaskChecked"] ?? 0;
+    var taskRevision  = ViewData["TaskRevision"] ?? 0;
+
+    /* ── Completion rate ── */
+    var completionRate = ViewData["CompletionRate"] ?? 0;
+    var proposalRate   = ViewData["ProposalRate"] ?? 0;
+
+    /* ── Recent data ── */
+    var recentProjects  = ViewData["RecentProjects"] as List<dynamic> ?? new List<dynamic>();
+    var recentProposals = ViewData["RecentProposals"] as List<dynamic> ?? new List<dynamic>();
 }
 
 <div class="dashboard-container">
@@ -8,71 +42,103 @@
     <div class="dashboard-header">
         <div class="header-content">
             <h1 class="dashboard-title">Super Admin Dashboard</h1>
-            <p class="dashboard-subtitle">Manage and monitor your entire system</p>
+            <p class="dashboard-subtitle">System-wide overview and management console</p>
         </div>
         <div class="header-actions">
-            <button class="btn btn-ocean">
-                <i class="fas fa-download"></i>
-                Export Report
-            </button>
-            <button class="btn btn-outline-ocean">
+            <a href="@Url.Action("Index", "User", new { area = "SuperAdmin" })" class="btn btn-ocean">
+                <i class="fas fa-user-plus"></i>
+                Manage Users
+            </a>
+            <button class="btn btn-outline-ocean" onclick="location.reload()">
                 <i class="fas fa-sync"></i>
-                Refresh Data
+                Refresh
             </button>
         </div>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Primary Stats Cards -->
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon primary">
                 <i class="fas fa-users"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">1,234</div>
+                <div class="stat-number">@totalUsers</div>
                 <div class="stat-label">Total Users</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> 12% from last month
+                    <i class="fas fa-shield-halved"></i> All roles
                 </div>
             </div>
         </div>
 
         <div class="stat-card">
             <div class="stat-icon success">
-                <i class="fas fa-project-diagram"></i>
+                <i class="fas fa-user-tie"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">456</div>
-                <div class="stat-label">Active Projects</div>
+                <div class="stat-number">@totalEmployees</div>
+                <div class="stat-label">Employees</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> 8% from last month
+                    <i class="fas fa-arrow-up"></i> Active workforce
                 </div>
             </div>
         </div>
 
         <div class="stat-card">
             <div class="stat-icon warning">
-                <i class="fas fa-chart-line"></i>
+                <i class="fas fa-diagram-project"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">89%</div>
-                <div class="stat-label">System Health</div>
+                <div class="stat-number">@totalProjects</div>
+                <div class="stat-label">Total Projects</div>
                 <div class="stat-change neutral">
-                    <i class="fas fa-minus"></i> No change
+                    <i class="fas fa-folder-open"></i> All projects
                 </div>
             </div>
         </div>
 
         <div class="stat-card">
             <div class="stat-icon danger">
-                <i class="fas fa-exclamation-triangle"></i>
+                <i class="fas fa-building"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">23</div>
-                <div class="stat-label">Critical Issues</div>
-                <div class="stat-change negative">
-                    <i class="fas fa-arrow-up"></i> 3 new today
+                <div class="stat-number">@totalDepts</div>
+                <div class="stat-label">Departments</div>
+                <div class="stat-change neutral">
+                    <i class="fas fa-sitemap"></i> Organization
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Mini Stats -->
+    <div class="stats-mini-grid">
+        <div class="stat-card-mini">
+            <div class="mini-icon ocean"><i class="fas fa-list-check"></i></div>
+            <div>
+                <div class="mini-value">@totalTasks</div>
+                <div class="mini-label">Total Tasks</div>
+            </div>
+        </div>
+        <div class="stat-card-mini">
+            <div class="mini-icon teal"><i class="fas fa-circle-check"></i></div>
+            <div>
+                <div class="mini-value">@completedTasks</div>
+                <div class="mini-label">Completed Tasks</div>
+            </div>
+        </div>
+        <div class="stat-card-mini">
+            <div class="mini-icon amber"><i class="fas fa-clock"></i></div>
+            <div>
+                <div class="mini-value">@pendingProposals</div>
+                <div class="mini-label">Pending Proposals</div>
+            </div>
+        </div>
+        <div class="stat-card-mini">
+            <div class="mini-icon rose"><i class="fas fa-briefcase"></i></div>
+            <div>
+                <div class="mini-value">@totalPositions</div>
+                <div class="mini-label">Positions</div>
             </div>
         </div>
     </div>
@@ -81,84 +147,96 @@
     <div class="charts-row">
         <div class="chart-container">
             <div class="chart-header">
-                <h3>User Growth</h3>
+                <h3 id="userTrendTitle">User Registrations</h3>
                 <div class="chart-actions">
-                    <select class="form-select form-select-sm" style="min-width: 120px;">
-                        <option>Last 7 days</option>
-                        <option>Last 30 days</option>
-                        <option>Last 90 days</option>
+                    <select id="userTrendRange" class="form-select form-select-sm">
+                        <option value="7" selected>Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
                     </select>
                 </div>
             </div>
             <div class="chart-body">
-                <canvas id="userGrowthChart" style="width:100%; max-height:300px;"></canvas>
+                <canvas id="userTrendChart" height="300"></canvas>
             </div>
         </div>
 
         <div class="chart-container">
             <div class="chart-header">
-                <h3>Project Status</h3>
+                <h3>Task Status Distribution</h3>
                 <div class="chart-actions">
-                    <button class="btn btn-sm btn-outline-ocean">View All</button>
+                    <button class="btn btn-sm btn-outline-ocean" disabled>Overview</button>
                 </div>
             </div>
             <div class="chart-body">
-                <canvas id="projectStatusChart" style="width:100%; max-height:300px;"></canvas>
+                <canvas id="taskStatusChart" height="300"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Activity and Recent Items -->
+    <div class="charts-row">
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Proposal Status</h3>
+                <div class="chart-actions">
+                    <button class="btn btn-sm btn-outline-ocean" disabled>Overview</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="proposalStatusChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Department Headcount</h3>
+                <div class="chart-actions">
+                    <button class="btn btn-sm btn-outline-ocean" disabled>Overview</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="deptChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Projects & Proposals -->
     <div class="content-row">
         <div class="activity-panel">
             <div class="panel-header">
-                <h3>Recent Activity</h3>
-                <button class="btn btn-sm btn-link">View All</button>
+                <h3>Recent Projects</h3>
+                <span class="btn btn-sm btn-link">@recentProjects.Count shown</span>
             </div>
             <div class="activity-list">
-                <div class="activity-item">
-                    <div class="activity-icon user">
-                        <i class="fas fa-user-plus"></i>
+                @if (recentProjects.Count == 0)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon system"><i class="fas fa-folder"></i></div>
+                        <div class="activity-content">
+                            <div class="activity-title">No projects yet</div>
+                            <div class="activity-description">Projects will appear here once created.</div>
+                        </div>
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">New user registered</div>
-                        <div class="activity-description">John Doe joined the platform</div>
-                        <div class="activity-time">2 minutes ago</div>
+                }
+                @foreach (var p in recentProjects)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon project"><i class="fas fa-folder-open"></i></div>
+                        <div class="activity-content">
+                            <div class="activity-title">@p.Name</div>
+                            <div class="activity-description">
+                                @(p.IsArchived ? "Archived" : "Active")
+                                &middot; Created @((p.DateCreated as DateTime?)?.ToString("MMM dd, yyyy"))
+                            </div>
+                            <div class="activity-time">
+                                @if (p.StartDate != null)
+                                {
+                                    <span>@((p.StartDate as DateTime?)?.ToString("MMM dd")) – @((p.EndDate as DateTime?)?.ToString("MMM dd, yyyy"))</span>
+                                }
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon project">
-                        <i class="fas fa-folder-plus"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Project created</div>
-                        <div class="activity-description">Mobile App Development started</div>
-                        <div class="activity-time">15 minutes ago</div>
-                    </div>
-                </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon system">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">System update</div>
-                        <div class="activity-description">Database backup completed</div>
-                        <div class="activity-time">1 hour ago</div>
-                    </div>
-                </div>
-
-                <div class="activity-item">
-                    <div class="activity-icon security">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Security alert</div>
-                        <div class="activity-description">Failed login attempt detected</div>
-                        <div class="activity-time">2 hours ago</div>
-                    </div>
-                </div>
+                }
             </div>
         </div>
 
@@ -167,38 +245,67 @@
                 <h3>Quick Actions</h3>
             </div>
             <div class="quick-actions-grid">
-                <button class="quick-action-btn">
+                <a href="@Url.Action("Index", "User", new { area = "SuperAdmin" })" class="quick-action-btn">
                     <i class="fas fa-user-plus"></i>
                     <span>Add User</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-folder-plus"></i>
-                    <span>New Project</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Generate Report</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-backup"></i>
-                    <span>Backup</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
+                </a>
+                <a href="@Url.Action("Index", "Department", new { area = "SuperAdmin" })" class="quick-action-btn">
+                    <i class="fas fa-building"></i>
+                    <span>Departments</span>
+                </a>
+                <a href="@Url.Action("Index", "Position", new { area = "SuperAdmin" })" class="quick-action-btn">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Positions</span>
+                </a>
+                <button class="quick-action-btn" onclick="location.reload()">
+                    <i class="fas fa-sync"></i>
+                    <span>Refresh Data</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- System Status -->
+    <!-- Recent Proposals Table -->
+    @if (recentProposals.Count > 0)
+    {
+        <div class="recent-table-wrap">
+            <div class="panel-header">
+                <h3>Recent Proposals</h3>
+                <span class="btn btn-sm btn-link">@recentProposals.Count shown</span>
+            </div>
+            <table class="recent-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pr in recentProposals)
+                    {
+                        var badgeClass = (pr.Status as string) switch
+                        {
+                            "Approved" => "active",
+                            "Pending" => "pending",
+                            "Rejected" => "archived",
+                            _ => "pending"
+                        };
+                        <tr>
+                            <td><strong>@pr.Title</strong></td>
+                            <td><span class="badge-status @badgeClass">@pr.Status</span></td>
+                            <td>@((pr.DateCreated as DateTime?)?.ToString("MMM dd, yyyy"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- Organization Health -->
     <div class="system-status-panel">
         <div class="panel-header">
-            <h3>System Status</h3>
+            <h3>Organization Health</h3>
             <div class="status-indicator online">
                 <span class="status-dot"></span>
                 All Systems Operational
@@ -207,41 +314,33 @@
         <div class="status-grid">
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Database</div>
-                    <div class="status-value">99.9% Uptime</div>
+                    <div class="status-name">Task Completion Rate</div>
+                    <div class="status-value">@completionRate%</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 99.9%"></div>
+                    <div class="status-progress @(Convert.ToInt32(completionRate) >= 70 ? "green" : Convert.ToInt32(completionRate) >= 40 ? "" : "red")"
+                         style="width: @completionRate%"></div>
                 </div>
             </div>
 
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">API Server</div>
-                    <div class="status-value">98.5% Uptime</div>
+                    <div class="status-name">Proposal Approval Rate</div>
+                    <div class="status-value">@proposalRate%</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 98.5%"></div>
+                    <div class="status-progress @(Convert.ToInt32(proposalRate) >= 70 ? "green" : Convert.ToInt32(proposalRate) >= 40 ? "" : "amber")"
+                         style="width: @proposalRate%"></div>
                 </div>
             </div>
 
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Storage</div>
-                    <div class="status-value">67% Used</div>
+                    <div class="status-name">Workforce Coverage</div>
+                    <div class="status-value">@totalEmployees employees across @totalDepts departments</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 67%"></div>
-                </div>
-            </div>
-
-            <div class="status-item">
-                <div class="status-info">
-                    <div class="status-name">Memory</div>
-                    <div class="status-value">45% Used</div>
-                </div>
-                <div class="status-bar">
-                    <div class="status-progress" style="width: 45%"></div>
+                    <div class="status-progress" style="width: @(Convert.ToInt32(totalDepts) > 0 ? Math.Min(100, Convert.ToInt32(totalEmployees) * 10 / Convert.ToInt32(totalDepts)) : 0)%"></div>
                 </div>
             </div>
         </div>
@@ -251,77 +350,96 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // User Growth Chart
-        const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
-        new Chart(userGrowthCtx, {
+        /* ── Chart Palette (Ocean Blue) ── */
+        const palette = {
+            primary:   '#006994',
+            light:     '#4CA3DD',
+            lighter:   '#7ec8e3',
+            lightest:  '#E0F2FE',
+            green:     '#10b981',
+            amber:     '#f59e0b',
+            red:       '#ef4444',
+            sky:       '#0ea5e9'
+        };
+
+        /* ── 1. User Registration Trend (Line) ── */
+        const userTrendCtx = document.getElementById('userTrendChart').getContext('2d');
+        let userTrendChart = new Chart(userTrendCtx, {
             type: 'line',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'New Users',
-                    data: [12, 19, 15, 25, 22, 30, 28],
-                    borderColor: '#4CA3DD',
-                    backgroundColor: 'rgba(76, 163, 221, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
+            data: { labels: [], datasets: [{ label: 'Registrations', data: [], borderColor: palette.primary, backgroundColor: 'rgba(0,105,148,0.08)', tension: 0.35, fill: true, pointRadius: 4, pointHoverRadius: 6 }] },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { precision: 0 }, title: { display: true, text: 'Users', color: '#64748b', font: { weight: '600', size: 12 } } },
+                    x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true }, title: { display: true, text: 'Date', color: '#64748b', font: { weight: '600', size: 12 } } }
                 }
             }
         });
 
-        // Project Status Chart
-        const projectStatusCtx = document.getElementById('projectStatusChart').getContext('2d');
-        new Chart(projectStatusCtx, {
+        const trendSelect = document.getElementById('userTrendRange');
+        function fetchUserTrend(days) {
+            const titleEl = document.getElementById('userTrendTitle');
+            if (titleEl) titleEl.textContent = `User Registrations — Last ${days} days`;
+            fetch('@Url.Action("UserRegistrationTrend", "Dashboard", new { area = "SuperAdmin" })?days=' + days)
+                .then(r => r.json())
+                .then(d => {
+                    userTrendChart.data.labels = d.labels.map(l => {
+                        const dt = new Date(l);
+                        return dt.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+                    });
+                    userTrendChart.data.datasets[0].data = d.data;
+                    userTrendChart.update();
+                })
+                .catch(e => console.error('Trend fetch failed', e));
+        }
+        fetchUserTrend(parseInt(trendSelect?.value || 7));
+        trendSelect?.addEventListener('change', function () { fetchUserTrend(parseInt(this.value)); });
+
+        /* ── 2. Task Status (Doughnut) ── */
+        new Chart(document.getElementById('taskStatusChart').getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Completed', 'In Progress', 'Planning', 'On Hold'],
+                labels: ['Checked', 'Pending', 'Requires Revision'],
+                datasets: [{ data: [@taskChecked, @taskPending, @taskRevision], backgroundColor: [palette.primary, palette.amber, palette.red], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        /* ── 3. Proposal Status (Doughnut) ── */
+        new Chart(document.getElementById('proposalStatusChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Approved', 'Pending', 'Rejected', 'Requires Revision'],
+                datasets: [{ data: [@proposalApproved, @proposalPending, @proposalRejected, @proposalRevision], backgroundColor: [palette.green, palette.amber, palette.red, palette.sky], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        /* ── 4. Department Headcount (Bar) ── */
+        new Chart(document.getElementById('deptChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(JsonSerializer.Serialize(deptNames)),
                 datasets: [{
-                    data: [45, 30, 15, 10],
-                    backgroundColor: [
-                        '#006994',
-                        '#4CA3DD',
-                        '#94D3FF',
-                        '#E8F4F8'
-                    ],
-                    borderWidth: 0
+                    label: 'Employees',
+                    data: @Html.Raw(JsonSerializer.Serialize(deptCounts)),
+                    backgroundColor: palette.light,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    maxBarThickness: 44
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' }, ticks: { precision: 0 } },
+                    x: { grid: { display: false } }
                 }
             }
         });
-
-        // Auto-refresh data
-        setInterval(function() {
-            // Simulate data refresh
-            console.log('Refreshing dashboard data...');
-        }, 30000);
     </script>
 }

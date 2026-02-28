@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.Services;
 using project_lifecycle.ViewModels;
 
 namespace project_lifecycle.EmployeeArea.Controllers
@@ -15,12 +16,14 @@ namespace project_lifecycle.EmployeeArea.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<ProposalController> _logger;
+        private readonly IAuditLogService _audit;
 
-        public ProposalController(ApplicationDbContext context, UserManager<IdentityUser> userManager, ILogger<ProposalController> logger)
+        public ProposalController(ApplicationDbContext context, UserManager<IdentityUser> userManager, ILogger<ProposalController> logger, IAuditLogService audit)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
+            _audit = audit;
         }
 
         public IActionResult Index(string archiveFilter = "active")
@@ -154,6 +157,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 {
                     _logger.LogInformation($"Proposal saved successfully. ProposalId: {proposal.Id}");
                     TempData["SuccessMessage"] = $"Proposal '{proposal.Title}' submitted successfully.";
+                    await _audit.LogAsync(User, "Create", "Proposals", $"Created proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
                 }
                 else
                 {
@@ -395,6 +399,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
                 await _context.SaveChangesAsync();
 
+                await _audit.LogAsync(User, "Update", "Proposals", $"Edited proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
+
                 TempData["SuccessMessage"] = "Proposal updated and previous version saved.";
                 return RedirectToAction("Details", new { id = proposal.Id });
             }
@@ -482,6 +488,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 proposal.IsArchived = true;
                 await _context.SaveChangesAsync();
 
+                await _audit.LogAsync(User, "Archive", "Proposals", $"Archived proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
+
                 TempData["SuccessMessage"] = "Proposal archived.";
                 return RedirectToAction("Index");
             }
@@ -510,6 +518,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
                 proposal.IsArchived = false;
                 await _context.SaveChangesAsync();
+
+                await _audit.LogAsync(User, "Unarchive", "Proposals", $"Unarchived proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
 
                 TempData["SuccessMessage"] = "Proposal restored from archive.";
                 return RedirectToAction("Index", new { archiveFilter = "inactive" });

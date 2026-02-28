@@ -1,0 +1,261 @@
+@model List<project_lifecycle.Models.AuditLog>
+@{
+    ViewData["Title"] = "Audit Logs";
+
+    var roles   = (ViewData["Roles"]   as List<string>) ?? new();
+    var actions = (ViewData["Actions"] as List<string>) ?? new();
+    var modules = (ViewData["Modules"] as List<string>) ?? new();
+
+    var curRole   = ViewData["CurrentRole"]?.ToString();
+    var curAction = ViewData["CurrentAction"]?.ToString();
+    var curModule = ViewData["CurrentModule"]?.ToString();
+    var curSearch = ViewData["CurrentSearch"]?.ToString();
+    var curFrom   = ViewData["CurrentFrom"]?.ToString();
+    var curTo     = ViewData["CurrentTo"]?.ToString();
+    var page      = (int)(ViewData["Page"] ?? 1);
+    var pageSize  = (int)(ViewData["PageSize"] ?? 25);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var totalCount = (int)(ViewData["TotalCount"] ?? 0);
+}
+
+@section Styles {
+<link rel="stylesheet" href="~/css/superadmin-auditlog.css" asp-append-version="true" />
+}
+
+<div class="audit-container">
+
+    <!-- ── Header ── -->
+    <div class="audit-header">
+        <div class="audit-header-content">
+            <div>
+                <h1 class="audit-title"><i class="fas fa-clipboard-list"></i> Audit Logs</h1>
+                <p class="audit-subtitle">Track all administrative activities across the system</p>
+            </div>
+            <div class="audit-header-actions">
+                <span class="audit-count-badge"><i class="fas fa-database"></i> @totalCount records</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filter Panel ── -->
+    <div class="audit-filter-panel">
+        <form method="get" asp-action="Index" class="audit-filter-form" id="filterForm">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label><i class="fas fa-search"></i> Search</label>
+                    <input type="text" name="search" value="@curSearch" placeholder="User, description, entity…" class="filter-input" />
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-user-shield"></i> Role</label>
+                    <select name="role" class="filter-select">
+                        <option value="">All Roles</option>
+                        @foreach (var r in roles)
+                        {
+                            <option value="@r" selected="@(curRole == r)">@r</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-bolt"></i> Action</label>
+                    <select name="action" class="filter-select">
+                        <option value="">All Actions</option>
+                        @foreach (var a in actions)
+                        {
+                            <option value="@a" selected="@(curAction == a)">@a</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-cube"></i> Module</label>
+                    <select name="module" class="filter-select">
+                        <option value="">All Modules</option>
+                        @foreach (var m in modules)
+                        {
+                            <option value="@m" selected="@(curModule == m)">@m</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar"></i> From</label>
+                    <input type="date" name="from" value="@curFrom" class="filter-input" />
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-check"></i> To</label>
+                    <input type="date" name="to" value="@curTo" class="filter-input" />
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter"><i class="fas fa-filter"></i> Apply Filters</button>
+                <a href="@Url.Action("Index")" class="btn-filter-reset"><i class="fas fa-rotate-left"></i> Reset</a>
+                <button type="button" class="btn-filter-export" id="exportCsvBtn"><i class="fas fa-file-csv"></i> Export CSV</button>
+            </div>
+        </form>
+
+        <!-- Hidden CSV export form -->
+        <form method="post" asp-action="Export" id="exportForm" style="display:none;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="role" value="@curRole" />
+            <input type="hidden" name="action" value="@curAction" />
+            <input type="hidden" name="module" value="@curModule" />
+            <input type="hidden" name="search" value="@curSearch" />
+            <input type="hidden" name="from" value="@curFrom" />
+            <input type="hidden" name="to" value="@curTo" />
+        </form>
+    </div>
+
+    <!-- ── Table ── -->
+    <div class="audit-table-wrap">
+        @if (Model.Any())
+        {
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>Module</th>
+                        <th>Description</th>
+                        <th class="text-center">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        <tr class="audit-row" data-id="@log.Id">
+                            <td class="col-timestamp">
+                                <span class="timestamp-date">@log.Timestamp.ToString("MMM dd, yyyy")</span>
+                                <span class="timestamp-time">@log.Timestamp.ToString("hh:mm tt")</span>
+                            </td>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar-sm">@(log.UserName.Length > 0 ? log.UserName[0].ToString().ToUpper() : "?")</div>
+                                    <span class="user-name-text">@log.UserName</span>
+                                </div>
+                            </td>
+                            <td><span class="badge-role badge-role-@log.Role.ToLower().Replace(" ", "")">@log.Role</span></td>
+                            <td><span class="badge-action badge-action-@log.Action.ToLower().Replace(" ", "")">@log.Action</span></td>
+                            <td><span class="module-text">@log.Module</span></td>
+                            <td class="col-desc">@log.Description</td>
+                            <td class="text-center">
+                                <button class="btn-details" data-id="@log.Id" title="View details"><i class="fas fa-eye"></i></button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="audit-empty">
+                <i class="fas fa-inbox"></i>
+                <h3>No audit logs found</h3>
+                <p>Try adjusting your filters or wait for new activities to be recorded.</p>
+            </div>
+        }
+    </div>
+
+    <!-- ── Pagination ── -->
+    @if (totalPages > 1)
+    {
+        <nav class="audit-pagination">
+            <span class="page-info">Page @(page) of @totalPages</span>
+            <div class="page-btns">
+                @if (page > 1)
+                {
+                    <a href="@BuildPageUrl(page - 1)" class="page-btn"><i class="fas fa-chevron-left"></i></a>
+                }
+                @for (int p = Math.Max(1, page - 2); p <= Math.Min(totalPages, page + 2); p++)
+                {
+                    <a href="@BuildPageUrl(p)" class="page-btn @(p == page ? "active" : "")">@p</a>
+                }
+                @if (page < totalPages)
+                {
+                    <a href="@BuildPageUrl(page + 1)" class="page-btn"><i class="fas fa-chevron-right"></i></a>
+                }
+            </div>
+        </nav>
+    }
+</div>
+
+<!-- ── Details Modal ── -->
+<div class="audit-modal-backdrop" id="detailsModal">
+    <div class="audit-modal">
+        <div class="audit-modal-header">
+            <h4><i class="fas fa-clipboard-list"></i> Log Details</h4>
+            <button class="audit-modal-close" id="closeModal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="audit-modal-body" id="modalBody">
+            <div class="detail-grid">
+                <div class="detail-item"><label>User</label><span id="dUser">-</span></div>
+                <div class="detail-item"><label>Role</label><span id="dRole">-</span></div>
+                <div class="detail-item"><label>Action</label><span id="dAction">-</span></div>
+                <div class="detail-item"><label>Module</label><span id="dModule">-</span></div>
+                <div class="detail-item full"><label>Description</label><span id="dDesc">-</span></div>
+                <div class="detail-item"><label>Entity Type</label><span id="dEntity">-</span></div>
+                <div class="detail-item"><label>Entity ID</label><span id="dEntityId">-</span></div>
+                <div class="detail-item"><label>IP Address</label><span id="dIp">-</span></div>
+                <div class="detail-item"><label>Timestamp</label><span id="dTime">-</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string BuildPageUrl(int p)
+    {
+        var qs = new Dictionary<string, string?>
+        {
+            ["page"]   = p.ToString(),
+            ["role"]   = ViewData["CurrentRole"]?.ToString(),
+            ["action"] = ViewData["CurrentAction"]?.ToString(),
+            ["module"] = ViewData["CurrentModule"]?.ToString(),
+            ["search"] = ViewData["CurrentSearch"]?.ToString(),
+            ["from"]   = ViewData["CurrentFrom"]?.ToString(),
+            ["to"]     = ViewData["CurrentTo"]?.ToString()
+        };
+        var pairs = qs.Where(kv => !string.IsNullOrEmpty(kv.Value)).Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value!)}");
+        return Url.Action("Index") + "?" + string.Join("&", pairs);
+    }
+}
+
+@section Scripts {
+<script>
+(function () {
+    /* ── CSV Export ── */
+    document.getElementById('exportCsvBtn')?.addEventListener('click', function () {
+        document.getElementById('exportForm')?.submit();
+    });
+
+    /* ── Details Modal ── */
+    const modal = document.getElementById('detailsModal');
+    const closeBtn = document.getElementById('closeModal');
+
+    document.querySelectorAll('.btn-details').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const id = this.dataset.id;
+            try {
+                const res = await fetch('@Url.Action("Details")/' + id);
+                if (!res.ok) throw new Error('Not found');
+                const d = await res.json();
+                document.getElementById('dUser').textContent     = d.userName;
+                document.getElementById('dRole').textContent     = d.role;
+                document.getElementById('dAction').textContent   = d.action;
+                document.getElementById('dModule').textContent   = d.module;
+                document.getElementById('dDesc').textContent     = d.description;
+                document.getElementById('dEntity').textContent   = d.entityType || '–';
+                document.getElementById('dEntityId').textContent = d.entityId || '–';
+                document.getElementById('dIp').textContent       = d.ipAddress || '–';
+                document.getElementById('dTime').textContent     = d.timestamp;
+                modal.classList.add('active');
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    });
+
+    closeBtn?.addEventListener('click', function () { modal.classList.remove('active'); });
+    modal?.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('active'); });
+})();
+</script>
+}

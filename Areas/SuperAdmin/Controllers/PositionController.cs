@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.Services;
 
 namespace project_lifecycle.Areas.SuperAdmin.Controllers
 {
@@ -11,10 +12,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
     public class PositionController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuditLogService _audit;
 
-        public PositionController(ApplicationDbContext context)
+        public PositionController(ApplicationDbContext context, IAuditLogService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
         // GET: /SuperAdmin/Position/Index
@@ -58,7 +61,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     position.DateCreated = DateTime.Now;
                     _context.Add(position);
                     await _context.SaveChangesAsync();
-                    
+
+                    await _audit.LogAsync(User, "Create", "Position Management", $"Created position '{position.Name}'", "Position", position.Id.ToString());
+
                     // Check if request is AJAX
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -120,7 +125,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 {
                     _context.Update(position);
                     await _context.SaveChangesAsync();
-                    
+
+                    await _audit.LogAsync(User, "Update", "Position Management", $"Updated position '{position.Name}' (ID: {position.Id})", "Position", position.Id.ToString());
+
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
                         return Json(new { success = true, message = "Position updated successfully!" });
@@ -168,7 +175,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             {
                 _context.Positions.Remove(position);
                 await _context.SaveChangesAsync();
-                
+
+                await _audit.LogAsync(User, "Delete", "Position Management", $"Deleted position '{position.Name}' (ID: {position.Id})", "Position", position.Id.ToString());
+
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     return Json(new { success = true, message = "Position deleted successfully!" });

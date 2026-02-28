@@ -16,6 +16,10 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
+// Audit & HTTP context
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
 // Nager.Date holiday API service
 builder.Services.AddHttpClient<INagerHolidayService, NagerHolidayService>();
 

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.Services;
 
 namespace project_lifecycle.DepartmentHeadArea.Controllers
 {
@@ -14,10 +15,12 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
     public class ProposalController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuditLogService _audit;
 
-        public ProposalController(ApplicationDbContext context)
+        public ProposalController(ApplicationDbContext context, IAuditLogService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
         [HttpGet]
@@ -232,6 +235,7 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             }
 
             TempData["SuccessMessage"] = "Proposal updated.";
+            await _audit.LogAsync(User, actionType, "Proposal Review", $"{actionType} proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
             return RedirectToAction(nameof(Details), new { id = proposal.Id });
         }
 
@@ -255,6 +259,8 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             proposal.IsArchived = true;
             _context.Update(proposal);
             await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Archive", "Proposals", $"Archived proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
 
             TempData["SuccessMessage"] = "Proposal archived.";
             return RedirectToAction(nameof(Index));
@@ -280,6 +286,8 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             proposal.IsArchived = false;
             _context.Update(proposal);
             await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Unarchive", "Proposals", $"Unarchived proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
 
             TempData["SuccessMessage"] = "Proposal unarchived.";
             return RedirectToAction(nameof(Index));

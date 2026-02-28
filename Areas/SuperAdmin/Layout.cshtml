@@ -1,5 +1,6 @@
 ﻿@{
     Layout = null;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
 }
 
 <!DOCTYPE html>
@@ -8,350 +9,265 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Super Admin Dashboard</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
+
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/superadmin-responsive.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/superadmin-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/superadmin-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
     @RenderSection("Styles", required: false)
 </head>
-<body class="admin-body">
-    <div class="admin-layout">
-        <!-- Sidebar -->
-        <aside class="admin-sidebar" id="adminSidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-brand">
-                    <div class="brand-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+<body class="superadmin-body">
+
+    <!-- Mobile overlay -->
+    <div class="sa-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="superadmin-layout">
+
+        <!-- ========== SIDEBAR ========== -->
+        <aside class="sa-sidebar" id="saSidebar">
+
+            <!-- Brand -->
+            <div class="sa-sidebar-header">
+                <a href="@Url.Action("Index", "Dashboard", new { area = "SuperAdmin" })" class="sa-sidebar-brand">
+                    <div class="sa-brand-icon">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M16 2L20 8L27 7L24 14L28 20L21 19L16 24L11 19L4 20L8 14L5 7L12 8L16 2Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
                             <circle cx="16" cy="14" r="6" fill="white"/>
                             <path d="M13 12L15 14L19 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="brand-text">Super Admin</span>
-                </div>
-                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
-                    <i class="fas fa-bars"></i>
+                    <span class="sa-brand-text">Super Admin</span>
+                </a>
+                <button class="sa-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fas fa-bars fa-sm"></i>
                 </button>
             </div>
-            
-            <nav class="sidebar-nav">
-                <ul class="nav-list">
-                    <li class="nav-item">
-                        <a href="@Url.Action("Index", "Dashboard", new { area = "SuperAdmin" })" class="nav-link">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span class="nav-text">Dashboard</span>
+
+            <!-- Navigation -->
+            <nav class="sa-sidebar-nav">
+                <span class="sa-nav-section-title">Menu</span>
+                <ul class="sa-nav-list">
+                    <li class="sa-nav-item">
+                        <a href="@Url.Action("Index", "Dashboard", new { area = "SuperAdmin" })"
+                           class="sa-nav-link @(currentController == "Dashboard" ? "active" : "")"
+                           data-tooltip="Dashboard">
+                            <i class="fas fa-th-large"></i>
+                            <span class="sa-nav-text">Dashboard</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="@Url.Action("Index", "User", new { area = "SuperAdmin" })" class="nav-link">
+                    <li class="sa-nav-item">
+                        <a href="@Url.Action("Index", "User", new { area = "SuperAdmin" })"
+                           class="sa-nav-link @(currentController == "User" ? "active" : "")"
+                           data-tooltip="Users">
                             <i class="fas fa-users"></i>
-                            <span class="nav-text">User Management</span>
+                            <span class="sa-nav-text">User Management</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link collapsible-toggle" data-target="managementSubmenu">
+                    <li class="sa-nav-item">
+                        <a href="#" class="sa-nav-link sa-collapsible-toggle @(currentController == "Department" || currentController == "Position" ? "expanded" : "")"
+                           data-target="managementSubmenu"
+                           data-tooltip="Management">
                             <i class="fas fa-tasks"></i>
-                            <span class="nav-text">Management</span>
-                            <i class="fas fa-chevron-down nav-arrow"></i>
+                            <span class="sa-nav-text">Management</span>
+                            <i class="fas fa-chevron-down sa-nav-arrow"></i>
                         </a>
-                        <ul class="nav-submenu" id="managementSubmenu">
-                            <li class="nav-subitem">
-                                <a href="@Url.Action("Index", "Department", new { area = "SuperAdmin" })" class="nav-sublink">
+                        <ul class="sa-nav-submenu @(currentController == "Department" || currentController == "Position" ? "expanded" : "")" id="managementSubmenu">
+                            <li class="sa-nav-subitem">
+                                <a href="@Url.Action("Index", "Department", new { area = "SuperAdmin" })"
+                                   class="sa-nav-sublink @(currentController == "Department" ? "active" : "")">
                                     <i class="fas fa-building"></i> Departments
                                 </a>
                             </li>
-                            <li class="nav-subitem">
-                                <a href="@Url.Action("Index", "Position", new { area = "SuperAdmin" })" class="nav-sublink">
+                            <li class="sa-nav-subitem">
+                                <a href="@Url.Action("Index", "Position", new { area = "SuperAdmin" })"
+                                   class="sa-nav-sublink @(currentController == "Position" ? "active" : "")">
                                     <i class="fas fa-briefcase"></i> Positions
                                 </a>
                             </li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-project-diagram"></i>
-                            <span class="nav-text">Projects</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-chart-line"></i>
-                            <span class="nav-text">Analytics</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-cog"></i>
-                            <span class="nav-text">Settings</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-shield-alt"></i>
-                            <span class="nav-text">Security</span>
+
+                    <!-- Audit Logs -->
+                    <li class="sa-nav-item">
+                        <a href="@Url.Action("Index", "AuditLog", new { area = "SuperAdmin" })"
+                           class="sa-nav-link @(currentController == "AuditLog" ? "active" : "")">
+                            <i class="fas fa-clipboard-list sa-nav-icon"></i>
+                            <span class="sa-nav-text">Audit Logs</span>
                         </a>
                     </li>
                 </ul>
             </nav>
-            
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        <span>SA</span>
+
+            <!-- User footer -->
+            <div class="sa-sidebar-footer">
+                <div class="sa-user-card">
+                    <div class="sa-user-avatar">SA</div>
+                    <div class="sa-user-details">
+                        <div class="sa-user-name">Super Admin</div>
+                        <div class="sa-user-role">Administrator</div>
                     </div>
-                    <div class="user-info">
-                        <div class="user-name">Super Admin</div>
-                        <div class="user-role">Administrator</div>
-                    </div>
-                    <form action="/Identity/Account/Logout" method="post" class="logout-form" id="logoutForm">
+                    <form action="/Identity/Account/Logout" method="post" class="sa-logout-form" id="logoutForm">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="returnUrl" value="/" />
-                        <button type="submit" class="logout-btn" title="Logout" onclick="return confirmLogout();">
-                            <i class="fas fa-sign-out-alt"></i>
+                        <button type="button" class="sa-logout-btn" id="logoutBtn" title="Sign out">
+                            <i class="fas fa-arrow-right-from-bracket"></i>
                         </button>
                     </form>
-                    
-                    <script>
-                        function confirmLogout() {
-                            console.log('Logout button clicked');
-                            console.log('Form action:', document.getElementById('logoutForm').action);
-                            if (confirm('Are you sure you want to logout?')) {
-                                console.log('User confirmed logout - submitting form');
-                                return true;
-                            } else {
-                                console.log('User cancelled logout');
-                                return false;
-                            }
-                        }
-                    </script>
                 </div>
             </div>
+
         </aside>
 
-        <!-- Sidebar Overlay (mobile) -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <!-- ========== MAIN ========== -->
+        <div class="sa-main">
 
-        <!-- Main Content -->
-        <div class="admin-main">
-            <!-- Top Header -->
-            <header class="admin-header">
-                <div class="header-left">
-                    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+            <!-- Header -->
+            <header class="sa-header" id="saHeader">
+                <div class="sa-header-left">
+                    <button class="sa-mobile-toggle" id="mobileSidebarToggle" aria-label="Open menu">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <div class="breadcrumb">
-                        <span class="breadcrumb-item">Dashboard</span>
-                    </div>
+                    <nav class="sa-breadcrumb" aria-label="Breadcrumb">
+                        <a href="@Url.Action("Index", "Dashboard", new { area = "SuperAdmin" })" class="sa-breadcrumb-home">
+                            <i class="fas fa-home"></i>
+                        </a>
+                        <span class="sa-breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
+                        <span class="sa-breadcrumb-current">@(ViewData["Title"] ?? "Dashboard")</span>
+                    </nav>
                 </div>
-                
-                <div class="header-right">
-                    <div class="header-actions">
-                        <button class="action-btn notification-btn">
-                            <i class="fas fa-bell"></i>
-                            <span class="badge">3</span>
-                        </button>
-                        <button class="action-btn search-btn">
-                            <i class="fas fa-search"></i>
-                        </button>
-                        <button class="action-btn theme-toggle">
-                            <i class="fas fa-moon"></i>
-                        </button>
+
+                <div class="sa-header-right">
+                    <button class="sa-header-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="sa-notif-dot"></span>
+                    </button>
+                    <button class="sa-header-btn" title="Search">
+                        <i class="fas fa-magnifying-glass"></i>
+                    </button>
+
+                    <div class="sa-header-divider"></div>
+
+                    <div class="sa-header-profile">
+                        <div class="sa-header-avatar">SA</div>
+                        <div class="sa-header-user-info">
+                            <div class="sa-header-greeting" id="headerGreeting">Welcome back</div>
+                            <div class="sa-header-name">Super Admin</div>
+                        </div>
                     </div>
                 </div>
             </header>
 
             <!-- Page Content -->
-            <main class="admin-content">
+            <main class="sa-content">
                 @RenderBody()
             </main>
         </div>
+
     </div>
 
+    <!-- Logout confirmation modal -->
+
+    <style>
+    .sa-modal-backdrop { position: fixed; inset: 0; background: rgba(3,7,18,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .sa-modal-backdrop.active { display: flex; }
+    .sa-modal { background: #fff; border-radius: 12px; width: 94%; max-width: 420px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(2,6,23,0.35); }
+    .sa-modal h4 { margin: 0 0 .5rem; font-size: 1.05rem; color: #0f172a; }
+    .sa-modal p { margin: 0 0 1rem; color: #64748b; font-size: .92rem; }
+    .sa-modal .sa-modal-actions { display:flex; gap:.5rem; justify-content:flex-end; }
+    .sa-modal .sa-btn { border-radius: 8px; padding: .5rem .85rem; font-weight:600; cursor:pointer; }
+    .sa-modal .sa-btn-cancel { background: transparent; border:1px solid #e6eef6; color:#475569; }
+    .sa-modal .sa-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color:#fff; border:none; }
+    </style>
+
+    <div class="sa-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="sa-modal" role="document">
+            <h4>Sign out</h4>
+            <p>Are you sure you want to sign out of your account?</p>
+            <div class="sa-modal-actions">
+                <button type="button" class="sa-btn sa-btn-cancel" id="cancelLogoutBtn">Cancel</button>
+                <button type="button" class="sa-btn sa-btn-confirm" id="confirmLogoutBtn">Sign out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     <script>
-        // Sidebar Toggle
-        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-            const sidebar = document.getElementById('adminSidebar');
+    (function () {
+        const sidebar  = document.getElementById('saSidebar');
+        const toggle   = document.getElementById('sidebarToggle');
+        const mobile   = document.getElementById('mobileSidebarToggle');
+        const overlay  = document.getElementById('sidebarOverlay');
+        const header   = document.getElementById('saHeader');
+        const greeting = document.getElementById('headerGreeting');
+
+        /* --- Time-based greeting --- */
+        const hour = new Date().getHours();
+        if (greeting) {
+            greeting.textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        }
+
+        /* --- Sidebar collapse toggle (desktop) --- */
+        toggle?.addEventListener('click', function () {
             const icon = this.querySelector('i');
-            
-            // Toggle collapsed state
-            const isCollapsed = sidebar.classList.toggle('collapsed');
-            
-            // Update icon
-            icon.className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-bars';
-            
-            // Update tooltip
-            this.setAttribute('title', isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar');
-            
-            // Save state
-            localStorage.setItem('sidebarCollapsed', isCollapsed);
-            
-            console.log('Sidebar toggled:', isCollapsed ? 'collapsed' : 'expanded');
+            const collapsed = sidebar.classList.toggle('collapsed');
+            icon.className = collapsed ? 'fas fa-chevron-right fa-sm' : 'fas fa-bars fa-sm';
+            this.setAttribute('title', collapsed ? 'Expand Sidebar' : 'Collapse Sidebar');
+            localStorage.setItem('saSidebarCollapsed', collapsed);
         });
 
-        // Restore sidebar state on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('adminSidebar');
-            const toggle = document.getElementById('sidebarToggle');
+        /* --- Restore collapsed state --- */
+        if (localStorage.getItem('saSidebarCollapsed') === 'true') {
+            sidebar?.classList.add('collapsed');
             const icon = toggle?.querySelector('i');
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            
-            if (isCollapsed && sidebar && toggle && icon) {
-                sidebar.classList.add('collapsed');
-                icon.classList.remove('fa-bars');
-                icon.classList.add('fa-chevron-right');
+            if (icon) {
+                icon.className = 'fas fa-chevron-right fa-sm';
                 toggle.setAttribute('title', 'Expand Sidebar');
-            }
-        });
-
-        document.getElementById('mobileSidebarToggle')?.addEventListener('click', function() {
-            const sidebar = document.getElementById('adminSidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            sidebar.classList.toggle('mobile-open');
-            overlay.classList.toggle('active');
-            document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
-        });
-
-        // Close sidebar when clicking overlay on mobile
-        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
-            const sidebar = document.getElementById('adminSidebar');
-            sidebar.classList.remove('mobile-open');
-            this.classList.remove('active');
-            document.body.style.overflow = '';
-        });
-
-        // Close sidebar when clicking nav links on mobile
-        document.querySelectorAll('.nav-link:not(.collapsible-toggle), .nav-sublink').forEach(function(link) {
-            link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    const sidebar = document.getElementById('adminSidebar');
-                    const overlay = document.getElementById('sidebarOverlay');
-                    sidebar.classList.remove('mobile-open');
-                    overlay.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            });
-        });
-
-        // Reset mobile state on resize
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                const sidebar = document.getElementById('adminSidebar');
-                const overlay = document.getElementById('sidebarOverlay');
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
-
-        // Active nav link handling
-        document.querySelectorAll('.sidebar-nav .nav-link, .nav-sublink').forEach(link => {
-            link.addEventListener('click', function(e) {
-                // Remove active classes from all links
-                document.querySelectorAll('.sidebar-nav .nav-link, .nav-sublink').forEach(l => l.classList.remove('active'));
-                // Add active class to clicked link
-                this.classList.add('active');
-                
-                // Handle submenu expansion for sublinks
-                if (this.classList.contains('nav-sublink')) {
-                    const parentSubmenu = this.closest('.nav-submenu');
-                    if (parentSubmenu) {
-                        const parentId = parentSubmenu.getAttribute('id');
-                        const parentToggle = document.querySelector(`[data-target="${parentId}"]`);
-                        if (parentToggle) {
-                            parentToggle.classList.add('expanded');
-                            parentSubmenu.classList.add('expanded');
-                        }
-                    }
-                }
-            });
-        });
-
-        // Set active nav link based on current URL - robust controller extraction
-        function setActiveNavLink() {
-            const currentPath = (window.location.pathname || '').toLowerCase();
-
-            function extractControllerFromPath(path) {
-                if (!path) return '';
-                const parts = path.split('/').filter(p => p && p.trim() !== '');
-                // If URL contains area segment like 'superadmin', controller should be the next segment
-                const areaIndex = parts.indexOf('superadmin');
-                if (areaIndex !== -1 && parts.length > areaIndex + 1) {
-                    return parts[areaIndex + 1];
-                }
-                // Otherwise, use first segment (root-level app)
-                return parts.length > 0 ? parts[0] : '';
-            }
-
-            const targetController = extractControllerFromPath(currentPath) || 'dashboard';
-
-            // Clear existing active/expanded states
-            document.querySelectorAll('.sidebar-nav .nav-link, .nav-sublink').forEach(l => l.classList.remove('active'));
-            document.querySelectorAll('.collapsible-toggle').forEach(t => t.classList.remove('expanded'));
-            document.querySelectorAll('.nav-submenu').forEach(s => s.classList.remove('expanded'));
-
-            // Try to match sublinks first (higher priority)
-            let matched = false;
-            document.querySelectorAll('.nav-sublink').forEach(link => {
-                const href = (link.getAttribute('href') || '').toLowerCase();
-                if (!href || href === '#') return;
-                const linkController = extractControllerFromPath(href);
-                if (linkController === targetController) {
-                    link.classList.add('active');
-                    matched = true;
-                    const parentSubmenu = link.closest('.nav-submenu');
-                    if (parentSubmenu) {
-                        parentSubmenu.classList.add('expanded');
-                        const parentToggle = document.querySelector(`[data-target="${parentSubmenu.id}"]`);
-                        if (parentToggle) parentToggle.classList.add('expanded');
-                    }
-                }
-            });
-
-            if (!matched) {
-                // Match main nav links
-                document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
-                    const href = (link.getAttribute('href') || '').toLowerCase();
-                    if (!href || href === '#') return;
-                    const linkController = extractControllerFromPath(href);
-                    if (linkController === targetController) {
-                        link.classList.add('active');
-                        matched = true;
-                    }
-                });
-            }
-
-            // Fallback: highlight Dashboard
-            if (!matched) {
-                document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
-                    const href = (link.getAttribute('href') || '').toLowerCase();
-                    if (href && href.includes('dashboard')) link.classList.add('active');
-                });
             }
         }
 
-        // Set active link on page load
-        setActiveNavLink();
-        
-        // Set active link when navigation occurs
-        window.addEventListener('popstate', setActiveNavLink);
+        /* --- Mobile sidebar --- */
+        function openMobile()  { sidebar?.classList.add('mobile-open');    overlay?.classList.add('active'); }
+        function closeMobile() { sidebar?.classList.remove('mobile-open'); overlay?.classList.remove('active'); }
 
-        // Collapsible submenu handling
-        document.querySelectorAll('.collapsible-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function(e) {
+        mobile?.addEventListener('click', function () {
+            sidebar?.classList.contains('mobile-open') ? closeMobile() : openMobile();
+        });
+        overlay?.addEventListener('click', closeMobile);
+
+        document.addEventListener('click', function (e) {
+            if (window.innerWidth <= 768 &&
+                sidebar?.classList.contains('mobile-open') &&
+                !sidebar.contains(e.target) &&
+                !mobile?.contains(e.target)) {
+                closeMobile();
+            }
+        });
+
+        /* --- Sticky header shadow on scroll --- */
+        window.addEventListener('scroll', function () {
+            header?.classList.toggle('scrolled', window.scrollY > 8);
+        }, { passive: true });
+
+        /* --- Collapsible submenu handling --- */
+        document.querySelectorAll('.sa-collapsible-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
                 e.preventDefault();
-                
                 const targetId = this.getAttribute('data-target');
                 const submenu = document.getElementById(targetId);
                 const isExpanded = this.classList.contains('expanded');
-                
-                // Toggle current submenu
+
                 if (submenu) {
                     if (isExpanded) {
                         this.classList.remove('expanded');
@@ -361,31 +277,57 @@
                         submenu.classList.add('expanded');
                     }
                 }
-                
+
                 // Close other submenus
-                document.querySelectorAll('.collapsible-toggle').forEach(otherToggle => {
-                    if (otherToggle !== this) {
-                        const otherTargetId = otherToggle.getAttribute('data-target');
-                        const otherSubmenu = document.getElementById(otherTargetId);
-                        if (otherSubmenu) {
-                            otherToggle.classList.remove('expanded');
-                            otherSubmenu.classList.remove('expanded');
+                document.querySelectorAll('.sa-collapsible-toggle').forEach(function (other) {
+                    if (other !== btn) {
+                        const otherId = other.getAttribute('data-target');
+                        const otherSub = document.getElementById(otherId);
+                        if (otherSub) {
+                            other.classList.remove('expanded');
+                            otherSub.classList.remove('expanded');
                         }
                     }
                 });
             });
         });
 
-        // Handle submenu link clicks
-        document.querySelectorAll('.nav-sublink').forEach(link => {
-            link.addEventListener('click', function(e) {
-                // Remove active class from all nav links and sublinks
-                document.querySelectorAll('.nav-link, .nav-sublink').forEach(l => l.classList.remove('active'));
-                // Add active class to clicked sublink
-                this.classList.add('active');
-            });
+        /* --- Logout confirmation modal --- */
+        const logoutForm = document.getElementById('logoutForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = document.getElementById('logoutModal');
+        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+        function showLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.add('active');
+            logoutModal.setAttribute('aria-hidden', 'false');
+        }
+        function hideLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.remove('active');
+            logoutModal.setAttribute('aria-hidden', 'true');
+        }
+
+        logoutBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLogoutModal();
         });
+
+        cancelLogoutBtn?.addEventListener('click', function () { hideLogoutModal(); });
+
+        // Close modal when clicking backdrop
+        logoutModal?.addEventListener('click', function (e) {
+            if (e.target === logoutModal) hideLogoutModal();
+        });
+
+        confirmLogoutBtn?.addEventListener('click', function () {
+            if (logoutForm) logoutForm.submit();
+        });
+    })();
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

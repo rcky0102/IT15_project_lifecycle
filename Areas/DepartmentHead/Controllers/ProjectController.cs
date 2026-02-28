@@ -21,11 +21,13 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly INagerHolidayService _holidayService;
+        private readonly IAuditLogService _audit;
 
-        public ProjectController(ApplicationDbContext context, INagerHolidayService holidayService)
+        public ProjectController(ApplicationDbContext context, INagerHolidayService holidayService, IAuditLogService audit)
         {
             _context = context;
             _holidayService = holidayService;
+            _audit = audit;
         }
 
         [HttpGet]
@@ -172,6 +174,7 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             }
 
             TempData["SuccessMessage"] = "Project created successfully.";
+            await _audit.LogAsync(User, "Create", "Projects", $"Created project '{project.Name}' (ID: {project.Id})", "Project", project.Id.ToString());
             return RedirectToAction(nameof(Index));
         }
 

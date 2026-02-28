@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.Services;
 
 namespace project_lifecycle.ProjectManagerArea.Controllers
 {
@@ -11,10 +12,12 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
     public class ManagementController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuditLogService _audit;
 
-        public ManagementController(ApplicationDbContext context)
+        public ManagementController(ApplicationDbContext context, IAuditLogService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
         // Milestones
@@ -54,6 +57,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     milestone.DateCreated = DateTime.Now;
                     _context.Add(milestone);
                     await _context.SaveChangesAsync();
+
+                    await _audit.LogAsync(User, "Create", "Milestone Management", $"Created milestone '{milestone.Name}'", "Milestone", milestone.Id.ToString());
 
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -103,6 +108,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     _context.Update(milestone);
                     await _context.SaveChangesAsync();
 
+                    await _audit.LogAsync(User, "Update", "Milestone Management", $"Updated milestone '{milestone.Name}' (ID: {milestone.Id})", "Milestone", milestone.Id.ToString());
+
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = true, message = "Milestone updated successfully!" });
 
                     TempData["Success"] = "Milestone updated successfully!";
@@ -137,6 +144,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             {
                 _context.Milestones.Remove(milestone);
                 await _context.SaveChangesAsync();
+
+                await _audit.LogAsync(User, "Delete", "Milestone Management", $"Deleted milestone '{milestone.Name}' (ID: {milestone.Id})", "Milestone", milestone.Id.ToString());
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = true, message = "Milestone deleted successfully!" });
 
@@ -186,6 +195,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     _context.Add(role);
                     await _context.SaveChangesAsync();
 
+                    await _audit.LogAsync(User, "Create", "Project Role Management", $"Created project role '{role.Name}'", "ProjectRole", role.Id.ToString());
+
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = true, message = "Project role created successfully!" });
 
                     TempData["Success"] = "Project role created successfully!";
@@ -231,6 +242,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     _context.Update(role);
                     await _context.SaveChangesAsync();
 
+                    await _audit.LogAsync(User, "Update", "Project Role Management", $"Updated project role '{role.Name}' (ID: {role.Id})", "ProjectRole", role.Id.ToString());
+
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = true, message = "Project role updated successfully!" });
 
                     TempData["Success"] = "Project role updated successfully!";
@@ -265,6 +278,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             {
                 _context.ProjectRoles.Remove(role);
                 await _context.SaveChangesAsync();
+
+                await _audit.LogAsync(User, "Delete", "Project Role Management", $"Deleted project role '{role.Name}' (ID: {role.Id})", "ProjectRole", role.Id.ToString());
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = true, message = "Project role deleted successfully!" });
 

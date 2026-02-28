@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Constants;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
+using project_lifecycle.Services;
 using project_lifecycle.ViewModels;
 
 namespace project_lifecycle.Areas.SuperAdmin.Controllers
@@ -16,15 +17,18 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
+        private readonly IAuditLogService _audit;
 
         public UserController(
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IAuditLogService audit)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
+            _audit = audit;
         }
 
         // GET: /SuperAdmin/User/Index
@@ -388,6 +392,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     await _context.SaveChangesAsync();
                 }
 
+                await _audit.LogAsync(User, "Create", "User Management", $"Created user '{model.FirstName} {model.LastName}' ({model.Email}) with role {model.Role}", "User", user.Id);
+
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     return Json(new { success = true, message = "User created successfully!" });
@@ -647,6 +653,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
+                await _audit.LogAsync(User, "Delete", "User Management", $"Deleted user '{user.Email}'", "User", id);
+
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     return Json(new { success = true, message = "User deleted successfully!" });
@@ -890,6 +898,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                await _audit.LogAsync(User, "Update", "User Management", $"Updated user '{model.FirstName} {model.LastName}' ({model.Email}) – role: {model.Role}", "User", model.UserId);
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
