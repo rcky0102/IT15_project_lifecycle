@@ -149,10 +149,10 @@
                     <div class="sa-header-divider"></div>
 
                     <div class="sa-header-profile" id="userDropdownToggle" style="cursor:pointer;position:relative;">
-                        <div class="sa-header-avatar">SA</div>
+                        <div class="sa-header-avatar" id="headerUserAvatar">SA</div>
                         <div class="sa-header-user-info">
                             <div class="sa-header-greeting" id="headerGreeting">Welcome back</div>
-                            <div class="sa-header-name">Super Admin</div>
+                            <div class="sa-header-name" id="headerUserName">Super Admin</div>
                         </div>
                         <i class="fas fa-chevron-down" style="font-size:.7rem;color:#64748b;margin-left:.25rem"></i>
                         <div class="sa-user-dropdown" id="userDropdown">
@@ -217,6 +217,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/notifications.js" asp-append-version="true"></script>
+    <script src="~/js/header-user.js" asp-append-version="true"></script>
 
     <script>
     (function () {

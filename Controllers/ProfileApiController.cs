@@ -13,12 +13,14 @@ namespace project_lifecycle.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IWebHostEnvironment _env;
 
-        public ProfileApiController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IWebHostEnvironment env)
+        public ProfileApiController(ApplicationDbContext context, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IWebHostEnvironment env)
         {
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
             _env = env;
         }
 
@@ -125,7 +127,35 @@ namespace project_lifecycle.Controllers
                     break;
             }
 
-            if (profile == null) return NotFound();
+            if (profile == null)
+            {
+                // SuperAdmin or unlinked user – return minimal info
+                return Ok(new
+                {
+                    email = user.Email,
+                    role = string.IsNullOrEmpty(role) ? "SuperAdmin" : role,
+                    profile = new
+                    {
+                        Id = 0,
+                        EmployeeNumber = "",
+                        FirstName = "Super",
+                        MiddleName = "",
+                        LastName = "Admin",
+                        Contact = (string?)null,
+                        DepartmentName = (string?)null,
+                        PositionName = (string?)null,
+                        DepartmentId = (int?)null,
+                        PositionId = (int?)null,
+                        AddressLine = "",
+                        Region = "",
+                        Province = "",
+                        City = "",
+                        Barangay = "",
+                        ProfileImage = (string?)null,
+                        DateHired = (string?)null
+                    }
+                });
+            }
 
             return Ok(new { email = user.Email, role, profile });
         }
@@ -166,9 +196,18 @@ namespace project_lifecycle.Controllers
             {
                 var setEmailResult = await _userManager.SetEmailAsync(user, newEmail);
                 if (!setEmailResult.Succeeded)
+                {
                     errors.AddRange(setEmailResult.Errors.Select(e => e.Description));
+                }
                 else
+                {
                     await _userManager.SetUserNameAsync(user, newEmail);
+                    // Re-confirm the email so the user can still log in
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    await _userManager.ConfirmEmailAsync(user, token);
+                    // Refresh the auth cookie so the current session stays valid
+                    await _signInManager.RefreshSignInAsync(user);
+                }
             }
 
             // ── Update password if provided ──
