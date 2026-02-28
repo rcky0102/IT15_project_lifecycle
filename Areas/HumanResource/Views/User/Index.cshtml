@@ -303,6 +303,28 @@
                                     <span asp-validation-for="CreateUserViewModel.Contact" class="text-danger"></span>
                                 </div>
                             </div>
+                            <div class="row g-3" id="addressFieldsContainer" style="display: none;">
+                                <div class="col-md-6">
+                                    <label class="form-label">Region</label>
+                                    <select id="psgcRegion" class="form-select"></select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Province</label>
+                                    <select id="psgcProvince" class="form-select"></select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">City / Municipality</label>
+                                    <select id="psgcCity" class="form-select"></select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Barangay</label>
+                                    <select id="psgcBarangay" class="form-select"></select>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Street / Address</label>
+                                    <input id="userAddressLine" class="form-control" placeholder="House number, street, subdivision" />
+                                </div>
+                            </div>
                             <div class="row g-3" id="employmentFieldsContainer" style="display: none;">
                                 <div class="col-md-6">
                                     <label asp-for="CreateUserViewModel.DepartmentId" class="form-label"></label>
@@ -348,6 +370,16 @@
                                         <h6 class="sa-review-section-title">Personal Information</h6>
                                         <p><strong>Name:</strong> <span id="reviewName">-</span></p>
                                         <p><strong>Contact:</strong> <span id="reviewContact">-</span></p>
+                                    </div>
+                                </div>
+                                <div class="row mt-3" id="reviewAddressInfo" style="display: none;">
+                                    <div class="col-md-6">
+                                        <h6 class="sa-review-section-title">Address Information</h6>
+                                        <p><strong>Region:</strong> <span id="reviewRegion">-</span></p>
+                                        <p><strong>Province:</strong> <span id="reviewProvince">-</span></p>
+                                        <p><strong>City / Municipality:</strong> <span id="reviewCity">-</span></p>
+                                        <p><strong>Barangay:</strong> <span id="reviewBarangay">-</span></p>
+                                        <p><strong>Street / Address:</strong> <span id="reviewAddressLine">-</span></p>
                                     </div>
                                 </div>
                                 <div class="row mt-3" id="reviewEmploymentInfo" style="display: none;">
@@ -433,6 +465,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/psgc.js" asp-append-version="true"></script>
     <script>
     (function () {
         let PAGE_SIZE = 10;
@@ -689,6 +722,20 @@
                 $('#reviewName').text((firstName + ' ' + middleName + ' ' + lastName).trim() || '-');
                 $('#reviewContact').text(contact);
 
+                // Address review
+                const addr = window.getPSGCAddressText ? window.getPSGCAddressText() : {};
+                const hasAddress = addr.region || addr.province || addr.city || addr.barangay || $('#userAddressLine').val();
+                if (hasAddress) {
+                    $('#reviewAddressInfo').show();
+                    $('#reviewRegion').text(addr.region || '-');
+                    $('#reviewProvince').text(addr.province || '-');
+                    $('#reviewCity').text(addr.city || '-');
+                    $('#reviewBarangay').text(addr.barangay || '-');
+                    $('#reviewAddressLine').text($('#userAddressLine').val() || '-');
+                } else {
+                    $('#reviewAddressInfo').hide();
+                }
+
                 if (role === 'Employee' || employeeNumber !== '-' || department !== '-' || position !== '-' || dateHired !== '-') {
                     $('#reviewEmploymentInfo').show();
                     $('#reviewEmployeeNumber').text(employeeNumber);
@@ -721,6 +768,7 @@
                     $personalFieldsContainer.show();
                     $nameFieldsContainer.show();
                     $contactFieldsContainer.show();
+                    $('#addressFieldsContainer').show();
                     $personalDetailsTitle.html(selectedRole === 'Employee' ? '<i class="fas fa-id-card"></i> Employee Information' :
                                                   selectedRole === 'DepartmentHead' ? '<i class="fas fa-id-card"></i> Department Head Information' :
                                                   selectedRole === 'ProjectManager' ? '<i class="fas fa-id-card"></i> Project Manager Information' :
@@ -768,6 +816,7 @@
                     $personalFieldsContainer.hide();
                     $nameFieldsContainer.hide();
                     $contactFieldsContainer.hide();
+                    $('#addressFieldsContainer').hide();
                     $employmentFieldsContainer.hide();
                     $('#employeeNumberField').hide();
                     $roleDescription.hide();
@@ -801,6 +850,11 @@
                     MiddleName: $('#userMiddleName').val().trim(),
                     LastName: $('#userLastName').val().trim(),
                     Contact: $('#userContact').val().trim(),
+                    AddressLine: $('#userAddressLine').val() ? $('#userAddressLine').val().trim() : null,
+                    Region: window.getPSGCAddressText ? window.getPSGCAddressText().region || null : null,
+                    Province: window.getPSGCAddressText ? window.getPSGCAddressText().province || null : null,
+                    City: window.getPSGCAddressText ? window.getPSGCAddressText().city || null : null,
+                    Barangay: window.getPSGCAddressText ? window.getPSGCAddressText().barangay || null : null,
                     DepartmentId: $('#userDepartmentId').val() ? parseInt($('#userDepartmentId').val()) : null,
                     PositionId: $('#userPositionId').val() ? parseInt($('#userPositionId').val()) : null,
                     DateHired: $('#userDateHired').val()
@@ -879,6 +933,8 @@
                 $('.alert').remove();
                 currentStep = 1;
                 $('#editingUserId').val('');
+                $('#userAddressLine').val('');
+                if (window.resetPSGCSelects) window.resetPSGCSelects();
                 $('#saveUserBtn').html('<i class="fas fa-user-plus"></i> Create User').hide();
                 initStepper();
             });

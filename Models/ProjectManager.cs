@@ -17,7 +17,7 @@ namespace project_lifecycle.Models
         public string FirstName { get; set; }
 
         [StringLength(50)]
-        public string MiddleName { get; set; }
+        public string? MiddleName { get; set; }
 
         [Required]
         [StringLength(50)]
@@ -38,5 +38,20 @@ namespace project_lifecycle.Models
 
         public int? PositionId { get; set; }
         public Position? Position { get; set; }
+
+        [StringLength(200)]
+        public string? AddressLine { get; set; }
+
+        [StringLength(100)]
+        public string? Region { get; set; }
+
+        [StringLength(100)]
+        public string? Province { get; set; }
+
+        [StringLength(100)]
+        public string? City { get; set; }
+
+        [StringLength(100)]
+        public string? Barangay { get; set; }
     }
 }
