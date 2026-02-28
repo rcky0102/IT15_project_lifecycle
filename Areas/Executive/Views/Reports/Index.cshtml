@@ -1,0 +1,420 @@
+@{
+    ViewData["Title"] = "Reports";
+    Layout = "~/Areas/Executive/Layout.cshtml";
+}
+
+<div class="dashboard-container">
+    <!-- Page Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="dashboard-title">Reports</h1>
+            <p class="dashboard-subtitle">Generate, preview, and export organization reports</p>
+        </div>
+    </div>
+
+    <!-- Report Configuration Panel -->
+    <div class="report-config-panel">
+        <div class="panel-header">
+            <h3><i class="fas fa-sliders"></i> Report Configuration</h3>
+        </div>
+        <div class="report-config-body">
+            <div class="config-row">
+                <!-- Report Type -->
+                <div class="config-group">
+                    <label class="config-label" for="reportType">
+                        <i class="fas fa-file-alt"></i> Report Type
+                    </label>
+                    <select id="reportType" class="config-select">
+                        <option value="summary" selected>Executive Summary</option>
+                        <option value="projects">Projects Report</option>
+                        <option value="tasks">Tasks Report</option>
+                        <option value="proposals">Proposals Report</option>
+                        <option value="employees">Employees Report</option>
+                    </select>
+                </div>
+
+                <!-- Date From -->
+                <div class="config-group">
+                    <label class="config-label" for="dateFrom">
+                        <i class="fas fa-calendar-day"></i> Date From
+                    </label>
+                    <input type="date" id="dateFrom" class="config-input" />
+                </div>
+
+                <!-- Date To -->
+                <div class="config-group">
+                    <label class="config-label" for="dateTo">
+                        <i class="fas fa-calendar-check"></i> Date To
+                    </label>
+                    <input type="date" id="dateTo" class="config-input" />
+                </div>
+
+                <!-- Quick Range -->
+                <div class="config-group">
+                    <label class="config-label">
+                        <i class="fas fa-clock-rotate-left"></i> Quick Range
+                    </label>
+                    <div class="quick-range-btns">
+                        <button class="quick-range-btn" data-days="7">7d</button>
+                        <button class="quick-range-btn active" data-days="30">30d</button>
+                        <button class="quick-range-btn" data-days="90">90d</button>
+                        <button class="quick-range-btn" data-days="365">1y</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-actions">
+                <button class="btn-generate" id="btnGenerate">
+                    <i class="fas fa-chart-bar"></i> Generate Report
+                </button>
+                <button class="btn-export" id="btnExportPdf" disabled>
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="report-loading" id="reportLoading" style="display:none;">
+        <div class="loading-spinner"></div>
+        <p>Generating report&hellip;</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="report-empty" id="reportEmpty">
+        <div class="empty-icon">
+            <i class="fas fa-chart-pie"></i>
+        </div>
+        <h3>No Report Generated</h3>
+        <p>Choose a report type and date range, then click <strong>Generate Report</strong> to get started.</p>
+    </div>
+
+    <!-- Report Output -->
+    <div id="reportOutput" style="display:none;">
+        <!-- Report Title Bar -->
+        <div class="report-title-bar" id="reportTitleBar">
+            <div class="report-title-info">
+                <h2 id="reportMainTitle">Report</h2>
+                <span class="report-date-range" id="reportDateRange"></span>
+            </div>
+            <span class="report-badge" id="reportRecordCount"></span>
+        </div>
+
+        <!-- Summary Cards (for summary report) -->
+        <div class="report-summary-grid" id="reportSummaryGrid" style="display:none;"></div>
+
+        <!-- Data Table -->
+        <div class="report-table-panel" id="reportTablePanel" style="display:none;">
+            <div class="panel-header">
+                <h3 id="reportTableTitle">Details</h3>
+                <div class="table-search-wrap">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="tableSearch" class="table-search" placeholder="Search rows..." />
+                </div>
+            </div>
+            <div class="report-table-wrap">
+                <table class="report-table" id="reportTable">
+                    <thead id="reportTableHead"></thead>
+                    <tbody id="reportTableBody"></tbody>
+                </table>
+            </div>
+            <div class="table-footer" id="tableFooter">
+                <span class="table-count" id="tableRowCount"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- html2pdf.js for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        (function () {
+            // ── Elements ──
+            const reportType = document.getElementById('reportType');
+            const dateFrom = document.getElementById('dateFrom');
+            const dateTo = document.getElementById('dateTo');
+            const btnGenerate = document.getElementById('btnGenerate');
+            const btnExport = document.getElementById('btnExportPdf');
+            const quickBtns = document.querySelectorAll('.quick-range-btn');
+            const loadingEl = document.getElementById('reportLoading');
+            const emptyEl = document.getElementById('reportEmpty');
+            const outputEl = document.getElementById('reportOutput');
+            const summaryGrid = document.getElementById('reportSummaryGrid');
+            const tablePanel = document.getElementById('reportTablePanel');
+            const tableHead = document.getElementById('reportTableHead');
+            const tableBody = document.getElementById('reportTableBody');
+            const tableSearch = document.getElementById('tableSearch');
+            const tableRowCount = document.getElementById('tableRowCount');
+            const reportMainTitle = document.getElementById('reportMainTitle');
+            const reportDateRange = document.getElementById('reportDateRange');
+            const reportRecordCount = document.getElementById('reportRecordCount');
+            const reportTableTitle = document.getElementById('reportTableTitle');
+
+            let currentReport = null;
+
+            // ── Set initial dates (last 30 days) ──
+            function setDateRange(days) {
+                const now = new Date();
+                const from = new Date();
+                from.setDate(now.getDate() - days);
+                dateFrom.value = from.toISOString().split('T')[0];
+                dateTo.value = now.toISOString().split('T')[0];
+            }
+            setDateRange(30);
+
+            // ── Quick range buttons ──
+            quickBtns.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    quickBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    setDateRange(parseInt(this.dataset.days));
+                });
+            });
+
+            // ── Generate ──
+            btnGenerate.addEventListener('click', async function () {
+                const type = reportType.value;
+                const from = dateFrom.value;
+                const to = dateTo.value;
+
+                if (!from || !to) {
+                    alert('Please select both From and To dates.');
+                    return;
+                }
+                if (new Date(from) > new Date(to)) {
+                    alert('From date must be before To date.');
+                    return;
+                }
+
+                // Show loading
+                emptyEl.style.display = 'none';
+                outputEl.style.display = 'none';
+                loadingEl.style.display = 'flex';
+                btnExport.disabled = true;
+
+                try {
+                    const url = '@Url.Action("Generate", "Reports", new { area = "Executive" })';
+                    const resp = await fetch(`${url}?type=${encodeURIComponent(type)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+                    if (!resp.ok) throw new Error('Server error');
+                    const report = await resp.json();
+                    currentReport = report;
+                    renderReport(report);
+                    loadingEl.style.display = 'none';
+                    outputEl.style.display = 'block';
+                    btnExport.disabled = false;
+                } catch (err) {
+                    console.error('Report generation failed', err);
+                    loadingEl.style.display = 'none';
+                    emptyEl.style.display = 'flex';
+                    alert('Failed to generate report. Please try again.');
+                }
+            });
+
+            // ── Render ──
+            function renderReport(report) {
+                const titles = {
+                    summary: 'Executive Summary',
+                    projects: 'Projects Report',
+                    tasks: 'Tasks Report',
+                    proposals: 'Proposals Report',
+                    employees: 'Employees Report'
+                };
+
+                reportMainTitle.textContent = titles[report.type] || 'Report';
+                reportDateRange.textContent = `${report.from} — ${report.to}`;
+
+                if (report.type === 'summary') {
+                    renderSummary(report);
+                } else {
+                    renderTable(report);
+                }
+            }
+
+            // ── Summary Report ──
+            function renderSummary(report) {
+                summaryGrid.style.display = 'grid';
+                tablePanel.style.display = 'none';
+                const d = report.data;
+
+                reportRecordCount.textContent = 'Executive Summary';
+
+                summaryGrid.innerHTML = `
+                    <div class="summary-section">
+                        <h4 class="summary-section-title"><i class="fas fa-diagram-project"></i> Projects</h4>
+                        <div class="summary-cards">
+                            ${summaryCard('Projects Created', d.projectsCreated, 'primary')}
+                            ${summaryCard('Active Projects', d.activeProjects, 'success')}
+                            ${summaryCard('Archived', d.archivedProjects, 'neutral')}
+                        </div>
+                    </div>
+                    <div class="summary-section">
+                        <h4 class="summary-section-title"><i class="fas fa-list-check"></i> Tasks</h4>
+                        <div class="summary-cards">
+                            ${summaryCard('Total Tasks', d.totalTasks, 'primary')}
+                            ${summaryCard('Completed', d.completedTasks, 'success')}
+                            ${summaryCard('Pending', d.pendingTasks, 'warning')}
+                            ${summaryCard('Require Revision', d.revisionTasks, 'danger')}
+                            ${summaryCard('Completion Rate', d.taskCompletionRate + '%', 'info')}
+                        </div>
+                    </div>
+                    <div class="summary-section">
+                        <h4 class="summary-section-title"><i class="fas fa-file-lines"></i> Proposals</h4>
+                        <div class="summary-cards">
+                            ${summaryCard('Total Proposals', d.totalProposals, 'primary')}
+                            ${summaryCard('Approved', d.approvedProposals, 'success')}
+                            ${summaryCard('Pending', d.pendingProposals, 'warning')}
+                            ${summaryCard('Rejected', d.rejectedProposals, 'danger')}
+                            ${summaryCard('Approval Rate', d.proposalApprovalRate + '%', 'info')}
+                        </div>
+                    </div>
+                    <div class="summary-section">
+                        <h4 class="summary-section-title"><i class="fas fa-users"></i> People & Milestones</h4>
+                        <div class="summary-cards">
+                            ${summaryCard('New Employees', d.newEmployees, 'primary')}
+                            ${summaryCard('Total Employees', d.totalEmployees, 'neutral')}
+                            ${summaryCard('Departments', d.totalDepartments, 'neutral')}
+                            ${summaryCard('Milestones Done', d.milestonesFinished, 'success')}
+                            ${summaryCard('Milestone Rate', d.milestoneCompletionRate + '%', 'info')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function summaryCard(label, value, color) {
+                return `<div class="summary-card ${color}"><div class="summary-card-value">${value}</div><div class="summary-card-label">${label}</div></div>`;
+            }
+
+            // ── Table Reports ──
+            function renderTable(report) {
+                summaryGrid.style.display = 'none';
+                tablePanel.style.display = 'block';
+                reportRecordCount.textContent = `${report.totalCount} records`;
+                tableSearch.value = '';
+
+                const columns = getColumns(report.type);
+                reportTableTitle.textContent = `${report.type.charAt(0).toUpperCase() + report.type.slice(1)} Details`;
+
+                // Head
+                tableHead.innerHTML = '<tr>' + columns.map(c => `<th>${c.label}</th>`).join('') + '</tr>';
+
+                // Body
+                renderRows(report.rows, columns);
+            }
+
+            function renderRows(rows, columns, filter = '') {
+                const lf = filter.toLowerCase();
+                const filtered = lf
+                    ? rows.filter(r => columns.some(c => String(r[c.key] ?? '').toLowerCase().includes(lf)))
+                    : rows;
+
+                tableBody.innerHTML = filtered.length === 0
+                    ? `<tr><td colspan="${columns.length}" class="table-empty">No matching records</td></tr>`
+                    : filtered.map(r =>
+                        '<tr>' + columns.map(c => {
+                            let val = r[c.key] ?? '—';
+                            if (c.key === 'status' || c.key === 'Status') val = statusBadge(val);
+                            return `<td>${val}</td>`;
+                        }).join('') + '</tr>'
+                    ).join('');
+
+                tableRowCount.textContent = `Showing ${filtered.length} of ${rows.length} records`;
+            }
+
+            function statusBadge(status) {
+                const cls = {
+                    'Checked': 'approved', 'Approved': 'approved', 'Active': 'approved',
+                    'Pending': 'pending',
+                    'Rejected': 'rejected', 'Archived': 'rejected',
+                    'Require Revision': 'revision', 'Requires Revision': 'revision'
+                };
+                return `<span class="badge-status ${cls[status] || 'neutral'}">${status}</span>`;
+            }
+
+            function getColumns(type) {
+                switch (type) {
+                    case 'projects': return [
+                        { key: 'name', label: 'Project Name' },
+                        { key: 'manager', label: 'Manager' },
+                        { key: 'status', label: 'Status' },
+                        { key: 'startDate', label: 'Start' },
+                        { key: 'endDate', label: 'End' },
+                        { key: 'memberCount', label: 'Members' },
+                        { key: 'taskCount', label: 'Tasks' },
+                        { key: 'completedTaskCount', label: 'Done' },
+                        { key: 'dateCreated', label: 'Created' },
+                    ];
+                    case 'tasks': return [
+                        { key: 'name', label: 'Task Name' },
+                        { key: 'project', label: 'Project' },
+                        { key: 'milestone', label: 'Milestone' },
+                        { key: 'status', label: 'Status' },
+                        { key: 'startDate', label: 'Start' },
+                        { key: 'endDate', label: 'Due' },
+                        { key: 'completedAt', label: 'Completed' },
+                        { key: 'assigneeCount', label: 'Assignees' },
+                    ];
+                    case 'proposals': return [
+                        { key: 'title', label: 'Title' },
+                        { key: 'employee', label: 'Submitted By' },
+                        { key: 'department', label: 'Department' },
+                        { key: 'status', label: 'Status' },
+                        { key: 'dateCreated', label: 'Date' },
+                    ];
+                    case 'employees': return [
+                        { key: 'name', label: 'Name' },
+                        { key: 'employeeNumber', label: 'Emp #' },
+                        { key: 'department', label: 'Department' },
+                        { key: 'position', label: 'Position' },
+                        { key: 'dateHired', label: 'Hired' },
+                        { key: 'projectCount', label: 'Projects' },
+                        { key: 'taskCount', label: 'Tasks' },
+                    ];
+                    default: return [];
+                }
+            }
+
+            // ── Search filter ──
+            tableSearch.addEventListener('input', function () {
+                if (!currentReport || !currentReport.rows) return;
+                const columns = getColumns(currentReport.type);
+                renderRows(currentReport.rows, columns, this.value);
+            });
+
+            // ── PDF Export ──
+            btnExport.addEventListener('click', function () {
+                if (!currentReport) return;
+
+                const element = document.getElementById('reportOutput');
+                const title = reportMainTitle.textContent;
+                const dateStr = new Date().toISOString().split('T')[0];
+
+                // Temporarily adjust styling for PDF
+                element.style.display = 'block';
+                const opt = {
+                    margin: [0.4, 0.4, 0.6, 0.4],
+                    filename: `${title.replace(/\s+/g, '_')}_${dateStr}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
+                // Add PDF header watermark temporarily
+                const watermark = document.createElement('div');
+                watermark.id = 'pdfWatermark';
+                watermark.style.cssText = 'text-align:center;padding:0.5rem 0 1rem;border-bottom:2px solid #006994;margin-bottom:1rem;';
+                watermark.innerHTML = `
+                    <div style="font-size:1.3rem;font-weight:800;color:#006994;">${title}</div>
+                    <div style="font-size:.85rem;color:#64748b;margin-top:.25rem;">${reportDateRange.textContent} &mdash; Generated on ${new Date().toLocaleDateString()}</div>
+                `;
+                element.prepend(watermark);
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    watermark.remove();
+                });
+            });
+        })();
+    </script>
+}
