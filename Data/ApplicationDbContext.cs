@@ -27,6 +27,9 @@ namespace project_lifecycle.Data
         public DbSet<ProposalNoteVersion> ProposalNoteVersions { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Document> Documents { get; set; }
+        public DbSet<DocumentCollaborator> DocumentCollaborators { get; set; }
+        public DbSet<DocumentVersion> DocumentVersions { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -149,6 +152,36 @@ namespace project_lifecycle.Data
                 .HasOne(tnv => tnv.ProjectManager)
                 .WithMany()
                 .HasForeignKey(tnv => tnv.ProjectManagerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Document>()
+                .HasOne(d => d.OwnerEmployee)
+                .WithMany()
+                .HasForeignKey(d => d.OwnerEmployeeId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<DocumentCollaborator>()
+                .HasOne(dc => dc.Document)
+                .WithMany()
+                .HasForeignKey(dc => dc.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<DocumentCollaborator>()
+                .HasOne(dc => dc.Employee)
+                .WithMany()
+                .HasForeignKey(dc => dc.EmployeeId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<DocumentVersion>()
+                .HasOne(dv => dv.Document)
+                .WithMany()
+                .HasForeignKey(dv => dv.DocumentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<DocumentVersion>()
+                .HasOne(dv => dv.Employee)
+                .WithMany()
+                .HasForeignKey(dv => dv.EmployeeId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }

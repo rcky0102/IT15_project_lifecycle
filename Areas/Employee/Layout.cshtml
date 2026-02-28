@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="~/css/employee-dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/employee-news.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/employee-project.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-document.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
 </head>
 <body class="employee-body">
@@ -90,6 +91,14 @@
                                class="emp-nav-link @(currentController == "News" ? "active" : "")"           data-tooltip="News">
                             <i class="fas fa-newspaper"></i>
                             <span class="emp-nav-text">News</span>
+                        </a>
+                    </li>
+                    <li class="emp-nav-item">
+                        <a href="@Url.Action("Index", "Document", new { area = "Employee" })"
+                               class="emp-nav-link @(currentController == "Document" ? "active" : "")"
+                               data-tooltip="Documents">
+                            <i class="fas fa-file-alt"></i>
+                            <span class="emp-nav-text">Documents</span>
                         </a>
                     </li>
                 </ul>

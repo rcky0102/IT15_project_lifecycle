@@ -1,0 +1,251 @@
+@*
+    Create Document Page
+*@
+@{
+    ViewData["Title"] = "New Document";
+}
+
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-file-circle-plus"></i></span>
+                New Document
+            </h1>
+            <p class="emp-page-subtitle">Create a new collaborative document</p>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="Employee" asp-controller="Document" asp-action="Index" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Documents</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+
+<div class="emp-form-card">
+    <div class="emp-form-section">
+        <div class="emp-form-section-title"><i class="fas fa-file-alt"></i> Document Details</div>
+
+        <form asp-area="Employee" asp-controller="Document" asp-action="Create" method="post" class="emp-form" id="createDocForm">
+            @Html.AntiForgeryToken()
+
+            <div class="emp-form-row">
+                <label for="Title" class="emp-form-label">Document Title</label>
+                <input type="text" id="Title" name="Title" class="emp-form-control" placeholder="Enter a descriptive title…" required maxlength="200" />
+            </div>
+
+            <div class="emp-form-row">
+                <label for="Content" class="emp-form-label">Content</label>
+                <textarea id="Content" name="Content" rows="12" class="emp-form-control" placeholder="Start writing your document…"></textarea>
+                <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+                    <button type="button" id="insertRichFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
+                        <i class="fas fa-paperclip"></i> Add file/image
+                    </button>
+                    <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
+                </div>
+                <input type="file" id="richFileInput" style="display:none;" />
+            </div>
+
+            <div class="emp-form-actions" style="justify-content:flex-end;">
+                <button type="reset" class="emp-btn emp-btn-secondary"><i class="fas fa-rotate-left"></i> Reset</button>
+                <button type="submit" id="submitDocBtn" class="emp-btn emp-btn-primary"><i class="fas fa-plus"></i> Create Document</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editorSelector = '#Content';
+        const uploadEndpoint = '@Url.Action("UploadFile", "Document", new { area = "Employee" })';
+        const formElement = document.getElementById('createDocForm');
+        const submitButton = document.getElementById('submitDocBtn');
+        const titleInput = document.getElementById('Title');
+        let editorInstance = null;
+        let pendingUploads = 0;
+        let isSubmitting = false;
+
+        function setUploadingState(isUploading) {
+            if (submitButton) submitButton.disabled = isUploading;
+        }
+
+        function beginUpload() { pendingUploads += 1; setUploadingState(true); }
+        function endUpload() { pendingUploads = Math.max(0, pendingUploads - 1); setUploadingState(pendingUploads > 0); }
+
+        const scriptCdnCandidates = [
+            'https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js',
+            'https://unpkg.com/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js'
+        ];
+        const styleCdnCandidates = [
+            'https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/ckeditor5.css',
+            'https://unpkg.com/ckeditor5@47.1.0/dist/ckeditor5.css'
+        ];
+
+        class DocUploadAdapter {
+            constructor(loader) { this.loader = loader; this.abortController = new AbortController(); }
+            async upload() {
+                const file = await this.loader.file;
+                const result = await uploadFile(file, this.abortController.signal);
+                return { default: result.url };
+            }
+            abort() { this.abortController.abort(); }
+        }
+
+        function DocUploadAdapterPlugin(editor) {
+            editor.plugins.get('FileRepository').createUploadAdapter = (loader) => new DocUploadAdapter(loader);
+        }
+
+        async function uploadFile(file, abortSignal) {
+            beginUpload();
+            try {
+                const formData = new FormData();
+                formData.append('upload', file);
+                const response = await fetch(uploadEndpoint, { method: 'POST', body: formData, signal: abortSignal });
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload?.error?.message || 'Upload failed.');
+                return payload;
+            } finally { endUpload(); }
+        }
+
+        function wireFileInsertButton() {
+            const button = document.getElementById('insertRichFileBtn');
+            const input = document.getElementById('richFileInput');
+            if (!button || !input) return;
+
+            button.addEventListener('click', function () { input.click(); });
+            input.addEventListener('change', async function () {
+                if (!editorInstance || !input.files || input.files.length === 0) return;
+                const file = input.files[0];
+                button.disabled = true;
+                try {
+                    const result = await uploadFile(file);
+                    if (file.type.startsWith('image/')) {
+                        editorInstance.model.change(writer => {
+                            const img = writer.createElement('imageBlock', { src: result.url });
+                            editorInstance.model.insertContent(img, editorInstance.model.document.selection);
+                        });
+                    } else {
+                        editorInstance.model.change(writer => {
+                            const link = writer.createText(result.fileName || file.name, { linkHref: result.url });
+                            editorInstance.model.insertContent(link, editorInstance.model.document.selection);
+                        });
+                    }
+                } catch (error) {
+                    console.error('File insertion failed:', error);
+                    alert(error.message || 'File upload failed.');
+                } finally {
+                    input.value = '';
+                    button.disabled = false;
+                }
+            });
+        }
+
+        function initEditor() {
+            if (!window.CKEDITOR || !window.CKEDITOR.ClassicEditor) {
+                console.error('CKEditor UMD bundle was not loaded.');
+                return;
+            }
+
+            const {
+                ClassicEditor, Essentials, Paragraph, Heading, Bold, Italic, Link, List, Indent,
+                BlockQuote, Table, TableToolbar, Image, ImageCaption, ImageStyle, ImageToolbar,
+                ImageUpload, ImageResize, ImageResizeEditing, ImageResizeHandles, MediaEmbed, Alignment
+            } = window.CKEDITOR;
+
+            ClassicEditor
+                .create(document.querySelector(editorSelector), {
+                    licenseKey: 'GPL',
+                    plugins: [
+                        Essentials, Paragraph, Heading, Bold, Italic, Link, List, Indent,
+                        BlockQuote, Table, TableToolbar, Image, ImageCaption, ImageStyle, ImageToolbar,
+                        ImageUpload, ImageResize, ImageResizeEditing, ImageResizeHandles, MediaEmbed, Alignment
+                    ],
+                    extraPlugins: [DocUploadAdapterPlugin],
+                    toolbar: {
+                        items: [
+                            'undo', 'redo', '|', 'heading', '|', 'bold', 'italic', 'link', '|',
+                            'alignment', '|', 'bulletedList', 'numberedList', '|', 'outdent', 'indent', '|',
+                            'imageUpload', 'insertTable', 'mediaEmbed', 'blockQuote'
+                        ],
+                        shouldNotGroupWhenFull: true
+                    },
+                    image: {
+                        toolbar: ['imageTextAlternative', 'toggleImageCaption', '|', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side', '|', 'resizeImage'],
+                        resizeOptions: [
+                            { name: 'resizeImage:original', value: null, label: 'Original' },
+                            { name: 'resizeImage:25', value: '25', label: '25%' },
+                            { name: 'resizeImage:50', value: '50', label: '50%' },
+                            { name: 'resizeImage:75', value: '75', label: '75%' },
+                            { name: 'resizeImage:100', value: '100', label: '100%' }
+                        ],
+                        resizeUnit: '%'
+                    },
+                    alignment: { options: ['left', 'center', 'right', 'justify'] },
+                    table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] }
+                })
+                .then(editor => {
+                    editorInstance = editor;
+                    wireFileInsertButton();
+                })
+                .catch(error => console.error('CKEditor initialization error:', error));
+        }
+
+        function hasMeaningfulContent(html) {
+            if (!html) return false;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const text = (doc.body.textContent || '').replace(/\u00A0/g, ' ').trim();
+            const media = doc.body.querySelector('img,table,video,audio,iframe,embed,object');
+            return text.length > 0 || !!media;
+        }
+
+        if (formElement) {
+            formElement.addEventListener('submit', function (event) {
+                if (pendingUploads > 0) {
+                    event.preventDefault();
+                    alert('Please wait for file upload to finish.');
+                    return;
+                }
+                const inputEl = document.querySelector(editorSelector);
+                const html = editorInstance ? editorInstance.getData() : (inputEl ? inputEl.value : '');
+                if (inputEl) inputEl.value = html;
+                isSubmitting = true;
+            });
+        }
+
+        function loadScriptSequentially(index) {
+            if (window.CKEDITOR && window.CKEDITOR.ClassicEditor) { initEditor(); return; }
+            if (index >= scriptCdnCandidates.length) { initEditor(); return; }
+            const script = document.createElement('script');
+            script.src = scriptCdnCandidates[index];
+            script.async = true;
+            script.onload = function () { initEditor(); };
+            script.onerror = function () { loadScriptSequentially(index + 1); };
+            document.head.appendChild(script);
+        }
+
+        function loadStyleSequentially(index) {
+            if (document.querySelector('link[data-ckeditor-style="true"]')) { loadScriptSequentially(0); return; }
+            if (index >= styleCdnCandidates.length) { loadScriptSequentially(0); return; }
+            const style = document.createElement('link');
+            style.rel = 'stylesheet';
+            style.href = styleCdnCandidates[index];
+            style.setAttribute('data-ckeditor-style', 'true');
+            style.onload = function () { loadScriptSequentially(0); };
+            style.onerror = function () { style.remove(); loadStyleSequentially(index + 1); };
+            document.head.appendChild(style);
+        }
+
+        loadStyleSequentially(0);
+    });
+</script>

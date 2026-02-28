@@ -1,0 +1,214 @@
+@model List<project_lifecycle.Models.Document>
+@using project_lifecycle.Models
+@{
+    var filter = ViewData["Filter"]?.ToString() ?? "my";
+    var currentEmployeeId = (int)(ViewData["CurrentEmployeeId"] ?? 0);
+}
+
+<!-- ===== Page Title Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-file-alt"></i></span>
+                Documents
+            </h1>
+            <p class="emp-page-subtitle">Create and collaborate on documents with your team</p>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="Employee" asp-controller="Document" asp-action="Create" class="emp-btn emp-btn-outline">
+                <i class="fas fa-file-circle-plus"></i>
+                <span>New Document</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Alerts ===== -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <div class="emp-alert-icon"><i class="fas fa-check-circle"></i></div>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+
+<!-- ===== Filters ===== -->
+<div class="emp-filters-card">
+    <div class="emp-filters-row">
+        <div class="emp-search-group">
+            <i class="fas fa-magnifying-glass emp-search-icon"></i>
+            <input id="docSearch" type="text" class="emp-search-input" placeholder="Search documents…" autocomplete="off" />
+        </div>
+        <div class="emp-select-group">
+            <select id="docFilter" class="emp-select">
+                @if (filter == "my") { <option value="my" selected>My Documents</option> } else { <option value="my">My Documents</option> }
+                @if (filter == "shared") { <option value="shared" selected>Shared with Me</option> } else { <option value="shared">Shared with Me</option> }
+                @if (filter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
+        </div>
+        <div class="emp-select-group">
+            <label for="docPageSize" style="font-size:.82rem;color:var(--emp-muted);margin-right:.4rem;">Show</label>
+            <select id="docPageSize" class="emp-select" style="width:92px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Table ===== -->
+<div class="project-table-section">
+    <div class="project-table-card">
+        @if (Model.Any())
+        {
+            <div class="project-table-responsive">
+                <table class="project-table" id="documentsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Owner</th>
+                            <th>Last Modified</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in Model)
+                        {
+                            var isOwner = doc.OwnerEmployeeId == currentEmployeeId;
+                            <tr class="doc-row" data-title="@doc.Title.ToLower()">
+                                <td>
+                                    <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id" class="doc-title-link">
+                                        <i class="fas fa-file-alt" style="margin-right:6px; opacity:.7;"></i>
+                                        @doc.Title
+                                    </a>
+                                </td>
+                                <td>
+                                    @if (isOwner)
+                                    {
+                                        <span class="emp-badge emp-badge-primary">You</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@doc.OwnerEmployee?.FirstName @doc.OwnerEmployee?.LastName</span>
+                                    }
+                                </td>
+                                <td>
+                                    @((doc.LastModified ?? doc.DateCreated).ToString("MMM dd, yyyy h:mm tt"))
+                                </td>
+                                <td>
+                                    <div class="emp-table-actions">
+                                        <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id" class="emp-btn emp-btn-sm emp-btn-outline" title="Open">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        @if (isOwner)
+                                        {
+                                            <form asp-area="Employee" asp-controller="Document" asp-action="Delete" asp-route-id="@doc.Id" method="post"
+                                                  style="display:inline;" onsubmit="return confirm('Delete this document? This cannot be undone.');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="emp-btn emp-btn-sm emp-btn-danger" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="emp-pagination" id="docPagination"></div>
+        }
+        else
+        {
+            <div class="emp-empty-state">
+                <div class="emp-empty-icon"><i class="fas fa-file-alt"></i></div>
+                <h3>No documents found</h3>
+                <p>Create a new document to get started, or check the shared filter.</p>
+                <a asp-area="Employee" asp-controller="Document" asp-action="Create" class="emp-btn emp-btn-primary" style="margin-top:.5rem;">
+                    <i class="fas fa-plus"></i> New Document
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Filter change -> reload page
+        const filterSelect = document.getElementById('docFilter');
+        if (filterSelect) {
+            filterSelect.addEventListener('change', function () {
+                window.location.href = '@Url.Action("Index", "Document", new { area = "Employee" })' + '?filter=' + this.value;
+            });
+        }
+
+        // Client-side search + pagination
+        const searchInput = document.getElementById('docSearch');
+        const pageSizeSelect = document.getElementById('docPageSize');
+        const table = document.getElementById('documentsTable');
+        const paginationEl = document.getElementById('docPagination');
+        if (!table) return;
+
+        const allRows = Array.from(table.querySelectorAll('tbody .doc-row'));
+        let visibleRows = [...allRows];
+        let pageSize = parseInt(pageSizeSelect?.value || '10');
+        let currentPage = 1;
+
+        function applyFilter() {
+            const term = (searchInput?.value || '').toLowerCase().trim();
+            visibleRows = allRows.filter(r => !term || r.dataset.title.includes(term));
+            currentPage = 1;
+            renderPage();
+        }
+
+        function renderPage() {
+            const total = visibleRows.length;
+            const pages = Math.ceil(total / pageSize) || 1;
+            if (currentPage > pages) currentPage = pages;
+
+            allRows.forEach(r => r.style.display = 'none');
+            const start = (currentPage - 1) * pageSize;
+            visibleRows.slice(start, start + pageSize).forEach(r => r.style.display = '');
+
+            // Pagination controls
+            if (!paginationEl) return;
+            if (pages <= 1) { paginationEl.innerHTML = ''; return; }
+
+            let html = '<button class="emp-page-btn" data-page="prev">&laquo;</button>';
+            for (let i = 1; i <= pages; i++) {
+                html += '<button class="emp-page-btn' + (i === currentPage ? ' active' : '') + '" data-page="' + i + '">' + i + '</button>';
+            }
+            html += '<button class="emp-page-btn" data-page="next">&raquo;</button>';
+            paginationEl.innerHTML = html;
+
+            paginationEl.querySelectorAll('.emp-page-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const p = this.dataset.page;
+                    if (p === 'prev') { if (currentPage > 1) currentPage--; }
+                    else if (p === 'next') { if (currentPage < pages) currentPage++; }
+                    else currentPage = parseInt(p);
+                    renderPage();
+                });
+            });
+        }
+
+        searchInput?.addEventListener('input', applyFilter);
+        pageSizeSelect?.addEventListener('change', function () { pageSize = parseInt(this.value); applyFilter(); });
+        renderPage();
+    });
+</script>
