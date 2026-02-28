@@ -1,5 +1,6 @@
 @{
     Layout = null;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
 }
 
 <!DOCTYPE html>
@@ -8,74 +9,253 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Human Resource Dashboard</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
+
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/hr-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/hr-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
 </head>
-<body class="admin-body">
-    <div class="admin-layout">
-        <aside class="admin-sidebar" id="adminSidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-brand">
-                    <div class="brand-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M16 2L20 8L27 7L24 14L28 20L21 19L16 24L11 19L4 20L8 14L5 7L12 8L16 2Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-                            <circle cx="16" cy="14" r="6" fill="white"/>
-                            <path d="M13 12L15 14L19 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<body class="hr-body">
+
+    <!-- Mobile overlay -->
+    <div class="hr-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="hr-layout">
+
+        <!-- ========== SIDEBAR ========== -->
+        <aside class="hr-sidebar" id="hrSidebar">
+
+            <!-- Brand -->
+            <div class="hr-sidebar-header">
+                <a href="@Url.Action("Index", "Dashboard", new { area = "HumanResource" })" class="hr-sidebar-brand">
+                    <div class="hr-brand-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="9" cy="7" r="3" fill="currentColor"/>
+                            <path d="M2 20v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                            <path d="M21 21v-1a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <span class="brand-text">Human Resource</span>
-                </div>
-                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
-                    <i class="fas fa-bars"></i>
+                    <span class="hr-brand-text">Human Resource</span>
+                </a>
+                <button class="hr-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fas fa-bars fa-sm"></i>
                 </button>
             </div>
-            <nav class="sidebar-nav">
-                <ul class="nav-list">
-                    <li class="nav-item">
-                        <a href="@Url.Action("Index", "Dashboard", new { area = "HumanResource" })" class="nav-link">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span class="nav-text">Dashboard</span>
+
+            <!-- Navigation -->
+            <nav class="hr-sidebar-nav">
+                <span class="hr-nav-section-title">Menu</span>
+                <ul class="hr-nav-list">
+                    <li class="hr-nav-item">
+                        <a href="@Url.Action("Index", "Dashboard", new { area = "HumanResource" })"
+                           class="hr-nav-link @(currentController == "Dashboard" ? "active" : "")"
+                           data-tooltip="Dashboard">
+                            <i class="fas fa-th-large"></i>
+                            <span class="hr-nav-text">Dashboard</span>
                         </a>
                     </li>
                 </ul>
             </nav>
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar"><span>HR</span></div>
-                    <div class="user-info">
-                        <div class="user-name">Human Resource</div>
-                        <div class="user-role">HR</div>
+
+            <!-- User footer -->
+            <div class="hr-sidebar-footer">
+                <div class="hr-user-card">
+                    <div class="hr-user-avatar">HR</div>
+                    <div class="hr-user-details">
+                        <div class="hr-user-name">Human Resource</div>
+                        <div class="hr-user-role">HR Manager</div>
                     </div>
-                    <form action="/Identity/Account/Logout" method="post" class="logout-form" id="logoutForm">
+                    <form action="/Identity/Account/Logout" method="post" class="hr-logout-form" id="logoutForm">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="returnUrl" value="/" />
-                        <button type="submit" class="logout-btn" title="Logout" onclick="return confirm('Are you sure you want to logout?');">
-                            <i class="fas fa-sign-out-alt"></i>
+                        <button type="button" class="hr-logout-btn" id="logoutBtn" title="Sign out">
+                            <i class="fas fa-arrow-right-from-bracket"></i>
                         </button>
                     </form>
                 </div>
             </div>
+
         </aside>
 
-        <div class="admin-main">
-            <header class="admin-header">
-                <div class="header-left">
-                    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle"><i class="fas fa-bars"></i></button>
-                    <div class="breadcrumb"><span class="breadcrumb-item">Dashboard</span></div>
+        <!-- ========== MAIN ========== -->
+        <div class="hr-main">
+
+            <!-- Header -->
+            <header class="hr-header" id="hrHeader">
+                <div class="hr-header-left">
+                    <button class="hr-mobile-toggle" id="mobileSidebarToggle" aria-label="Open menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="hr-breadcrumb" aria-label="Breadcrumb">
+                        <a href="@Url.Action("Index", "Dashboard", new { area = "HumanResource" })" class="hr-breadcrumb-home">
+                            <i class="fas fa-home"></i>
+                        </a>
+                        <span class="hr-breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
+                        <span class="hr-breadcrumb-current">@(ViewData["Title"] ?? "Dashboard")</span>
+                    </nav>
+                </div>
+
+                <div class="hr-header-right">
+                    <button class="hr-header-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="hr-notif-dot"></span>
+                    </button>
+                    <button class="hr-header-btn" title="Search">
+                        <i class="fas fa-magnifying-glass"></i>
+                    </button>
+
+                    <div class="hr-header-divider"></div>
+
+                    <div class="hr-header-profile">
+                        <div class="hr-header-avatar">HR</div>
+                        <div class="hr-header-user-info">
+                            <div class="hr-header-greeting" id="headerGreeting">Welcome back</div>
+                            <div class="hr-header-name">Human Resource</div>
+                        </div>
+                    </div>
                 </div>
             </header>
-            <main class="admin-content">@RenderBody()</main>
+
+            <!-- Page Content -->
+            <main class="hr-content">
+                @RenderBody()
+            </main>
+        </div>
+
+    </div>
+
+    <!-- Logout confirmation modal -->
+
+    <style>
+    .hr-modal-backdrop { position: fixed; inset: 0; background: rgba(3,7,18,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .hr-modal-backdrop.active { display: flex; }
+    .hr-modal { background: #fff; border-radius: 12px; width: 94%; max-width: 420px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(2,6,23,0.35); }
+    .hr-modal h4 { margin: 0 0 .5rem; font-size: 1.05rem; color: #0f172a; }
+    .hr-modal p { margin: 0 0 1rem; color: #64748b; font-size: .92rem; }
+    .hr-modal .hr-modal-actions { display:flex; gap:.5rem; justify-content:flex-end; }
+    .hr-modal .hr-btn { border-radius: 8px; padding: .5rem .85rem; font-weight:600; }
+    .hr-modal .hr-btn-cancel { background: transparent; border:1px solid #e6eef6; color:#475569; }
+    .hr-modal .hr-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color:#fff; border:none; }
+    </style>
+
+    <div class="hr-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="hr-modal" role="document">
+            <h4>Sign out</h4>
+            <p>Are you sure you want to sign out of your account?</p>
+            <div class="hr-modal-actions">
+                <button type="button" class="hr-btn hr-btn-cancel" id="cancelLogoutBtn">Cancel</button>
+                <button type="button" class="hr-btn hr-btn-confirm" id="confirmLogoutBtn">Sign out</button>
+            </div>
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+    (function () {
+        const sidebar  = document.getElementById('hrSidebar');
+        const toggle   = document.getElementById('sidebarToggle');
+        const mobile   = document.getElementById('mobileSidebarToggle');
+        const overlay  = document.getElementById('sidebarOverlay');
+        const header   = document.getElementById('hrHeader');
+        const greeting = document.getElementById('headerGreeting');
+
+        /* --- Time-based greeting --- */
+        const hour = new Date().getHours();
+        if (greeting) {
+            greeting.textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        }
+
+        /* --- Sidebar collapse toggle (desktop) --- */
+        toggle?.addEventListener('click', function () {
+            const icon = this.querySelector('i');
+            const collapsed = sidebar.classList.toggle('collapsed');
+            icon.className = collapsed ? 'fas fa-chevron-right fa-sm' : 'fas fa-bars fa-sm';
+            this.setAttribute('title', collapsed ? 'Expand Sidebar' : 'Collapse Sidebar');
+            localStorage.setItem('hrSidebarCollapsed', collapsed);
+        });
+
+        /* --- Restore collapsed state --- */
+        if (localStorage.getItem('hrSidebarCollapsed') === 'true') {
+            sidebar?.classList.add('collapsed');
+            const icon = toggle?.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-chevron-right fa-sm';
+                toggle.setAttribute('title', 'Expand Sidebar');
+            }
+        }
+
+        /* --- Mobile sidebar --- */
+        function openMobile()  { sidebar?.classList.add('mobile-open');    overlay?.classList.add('active'); }
+        function closeMobile() { sidebar?.classList.remove('mobile-open'); overlay?.classList.remove('active'); }
+
+        mobile?.addEventListener('click', function () {
+            sidebar?.classList.contains('mobile-open') ? closeMobile() : openMobile();
+        });
+        overlay?.addEventListener('click', closeMobile);
+
+        document.addEventListener('click', function (e) {
+            if (window.innerWidth <= 768 &&
+                sidebar?.classList.contains('mobile-open') &&
+                !sidebar.contains(e.target) &&
+                !mobile?.contains(e.target)) {
+                closeMobile();
+            }
+        });
+
+        /* --- Sticky header shadow on scroll --- */
+        window.addEventListener('scroll', function () {
+            header?.classList.toggle('scrolled', window.scrollY > 8);
+        }, { passive: true });
+
+        /* --- Logout confirmation modal --- */
+        const logoutForm = document.getElementById('logoutForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = document.getElementById('logoutModal');
+        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+        function showLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.add('active');
+            logoutModal.setAttribute('aria-hidden', 'false');
+        }
+        function hideLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.remove('active');
+            logoutModal.setAttribute('aria-hidden', 'true');
+        }
+
+        logoutBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLogoutModal();
+        });
+
+        cancelLogoutBtn?.addEventListener('click', function () { hideLogoutModal(); });
+
+        // Close modal when clicking backdrop
+        logoutModal?.addEventListener('click', function (e) {
+            if (e.target === logoutModal) hideLogoutModal();
+        });
+
+        confirmLogoutBtn?.addEventListener('click', function () {
+            if (logoutForm) logoutForm.submit();
+        });
+    })();
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
