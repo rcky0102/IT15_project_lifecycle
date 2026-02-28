@@ -40,17 +40,13 @@
             <!-- Brand -->
             <div class="dh-sidebar-header">
                 <a href="@Url.Action("Index", "Dashboard", new { area = "DepartmentHead" })" class="dh-sidebar-brand">
-                    <div class="dh-brand-icon" aria-hidden="true">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Department Head">
-                            <!-- Rounded badge with person silhouette -->
-                            <rect x="0.5" y="0.5" width="23" height="23" rx="5" fill="currentColor" opacity="0.06" />
-                            <g transform="translate(4,3)" fill="currentColor">
-                                <circle cx="8" cy="4.5" r="3.2" />
-                                <path d="M0.3 16.2c0-2.9 3.9-5.2 7.7-5.2s7.7 2.3 7.7 5.2v1.6H0.3v-1.6z" />
-                            </g>
-                        </svg>
+                    <div class="dh-brand-icon">
+                        <img src="~/css/Images/LOGO (final).png" asp-append-version="true" alt="Project Lifecycle Logo" class="brand-logo dh-brand-logo" />
                     </div>
-                    <span class="dh-brand-text">Department Head</span>
+                    <span class="dh-brand-text">
+                        Project <br />
+                        Lifecycle
+                    </span>
                 </a>
                 <button class="dh-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
                     <i class="fas fa-bars fa-sm"></i>

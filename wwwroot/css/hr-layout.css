@@ -73,6 +73,7 @@
     padding: 1.25rem 1rem 1.25rem 1.25rem;
     border-bottom: 1px solid rgba(255,255,255,.06);
     min-height: 72px;
+    position: relative;
 }
 
 .hr-sidebar-brand {
@@ -103,6 +104,26 @@
 
 .hr-brand-icon svg {
     color: #fff;
+}
+
+.hr-brand-icon:has(img) {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 50%;
+}
+
+.hr-brand-logo {
+    width: 38px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 105, 148, 0.25);
+    background: #ffffff;
+    transition: transform .3s var(--hr-ease);
+}
+
+.hr-sidebar-brand:hover .hr-brand-logo {
+    transform: scale(1.08) rotate(-3deg);
 }
 
 .hr-brand-text {
@@ -330,22 +351,31 @@
 .hr-sidebar.collapsed .hr-nav-section-title,
 .hr-sidebar.collapsed .hr-user-details {
     opacity: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
     visibility: hidden;
     pointer-events: none;
+    position: absolute;
 }
 
 .hr-sidebar.collapsed .hr-sidebar-header {
     justify-content: center;
     padding: 1.25rem .5rem;
-    flex-direction: column;
-    gap: .5rem;
+    gap: 0;
 }
 
 .hr-sidebar.collapsed .hr-sidebar-brand {
     justify-content: center;
+    gap: 0;
 }
 
 .hr-sidebar.collapsed .hr-sidebar-toggle {
+    position: absolute;
+    top: 1.25rem;
+    right: .5rem;
+    width: 28px;
+    height: 28px;
     margin: 0;
 }
 
@@ -356,6 +386,11 @@
 .hr-sidebar.collapsed .hr-nav-link {
     justify-content: center;
     padding: .75rem .5rem;
+    gap: 0;
+}
+
+.hr-sidebar.collapsed .hr-nav-link i {
+    margin: 0;
 }
 
 .hr-sidebar.collapsed .hr-nav-link.active::before {
@@ -365,10 +400,19 @@
 .hr-sidebar.collapsed .hr-user-card {
     justify-content: center;
     padding: .5rem;
+    gap: 0;
+}
+
+.hr-sidebar.collapsed .hr-user-avatar {
+    margin: 0;
 }
 
 .hr-sidebar.collapsed .hr-logout-form {
     display: none;
+}
+
+.hr-sidebar.collapsed .hr-sidebar-footer {
+    padding: .75rem .35rem;
 }
 
 /* Tooltip on collapsed hover */

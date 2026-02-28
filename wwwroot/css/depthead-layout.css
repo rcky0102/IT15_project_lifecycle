@@ -72,6 +72,7 @@
     padding: 1.25rem 1rem 1.25rem 1.25rem;
     border-bottom: 1px solid rgba(255,255,255,.06);
     min-height: 72px;
+    position: relative;
 }
 
 .dh-sidebar-brand {
@@ -102,6 +103,26 @@
 
 .dh-brand-icon svg {
     color: #fff;
+}
+
+.dh-brand-icon:has(img) {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 50%;
+}
+
+.dh-brand-logo {
+    width: 38px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid rgba(2, 132, 199, 0.25);
+    background: #ffffff;
+    transition: transform .3s var(--dh-ease);
+}
+
+.dh-sidebar-brand:hover .dh-brand-logo {
+    transform: scale(1.08) rotate(-3deg);
 }
 
 .dh-brand-text {
@@ -329,22 +350,31 @@
 .dh-sidebar.collapsed .dh-nav-section-title,
 .dh-sidebar.collapsed .dh-user-details {
     opacity: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
     visibility: hidden;
     pointer-events: none;
+    position: absolute;
 }
 
 .dh-sidebar.collapsed .dh-sidebar-header {
     justify-content: center;
     padding: 1.25rem .5rem;
-    flex-direction: column;
-    gap: .5rem;
+    gap: 0;
 }
 
 .dh-sidebar.collapsed .dh-sidebar-brand {
     justify-content: center;
+    gap: 0;
 }
 
 .dh-sidebar.collapsed .dh-sidebar-toggle {
+    position: absolute;
+    top: 1.25rem;
+    right: .5rem;
+    width: 28px;
+    height: 28px;
     margin: 0;
 }
 
@@ -355,6 +385,11 @@
 .dh-sidebar.collapsed .dh-nav-link {
     justify-content: center;
     padding: .75rem .5rem;
+    gap: 0;
+}
+
+.dh-sidebar.collapsed .dh-nav-link i {
+    margin: 0;
 }
 
 .dh-sidebar.collapsed .dh-nav-link.active::before {
@@ -364,10 +399,19 @@
 .dh-sidebar.collapsed .dh-user-card {
     justify-content: center;
     padding: .5rem;
+    gap: 0;
+}
+
+.dh-sidebar.collapsed .dh-user-avatar {
+    margin: 0;
 }
 
 .dh-sidebar.collapsed .dh-logout-form {
     display: none;
+}
+
+.dh-sidebar.collapsed .dh-sidebar-footer {
+    padding: .75rem .35rem;
 }
 
 /* Tooltip on collapsed hover */
