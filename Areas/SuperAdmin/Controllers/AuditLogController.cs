@@ -19,7 +19,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         // GET: /SuperAdmin/AuditLog
         public async Task<IActionResult> Index(
             string? role,
-            string? action,
+            string? actionFilter,
             string? module,
             string? search,
             DateTime? from,
@@ -35,8 +35,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             if (!string.IsNullOrWhiteSpace(role))
                 query = query.Where(a => a.Role == role);
 
-            if (!string.IsNullOrWhiteSpace(action))
-                query = query.Where(a => a.Action == action);
+            if (!string.IsNullOrWhiteSpace(actionFilter))
+                query = query.Where(a => a.Action == actionFilter);
 
             if (!string.IsNullOrWhiteSpace(module))
                 query = query.Where(a => a.Module == module);
@@ -71,7 +71,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
             // Pass current filter state back to the view
             ViewData["CurrentRole"] = role;
-            ViewData["CurrentAction"] = action;
+            ViewData["CurrentAction"] = actionFilter;
             ViewData["CurrentModule"] = module;
             ViewData["CurrentSearch"] = search;
             ViewData["CurrentFrom"] = from?.ToString("yyyy-MM-dd");
@@ -110,7 +110,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Export(
             string? role,
-            string? action,
+            string? actionFilter,
             string? module,
             string? search,
             DateTime? from,
@@ -120,8 +120,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
             if (!string.IsNullOrWhiteSpace(role))
                 query = query.Where(a => a.Role == role);
-            if (!string.IsNullOrWhiteSpace(action))
-                query = query.Where(a => a.Action == action);
+            if (!string.IsNullOrWhiteSpace(actionFilter))
+                query = query.Where(a => a.Action == actionFilter);
             if (!string.IsNullOrWhiteSpace(module))
                 query = query.Where(a => a.Module == module);
             if (!string.IsNullOrWhiteSpace(search))

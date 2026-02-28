@@ -57,7 +57,7 @@
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-bolt"></i> Action</label>
-                    <select name="action" class="filter-select">
+                    <select name="actionFilter" class="filter-select">
                         <option value="">All Actions</option>
                         @foreach (var a in actions)
                         {
@@ -95,7 +95,7 @@
         <form method="post" asp-action="Export" id="exportForm" style="display:none;">
             @Html.AntiForgeryToken()
             <input type="hidden" name="role" value="@curRole" />
-            <input type="hidden" name="action" value="@curAction" />
+            <input type="hidden" name="actionFilter" value="@curAction" />
             <input type="hidden" name="module" value="@curModule" />
             <input type="hidden" name="search" value="@curSearch" />
             <input type="hidden" name="from" value="@curFrom" />
@@ -208,7 +208,7 @@
         {
             ["page"]   = p.ToString(),
             ["role"]   = ViewData["CurrentRole"]?.ToString(),
-            ["action"] = ViewData["CurrentAction"]?.ToString(),
+            ["actionFilter"] = ViewData["CurrentAction"]?.ToString(),
             ["module"] = ViewData["CurrentModule"]?.ToString(),
             ["search"] = ViewData["CurrentSearch"]?.ToString(),
             ["from"]   = ViewData["CurrentFrom"]?.ToString(),
