@@ -106,24 +106,6 @@
                 </ul>
             </nav>
 
-            <!-- User footer -->
-            <div class="sa-sidebar-footer">
-                <div class="sa-user-card">
-                    <div class="sa-user-avatar">SA</div>
-                    <div class="sa-user-details">
-                        <div class="sa-user-name">Super Admin</div>
-                        <div class="sa-user-role">Administrator</div>
-                    </div>
-                    <form action="/Identity/Account/Logout" method="post" class="sa-logout-form" id="logoutForm">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="returnUrl" value="/" />
-                        <button type="button" class="sa-logout-btn" id="logoutBtn" title="Sign out">
-                            <i class="fas fa-arrow-right-from-bracket"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-
         </aside>
 
         <!-- ========== MAIN ========== -->
@@ -166,11 +148,18 @@
 
                     <div class="sa-header-divider"></div>
 
-                    <div class="sa-header-profile">
+                    <div class="sa-header-profile" id="userDropdownToggle" style="cursor:pointer;position:relative;">
                         <div class="sa-header-avatar">SA</div>
                         <div class="sa-header-user-info">
                             <div class="sa-header-greeting" id="headerGreeting">Welcome back</div>
                             <div class="sa-header-name">Super Admin</div>
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size:.7rem;color:#64748b;margin-left:.25rem"></i>
+                        <div class="sa-user-dropdown" id="userDropdown">
+                            <button type="button" class="sa-user-dropdown-item sa-user-dropdown-logout" id="logoutBtn">
+                                <i class="fas fa-arrow-right-from-bracket"></i>
+                                <span>Logout</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -184,6 +173,12 @@
 
     </div>
 
+    <!-- Hidden logout form -->
+    <form action="/Identity/Account/Logout" method="post" id="logoutForm" style="display:none;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="/" />
+    </form>
+
     <!-- Logout confirmation modal -->
 
     <style>
@@ -196,6 +191,14 @@
     .sa-modal .sa-btn { border-radius: 8px; padding: .5rem .85rem; font-weight:600; cursor:pointer; }
     .sa-modal .sa-btn-cancel { background: transparent; border:1px solid #e6eef6; color:#475569; }
     .sa-modal .sa-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color:#fff; border:none; }
+    /* User dropdown */
+    .sa-user-dropdown { position:absolute; top:calc(100% + 4px); right:0; background:#fff; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.10); min-width:150px; padding:.3rem 0; display:none; z-index:1500; }
+    .sa-user-dropdown.active { display:block; }
+    .sa-user-dropdown-item { display:flex; align-items:center; gap:.45rem; padding:.35rem .75rem; font-size:.8rem; color:#334155; text-decoration:none; cursor:pointer; border:none; background:transparent; width:100%; text-align:left; }
+    .sa-user-dropdown-item:hover { background:#f1f5f9; color:#0f172a; }
+    .sa-user-dropdown-item i { width:15px; text-align:center; font-size:.78rem; }
+    .sa-user-dropdown-logout { color:#ef4444; }
+    .sa-user-dropdown-logout:hover { background:#fef2f2; color:#dc2626; }
     </style>
 
     <div class="sa-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">
@@ -305,6 +308,19 @@
                     }
                 });
             });
+        });
+
+        /* --- User dropdown toggle --- */
+        const userDropdownToggle = document.getElementById('userDropdownToggle');
+        const userDropdown = document.getElementById('userDropdown');
+        userDropdownToggle?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            userDropdown?.classList.toggle('active');
+        });
+        document.addEventListener('click', function (e) {
+            if (!userDropdownToggle?.contains(e.target)) {
+                userDropdown?.classList.remove('active');
+            }
         });
 
         /* --- Logout confirmation modal --- */
