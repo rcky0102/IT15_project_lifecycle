@@ -5,118 +5,169 @@
     Layout = "~/Areas/SuperAdmin/Layout.cshtml";
 }
 
-<div class="container-fluid user-management-container">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center user-management-header">
-                <div>
-                    <h1 class="user-management-title">User Management</h1>
-                    <p class="user-management-subtitle">Manage system users and their roles</p>
-                </div>
-                <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createUserModal">
-                    <i class="fas fa-user-plus"></i> Add User
-                </button>
-            </div>
-            
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success-ocean alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i>
-                    @TempData["Success"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-
-            <!-- Existing Users Table -->
-            <div class="card users-card">
-                <div class="card-header users-card-header">
-                    <h5>
-                        <i class="fas fa-users"></i>
-                        Existing Users
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    @if (Model.Users.Any())
-                    {
-                        <div class="table-responsive users-table-wrapper">
-                            <table class="table table-users mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Employee Number</th>
-                                        <th>Name</th>
-                                        <th>Department</th>
-                                        <th>Position</th>
-                                        <th>Date Hired</th>
-                                        <th class="text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var user in Model.Users)
-                                    {
-                                        <tr class="user-row">
-                                            <td>
-                                                <div class="user-email">@user.Email</div>
-                                            </td>
-                                            <td>
-                                                <span class="badge role-badge role-@user.Role.ToLower()">
-                                                    @user.Role
-                                                </span>
-                                            </td>
-                                            <td>@user.EmployeeNumber</td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(user.FirstName))
-                                                {
-                                                    @($"{user.FirstName} {user.MiddleName} {user.LastName}".Replace("  ", " ").Trim())
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">N/A</span>
-                                                }
-                                            </td>
-                                            <td>@user.DepartmentName</td>
-                                            <td>@user.PositionName</td>
-                                            <td>
-                                                @if (user.DateHired.HasValue)
-                                                {
-                                                    @user.DateHired.Value.ToString("MMM dd, yyyy")
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">N/A</span>
-                                                }
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="btn-group-actions" role="group">
-                                                    <button type="button" class="btn-icon-edit" title="Edit user" onclick="editUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))', '@user.Role', '@Html.Raw(user.FirstName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.MiddleName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.LastName?.Replace("'", "\\'") ?? "")', '@user.EmployeeNumber', '@Html.Raw(user.DepartmentName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.PositionName?.Replace("'", "\\'") ?? "")')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn-icon-delete" title="Delete user" onclick="confirmDeleteUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="empty-state-container">
-                            <i class="fas fa-users fa-4x empty-state-icon"></i>
-                            <h5 class="empty-state-title">No users found</h5>
-                            <p class="empty-state-text">Create your first user to get started.</p>
-                            <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createUserModal">
-                                <i class="fas fa-user-plus"></i> Add User
-                            </button>
-                        </div>
-                    }
-                </div>
-            </div>
+<!-- ===== Page Title Hero ===== -->
+<div class="sa-page-hero">
+    <div class="sa-page-hero-content">
+        <div class="sa-page-hero-left">
+            <h1 class="sa-page-title">
+                <span class="sa-page-title-icon"><i class="fas fa-users-gear"></i></span>
+                User Management
+            </h1>
+            <p class="sa-page-subtitle">Manage system users and their roles</p>
         </div>
+        <div class="sa-page-hero-right">
+            <button type="button" class="sa-btn sa-btn-outline" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                <i class="fas fa-user-plus"></i>
+                <span>Add User</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Alerts ===== -->
+@if (TempData["Success"] != null)
+{
+    <div class="sa-alert sa-alert-success">
+        <div class="sa-alert-icon"><i class="fas fa-check-circle"></i></div>
+        <span>@TempData["Success"]</span>
+        <button class="sa-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+
+<!-- ===== Filters ===== -->
+<div class="sa-filters-card">
+    <div class="sa-filters-row">
+        <div class="sa-search-group">
+            <i class="fas fa-magnifying-glass sa-search-icon"></i>
+            <input id="userSearch" type="text" class="sa-search-input" placeholder="Search users…" autocomplete="off" />
+        </div>
+        <div class="sa-select-group">
+            <select id="roleFilter" class="sa-select">
+                <option value="">All Roles</option>
+                <option value="HumanResource">Human Resource</option>
+                <option value="DepartmentHead">Department Head</option>
+                <option value="Executive">Executive</option>
+                <option value="ProjectManager">Project Manager</option>
+                <option value="Employee">Employee</option>
+            </select>
+        </div>
+        <div class="sa-select-group">
+            <label for="pageSizeSelect" style="font-size:.82rem;color:var(--sa-muted);margin-right:.4rem;">Show</label>
+            <select id="pageSizeSelect" class="sa-select" style="width:92px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Table ===== -->
+<div class="sa-table-section">
+    <div class="sa-table-card">
+        @if (Model.Users.Any())
+        {
+            <div class="sa-table-responsive">
+                <table class="sa-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Employee #</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Date Hired</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody">
+                        @foreach (var user in Model.Users)
+                        {
+                            var fullName = !string.IsNullOrEmpty(user.FirstName)
+                                ? $"{user.FirstName} {user.MiddleName} {user.LastName}".Replace("  ", " ").Trim()
+                                : "";
+                            <tr class="sa-row"
+                                data-email="@user.Email.ToLower()"
+                                data-name="@fullName.ToLower()"
+                                data-role="@user.Role"
+                                data-dept="@(user.DepartmentName?.ToLower() ?? "")"
+                                data-empno="@(user.EmployeeNumber?.ToLower() ?? "")">
+                                <td>
+                                    <div class="sa-name-cell">
+                                        <div class="sa-name-icon">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div>
+                                            <div class="sa-name-text">@user.Email</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="sa-role-badge sa-role-@user.Role.ToLower()">
+                                        <span class="sa-role-dot"></span>
+                                        <span>@user.Role</span>
+                                    </span>
+                                </td>
+                                <td class="sa-date">@(user.EmployeeNumber ?? "—")</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(user.FirstName))
+                                    {
+                                        @fullName
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#94a3b8;">N/A</span>
+                                    }
+                                </td>
+                                <td>@(user.DepartmentName ?? "—")</td>
+                                <td>@(user.PositionName ?? "—")</td>
+                                <td class="sa-date">
+                                    @if (user.DateHired.HasValue)
+                                    {
+                                        @user.DateHired.Value.ToString("MMM dd, yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#94a3b8;">N/A</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="sa-action-group">
+                                        <button type="button" class="sa-action-btn sa-action-edit" title="Edit user" onclick="editUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))', '@user.Role', '@Html.Raw(user.FirstName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.MiddleName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.LastName?.Replace("'", "\\'") ?? "")', '@user.EmployeeNumber', '@Html.Raw(user.DepartmentName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.PositionName?.Replace("'", "\\'") ?? "")')">
+                                            <i class="fas fa-pen-to-square"></i>
+                                        </button>
+                                        <button type="button" class="sa-action-btn sa-action-delete" title="Delete user" onclick="confirmDeleteUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="noFilterResults" class="sa-empty-state" style="display:none;">
+                <div class="sa-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <div class="sa-empty-title">No matching users</div>
+                <div class="sa-empty-text">Try adjusting your search or filters.</div>
+            </div>
+
+            <div class="sa-pagination" id="paginationContainer">
+                <div class="sa-pagination-info" id="paginationInfo"></div>
+                <div class="sa-pagination-controls" id="paginationControls"></div>
+            </div>
+        }
+        else
+        {
+            <div class="sa-empty-state">
+                <div class="sa-empty-icon"><i class="fas fa-users"></i></div>
+                <div class="sa-empty-title">No users found</div>
+                <div class="sa-empty-text">Create your first user to get started.</div>
+            </div>
+        }
     </div>
 </div>
 
@@ -377,591 +428,100 @@
 </div>
 
 @section Styles {
-    <style>
-        /* Ocean Blue Theme - Color Constants */
-        :root {
-            --ocean-primary: #0066a1;
-            --ocean-light: #0099cc;
-            --ocean-dark: #004d7a;
-            --ocean-very-light: #e3f2fd;
-            --ocean-lighter: #f0f7ff;
-            --text-dark: #1a1a1a;
-            --text-muted: #666666;
-            --border-light: #e0e0e0;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --shadow-sm: 0 2px 8px rgba(0, 102, 161, 0.08);
-            --shadow-md: 0 4px 16px rgba(0, 102, 161, 0.12);
-            --shadow-lg: 0 8px 24px rgba(0, 102, 161, 0.15);
-        }
-
-        /* Page Background */
-        .container-fluid {
-            background: linear-gradient(135deg, #f5f9fc 0%, #e8f4f8 100%);
-            min-height: 100vh;
-        }
-
-        /* Headers */
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        /* Cards - Ocean Theme */
-        .users-card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: var(--shadow-md);
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .users-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .users-card-header {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            border-bottom: none;
-            padding: 20px;
-            color: white;
-        }
-
-        /* Table Styling */
-        .users-table-wrapper {
-            overflow-x: auto;
-        }
-
-        .table-users {
-            border-collapse: collapse;
-        }
-
-        .table-users thead {
-            background: #f8f9fa;
-            border-bottom: 2px solid var(--ocean-primary);
-        }
-
-        .table-users thead th {
-            color: var(--ocean-primary);
-            font-weight: 600;
-            padding: 16px 12px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: none;
-        }
-
-        .table-users tbody td {
-            padding: 16px 12px;
-            border-bottom: 1px solid #f0f0f0;
-            vertical-align: middle;
-        }
-
-        .user-row {
-            transition: background-color 0.3s ease;
-        }
-
-        .user-row:hover {
-            background-color: #f8fafb;
-        }
-
-        .user-row:last-child td {
-            border-bottom: none;
-        }
-
-        .user-email {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Role Badges */
-        .role-badge {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: inline-block;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .role-humanresource {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            color: white;
-        }
-
-        .role-departmenthead {
-            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-            color: white;
-        }
-
-        .role-executive {
-            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-            color: white;
-        }
-
-        .role-projectmanager {
-            background: linear-gradient(135deg, #00A8CC 0%, #4CA3DD 100%);
-            color: white;
-        }
-
-        .role-employee {
-            background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
-            color: white;
-        }
-
-        /* Action Buttons */
-        .btn-group-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .btn-icon-edit, .btn-icon-delete {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-icon-edit {
-            background-color: #e3f2fd;
-            color: var(--ocean-primary);
-        }
-
-        .btn-icon-edit:hover {
-            background-color: var(--ocean-primary);
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .btn-icon-delete {
-            background-color: #ffebee;
-            color: var(--danger-color);
-        }
-
-        .btn-icon-delete:hover {
-            background-color: var(--danger-color);
-            color: white;
-            transform: scale(1.1);
-        }
-
-        /* Add User Button */
-        .btn-add-user {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-add-user:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-            color: white;
-        }
-
-        /* Modal Styling */
-        .modal-modern {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 102, 161, 0.2);
-            overflow: hidden;
-        }
-
-        .modal-header-ocean {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            border: none;
-            padding: 24px;
-        }
-
-        .modal-header-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
-            border: none;
-            padding: 24px;
-        }
-
-        .modal-body-custom {
-            padding: 28px;
-            background-color: #fafbfc;
-        }
-
-        .modal-footer-custom {
-            background-color: #f5f7fa;
-            border-top: 1px solid var(--border-light);
-            padding: 20px;
-            gap: 10px;
-        }
-
-        /* Stepper Styling */
-        .stepper-wrapper-modern {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 40px;
-            position: relative;
-        }
-
-        .stepper-wrapper-modern::before {
-            content: "";
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--border-light);
-            z-index: 1;
-        }
-
-        .stepper-item {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            z-index: 2;
-            cursor: pointer;
-        }
-
-        .step-counter {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: white;
-            border: 2px solid var(--border-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-
-        .step-name {
-            font-size: 0.85rem;
-            text-align: center;
-            color: var(--text-muted);
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-
-        .stepper-item.completed .step-counter {
-            background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
-            border-color: var(--success-color);
-            color: white;
-        }
-
-        .stepper-item.active .step-counter {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            border-color: var(--ocean-light);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 102, 161, 0.3);
-        }
-
-        .stepper-item.completed::after {
-            content: "";
-            position: absolute;
-            left: 50%;
-            top: 20px;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--success-color) 0%, var(--success-color) 100%);
-            z-index: -1;
-        }
-
-        .stepper-item:first-child::after {
-            display: none;
-        }
-
-        /* Form Elements */
-        .step-content {
-            min-height: 320px;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        .step-title {
-            color: var(--ocean-primary);
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .form-label-custom {
-            color: var(--text-dark);
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-        }
-
-        .form-control-custom, .form-select-custom {
-            border: 1.5px solid var(--border-light);
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background-color: white;
-        }
-
-        .form-control-custom:focus, .form-select-custom:focus {
-            border-color: var(--ocean-primary);
-            box-shadow: 0 0 0 0.2rem rgba(0, 102, 161, 0.15);
-            outline: none;
-        }
-
-        .form-control-custom:hover, .form-select-custom:hover {
-            border-color: var(--ocean-light);
-        }
-
-        /* Alert Styling */
-        .alert-ocean-light {
-            background: linear-gradient(135deg, var(--ocean-very-light) 0%, #cfe9f3 100%);
-            border: 1px solid #90caf9;
-            border-radius: 10px;
-            color: var(--ocean-dark);
-            padding: 14px 16px;
-        }
-
-        .alert-ocean-light i {
-            color: var(--ocean-primary);
-            margin-right: 8px;
-        }
-
-        .alert-warning-custom {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffc107;
-            border-radius: 10px;
-            color: #856404;
-            padding: 14px 16px;
-        }
-
-        .alert-danger-custom {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            border: 1px solid #f5c2c7;
-            border-radius: 10px;
-            color: #842029;
-            padding: 14px 16px;
-        }
-
-        /* Review Card */
-        .review-card {
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .review-section-title {
-            color: var(--ocean-primary);
-            font-weight: 700;
-            font-size: 0.95rem;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .review-card p {
-            margin-bottom: 8px;
-            color: var(--text-dark);
-            font-size: 0.95rem;
-        }
-
-        /* Button Variants */
-        .btn-next {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-next:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-next:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-save-user {
-            background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-save-user:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-save-user:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary-custom {
-            background-color: #f0f0f0;
-            color: var(--text-dark);
-            border: 1px solid var(--border-light);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-secondary-custom:hover:not(:disabled) {
-            background-color: #e0e0e0;
-            transform: translateY(-2px);
-        }
-
-        .btn-cancel {
-            background-color: #f0f0f0;
-            color: var(--text-dark);
-            border: 1px solid var(--border-light);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-cancel:hover:not(:disabled) {
-            background-color: #e0e0e0;
-            transform: translateY(-2px);
-        }
-
-        .btn-delete {
-            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-delete:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-        }
-
-        .btn-delete:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* Role Description */
-        .role-description {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @@keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive Design */
-        @@media (max-width: 768px) {
-            .stepper-wrapper-modern {
-                flex-wrap: wrap;
-                gap: 20px;
-                margin-bottom: 20px;
-            }
-
-            .stepper-wrapper-modern::before {
-                display: none;
-            }
-
-            .stepper-item::after {
-                display: none !important;
-            }
-
-            .step-counter {
-                width: 40px;
-                height: 40px;
-                font-size: 0.9rem;
-            }
-
-            .step-name {
-                font-size: 0.75rem;
-            }
-
-            .btn-group-actions {
-                flex-wrap: wrap;
-            }
-
-            .modal-dialog-xl {
-                max-width: 95%;
-            }
-
-            .table-users thead th {
-                padding: 12px 8px;
-                font-size: 0.8rem;
-            }
-
-            .table-users tbody td {
-                padding: 12px 8px;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Smooth Transitions */
-        * {
-            transition-property: background-color, border-color, color, box-shadow;
-            transition-duration: 0.2s;
-            transition-timing-function: ease-in-out;
-        }
-
-        /* Text Selection */
-        ::selection {
-            background-color: var(--ocean-primary);
-            color: white;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/superadmin-management.css" asp-append-version="true" />
 }
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <!-- Client-side filter & pagination -->
+    <script>
+    (function () {
+        let PAGE_SIZE = 10;
+        let currentPage = 1;
+        let filteredRows = [];
+
+        const searchInput  = document.getElementById('userSearch');
+        const roleSelect   = document.getElementById('roleFilter');
+        const allRows      = Array.from(document.querySelectorAll('.sa-row'));
+        const noResults    = document.getElementById('noFilterResults');
+        const pageInfo     = document.getElementById('paginationInfo');
+        const pageControls = document.getElementById('paginationControls');
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+        function applyFilters() {
+            const query = (searchInput?.value ?? '').toLowerCase().trim();
+            const role  = roleSelect?.value ?? '';
+            filteredRows = allRows.filter(row => {
+                const email   = row.dataset.email || '';
+                const name    = row.dataset.name || '';
+                const dept    = row.dataset.dept || '';
+                const empno   = row.dataset.empno || '';
+                const textMatch = !query || email.includes(query) || name.includes(query) || dept.includes(query) || empno.includes(query);
+                const roleMatch = !role || row.dataset.role === role;
+                return textMatch && roleMatch;
+            });
+            currentPage = 1;
+            render();
+        }
+
+        function render() {
+            const total = filteredRows.length;
+            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            currentPage = Math.min(currentPage, totalPages);
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end   = start + PAGE_SIZE;
+
+            allRows.forEach(r => r.style.display = 'none');
+            filteredRows.forEach((r, i) => {
+                r.style.display = (i >= start && i < end) ? '' : 'none';
+            });
+
+            if (noResults) noResults.style.display = total === 0 ? '' : 'none';
+            if (pageInfo) {
+                pageInfo.textContent = total === 0 ? '' : 'Showing ' + (start + 1) + '\u2013' + Math.min(end, total) + ' of ' + total;
+            }
+
+            if (pageControls) {
+                pageControls.innerHTML = '';
+                const makeBtn = (label, page, disabled, active) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'sa-page-btn' + (active ? ' active' : '');
+                    btn.innerHTML = label;
+                    btn.disabled  = disabled;
+                    btn.addEventListener('click', () => { currentPage = page; render(); });
+                    return btn;
+                };
+                pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
+                const w = 2;
+                for (let p = 1; p <= totalPages; p++) {
+                    if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
+                        pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                    } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                        const el = document.createElement('span');
+                        el.className = 'sa-page-ellipsis';
+                        el.textContent = '\u2026';
+                        pageControls.appendChild(el);
+                    }
+                }
+                pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
+            }
+        }
+
+        if (searchInput)  searchInput.addEventListener('input', applyFilters);
+        if (roleSelect)   roleSelect.addEventListener('change', applyFilters);
+        if (pageSizeSelect) {
+            pageSizeSelect.value = String(PAGE_SIZE);
+            pageSizeSelect.addEventListener('change', function () {
+                PAGE_SIZE = Math.max(5, parseInt(pageSizeSelect.value, 10) || 10);
+                currentPage = 1;
+                render();
+            });
+        }
+
+        filteredRows = allRows.slice();
+        render();
+    })();
+    </script>
     <script>
         $(document).ready(function() {
             let currentStep = 1;

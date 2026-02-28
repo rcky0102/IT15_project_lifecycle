@@ -4,100 +4,133 @@
     Layout = "~/Areas/SuperAdmin/Layout.cshtml";
 }
 
-<div class="container-fluid user-management-container">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center user-management-header">
-                <div>
-                    <h1 class="user-management-title">Department Management</h1>
-                    <p class="user-management-subtitle">Manage system departments</p>
-                </div>
-                <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createDepartmentModal">
-                    <i class="fas fa-building"></i> Add Department
-                </button>
-            </div>
-            
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success-ocean alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i>
-                    @TempData["Success"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-
-            <!-- Existing Departments Table -->
-            <div class="card users-card">
-                <div class="card-header users-card-header">
-                    <h5>
-                        <i class="fas fa-building"></i>
-                        Existing Departments
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    @if (Model.Any())
-                    {
-                        <div class="table-responsive users-table-wrapper">
-                            <table class="table table-users mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Description</th>
-                                        <th>Date Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in Model)
-                                    {
-                                        <tr class="user-row">
-                                            <td>
-                                                <div class="user-email">
-                                                    <i class="fas fa-building text-muted"></i>
-                                                    <strong>@Html.DisplayFor(modelItem => item.Name)</strong>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(item.Description))
-                                                {
-                                                    @Html.DisplayFor(modelItem => item.Description)
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">No description</span>
-                                                }
-                                            </td>
-                                            <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
-                                            <td>
-                                                <div class="btn-group-actions">
-                                                    <button type="button" class="btn-icon-edit" onclick="editDepartment(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')" title="Edit Department">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn-icon-delete" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')" title="Delete Department">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="fas fa-building fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No departments found</h5>
-                            <p class="text-muted">Create your first department to get started.</p>
-                            <button type="button" class="btn-add-user" data-bs-toggle="modal" data-bs-target="#createDepartmentModal">
-                                <i class="fas fa-plus"></i> Add Department
-                            </button>
-                        </div>
-                    }
-                </div>
-            </div>
+<!-- ===== Page Title Hero ===== -->
+<div class="sa-page-hero">
+    <div class="sa-page-hero-content">
+        <div class="sa-page-hero-left">
+            <h1 class="sa-page-title">
+                <span class="sa-page-title-icon"><i class="fas fa-building"></i></span>
+                Department Management
+            </h1>
+            <p class="sa-page-subtitle">Manage organizational departments</p>
         </div>
+        <div class="sa-page-hero-right">
+            <button type="button" class="sa-btn sa-btn-outline" data-bs-toggle="modal" data-bs-target="#createDepartmentModal">
+                <i class="fas fa-plus"></i>
+                <span>Add Department</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Alerts ===== -->
+@if (TempData["Success"] != null)
+{
+    <div class="sa-alert sa-alert-success">
+        <div class="sa-alert-icon"><i class="fas fa-check-circle"></i></div>
+        <span>@TempData["Success"]</span>
+        <button class="sa-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+}
+
+<!-- ===== Filters ===== -->
+<div class="sa-filters-card">
+    <div class="sa-filters-row">
+        <div class="sa-search-group">
+            <i class="fas fa-magnifying-glass sa-search-icon"></i>
+            <input id="deptSearch" type="text" class="sa-search-input" placeholder="Search departments…" autocomplete="off" />
+        </div>
+        <div class="sa-select-group">
+            <label for="pageSizeSelect" style="font-size:.82rem;color:var(--sa-muted);margin-right:.4rem;">Show</label>
+            <select id="pageSizeSelect" class="sa-select" style="width:92px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Table ===== -->
+<div class="sa-table-section">
+    <div class="sa-table-card">
+        @if (Model.Any())
+        {
+            <div class="sa-table-responsive">
+                <table class="sa-table" id="deptTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Date Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deptBody">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="sa-row"
+                                data-name="@item.Name.ToLower()"
+                                data-desc="@(item.Description?.ToLower() ?? "")">
+                                <td>
+                                    <div class="sa-name-cell">
+                                        <div class="sa-name-icon">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div>
+                                            <div class="sa-name-text">@item.Name</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="sa-desc">
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        @item.Description
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#94a3b8;">No description</span>
+                                    }
+                                </td>
+                                <td class="sa-date">@item.DateCreated.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <div class="sa-action-group">
+                                        <button type="button" class="sa-action-btn sa-action-edit" title="Edit department"
+                                                onclick="editDepartment(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')">
+                                            <i class="fas fa-pen-to-square"></i>
+                                        </button>
+                                        <button type="button" class="sa-action-btn sa-action-delete" title="Delete department"
+                                                onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="noFilterResults" class="sa-empty-state" style="display:none;">
+                <div class="sa-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <div class="sa-empty-title">No matching departments</div>
+                <div class="sa-empty-text">Try adjusting your search.</div>
+            </div>
+
+            <div class="sa-pagination" id="paginationContainer">
+                <div class="sa-pagination-info" id="paginationInfo"></div>
+                <div class="sa-pagination-controls" id="paginationControls"></div>
+            </div>
+        }
+        else
+        {
+            <div class="sa-empty-state">
+                <div class="sa-empty-icon"><i class="fas fa-building"></i></div>
+                <div class="sa-empty-title">No departments found</div>
+                <div class="sa-empty-text">Create your first department to get started.</div>
+            </div>
+        }
     </div>
 </div>
 
@@ -109,7 +142,7 @@
                 <h5 class="modal-title" id="createDepartmentModalLabel">
                     <i class="fas fa-building"></i> Create New Department
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body modal-body-custom">
                 <form id="createDepartmentForm">
@@ -122,7 +155,6 @@
                                 <span class="text-danger" data-valmsg-for="Name"></span>
                             </div>
                         </div>
-                        
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="departmentDescription" class="form-label-custom">Description</label>
@@ -153,7 +185,7 @@
                 <h5 class="modal-title" id="editDepartmentModalLabel">
                     <i class="fas fa-edit"></i> Edit Department
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body modal-body-custom">
                 <form id="editDepartmentForm">
@@ -168,7 +200,6 @@
                                 <span class="text-danger" data-valmsg-for="Name"></span>
                             </div>
                         </div>
-                        
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="editDepartmentDescription" class="form-label-custom">Description</label>
@@ -195,32 +226,30 @@
 <div class="modal fade" id="deleteDepartmentModal" tabindex="-1" aria-labelledby="deleteDepartmentModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content modal-modern">
-            <div class="modal-header modal-header-danger">
+            <div class="modal-header modal-header-ocean">
                 <h5 class="modal-title" id="deleteDepartmentModalLabel">
                     <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body modal-body-custom">
                 <div class="alert alert-danger-custom" role="alert">
                     <i class="fas fa-exclamation-circle"></i>
                     <strong>Warning:</strong> Are you sure you want to delete this department? This action cannot be undone.
                 </div>
-                
                 <div class="mb-3">
                     <strong>Department Name:</strong> <span id="deleteDepartmentName"></span>
                 </div>
-                
                 <form id="deleteDepartmentForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="deleteDepartmentId" />
                 </form>
             </div>
             <div class="modal-footer modal-footer-custom">
-                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button type="button" class="btn-delete" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     <i class="fas fa-trash"></i> Delete Department
                 </button>
             </div>
@@ -228,392 +257,117 @@
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/superadmin-management.css" />
+}
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <style>
-        /* Ocean Blue Theme - Color Constants */
-        :root {
-            --ocean-primary: #0066a1;
-            --ocean-light: #0099cc;
-            --ocean-dark: #004d7a;
-            --ocean-very-light: #e3f2fd;
-            --ocean-lighter: #f0f7ff;
-            --text-dark: #1a1a1a;
-            --text-muted: #666666;
-            --border-light: #e0e0e0;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --shadow-sm: 0 2px 8px rgba(0, 102, 161, 0.08);
-            --shadow-md: 0 4px 16px rgba(0, 102, 161, 0.12);
-            --shadow-lg: 0 8px 24px rgba(0, 102, 161, 0.15);
-        }
 
-        /* Page Background */
-        .container-fluid {
-            background: linear-gradient(135deg, #f5f9fc 0%, #e8f4f8 100%);
-            min-height: 100vh;
-        }
+    <script>
+        /* ===== Client-side filter & pagination ===== */
+        (function () {
+            var searchInput  = document.getElementById('deptSearch');
+            var pageSizeSel  = document.getElementById('pageSizeSelect');
+            var tbody        = document.getElementById('deptBody');
+            if (!tbody) return;
 
-        /* Headers */
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+            var allRows      = Array.prototype.slice.call(tbody.querySelectorAll('tr.sa-row'));
+            var filtered     = allRows.slice();
+            var currentPage  = 1;
 
-        .user-management-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--ocean-primary);
-            margin-bottom: 0.5rem;
-        }
+            function applyFilters() {
+                var q = (searchInput.value || '').toLowerCase().trim();
+                filtered = allRows.filter(function (r) {
+                    if (q && r.dataset.name.indexOf(q) === -1 && r.dataset.desc.indexOf(q) === -1) return false;
+                    return true;
+                });
+                currentPage = 1;
+                render();
+            }
 
-        .user-management-subtitle {
-            color: var(--text-muted);
-            font-size: 1rem;
-            margin-bottom: 0;
-        }
+            function render() {
+                var size  = parseInt(pageSizeSel.value, 10) || 10;
+                var pages = Math.ceil(filtered.length / size) || 1;
+                if (currentPage > pages) currentPage = pages;
+                var start = (currentPage - 1) * size;
+                var end   = start + size;
 
-        .user-management-header {
-            margin-bottom: 2rem;
-        }
+                allRows.forEach(function (r) { r.style.display = 'none'; });
+                filtered.slice(start, end).forEach(function (r) { r.style.display = ''; });
 
-        /* Cards - Ocean Theme */
-        .users-card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: var(--shadow-md);
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+                var noRes = document.getElementById('noFilterResults');
+                if (noRes) noRes.style.display = filtered.length === 0 ? '' : 'none';
 
-        .users-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
+                var info = document.getElementById('paginationInfo');
+                var ctrl = document.getElementById('paginationControls');
+                if (info) info.textContent = 'Showing ' + (filtered.length ? start + 1 : 0) + '–' + Math.min(end, filtered.length) + ' of ' + filtered.length;
+                if (ctrl) {
+                    ctrl.innerHTML = '';
+                    if (pages > 1) {
+                        var prev = btn('‹', currentPage > 1, function () { currentPage--; render(); });
+                        ctrl.appendChild(prev);
+                        for (var i = 1; i <= pages; i++) (function (p) {
+                            ctrl.appendChild(btn(p, true, function () { currentPage = p; render(); }, p === currentPage));
+                        })(i);
+                        var next = btn('›', currentPage < pages, function () { currentPage++; render(); });
+                        ctrl.appendChild(next);
+                    }
+                }
+            }
 
-        .users-card-header {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            border-bottom: none;
-            padding: 20px;
-            color: white;
-        }
+            function btn(label, enabled, cb, active) {
+                var b = document.createElement('button');
+                b.className = 'sa-page-btn' + (active ? ' active' : '');
+                b.textContent = label;
+                b.disabled = !enabled;
+                if (enabled) b.addEventListener('click', cb);
+                return b;
+            }
 
-        /* Table Styling */
-        .users-table-wrapper {
-            overflow-x: auto;
-        }
+            searchInput.addEventListener('input', applyFilters);
+            pageSizeSel.addEventListener('change', applyFilters);
+            applyFilters();
+        })();
+    </script>
 
-        .table-users {
-            border-collapse: collapse;
-        }
-
-        .table-users thead {
-            background: #f8f9fa;
-            border-bottom: 2px solid var(--ocean-primary);
-        }
-
-        .table-users thead th {
-            color: var(--ocean-primary);
-            font-weight: 600;
-            padding: 16px 12px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: none;
-        }
-
-        .table-users tbody td {
-            padding: 16px 12px;
-            border-bottom: 1px solid #f0f0f0;
-            vertical-align: middle;
-        }
-
-        .user-row {
-            transition: background-color 0.3s ease;
-        }
-
-        .user-row:hover {
-            background-color: #f8fafb;
-        }
-
-        .user-row:last-child td {
-            border-bottom: none;
-        }
-
-        .user-email {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Action Buttons */
-        .btn-group-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .btn-icon-edit, .btn-icon-delete {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-icon-edit {
-            background-color: #e3f2fd;
-            color: var(--ocean-primary);
-        }
-
-        .btn-icon-edit:hover {
-            background-color: var(--ocean-primary);
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .btn-icon-delete {
-            background-color: #ffebee;
-            color: var(--danger-color);
-        }
-
-        .btn-icon-delete:hover {
-            background-color: var(--danger-color);
-            color: white;
-            transform: scale(1.1);
-        }
-
-        /* Add User Button */
-        .btn-add-user {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-add-user:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-            color: white;
-        }
-
-        /* Modal Styling */
-        .modal-modern {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 102, 161, 0.2);
-            overflow: hidden;
-        }
-
-        .modal-header-ocean {
-            background: linear-gradient(135deg, var(--ocean-primary) 0%, var(--ocean-light) 100%);
-            border: none;
-            padding: 24px;
-        }
-
-        .modal-header-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
-            border: none;
-            padding: 24px;
-        }
-
-        .modal-body-custom {
-            padding: 28px;
-            background-color: #fafbfc;
-        }
-
-        .modal-footer-custom {
-            background-color: #f5f7fa;
-            border-top: 1px solid var(--border-light);
-            padding: 20px;
-            gap: 10px;
-        }
-
-        /* Form Elements */
-        .form-label-custom {
-            color: var(--text-dark);
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-        }
-
-        .form-control-custom, .form-select-custom {
-            border: 1.5px solid var(--border-light);
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background-color: white;
-        }
-
-        .form-control-custom:focus, .form-select-custom:focus {
-            border-color: var(--ocean-primary);
-            box-shadow: 0 0 0 0.2rem rgba(0, 102, 161, 0.15);
-            outline: none;
-        }
-
-        .form-control-custom:hover, .form-select-custom:hover {
-            border-color: var(--ocean-light);
-        }
-
-        /* Alert Styling */
-        .alert-success-ocean {
-            background: linear-gradient(135deg, var(--ocean-very-light) 0%, #cfe9f3 100%);
-            border: 1px solid #90caf9;
-            border-radius: 10px;
-            color: var(--ocean-dark);
-            padding: 14px 16px;
-        }
-
-        .alert-success-ocean i {
-            color: var(--ocean-primary);
-            margin-right: 8px;
-        }
-
-        .alert-danger-custom {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            border: 1px solid #f5c2c7;
-            border-radius: 10px;
-            color: #842029;
-            padding: 14px 16px;
-        }
-
-        /* Button Variants */
-        .btn-save-user {
-            background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-save-user:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-save-user:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary-custom {
-            background-color: #f0f0f0;
-            color: var(--text-dark);
-            border: 1px solid var(--border-light);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-secondary-custom:hover:not(:disabled) {
-            background-color: #e0e0e0;
-            transform: translateY(-2px);
-        }
-
-        .btn-delete {
-            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-delete:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-        }
-
-        .btn-delete:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* Smooth Transitions */
-        * {
-            transition-property: background-color, border-color, color, box-shadow;
-            transition-duration: 0.2s;
-            transition-timing-function: ease-in-out;
-        }
-    </style>
     <script>
         $(document).ready(function() {
+            // Create department
             $('#saveDepartmentBtn').click(function() {
                 var form = $('#createDepartmentForm');
-                
-                // Add validation attributes dynamically
+
                 $('#departmentName').attr('data-val', 'true');
                 $('#departmentName').attr('data-val-required', 'The Name field is required.');
-                
-                // Parse and validate form
+
                 var formData = {
                     __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
                     Name: $('#departmentName').val().trim(),
                     Description: $('#departmentDescription').val().trim()
                 };
-                
-                // Clear previous validation messages
+
                 $('.text-danger').text('');
-                
-                // Basic client-side validation
+
                 if (!formData.Name) {
                     $('#departmentName').siblings('.text-danger').text('The Name field is required.');
                     return;
                 }
-                
-                // Disable button and show loading
+
                 $('#saveDepartmentBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
-                
+
                 $.ajax({
                     url: '@Url.Action("Create", "Department")',
                     type: 'POST',
                     data: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     success: function(response) {
                         if (response.success) {
-                            // Close modal
                             $('#createDepartmentModal').modal('hide');
-                            
-                            // Show success message
-                            var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
-                                response.message +
-                                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                                '</div>';
-                            $('.container-fluid .row .col-12').prepend(alertHtml);
-                            
-                            // Reset form
+                            var alertHtml = '<div class="sa-alert sa-alert-success"><div class="sa-alert-icon"><i class="fas fa-check-circle"></i></div><span>' + response.message + '</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
+                            $('.sa-page-hero').after(alertHtml);
                             form[0].reset();
-                            
-                            // Reload page after a short delay to show updated list
-                            setTimeout(function() {
-                                location.reload();
-                            }, 1500);
+                            setTimeout(function() { location.reload(); }, 1500);
                         } else {
-                            // Show error message
                             if (response.errors) {
                                 for (var key in response.errors) {
                                     $('#' + key.toLowerCase() + 'Error').text(response.errors[key][0]);
@@ -623,38 +377,35 @@
                             }
                         }
                     },
-                    error: function(xhr, status, error) {
+                    error: function() {
                         $('#departmentName').siblings('.text-danger').text('An error occurred while creating the department. Please try again.');
                     },
                     complete: function() {
-                        // Re-enable button
                         $('#saveDepartmentBtn').prop('disabled', false).html('<i class="fas fa-save"></i> Create Department');
                     }
                 });
             });
-            
-            // Reset form when modal is hidden
+
+            // Reset create form
             $('#createDepartmentModal').on('hidden.bs.modal', function () {
                 $('#createDepartmentForm')[0].reset();
                 $('.text-danger').text('');
             });
-            
-            // Edit department function
+
+            // Edit department
             window.editDepartment = function(id, name, description) {
-                // Fetch complete department data including DateCreated
                 $.ajax({
                     url: '@Url.Action("GetDepartmentById", "Department")',
                     type: 'GET',
                     data: { id: id },
-                    success: function(department) {
-                        $('#editDepartmentId').val(department.id);
-                        $('#editDepartmentName').val(department.name);
-                        $('#editDepartmentDescription').val(department.description || '');
-                        $('#editDateCreated').val(department.dateCreated);
+                    success: function(dept) {
+                        $('#editDepartmentId').val(dept.id);
+                        $('#editDepartmentName').val(dept.name);
+                        $('#editDepartmentDescription').val(dept.description || '');
+                        $('#editDateCreated').val(dept.dateCreated);
                         $('#editDepartmentModal').modal('show');
                     },
                     error: function() {
-                        // Fallback to basic data if AJAX fails
                         $('#editDepartmentId').val(id);
                         $('#editDepartmentName').val(name);
                         $('#editDepartmentDescription').val(description);
@@ -663,15 +414,14 @@
                     }
                 });
             };
-            
-            // Update department button click
+
+            // Update department
             $('#updateDepartmentBtn').click(function() {
                 var form = $('#editDepartmentForm');
-                
-                // Add validation attributes dynamically
+
                 $('#editDepartmentName').attr('data-val', 'true');
                 $('#editDepartmentName').attr('data-val-required', 'The Name field is required.');
-                
+
                 var formData = {
                     __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
                     Id: $('#editDepartmentId').val(),
@@ -679,47 +429,29 @@
                     Description: $('#editDepartmentDescription').val().trim(),
                     DateCreated: $('#editDateCreated').val()
                 };
-                
-                // Clear previous validation messages
+
                 $('#editDepartmentModal .text-danger').text('');
-                
-                // Basic client-side validation
+
                 if (!formData.Name) {
                     $('#editDepartmentName').siblings('.text-danger').text('The Name field is required.');
                     return;
                 }
-                
-                // Disable button and show loading
+
                 $('#updateDepartmentBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
-                
+
                 $.ajax({
                     url: '@Url.Action("Edit", "Department")',
                     type: 'POST',
                     data: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     success: function(response) {
                         if (response.success) {
-                            // Close modal
                             $('#editDepartmentModal').modal('hide');
-                            
-                            // Show success message
-                            var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
-                                response.message +
-                                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                                '</div>';
-                            $('.container-fluid .row .col-12').prepend(alertHtml);
-                            
-                            // Reset form
+                            var alertHtml = '<div class="sa-alert sa-alert-success"><div class="sa-alert-icon"><i class="fas fa-check-circle"></i></div><span>' + response.message + '</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
+                            $('.sa-page-hero').after(alertHtml);
                             form[0].reset();
-                            
-                            // Reload page after a short delay to show updated list
-                            setTimeout(function() {
-                                location.reload();
-                            }, 1500);
+                            setTimeout(function() { location.reload(); }, 1500);
                         } else {
-                            // Show error message
                             if (response.errors) {
                                 for (var key in response.errors) {
                                     $('#editDepartmentModal #' + key.toLowerCase() + 'Error').text(response.errors[key][0]);
@@ -729,96 +461,68 @@
                             }
                         }
                     },
-                    error: function(xhr, status, error) {
+                    error: function() {
                         $('#editDepartmentName').siblings('.text-danger').text('An error occurred while updating the department. Please try again.');
                     },
                     complete: function() {
-                        // Re-enable button
                         $('#updateDepartmentBtn').prop('disabled', false).html('<i class="fas fa-save"></i> Update Department');
                     }
                 });
             });
-            
-            // Reset edit form when modal is hidden
+
+            // Reset edit form
             $('#editDepartmentModal').on('hidden.bs.modal', function () {
                 $('#editDepartmentForm')[0].reset();
                 $('#editDepartmentModal .text-danger').text('');
             });
-            
-            // Confirm delete function
+
+            // Confirm delete
             window.confirmDelete = function(id, name) {
                 $('#deleteDepartmentId').val(id);
                 $('#deleteDepartmentName').text(name);
                 $('#deleteDepartmentModal').modal('show');
             };
-            
-            // Confirm delete button click
+
+            // Delete department
             $('#confirmDeleteBtn').click(function() {
                 var form = $('#deleteDepartmentForm');
                 var formData = {
                     __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
                     id: $('#deleteDepartmentId').val()
                 };
-                
-                // Disable button and show loading
+
                 $('#confirmDeleteBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
-                
+
                 $.ajax({
                     url: '@Url.Action("Delete", "Department")',
                     type: 'POST',
                     data: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     success: function(response) {
                         if (response.success) {
-                            // Close modal
                             $('#deleteDepartmentModal').modal('hide');
-                            
-                            // Show success message
-                            var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
-                                response.message +
-                                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                                '</div>';
-                            $('.container-fluid .row .col-12').prepend(alertHtml);
-                            
-                            // Reset form
+                            var alertHtml = '<div class="sa-alert sa-alert-success"><div class="sa-alert-icon"><i class="fas fa-check-circle"></i></div><span>' + response.message + '</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
+                            $('.sa-page-hero').after(alertHtml);
                             form[0].reset();
-                            
-                            // Reload page after a short delay to show updated list
-                            setTimeout(function() {
-                                location.reload();
-                            }, 1500);
+                            setTimeout(function() { location.reload(); }, 1500);
                         } else {
-                            // Show error message
-                            var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-                                (response.message || 'An error occurred while deleting the department.') +
-                                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                                '</div>';
-                            $('.container-fluid .row .col-12').prepend(alertHtml);
-                            
-                            // Close modal
+                            var alertHtml = '<div class="sa-alert sa-alert-error"><div class="sa-alert-icon"><i class="fas fa-exclamation-circle"></i></div><span>' + (response.message || 'An error occurred while deleting the department.') + '</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
+                            $('.sa-page-hero').after(alertHtml);
                             $('#deleteDepartmentModal').modal('hide');
                         }
                     },
-                    error: function(xhr, status, error) {
-                        var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-                            'An error occurred while deleting the department. Please try again.' +
-                            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                            '</div>';
-                        $('.container-fluid .row .col-12').prepend(alertHtml);
-                        
-                        // Close modal
+                    error: function() {
+                        var alertHtml = '<div class="sa-alert sa-alert-error"><div class="sa-alert-icon"><i class="fas fa-exclamation-circle"></i></div><span>An error occurred while deleting the department. Please try again.</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
+                        $('.sa-page-hero').after(alertHtml);
                         $('#deleteDepartmentModal').modal('hide');
                     },
                     complete: function() {
-                        // Re-enable button
                         $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fas fa-trash"></i> Delete Department');
                     }
                 });
             });
-            
-            // Reset delete form when modal is hidden
+
+            // Reset delete form
             $('#deleteDepartmentModal').on('hidden.bs.modal', function () {
                 $('#deleteDepartmentForm')[0].reset();
             });
