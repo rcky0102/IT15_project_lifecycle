@@ -21,11 +21,23 @@
     const searchInput   = document.getElementById('messengerSearch');
     const tabChats      = document.getElementById('tabChats');
     const tabPeople     = document.getElementById('tabPeople');
+    const tabNewGroup   = document.getElementById('tabNewGroup');
     const backBtn       = document.getElementById('chatBackBtn');
+
+    // Group creation DOM refs
+    const groupPanel         = document.getElementById('groupPanel');
+    const groupNameInput     = document.getElementById('groupNameInput');
+    const groupMemberSearch  = document.getElementById('groupMemberSearch');
+    const groupSelectedMembers = document.getElementById('groupSelectedMembers');
+    const groupMembersList   = document.getElementById('groupMembersList');
+    const groupMemberCount   = document.getElementById('groupMemberCount');
+    const groupCreateBtn     = document.getElementById('groupCreateBtn');
 
     let currentConversationId = null;
     let currentUserId = null;
     let connection = null;
+    let allContacts = [];           // cached contacts for group selection
+    let selectedGroupMembers = {};  // { userId: { name, initials } }
 
     // ── Initialize ────────────────────────────────────────────────────
     async function init() {
@@ -37,6 +49,7 @@
         setupSearch();
         setupInput();
         setupBackButton();
+        setupGroupCreation();
 
         await loadConversations();
         await loadContacts();
@@ -82,17 +95,35 @@
         tabChats?.addEventListener('click', () => {
             tabChats.classList.add('active');
             tabPeople.classList.remove('active');
+            tabNewGroup?.classList.remove('active');
             convList.style.display = 'block';
             peopleList.style.display = 'none';
+            if (groupPanel) groupPanel.style.display = 'none';
             searchInput.placeholder = 'Search conversations...';
+            searchInput.style.display = '';
         });
 
         tabPeople?.addEventListener('click', () => {
             tabPeople.classList.add('active');
             tabChats.classList.remove('active');
+            tabNewGroup?.classList.remove('active');
             convList.style.display = 'none';
             peopleList.style.display = 'block';
+            if (groupPanel) groupPanel.style.display = 'none';
             searchInput.placeholder = 'Search people...';
+            searchInput.style.display = '';
+        });
+
+        tabNewGroup?.addEventListener('click', () => {
+            tabNewGroup.classList.add('active');
+            tabChats.classList.remove('active');
+            tabPeople.classList.remove('active');
+            convList.style.display = 'none';
+            peopleList.style.display = 'none';
+            if (groupPanel) groupPanel.style.display = 'flex';
+            searchInput.style.display = 'none';
+            resetGroupPanel();
+            renderGroupMembersList(allContacts);
         });
     }
 
@@ -191,8 +222,15 @@
                 ? `<div class="messenger-conv-unread">${conv.unreadCount}</div>`
                 : '';
 
+            const avatarClass = conv.isGroup
+                ? 'messenger-conv-avatar group-avatar'
+                : 'messenger-conv-avatar';
+            const avatarIcon = conv.isGroup
+                ? `<i class="fas fa-users" style="font-size:.9rem;"></i>`
+                : escapeHtml(conv.initials);
+
             item.innerHTML = `
-                <div class="messenger-conv-avatar">${escapeHtml(conv.initials)}</div>
+                <div class="${avatarClass}">${avatarIcon}</div>
                 <div class="messenger-conv-info">
                     <div class="messenger-conv-name">${escapeHtml(conv.displayName)}</div>
                     <div class="messenger-conv-preview">${previewText}</div>
@@ -218,6 +256,7 @@
                 return;
             }
             const data = await res.json();
+            allContacts = data;  // cache for group creation
             renderContacts(data);
         } catch (err) {
             console.error('Failed to load contacts:', err);
@@ -462,6 +501,167 @@
 
     // Periodically update badge
     setInterval(updateNavBadge, 30000);
+
+    // ── Group Chat Creation ──────────────────────────────────────────
+    function setupGroupCreation() {
+        // Search within group member list
+        groupMemberSearch?.addEventListener('input', () => {
+            const q = groupMemberSearch.value.trim().toLowerCase();
+            const filtered = allContacts.filter(c =>
+                c.name.toLowerCase().includes(q) ||
+                c.role.toLowerCase().includes(q) ||
+                (c.department && c.department.toLowerCase().includes(q))
+            );
+            renderGroupMembersList(filtered);
+        });
+
+        // Create group button
+        groupCreateBtn?.addEventListener('click', createGroupChat);
+    }
+
+    function resetGroupPanel() {
+        selectedGroupMembers = {};
+        if (groupNameInput) groupNameInput.value = '';
+        if (groupMemberSearch) groupMemberSearch.value = '';
+        updateGroupMemberCount();
+        renderGroupSelectedChips();
+    }
+
+    function renderGroupMembersList(contacts) {
+        if (!groupMembersList) return;
+        groupMembersList.innerHTML = '';
+
+        if (contacts.length === 0) {
+            groupMembersList.innerHTML = `
+                <div class="messenger-empty" style="padding: 20px;">
+                    <p style="font-size:.85rem;color:#65676b;">No people found</p>
+                </div>`;
+            return;
+        }
+
+        contacts.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'group-member-item';
+            const isSelected = !!selectedGroupMembers[c.userId];
+            if (isSelected) item.classList.add('selected');
+
+            item.innerHTML = `
+                <div class="messenger-people-avatar" style="width:36px;height:36px;font-size:.7rem;">${escapeHtml(c.initials)}</div>
+                <div class="messenger-people-info" style="flex:1;min-width:0;">
+                    <div class="messenger-people-name" style="font-size:.85rem;">${escapeHtml(c.name)}</div>
+                    <div class="messenger-people-role">${escapeHtml(c.role)}${c.department ? ' · ' + escapeHtml(c.department) : ''}</div>
+                </div>
+                <div class="group-member-check">
+                    <i class="fas ${isSelected ? 'fa-check-circle' : 'fa-circle'}" style="color:${isSelected ? '#0866ff' : '#bcc0c4'};font-size:1.1rem;"></i>
+                </div>`;
+
+            item.addEventListener('click', () => toggleGroupMember(c));
+            groupMembersList.appendChild(item);
+        });
+    }
+
+    function toggleGroupMember(contact) {
+        if (selectedGroupMembers[contact.userId]) {
+            delete selectedGroupMembers[contact.userId];
+        } else {
+            selectedGroupMembers[contact.userId] = {
+                name: contact.name,
+                initials: contact.initials
+            };
+        }
+        updateGroupMemberCount();
+        renderGroupSelectedChips();
+        // Re-render list to update check icons
+        const q = groupMemberSearch?.value?.trim().toLowerCase() || '';
+        const filtered = q
+            ? allContacts.filter(c => c.name.toLowerCase().includes(q) || c.role.toLowerCase().includes(q))
+            : allContacts;
+        renderGroupMembersList(filtered);
+    }
+
+    function renderGroupSelectedChips() {
+        if (!groupSelectedMembers) return;
+        groupSelectedMembers.innerHTML = '';
+
+        const ids = Object.keys(selectedGroupMembers);
+        ids.forEach(uid => {
+            const m = selectedGroupMembers[uid];
+            const chip = document.createElement('div');
+            chip.className = 'group-member-chip';
+            chip.innerHTML = `
+                <span>${escapeHtml(m.name)}</span>
+                <button class="chip-remove" title="Remove"><i class="fas fa-times"></i></button>`;
+            chip.querySelector('.chip-remove').addEventListener('click', (e) => {
+                e.stopPropagation();
+                delete selectedGroupMembers[uid];
+                updateGroupMemberCount();
+                renderGroupSelectedChips();
+                const q = groupMemberSearch?.value?.trim().toLowerCase() || '';
+                const filtered = q
+                    ? allContacts.filter(c => c.name.toLowerCase().includes(q) || c.role.toLowerCase().includes(q))
+                    : allContacts;
+                renderGroupMembersList(filtered);
+            });
+            groupSelectedMembers.appendChild(chip);
+        });
+    }
+
+    function updateGroupMemberCount() {
+        const count = Object.keys(selectedGroupMembers).length;
+        if (groupMemberCount) {
+            groupMemberCount.textContent = `${count} member${count !== 1 ? 's' : ''} selected`;
+        }
+        if (groupCreateBtn) {
+            groupCreateBtn.disabled = count < 2;
+        }
+    }
+
+    async function createGroupChat() {
+        const name = groupNameInput?.value?.trim();
+        const participantIds = Object.keys(selectedGroupMembers);
+
+        if (!name) {
+            alert('Please enter a group name.');
+            groupNameInput?.focus();
+            return;
+        }
+        if (participantIds.length < 2) {
+            alert('Please select at least 2 members for a group chat.');
+            return;
+        }
+
+        groupCreateBtn.disabled = true;
+        groupCreateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+        try {
+            const res = await fetch('/api/messages/conversations/group', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupName: name, participantIds })
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                console.error('Failed to create group:', err);
+                alert('Failed to create group chat. ' + (err || 'Please try again.'));
+                return;
+            }
+
+            const data = await res.json();
+            if (data.conversationId) {
+                // Switch to chats tab
+                tabChats?.click();
+                await loadConversations();
+                openConversation(data.conversationId, data.groupName, data.initials);
+            }
+        } catch (err) {
+            console.error('Failed to create group:', err);
+            alert('Failed to create group chat. Please try again.');
+        } finally {
+            groupCreateBtn.disabled = false;
+            groupCreateBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Create Group';
+        }
+    }
 
     // ── Helpers ───────────────────────────────────────────────────────
     function escapeHtml(text) {

@@ -17,6 +17,9 @@
                 <button class="messenger-tab-btn" id="tabPeople">
                     <i class="fas fa-user-plus"></i> People
                 </button>
+                <button class="messenger-tab-btn" id="tabNewGroup" title="Create Group Chat">
+                    <i class="fas fa-users"></i> Group
+                </button>
             </div>
         </div>
 
@@ -31,6 +34,33 @@
         <div class="messenger-people-list" id="peopleList">
             <div class="messenger-loading">
                 <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Group creation panel -->
+        <div class="messenger-group-panel" id="groupPanel" style="display:none;">
+            <div class="group-panel-section">
+                <label class="group-panel-label">Group Name</label>
+                <input type="text" id="groupNameInput" class="group-panel-input" placeholder="Enter group name..." maxlength="100" autocomplete="off" />
+            </div>
+            <div class="group-panel-section">
+                <label class="group-panel-label">Add Members</label>
+                <div class="group-panel-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="groupMemberSearch" placeholder="Search people..." autocomplete="off" />
+                </div>
+            </div>
+            <div class="group-selected-members" id="groupSelectedMembers">
+                <!-- Selected member chips appear here -->
+            </div>
+            <div class="group-members-list" id="groupMembersList">
+                <div class="messenger-loading"><div class="spinner"></div></div>
+            </div>
+            <div class="group-panel-footer">
+                <span class="group-member-count" id="groupMemberCount">0 members selected</span>
+                <button class="group-create-btn" id="groupCreateBtn" disabled>
+                    <i class="fas fa-plus-circle"></i> Create Group
+                </button>
             </div>
         </div>
     </div>

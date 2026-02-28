@@ -563,6 +563,193 @@
     to { transform: rotate(360deg); }
 }
 
+/* ── Group Creation Panel ─────────────────────────────────────────── */
+.messenger-group-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.group-panel-section {
+    padding: 12px 16px 4px;
+}
+
+.group-panel-label {
+    font-size: .75rem;
+    font-weight: 600;
+    color: #65676b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.group-panel-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #e4e6eb;
+    font-size: .9rem;
+    color: #050505;
+    outline: none;
+    transition: border-color .2s;
+    background: #f8f9fa;
+}
+
+.group-panel-input:focus {
+    border-color: #0866ff;
+    background: #fff;
+}
+
+.group-panel-search {
+    position: relative;
+}
+
+.group-panel-search input {
+    width: 100%;
+    padding: 8px 12px 8px 34px;
+    border-radius: 20px;
+    border: none;
+    background: #f0f2f5;
+    font-size: .85rem;
+    color: #050505;
+    outline: none;
+}
+
+.group-panel-search input:focus {
+    background: #e4e6eb;
+}
+
+.group-panel-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #65676b;
+    font-size: .8rem;
+}
+
+/* Selected member chips */
+.group-selected-members {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 16px;
+    min-height: 0;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.group-member-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e7f3ff;
+    color: #0866ff;
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-size: .78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.chip-remove {
+    background: none;
+    border: none;
+    color: #0866ff;
+    cursor: pointer;
+    font-size: .7rem;
+    padding: 0 2px;
+    opacity: .7;
+    transition: opacity .15s;
+}
+
+.chip-remove:hover {
+    opacity: 1;
+}
+
+/* Group members list (selectable) */
+.group-members-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px;
+}
+
+.group-members-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.group-members-list::-webkit-scrollbar-thumb {
+    background: #bcc0c4;
+    border-radius: 3px;
+}
+
+.group-member-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.group-member-item:hover {
+    background: #f0f2f5;
+}
+
+.group-member-item.selected {
+    background: #e7f3ff;
+}
+
+.group-member-check {
+    flex-shrink: 0;
+}
+
+/* Footer with count + create button */
+.group-panel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid #e4e6eb;
+    background: #fff;
+}
+
+.group-member-count {
+    font-size: .8rem;
+    color: #65676b;
+    font-weight: 500;
+}
+
+.group-create-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #0866ff;
+    color: #fff;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background .2s, opacity .2s;
+}
+
+.group-create-btn:hover:not(:disabled) {
+    background: #0553d1;
+}
+
+.group-create-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* Group avatar style in conversation list */
+.messenger-conv-avatar.group-avatar {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+}
+
 /* ── Typing indicator ─────────────────────────────────────────────── */
 .typing-indicator {
     display: none;

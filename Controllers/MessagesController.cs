@@ -254,6 +254,72 @@ namespace project_lifecycle.Controllers
             return Ok(new { conversationId = conversation.Id });
         }
 
+        // ───────── CREATE GROUP CONVERSATION ─────────
+
+        [HttpPost("conversations/group")]
+        public async Task<IActionResult> CreateGroupConversation([FromBody] GroupConversationRequest request)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (currentUserId == null) return Unauthorized();
+
+            if (request.ParticipantIds == null || request.ParticipantIds.Count < 2)
+                return BadRequest("A group chat requires at least 2 other members.");
+
+            if (string.IsNullOrWhiteSpace(request.GroupName))
+                return BadRequest("Group name is required.");
+
+            // Ensure the current user is not in the participant list (we add them automatically)
+            var memberIds = request.ParticipantIds
+                .Where(id => id != currentUserId)
+                .Distinct()
+                .ToList();
+
+            if (memberIds.Count < 2)
+                return BadRequest("A group chat requires at least 2 other members.");
+
+            var conversation = new Conversation
+            {
+                IsGroup = true,
+                GroupName = request.GroupName.Trim(),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _db.Conversations.Add(conversation);
+            await _db.SaveChangesAsync();
+
+            // Add the creator + all selected members
+            var participants = new List<ConversationParticipant>
+            {
+                new() { ConversationId = conversation.Id, UserId = currentUserId }
+            };
+            participants.AddRange(memberIds.Select(id => new ConversationParticipant
+            {
+                ConversationId = conversation.Id,
+                UserId = id
+            }));
+
+            _db.ConversationParticipants.AddRange(participants);
+            await _db.SaveChangesAsync();
+
+            // Notify all members via SignalR so their conversation list refreshes
+            foreach (var pid in memberIds)
+            {
+                await _chatHub.Clients.Group($"user_{pid}")
+                    .SendAsync("ConversationUpdated", new { conversationId = conversation.Id });
+            }
+
+            var initials = conversation.GroupName.Length >= 2
+                ? conversation.GroupName[..2].ToUpper()
+                : conversation.GroupName.ToUpper();
+
+            return Ok(new
+            {
+                conversationId = conversation.Id,
+                groupName = conversation.GroupName,
+                initials
+            });
+        }
+
         // ───────── MESSAGES IN A CONVERSATION ─────────
 
         [HttpGet("conversations/{conversationId}/messages")]
@@ -419,6 +485,12 @@ namespace project_lifecycle.Controllers
         public class DirectConversationRequest
         {
             public string OtherUserId { get; set; } = string.Empty;
+        }
+
+        public class GroupConversationRequest
+        {
+            public string GroupName { get; set; } = string.Empty;
+            public List<string> ParticipantIds { get; set; } = new();
         }
 
         public class SendMessageRequest
