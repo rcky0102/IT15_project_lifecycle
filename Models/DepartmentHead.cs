@@ -53,5 +53,8 @@ namespace project_lifecycle.Models
 
         [StringLength(100)]
         public string? Barangay { get; set; }
+
+        [StringLength(500)]
+        public string? ProfileImage { get; set; }
     }
 }

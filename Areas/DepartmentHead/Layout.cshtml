@@ -94,24 +94,6 @@
                 </ul>
             </nav>
 
-            <!-- User footer -->
-            <div class="dh-sidebar-footer">
-                <div class="dh-user-card">
-                    <div class="dh-user-avatar">DH</div>
-                    <div class="dh-user-details">
-                        <div class="dh-user-name">Department Head</div>
-                        <div class="dh-user-role">Head of Department</div>
-                    </div>
-                    <form action="/Identity/Account/Logout" method="post" class="dh-logout-form" id="logoutForm">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="returnUrl" value="/" />
-                        <button type="submit" class="dh-logout-btn" title="Sign out" onclick="return confirm('Are you sure you want to logout?');">
-                            <i class="fas fa-arrow-right-from-bracket"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-
         </aside>
 
         <!-- ========== MAIN ========== -->
@@ -154,11 +136,23 @@
 
                     <div class="dh-header-divider"></div>
 
-                    <div class="dh-header-profile">
+                    <div class="dh-header-profile" id="userDropdownToggle" style="cursor:pointer;position:relative;">
                         <div class="dh-header-avatar">DH</div>
                         <div class="dh-header-user-info">
                             <div class="dh-header-greeting" id="headerGreeting">Welcome back</div>
                             <div class="dh-header-name">Department Head</div>
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size:.7rem;color:#64748b;margin-left:.25rem"></i>
+                        <div class="dh-user-dropdown" id="userDropdown">
+                            <a href="@Url.Action("Index", "Profile", new { area = "DepartmentHead" })" class="dh-user-dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>Profile</span>
+                            </a>
+                            <div class="dh-user-dropdown-divider"></div>
+                            <button type="button" class="dh-user-dropdown-item dh-user-dropdown-logout" id="logoutBtn">
+                                <i class="fas fa-arrow-right-from-bracket"></i>
+                                <span>Logout</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -170,6 +164,45 @@
             </main>
         </div>
 
+    </div>
+
+    <!-- Hidden logout form -->
+    <form action="/Identity/Account/Logout" method="post" id="logoutForm" style="display:none;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="/" />
+    </form>
+
+    <!-- Logout confirmation modal -->
+    <style>
+    /* User dropdown */
+    .dh-user-dropdown { position:absolute; top:calc(100% + 8px); right:0; background:#fff; border-radius:10px; box-shadow:0 4px 24px rgba(0,0,0,.12); min-width:180px; padding:.5rem 0; display:none; z-index:1500; }
+    .dh-user-dropdown.active { display:block; }
+    .dh-user-dropdown-item { display:flex; align-items:center; gap:.6rem; padding:.55rem 1rem; font-size:.9rem; color:#334155; text-decoration:none; cursor:pointer; border:none; background:transparent; width:100%; text-align:left; }
+    .dh-user-dropdown-item:hover { background:#f1f5f9; color:#0f172a; }
+    .dh-user-dropdown-item i { width:18px; text-align:center; font-size:.85rem; }
+    .dh-user-dropdown-divider { height:1px; background:#e2e8f0; margin:.25rem 0; }
+    .dh-user-dropdown-logout { color:#ef4444; }
+    .dh-user-dropdown-logout:hover { background:#fef2f2; color:#dc2626; }
+    .dh-modal-backdrop { position: fixed; inset: 0; background: rgba(3,7,18,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .dh-modal-backdrop.active { display: flex; }
+    .dh-modal { background: #fff; border-radius: 12px; width: 94%; max-width: 420px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(2,6,23,0.35); }
+    .dh-modal h4 { margin: 0 0 .5rem; font-size: 1.05rem; color: #0f172a; }
+    .dh-modal p { margin: 0 0 1rem; color: #64748b; font-size: .92rem; }
+    .dh-modal .dh-modal-actions { display:flex; gap:.5rem; justify-content:flex-end; }
+    .dh-modal .dh-btn { border-radius: 8px; padding: .5rem .85rem; font-weight:600; }
+    .dh-modal .dh-btn-cancel { background: transparent; border:1px solid #e6eef6; color:#475569; }
+    .dh-modal .dh-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color:#fff; border:none; }
+    </style>
+
+    <div class="dh-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="dh-modal" role="document">
+            <h4>Sign out</h4>
+            <p>Are you sure you want to sign out of your account?</p>
+            <div class="dh-modal-actions">
+                <button type="button" class="dh-btn dh-btn-cancel" id="cancelLogoutBtn">Cancel</button>
+                <button type="button" class="dh-btn dh-btn-confirm" id="confirmLogoutBtn">Sign out</button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
@@ -239,6 +272,52 @@
 
         /* --- Notifications --- */
         if (typeof initNotifications === 'function') initNotifications();
+
+        /* --- User dropdown --- */
+        const userDropdownToggle = document.getElementById('userDropdownToggle');
+        const userDropdown = document.getElementById('userDropdown');
+        userDropdownToggle?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            userDropdown?.classList.toggle('active');
+        });
+        document.addEventListener('click', function (e) {
+            if (!userDropdownToggle?.contains(e.target)) {
+                userDropdown?.classList.remove('active');
+            }
+        });
+
+        /* --- Logout confirmation modal --- */
+        const logoutForm = document.getElementById('logoutForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = document.getElementById('logoutModal');
+        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+        function showLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.add('active');
+            logoutModal.setAttribute('aria-hidden', 'false');
+        }
+        function hideLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.remove('active');
+            logoutModal.setAttribute('aria-hidden', 'true');
+        }
+
+        logoutBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLogoutModal();
+        });
+
+        cancelLogoutBtn?.addEventListener('click', function () { hideLogoutModal(); });
+
+        logoutModal?.addEventListener('click', function (e) {
+            if (e.target === logoutModal) hideLogoutModal();
+        });
+
+        confirmLogoutBtn?.addEventListener('click', function () {
+            if (logoutForm) logoutForm.submit();
+        });
     })();
     </script>
 

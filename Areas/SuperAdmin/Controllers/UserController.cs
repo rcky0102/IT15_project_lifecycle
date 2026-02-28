@@ -19,19 +19,22 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogService _audit;
         private readonly INotificationService _notif;
+        private readonly IWebHostEnvironment _env;
 
         public UserController(
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
             ApplicationDbContext context,
             IAuditLogService audit,
-            INotificationService notif)
+            INotificationService notif,
+            IWebHostEnvironment env)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
             _audit = audit;
             _notif = notif;
+            _env = env;
         }
 
         // GET: /SuperAdmin/User/Index
@@ -76,6 +79,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.DepartmentName = employee.Department?.Name;
                             userDetail.PositionName = employee.Position?.Name;
                             userDetail.DateHired = employee.DateHired;
+                            userDetail.ProfileImage = employee.ProfileImage;
                         }
                     }
                     else if (roles.Contains(Roles.HumanResource.ToString()))
@@ -94,6 +98,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.DepartmentName = humanResource.Department?.Name;
                             userDetail.PositionName = humanResource.Position?.Name;
                             userDetail.DateHired = humanResource.CreatedDate;
+                            userDetail.ProfileImage = humanResource.ProfileImage;
                         }
                     }
                     else if (roles.Contains(Roles.DepartmentHead.ToString()))
@@ -112,6 +117,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.DepartmentName = departmentHead.Department?.Name;
                             userDetail.PositionName = departmentHead.Position?.Name;
                             userDetail.DateHired = departmentHead.CreatedDate;
+                            userDetail.ProfileImage = departmentHead.ProfileImage;
                         }
                     }
                     else if (roles.Contains(Roles.Executive.ToString()))
@@ -130,6 +136,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.DepartmentName = executive.Department?.Name;
                             userDetail.PositionName = executive.Position?.Name;
                             userDetail.DateHired = executive.CreatedDate;
+                            userDetail.ProfileImage = executive.ProfileImage;
                         }
                     }
                     else if (roles.Contains(Roles.ProjectManager.ToString()))
@@ -148,6 +155,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.DepartmentName = projectManager.Department?.Name;
                             userDetail.PositionName = projectManager.Position?.Name;
                             userDetail.DateHired = projectManager.CreatedDate;
+                            userDetail.ProfileImage = projectManager.ProfileImage;
                         }
                     }
 
@@ -177,7 +185,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         // POST: /SuperAdmin/User/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateUserViewModel model)
+        public async Task<IActionResult> Create([FromForm] CreateUserViewModel model)
         {
             try
             {
@@ -292,6 +300,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         DateHired = model.DateHired
                     };
 
+                    if (model.ProfileImageFile != null)
+                    {
+                        employee.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                    }
+
                     _context.Employees.Add(employee);
                 }
                 else if (model.Role.Equals("HumanResource", StringComparison.OrdinalIgnoreCase))
@@ -308,6 +321,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             Contact = model.Contact ?? "",
                             PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null
                         };
+
+                        if (model.ProfileImageFile != null)
+                        {
+                            humanResource.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                        }
 
                         _context.HumanResources.Add(humanResource);
                     }
@@ -332,6 +350,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             PositionId = (model.PositionId.HasValue && model.PositionId.Value > 0) ? model.PositionId.Value : (int?)null
                         };
 
+                        if (model.ProfileImageFile != null)
+                        {
+                            executive.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                        }
+
                         _context.Executives.Add(executive);
                     }
                     catch (Exception ex)
@@ -355,6 +378,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             PositionId = (model.PositionId.HasValue && model.PositionId.Value > 0) ? model.PositionId.Value : (int?)null
                         };
 
+                        if (model.ProfileImageFile != null)
+                        {
+                            departmentHead.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                        }
+
                         _context.DepartmentHeads.Add(departmentHead);
                     }
                     catch (Exception ex)
@@ -377,6 +405,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             DepartmentId = (model.DepartmentId.HasValue && model.DepartmentId.Value > 0) ? model.DepartmentId.Value : 0,
                             PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null
                         };
+
+                        if (model.ProfileImageFile != null)
+                        {
+                            projectManager.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                        }
 
                         _context.ProjectManagers.Add(projectManager);
                     }
@@ -467,6 +500,22 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             }
         }
 
+        private async Task<string> SaveProfileImageAsync(IFormFile file)
+        {
+            var uploadsDir = Path.Combine(_env.WebRootPath, "uploads", "profiles");
+            Directory.CreateDirectory(uploadsDir);
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var filePath = Path.Combine(uploadsDir, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return $"/uploads/profiles/{fileName}";
+        }
+
         private async Task<List<UserDetailsViewModel>> GetUserListAsync()
         {
             var users = await _userManager.Users.ToListAsync();
@@ -505,6 +554,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.DepartmentName = employee.Department?.Name;
                             userDetail.PositionName = employee.Position?.Name;
                             userDetail.DateHired = employee.DateHired;
+                            userDetail.ProfileImage = employee.ProfileImage;
                         }
                     }
                     else if (roles.Contains(Roles.HumanResource.ToString()))
@@ -519,6 +569,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.MiddleName = humanResource.MiddleName;
                             userDetail.LastName = humanResource.LastName;
                             userDetail.PositionName = humanResource.Position?.Name;
+                            userDetail.ProfileImage = humanResource.ProfileImage;
                         }
                     }
                     else if (roles.Contains(Roles.DepartmentHead.ToString()))
@@ -535,6 +586,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.LastName = departmentHead.LastName;
                             userDetail.DepartmentName = departmentHead.Department?.Name;
                             userDetail.PositionName = departmentHead.Position?.Name;
+                            userDetail.ProfileImage = departmentHead.ProfileImage;
                         }
                     }
                     else if (roles.Contains(Roles.Executive.ToString()))
@@ -549,6 +601,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.MiddleName = executive.MiddleName;
                             userDetail.LastName = executive.LastName;
                             userDetail.PositionName = executive.Position?.Name;
+                            userDetail.ProfileImage = executive.ProfileImage;
                         }
                     }
                     else if (roles.Contains(Roles.ProjectManager.ToString()))
@@ -565,6 +618,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.LastName = projectManager.LastName;
                             userDetail.DepartmentName = projectManager.Department?.Name;
                             userDetail.PositionName = projectManager.Position?.Name;
+                            userDetail.ProfileImage = projectManager.ProfileImage;
                         }
                     }
 
@@ -694,7 +748,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         // POST: /SuperAdmin/User/Update
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Update(CreateUserViewModel model)
+        public async Task<IActionResult> Update([FromForm] CreateUserViewModel model)
         {
             try
             {
@@ -761,6 +815,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     employee.DepartmentId = model.DepartmentId ?? 0;
                     employee.PositionId = model.PositionId ?? 0;
                     employee.DateHired = model.DateHired;
+
+                    if (model.ProfileImageFile != null)
+                    {
+                        employee.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                    }
                 }
                 else
                 {
@@ -787,6 +846,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     hr.LastName = model.LastName;
                     hr.Contact = model.Contact ?? string.Empty;
                     hr.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
+
+                    if (model.ProfileImageFile != null)
+                    {
+                        hr.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                    }
                 }
                 else
                 {
@@ -813,6 +877,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     dh.Contact = model.Contact ?? string.Empty;
                     dh.DepartmentId = model.DepartmentId ?? 0;
                     dh.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
+
+                    if (model.ProfileImageFile != null)
+                    {
+                        dh.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                    }
                 }
                 else
                 {
@@ -839,6 +908,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     ex.Contact = model.Contact ?? string.Empty;
                     ex.DepartmentId = model.DepartmentId.HasValue && model.DepartmentId.Value > 0 ? model.DepartmentId.Value : (int?)null;
                     ex.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
+
+                    if (model.ProfileImageFile != null)
+                    {
+                        ex.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                    }
                 }
                 else
                 {
@@ -865,6 +939,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     pm.Contact = model.Contact ?? string.Empty;
                     pm.DepartmentId = model.DepartmentId ?? 0;
                     pm.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
+
+                    if (model.ProfileImageFile != null)
+                    {
+                        pm.ProfileImage = await SaveProfileImageAsync(model.ProfileImageFile);
+                    }
                 }
                 else
                 {

@@ -21,5 +21,6 @@ namespace project_lifecycle.ViewModels
         public string? DepartmentName { get; set; }
         public string? PositionName { get; set; }
         public DateTime? DateHired { get; set; }
+        public string? ProfileImage { get; set; }
     }
 }

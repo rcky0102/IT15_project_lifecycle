@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using project_lifecycle.Models;
 
 namespace project_lifecycle.ViewModels
@@ -57,6 +58,9 @@ namespace project_lifecycle.ViewModels
 
         [Display(Name = "Contact")]
         public string? Contact { get; set; }
+
+        [Display(Name = "Profile Image")]
+        public IFormFile? ProfileImageFile { get; set; }
 
         // Lists for dropdowns
         public List<Department> Departments { get; set; } = new();
