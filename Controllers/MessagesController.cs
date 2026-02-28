@@ -47,41 +47,75 @@ namespace project_lifecycle.Controllers
                     .ToListAsync()
                 : new List<string>();
 
-            var query = _db.Employees
-                .Include(e => e.User)
-                .Include(e => e.Department)
-                .Include(e => e.Position)
+            var s = search?.Trim().ToLower() ?? "";
+
+            // Build a unified list of contacts from ALL role tables
+            var contacts = new List<(string UserId, string FirstName, string? MiddleName, string LastName, string? DepartmentName, string? PositionName, string? Email)>();
+
+            // ── Employees ──
+            var empQuery = _db.Employees.Include(e => e.User).Include(e => e.Department).Include(e => e.Position)
                 .Where(e => e.UserId != currentUserId && !superAdminUserIds.Contains(e.UserId));
+            if (!string.IsNullOrEmpty(s))
+                empQuery = empQuery.Where(e => e.FirstName.ToLower().Contains(s) || e.LastName.ToLower().Contains(s) || (e.MiddleName != null && e.MiddleName.ToLower().Contains(s)) || (e.User != null && e.User.Email != null && e.User.Email.ToLower().Contains(s)));
+            var emps = await empQuery.ToListAsync();
+            contacts.AddRange(emps.Select(e => (e.UserId, e.FirstName, e.MiddleName, e.LastName, e.Department?.Name, e.Position?.Name, e.User?.Email)));
 
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var s = search.Trim().ToLower();
-                query = query.Where(e =>
-                    e.FirstName.ToLower().Contains(s) ||
-                    e.LastName.ToLower().Contains(s) ||
-                    (e.MiddleName != null && e.MiddleName.ToLower().Contains(s)) ||
-                    (e.User != null && e.User.Email != null && e.User.Email.ToLower().Contains(s)));
-            }
+            // ── Project Managers ──
+            var pmQuery = _db.ProjectManagers.Include(p => p.Department).Include(p => p.Position)
+                .Where(p => p.UserId != currentUserId && !superAdminUserIds.Contains(p.UserId));
+            if (!string.IsNullOrEmpty(s))
+                pmQuery = pmQuery.Where(p => p.FirstName.ToLower().Contains(s) || p.LastName.ToLower().Contains(s) || (p.MiddleName != null && p.MiddleName.ToLower().Contains(s)));
+            var pms = await pmQuery.ToListAsync();
+            contacts.AddRange(pms.Select(p => (p.UserId, p.FirstName, p.MiddleName, p.LastName, p.Department?.Name, p.Position?.Name, (string?)null)));
 
-            var employees = await query.OrderBy(e => e.FirstName).ThenBy(e => e.LastName).ToListAsync();
+            // ── Department Heads ──
+            var dhQuery = _db.DepartmentHeads.Include(d => d.Department).Include(d => d.Position)
+                .Where(d => d.UserId != currentUserId && !superAdminUserIds.Contains(d.UserId));
+            if (!string.IsNullOrEmpty(s))
+                dhQuery = dhQuery.Where(d => d.FirstName.ToLower().Contains(s) || d.LastName.ToLower().Contains(s) || (d.MiddleName != null && d.MiddleName.ToLower().Contains(s)));
+            var dhs = await dhQuery.ToListAsync();
+            contacts.AddRange(dhs.Select(d => (d.UserId, d.FirstName, d.MiddleName, d.LastName, d.Department?.Name, d.Position?.Name, (string?)null)));
 
-            // Get roles for each employee
+            // ── Human Resources ──
+            var hrQuery = _db.HumanResources.Include(h => h.Department).Include(h => h.Position)
+                .Where(h => h.UserId != currentUserId && !superAdminUserIds.Contains(h.UserId));
+            if (!string.IsNullOrEmpty(s))
+                hrQuery = hrQuery.Where(h => h.FirstName.ToLower().Contains(s) || h.LastName.ToLower().Contains(s) || (h.MiddleName != null && h.MiddleName.ToLower().Contains(s)));
+            var hrs = await hrQuery.ToListAsync();
+            contacts.AddRange(hrs.Select(h => (h.UserId, h.FirstName, h.MiddleName, h.LastName, h.Department?.Name, h.Position?.Name, (string?)null)));
+
+            // ── Executives ──
+            var execQuery = _db.Executives.Include(e => e.Department).Include(e => e.Position)
+                .Where(e => e.UserId != currentUserId && !superAdminUserIds.Contains(e.UserId));
+            if (!string.IsNullOrEmpty(s))
+                execQuery = execQuery.Where(e => e.FirstName.ToLower().Contains(s) || e.LastName.ToLower().Contains(s) || (e.MiddleName != null && e.MiddleName.ToLower().Contains(s)));
+            var execs = await execQuery.ToListAsync();
+            contacts.AddRange(execs.Select(e => (e.UserId, e.FirstName, e.MiddleName, e.LastName, e.Department?.Name, e.Position?.Name, (string?)null)));
+
+            // Deduplicate by UserId (a person might exist in multiple tables)
+            var uniqueContacts = contacts
+                .GroupBy(c => c.UserId)
+                .Select(g => g.First())
+                .OrderBy(c => c.FirstName).ThenBy(c => c.LastName)
+                .ToList();
+
+            // Get roles for each contact
             var result = new List<object>();
-            foreach (var emp in employees)
+            foreach (var c in uniqueContacts)
             {
-                var roles = emp.User != null ? await _userManager.GetRolesAsync(emp.User) : new List<string>();
+                var user = await _userManager.FindByIdAsync(c.UserId);
+                var roles = user != null ? await _userManager.GetRolesAsync(user) : new List<string>();
                 var role = roles.FirstOrDefault(r => r != "SuperAdmin") ?? "Employee";
 
                 result.Add(new
                 {
-                    userId = emp.UserId,
-                    employeeId = emp.Id,
-                    name = $"{emp.FirstName} {emp.LastName}",
-                    initials = $"{emp.FirstName[0]}{emp.LastName[0]}".ToUpper(),
+                    userId = c.UserId,
+                    name = $"{c.FirstName} {c.LastName}",
+                    initials = $"{c.FirstName[0]}{c.LastName[0]}".ToUpper(),
                     role,
-                    department = emp.Department?.Name ?? "",
-                    position = emp.Position?.Name ?? "",
-                    email = emp.User?.Email ?? ""
+                    department = c.DepartmentName ?? "",
+                    position = c.PositionName ?? "",
+                    email = c.Email ?? ""
                 });
             }
 
@@ -115,11 +149,9 @@ namespace project_lifecycle.Controllers
                     .Where(p => p.UserId != currentUserId)
                     .ToList();
 
-                // Get display info from Employee table
+                // Get display info from ALL role tables
                 var otherUserIds = otherParticipants.Select(p => p.UserId).ToList();
-                var otherEmployees = await _db.Employees
-                    .Where(e => otherUserIds.Contains(e.UserId))
-                    .ToListAsync();
+                var otherUsers = await ResolveUsersInfoAsync(otherUserIds);
 
                 var lastMessage = conv.Messages.FirstOrDefault();
 
@@ -132,13 +164,9 @@ namespace project_lifecycle.Controllers
                 }
                 else
                 {
-                    var otherEmp = otherEmployees.FirstOrDefault();
-                    displayName = otherEmp != null
-                        ? $"{otherEmp.FirstName} {otherEmp.LastName}"
-                        : "Unknown";
-                    initials = otherEmp != null
-                        ? $"{otherEmp.FirstName[0]}{otherEmp.LastName[0]}".ToUpper()
-                        : "??";
+                    var otherInfo = otherUsers.Values.FirstOrDefault();
+                    displayName = otherInfo?.FullName ?? "Unknown";
+                    initials = otherInfo?.Initials ?? "??";
                 }
 
                 // Unread count
@@ -148,7 +176,7 @@ namespace project_lifecycle.Controllers
                                 && (cp.LastReadAt == null || m.SentAt > cp.LastReadAt))
                     .CountAsync();
 
-                // Resolve last message sender's employee name
+                // Resolve last message sender's name from all role tables
                 string? lastMsgSenderName = null;
                 if (lastMessage != null)
                 {
@@ -158,11 +186,9 @@ namespace project_lifecycle.Controllers
                     }
                     else
                     {
-                        var senderEmp = await _db.Employees
-                            .FirstOrDefaultAsync(e => e.UserId == lastMessage.SenderId);
-                        lastMsgSenderName = senderEmp != null
-                            ? $"{senderEmp.FirstName} {senderEmp.LastName}"
-                            : lastMessage.Sender?.UserName ?? "Unknown";
+                        var senderInfo = await ResolveUserInfoAsync(lastMessage.SenderId);
+                        lastMsgSenderName = senderInfo?.FullName
+                            ?? lastMessage.Sender?.UserName ?? "Unknown";
                     }
                 }
 
@@ -253,22 +279,20 @@ namespace project_lifecycle.Controllers
                 .Take(count)
                 .ToListAsync();
 
-            // Get employee info for senders
+            // Get user info for senders from all role tables
             var senderIds = messages.Select(m => m.SenderId).Distinct().ToList();
-            var senderEmployees = await _db.Employees
-                .Where(e => senderIds.Contains(e.UserId))
-                .ToDictionaryAsync(e => e.UserId, e => e);
+            var senderInfoMap = await ResolveUsersInfoAsync(senderIds);
 
             var result = messages.OrderBy(m => m.SentAt).Select(m =>
             {
-                senderEmployees.TryGetValue(m.SenderId, out var emp);
+                senderInfoMap.TryGetValue(m.SenderId, out var info);
                 return new
                 {
                     id = m.Id,
                     conversationId = m.ConversationId,
                     senderId = m.SenderId,
-                    senderName = emp != null ? $"{emp.FirstName} {emp.LastName}" : "Unknown",
-                    senderInitials = emp != null ? $"{emp.FirstName[0]}{emp.LastName[0]}".ToUpper() : "??",
+                    senderName = info?.FullName ?? "Unknown",
+                    senderInitials = info?.Initials ?? "??",
                     content = m.Content,
                     sentAt = m.SentAt,
                     timeAgo = GetTimeAgo(m.SentAt),
@@ -309,10 +333,10 @@ namespace project_lifecycle.Controllers
 
             await _db.SaveChangesAsync();
 
-            // Get sender employee info
-            var emp = await _db.Employees.FirstOrDefaultAsync(e => e.UserId == currentUserId);
-            var senderName = emp != null ? $"{emp.FirstName} {emp.LastName}" : "Unknown";
-            var senderInitials = emp != null ? $"{emp.FirstName[0]}{emp.LastName[0]}".ToUpper() : "??";
+            // Get sender info from all role tables
+            var senderInfo = await ResolveUserInfoAsync(currentUserId);
+            var senderName = senderInfo?.FullName ?? "Unknown";
+            var senderInitials = senderInfo?.Initials ?? "??";
 
             var messageDto = new
             {
@@ -403,6 +427,119 @@ namespace project_lifecycle.Controllers
         }
 
         // ───────── HELPERS ─────────
+
+        /// <summary>
+        /// Resolves user display info (name, initials, role, department, position) by checking
+        /// all role tables: Employees, ProjectManagers, DepartmentHeads, HumanResources, Executives.
+        /// </summary>
+        private async Task<UserDisplayInfo?> ResolveUserInfoAsync(string userId)
+        {
+            // Check Employee table
+            var emp = await _db.Employees
+                .Include(e => e.Department).Include(e => e.Position)
+                .FirstOrDefaultAsync(e => e.UserId == userId);
+            if (emp != null)
+                return new UserDisplayInfo(emp.FirstName, emp.LastName, emp.Department?.Name, emp.Position?.Name);
+
+            // Check ProjectManager table
+            var pm = await _db.ProjectManagers
+                .Include(p => p.Department).Include(p => p.Position)
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+            if (pm != null)
+                return new UserDisplayInfo(pm.FirstName, pm.LastName, pm.Department?.Name, pm.Position?.Name);
+
+            // Check DepartmentHead table
+            var dh = await _db.DepartmentHeads
+                .Include(d => d.Department).Include(d => d.Position)
+                .FirstOrDefaultAsync(d => d.UserId == userId);
+            if (dh != null)
+                return new UserDisplayInfo(dh.FirstName, dh.LastName, dh.Department?.Name, dh.Position?.Name);
+
+            // Check HumanResource table
+            var hr = await _db.HumanResources
+                .Include(h => h.Department).Include(h => h.Position)
+                .FirstOrDefaultAsync(h => h.UserId == userId);
+            if (hr != null)
+                return new UserDisplayInfo(hr.FirstName, hr.LastName, hr.Department?.Name, hr.Position?.Name);
+
+            // Check Executive table
+            var exec = await _db.Executives
+                .Include(e => e.Department).Include(e => e.Position)
+                .FirstOrDefaultAsync(e => e.UserId == userId);
+            if (exec != null)
+                return new UserDisplayInfo(exec.FirstName, exec.LastName, exec.Department?.Name, exec.Position?.Name);
+
+            return null;
+        }
+
+        /// <summary>
+        /// Batch-resolves user display info for multiple user IDs.
+        /// </summary>
+        private async Task<Dictionary<string, UserDisplayInfo>> ResolveUsersInfoAsync(IEnumerable<string> userIds)
+        {
+            var ids = userIds.Distinct().ToList();
+            var result = new Dictionary<string, UserDisplayInfo>();
+
+            // Employees
+            var employees = await _db.Employees
+                .Include(e => e.Department).Include(e => e.Position)
+                .Where(e => ids.Contains(e.UserId))
+                .ToListAsync();
+            foreach (var e in employees)
+                result[e.UserId] = new UserDisplayInfo(e.FirstName, e.LastName, e.Department?.Name, e.Position?.Name);
+
+            var remaining = ids.Except(result.Keys).ToList();
+            if (remaining.Count == 0) return result;
+
+            // ProjectManagers
+            var pms = await _db.ProjectManagers
+                .Include(p => p.Department).Include(p => p.Position)
+                .Where(p => remaining.Contains(p.UserId))
+                .ToListAsync();
+            foreach (var p in pms)
+                result[p.UserId] = new UserDisplayInfo(p.FirstName, p.LastName, p.Department?.Name, p.Position?.Name);
+
+            remaining = ids.Except(result.Keys).ToList();
+            if (remaining.Count == 0) return result;
+
+            // DepartmentHeads
+            var dhs = await _db.DepartmentHeads
+                .Include(d => d.Department).Include(d => d.Position)
+                .Where(d => remaining.Contains(d.UserId))
+                .ToListAsync();
+            foreach (var d in dhs)
+                result[d.UserId] = new UserDisplayInfo(d.FirstName, d.LastName, d.Department?.Name, d.Position?.Name);
+
+            remaining = ids.Except(result.Keys).ToList();
+            if (remaining.Count == 0) return result;
+
+            // HumanResources
+            var hrs = await _db.HumanResources
+                .Include(h => h.Department).Include(h => h.Position)
+                .Where(h => remaining.Contains(h.UserId))
+                .ToListAsync();
+            foreach (var h in hrs)
+                result[h.UserId] = new UserDisplayInfo(h.FirstName, h.LastName, h.Department?.Name, h.Position?.Name);
+
+            remaining = ids.Except(result.Keys).ToList();
+            if (remaining.Count == 0) return result;
+
+            // Executives
+            var execs = await _db.Executives
+                .Include(e => e.Department).Include(e => e.Position)
+                .Where(e => remaining.Contains(e.UserId))
+                .ToListAsync();
+            foreach (var e in execs)
+                result[e.UserId] = new UserDisplayInfo(e.FirstName, e.LastName, e.Department?.Name, e.Position?.Name);
+
+            return result;
+        }
+
+        private record UserDisplayInfo(string FirstName, string LastName, string? Department, string? Position)
+        {
+            public string FullName => $"{FirstName} {LastName}";
+            public string Initials => $"{FirstName[0]}{LastName[0]}".ToUpper();
+        }
 
         private static string GetTimeAgo(DateTime sentAt)
         {
