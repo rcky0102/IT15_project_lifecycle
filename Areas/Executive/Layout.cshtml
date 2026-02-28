@@ -1,69 +1,260 @@
 @{
     Layout = null;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
 }
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Executive Dashboard</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/executive-dashboard.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
+
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/executive-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/executive-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
 </head>
-<body class="admin-body">
-    <div class="admin-layout">
-        <aside class="admin-sidebar" id="adminSidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-brand">
-                    <div class="brand-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+<body class="executive-body">
+
+    <!-- Mobile overlay -->
+    <div class="exec-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="executive-layout">
+
+        <!-- ========== SIDEBAR ========== -->
+        <aside class="exec-sidebar" id="execSidebar">
+
+            <!-- Brand -->
+            <div class="exec-sidebar-header">
+                <a href="@Url.Action("Index", "Dashboard", new { area = "Executive" })" class="exec-sidebar-brand">
+                    <div class="exec-brand-icon">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M16 2L20 8L27 7L24 14L28 20L21 19L16 24L11 19L4 20L8 14L5 7L12 8L16 2Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
                             <circle cx="16" cy="14" r="6" fill="white"/>
                             <path d="M13 12L15 14L19 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <span class="brand-text">Executive</span>
-                </div>
-                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar"><i class="fas fa-bars"></i></button>
+                    <span class="exec-brand-text">Executive</span>
+                </a>
+                <button class="exec-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                    <i class="fas fa-bars fa-sm"></i>
+                </button>
             </div>
-            <nav class="sidebar-nav">
-                <ul class="nav-list">
-                    <li class="nav-item">
-                        <a href="@Url.Action("Index", "Dashboard", new { area = "Executive" })" class="nav-link"><i class="fas fa-tachometer-alt"></i><span class="nav-text">Dashboard</span></a>
+
+            <!-- Navigation -->
+            <nav class="exec-sidebar-nav">
+                <span class="exec-nav-section-title">Menu</span>
+                <ul class="exec-nav-list">
+                    <li class="exec-nav-item">
+                        <a href="@Url.Action("Index", "Dashboard", new { area = "Executive" })"
+                           class="exec-nav-link @(currentController == "Dashboard" ? "active" : "")"
+                           data-tooltip="Dashboard">
+                            <i class="fas fa-th-large"></i>
+                            <span class="exec-nav-text">Dashboard</span>
+                        </a>
                     </li>
                 </ul>
             </nav>
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar"><span>EX</span></div>
-                    <div class="user-info">
-                        <div class="user-name">Executive</div>
-                        <div class="user-role">EX</div>
+
+            <!-- User footer -->
+            <div class="exec-sidebar-footer">
+                <div class="exec-user-card">
+                    <div class="exec-user-avatar">EX</div>
+                    <div class="exec-user-details">
+                        <div class="exec-user-name">Executive</div>
+                        <div class="exec-user-role">Leadership</div>
                     </div>
-                    <form action="/Identity/Account/Logout" method="post" class="logout-form" id="logoutForm">
+                    <form action="/Identity/Account/Logout" method="post" class="exec-logout-form" id="logoutForm">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="returnUrl" value="/" />
-                        <button type="submit" class="logout-btn" title="Logout" onclick="return confirm('Are you sure you want to logout?');">
-                            <i class="fas fa-sign-out-alt"></i>
+                        <button type="button" class="exec-logout-btn" id="logoutBtn" title="Sign out">
+                            <i class="fas fa-arrow-right-from-bracket"></i>
                         </button>
                     </form>
                 </div>
             </div>
+
         </aside>
-        <div class="admin-main">
-            <header class="admin-header"><div class="header-left"><button class="mobile-sidebar-toggle" id="mobileSidebarToggle"><i class="fas fa-bars"></i></button><div class="breadcrumb"><span class="breadcrumb-item">Dashboard</span></div></div></header>
-            <main class="admin-content">@RenderBody()</main>
+
+        <!-- ========== MAIN ========== -->
+        <div class="exec-main">
+
+            <!-- Header -->
+            <header class="exec-header" id="execHeader">
+                <div class="exec-header-left">
+                    <button class="exec-mobile-toggle" id="mobileSidebarToggle" aria-label="Open menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="exec-breadcrumb" aria-label="Breadcrumb">
+                        <a href="@Url.Action("Index", "Dashboard", new { area = "Executive" })" class="exec-breadcrumb-home">
+                            <i class="fas fa-home"></i>
+                        </a>
+                        <span class="exec-breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
+                        <span class="exec-breadcrumb-current">@(ViewData["Title"] ?? "Dashboard")</span>
+                    </nav>
+                </div>
+
+                <div class="exec-header-right">
+                    <button class="exec-header-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="exec-notif-dot"></span>
+                    </button>
+                    <button class="exec-header-btn" title="Search">
+                        <i class="fas fa-magnifying-glass"></i>
+                    </button>
+
+                    <div class="exec-header-divider"></div>
+
+                    <div class="exec-header-profile">
+                        <div class="exec-header-avatar">EX</div>
+                        <div class="exec-header-user-info">
+                            <div class="exec-header-greeting" id="headerGreeting">Welcome back</div>
+                            <div class="exec-header-name">Executive</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="exec-content">
+                @RenderBody()
+            </main>
+        </div>
+
+    </div>
+
+    <!-- Logout confirmation modal -->
+
+    <style>
+    .exec-modal-backdrop { position: fixed; inset: 0; background: rgba(3,7,18,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .exec-modal-backdrop.active { display: flex; }
+    .exec-modal { background: #fff; border-radius: 12px; width: 94%; max-width: 420px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(2,6,23,0.35); }
+    .exec-modal h4 { margin: 0 0 .5rem; font-size: 1.05rem; color: #0f172a; }
+    .exec-modal p { margin: 0 0 1rem; color: #64748b; font-size: .92rem; }
+    .exec-modal .exec-modal-actions { display:flex; gap:.5rem; justify-content:flex-end; }
+    .exec-modal .exec-btn { border-radius: 8px; padding: .5rem .85rem; font-weight:600; }
+    .exec-modal .exec-btn-cancel { background: transparent; border:1px solid #e6eef6; color:#475569; }
+    .exec-modal .exec-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color:#fff; border:none; }
+    </style>
+
+    <div class="exec-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="exec-modal" role="document">
+            <h4>Sign out</h4>
+            <p>Are you sure you want to sign out of your account?</p>
+            <div class="exec-modal-actions">
+                <button type="button" class="exec-btn exec-btn-cancel" id="cancelLogoutBtn">Cancel</button>
+                <button type="button" class="exec-btn exec-btn-confirm" id="confirmLogoutBtn">Sign out</button>
+            </div>
         </div>
     </div>
+
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+    (function () {
+        const sidebar  = document.getElementById('execSidebar');
+        const toggle   = document.getElementById('sidebarToggle');
+        const mobile   = document.getElementById('mobileSidebarToggle');
+        const overlay  = document.getElementById('sidebarOverlay');
+        const header   = document.getElementById('execHeader');
+        const greeting = document.getElementById('headerGreeting');
+
+        /* --- Time-based greeting --- */
+        const hour = new Date().getHours();
+        if (greeting) {
+            greeting.textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        }
+
+        /* --- Sidebar collapse toggle (desktop) --- */
+        toggle?.addEventListener('click', function () {
+            const icon = this.querySelector('i');
+            const collapsed = sidebar.classList.toggle('collapsed');
+            icon.className = collapsed ? 'fas fa-chevron-right fa-sm' : 'fas fa-bars fa-sm';
+            this.setAttribute('title', collapsed ? 'Expand Sidebar' : 'Collapse Sidebar');
+            localStorage.setItem('execSidebarCollapsed', collapsed);
+        });
+
+        /* --- Restore collapsed state --- */
+        if (localStorage.getItem('execSidebarCollapsed') === 'true') {
+            sidebar?.classList.add('collapsed');
+            const icon = toggle?.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-chevron-right fa-sm';
+                toggle.setAttribute('title', 'Expand Sidebar');
+            }
+        }
+
+        /* --- Mobile sidebar --- */
+        function openMobile()  { sidebar?.classList.add('mobile-open');    overlay?.classList.add('active'); }
+        function closeMobile() { sidebar?.classList.remove('mobile-open'); overlay?.classList.remove('active'); }
+
+        mobile?.addEventListener('click', function () {
+            sidebar?.classList.contains('mobile-open') ? closeMobile() : openMobile();
+        });
+        overlay?.addEventListener('click', closeMobile);
+
+        document.addEventListener('click', function (e) {
+            if (window.innerWidth <= 768 &&
+                sidebar?.classList.contains('mobile-open') &&
+                !sidebar.contains(e.target) &&
+                !mobile?.contains(e.target)) {
+                closeMobile();
+            }
+        });
+
+        /* --- Sticky header shadow on scroll --- */
+        window.addEventListener('scroll', function () {
+            header?.classList.toggle('scrolled', window.scrollY > 8);
+        }, { passive: true });
+
+        /* --- Logout confirmation modal --- */
+        const logoutForm = document.getElementById('logoutForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = document.getElementById('logoutModal');
+        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+
+        function showLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.add('active');
+            logoutModal.setAttribute('aria-hidden', 'false');
+        }
+        function hideLogoutModal() {
+            if (!logoutModal) return;
+            logoutModal.classList.remove('active');
+            logoutModal.setAttribute('aria-hidden', 'true');
+        }
+
+        logoutBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            showLogoutModal();
+        });
+
+        cancelLogoutBtn?.addEventListener('click', function () { hideLogoutModal(); });
+
+        // Close modal when clicking backdrop
+        logoutModal?.addEventListener('click', function (e) {
+            if (e.target === logoutModal) hideLogoutModal();
+        });
+
+        confirmLogoutBtn?.addEventListener('click', function () {
+            if (logoutForm) logoutForm.submit();
+        });
+    })();
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
