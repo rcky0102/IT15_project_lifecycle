@@ -122,6 +122,15 @@
                 <span class="table-count" id="tableRowCount"></span>
             </div>
         </div>
+
+        <!-- Report Interpretation / Insights -->
+        <div class="report-interpretation" id="reportInterpretation" style="display:none;">
+            <div class="interpretation-header">
+                <i class="fas fa-lightbulb"></i>
+                <h3>Key Insights &amp; Interpretation</h3>
+            </div>
+            <div class="interpretation-body" id="interpretationBody"></div>
+        </div>
     </div>
 </div>
 
@@ -151,6 +160,8 @@
             const reportDateRange = document.getElementById('reportDateRange');
             const reportRecordCount = document.getElementById('reportRecordCount');
             const reportTableTitle = document.getElementById('reportTableTitle');
+            const interpretationEl = document.getElementById('reportInterpretation');
+            const interpretationBody = document.getElementById('interpretationBody');
 
             let currentReport = null;
 
@@ -230,6 +241,9 @@
                 } else {
                     renderTable(report);
                 }
+
+                // Always render interpretation
+                renderInterpretation(report);
             }
 
             // ── Summary Report ──
@@ -375,6 +389,356 @@
                 }
             }
 
+            // ── Interpretation / Insights ──
+            function renderInterpretation(report) {
+                const insights = [];
+
+                switch (report.type) {
+                    case 'summary':
+                        insights.push(...interpretSummary(report.data));
+                        break;
+                    case 'projects':
+                        insights.push(...interpretProjects(report));
+                        break;
+                    case 'tasks':
+                        insights.push(...interpretTasks(report));
+                        break;
+                    case 'proposals':
+                        insights.push(...interpretProposals(report));
+                        break;
+                    case 'employees':
+                        insights.push(...interpretEmployees(report));
+                        break;
+                }
+
+                if (insights.length === 0) {
+                    interpretationEl.style.display = 'none';
+                    return;
+                }
+
+                interpretationBody.innerHTML =
+                    insights.map(i =>
+                        `<div class="insight-block ${i.tone}">
+                            <div class="insight-icon"><i class="fas ${i.icon}"></i></div>
+                            <div class="insight-text">${i.text}</div>
+                        </div>`
+                    ).join('') +
+                    `<div class="interpretation-footer">Auto-generated insights based on data for the selected period (${report.from} — ${report.to}).</div>`;
+
+                interpretationEl.style.display = 'block';
+            }
+
+            // ── Summary Insights ──
+            function interpretSummary(d) {
+                const ins = [];
+
+                // Project activity
+                if (d.projectsCreated > 0) {
+                    const archiveRatio = d.projectsCreated > 0 ? Math.round(d.archivedProjects / d.projectsCreated * 100) : 0;
+                    ins.push({
+                        icon: 'fa-diagram-project',
+                        tone: d.activeProjects > d.archivedProjects ? 'positive' : 'neutral',
+                        text: `<strong>${d.projectsCreated}</strong> project(s) were created during this period, with <strong>${d.activeProjects}</strong> currently active and <strong>${d.archivedProjects}</strong> archived. ${archiveRatio > 50 ? 'A high archive rate may indicate rapid project turnover or effective project closure.' : 'The majority of projects remain active, suggesting ongoing organizational investment.'}`
+                    });
+                } else {
+                    ins.push({
+                        icon: 'fa-diagram-project',
+                        tone: 'caution',
+                        text: 'No new projects were created during this period. Consider reviewing whether project initiation is progressing as planned or if there are pipeline bottlenecks.'
+                    });
+                }
+
+                // Task completion
+                if (d.totalTasks > 0) {
+                    const rate = d.taskCompletionRate;
+                    let tone = rate >= 75 ? 'positive' : rate >= 40 ? 'caution' : 'negative';
+                    let commentary = rate >= 75
+                        ? 'This is a strong completion rate, reflecting healthy team productivity and effective task management.'
+                        : rate >= 40
+                            ? 'The completion rate is moderate. Consider investigating potential blockers or resource allocation issues that may be slowing progress.'
+                            : 'The completion rate is low, which may signal overcommitment, unclear task definitions, or insufficient resources. Immediate attention is recommended.';
+                    ins.push({
+                        icon: 'fa-list-check',
+                        tone,
+                        text: `Out of <strong>${d.totalTasks}</strong> tasks created, <strong>${d.completedTasks}</strong> were completed (<strong>${rate}%</strong> completion rate). <strong>${d.pendingTasks}</strong> remain pending and <strong>${d.revisionTasks}</strong> require revision. ${commentary}`
+                    });
+                }
+
+                if (d.revisionTasks > 0 && d.totalTasks > 0) {
+                    const revPct = Math.round(d.revisionTasks / d.totalTasks * 100);
+                    if (revPct >= 20) {
+                        ins.push({
+                            icon: 'fa-rotate-left',
+                            tone: 'negative',
+                            text: `<strong>${revPct}%</strong> of tasks require revision, which is notably high. This could indicate quality concerns, miscommunication on task requirements, or insufficient review before submission. Consider implementing clearer task guidelines or additional checkpoints.`
+                        });
+                    }
+                }
+
+                // Proposal pipeline
+                if (d.totalProposals > 0) {
+                    const approvalRate = d.proposalApprovalRate;
+                    let tone = approvalRate >= 60 ? 'positive' : approvalRate >= 30 ? 'caution' : 'negative';
+                    let commentary = approvalRate >= 60
+                        ? 'The approval rate is healthy, suggesting proposals are well-aligned with organizational goals.'
+                        : approvalRate >= 30
+                            ? 'The approval rate is moderate. It may be worth examining whether proposal guidelines need refinement or if reviewers and submitters are aligned on expectations.'
+                            : 'The approval rate is low, indicating a potential disconnect between proposal quality and organizational criteria. Review feedback loops and proposal preparation processes.';
+                    ins.push({
+                        icon: 'fa-file-lines',
+                        tone,
+                        text: `<strong>${d.totalProposals}</strong> proposal(s) were submitted—<strong>${d.approvedProposals}</strong> approved, <strong>${d.pendingProposals}</strong> pending, and <strong>${d.rejectedProposals}</strong> rejected (<strong>${approvalRate}%</strong> approval rate). ${commentary}`
+                    });
+                }
+
+                // People
+                if (d.newEmployees > 0) {
+                    const growthPct = d.totalEmployees > 0 ? Math.round(d.newEmployees / d.totalEmployees * 100) : 0;
+                    ins.push({
+                        icon: 'fa-users',
+                        tone: 'positive',
+                        text: `<strong>${d.newEmployees}</strong> new employee(s) joined the organization during this period, representing a <strong>${growthPct}%</strong> workforce growth relative to the current total of <strong>${d.totalEmployees}</strong>. The organization is distributed across <strong>${d.totalDepartments}</strong> department(s).`
+                    });
+                } else {
+                    ins.push({
+                        icon: 'fa-users',
+                        tone: 'neutral',
+                        text: `No new hires during this period. The organization currently has <strong>${d.totalEmployees}</strong> employee(s) across <strong>${d.totalDepartments}</strong> department(s).`
+                    });
+                }
+
+                // Milestones
+                if (d.totalMilestones > 0) {
+                    const mRate = d.milestoneCompletionRate;
+                    let tone = mRate >= 70 ? 'positive' : mRate >= 40 ? 'caution' : 'negative';
+                    ins.push({
+                        icon: 'fa-flag-checkered',
+                        tone,
+                        text: `<strong>${d.milestonesFinished}</strong> out of <strong>${d.totalMilestones}</strong> milestones were completed (<strong>${mRate}%</strong>). ${mRate >= 70 ? 'Milestone delivery is on track, demonstrating solid project scheduling and execution.' : mRate >= 40 ? 'Milestone progress is moderate—some projects may be falling behind schedule.' : 'Milestone completion is low, suggesting projects may face significant delays. A review of timelines and resource allocation is advisable.'}`
+                    });
+                }
+
+                return ins;
+            }
+
+            // ── Projects Insights ──
+            function interpretProjects(report) {
+                const ins = [];
+                const rows = report.rows || [];
+                if (rows.length === 0) {
+                    ins.push({ icon: 'fa-info-circle', tone: 'neutral', text: 'No projects were created in the selected period.' });
+                    return ins;
+                }
+
+                const active = rows.filter(r => r.status === 'Active').length;
+                const archived = rows.filter(r => r.status === 'Archived').length;
+                const totalTasks = rows.reduce((s, r) => s + (r.taskCount || 0), 0);
+                const completedTasks = rows.reduce((s, r) => s + (r.completedTaskCount || 0), 0);
+                const avgMembers = rows.length > 0 ? (rows.reduce((s, r) => s + (r.memberCount || 0), 0) / rows.length).toFixed(1) : 0;
+                const taskRate = totalTasks > 0 ? Math.round(completedTasks / totalTasks * 100) : 0;
+
+                ins.push({
+                    icon: 'fa-chart-bar',
+                    tone: 'neutral',
+                    text: `<strong>${rows.length}</strong> project(s) were created in this period—<strong>${active}</strong> active and <strong>${archived}</strong> archived. On average, each project has <strong>${avgMembers}</strong> member(s).`
+                });
+
+                if (totalTasks > 0) {
+                    ins.push({
+                        icon: 'fa-tasks',
+                        tone: taskRate >= 60 ? 'positive' : taskRate >= 30 ? 'caution' : 'negative',
+                        text: `Across all listed projects, <strong>${completedTasks}</strong> of <strong>${totalTasks}</strong> tasks are completed (<strong>${taskRate}%</strong>). ${taskRate >= 60 ? 'Overall project task completion is healthy.' : 'Several projects may need attention to improve task throughput.'}`
+                    });
+                }
+
+                // Identify projects with 0 completed tasks
+                const stalled = rows.filter(r => r.taskCount > 0 && r.completedTaskCount === 0);
+                if (stalled.length > 0) {
+                    ins.push({
+                        icon: 'fa-triangle-exclamation',
+                        tone: 'caution',
+                        text: `<strong>${stalled.length}</strong> project(s) have tasks assigned but none completed yet: <strong>${stalled.map(r => r.name).join(', ')}</strong>. These may be newly started or could need follow-up.`
+                    });
+                }
+
+                // Identify projects with no members
+                const unmanned = rows.filter(r => r.memberCount === 0);
+                if (unmanned.length > 0) {
+                    ins.push({
+                        icon: 'fa-user-slash',
+                        tone: 'negative',
+                        text: `<strong>${unmanned.length}</strong> project(s) currently have no members assigned: <strong>${unmanned.map(r => r.name).join(', ')}</strong>. Assign team members to keep these projects moving.`
+                    });
+                }
+
+                return ins;
+            }
+
+            // ── Tasks Insights ──
+            function interpretTasks(report) {
+                const ins = [];
+                const rows = report.rows || [];
+                if (rows.length === 0) {
+                    ins.push({ icon: 'fa-info-circle', tone: 'neutral', text: 'No tasks were created in the selected period.' });
+                    return ins;
+                }
+
+                const completed = report.completed || 0;
+                const pending = report.pending || 0;
+                const revision = report.revision || 0;
+                const total = rows.length;
+                const compRate = total > 0 ? Math.round(completed / total * 100) : 0;
+
+                ins.push({
+                    icon: 'fa-chart-pie',
+                    tone: compRate >= 60 ? 'positive' : compRate >= 30 ? 'caution' : 'negative',
+                    text: `Of <strong>${total}</strong> tasks, <strong>${completed}</strong> are completed (<strong>${compRate}%</strong>), <strong>${pending}</strong> are pending, and <strong>${revision}</strong> require revision. ${compRate >= 60 ? 'Task execution is progressing well.' : 'A significant portion of tasks remain incomplete—consider reviewing workload distribution and deadlines.'}`
+                });
+
+                // Unassigned tasks
+                const unassigned = rows.filter(r => (r.assigneeCount || 0) === 0);
+                if (unassigned.length > 0) {
+                    ins.push({
+                        icon: 'fa-user-slash',
+                        tone: 'caution',
+                        text: `<strong>${unassigned.length}</strong> task(s) have no assignees. Unassigned tasks risk being overlooked—ensure all tasks are allocated to responsible team members.`
+                    });
+                }
+
+                // Tasks across projects
+                const projectGroups = {};
+                rows.forEach(r => { projectGroups[r.project] = (projectGroups[r.project] || 0) + 1; });
+                const projectNames = Object.keys(projectGroups);
+                if (projectNames.length > 1) {
+                    const sorted = Object.entries(projectGroups).sort((a, b) => b[1] - a[1]);
+                    ins.push({
+                        icon: 'fa-layer-group',
+                        tone: 'neutral',
+                        text: `Tasks span <strong>${projectNames.length}</strong> projects. The most task-heavy project is <strong>${sorted[0][0]}</strong> with <strong>${sorted[0][1]}</strong> task(s), followed by <strong>${sorted[1] ? sorted[1][0] : '—'}</strong> with <strong>${sorted[1] ? sorted[1][1] : 0}</strong>.`
+                    });
+                }
+
+                if (revision > 0) {
+                    const revPct = Math.round(revision / total * 100);
+                    ins.push({
+                        icon: 'fa-rotate-left',
+                        tone: revPct >= 15 ? 'negative' : 'caution',
+                        text: `<strong>${revision}</strong> task(s) (<strong>${revPct}%</strong>) require revision. ${revPct >= 15 ? 'This is a high revision rate—review submission quality standards and provide clearer task specifications.' : 'A small number of revisions is normal; continue monitoring for trends.'}`
+                    });
+                }
+
+                return ins;
+            }
+
+            // ── Proposals Insights ──
+            function interpretProposals(report) {
+                const ins = [];
+                const rows = report.rows || [];
+                if (rows.length === 0) {
+                    ins.push({ icon: 'fa-info-circle', tone: 'neutral', text: 'No proposals were submitted in the selected period.' });
+                    return ins;
+                }
+
+                const approved = report.approved || 0;
+                const pending = report.pending || 0;
+                const rejected = report.rejected || 0;
+                const total = rows.length;
+                const approvalRate = total > 0 ? Math.round(approved / total * 100) : 0;
+
+                ins.push({
+                    icon: 'fa-chart-bar',
+                    tone: approvalRate >= 50 ? 'positive' : approvalRate >= 25 ? 'caution' : 'negative',
+                    text: `<strong>${total}</strong> proposal(s) were submitted—<strong>${approved}</strong> approved (<strong>${approvalRate}%</strong>), <strong>${pending}</strong> pending review, and <strong>${rejected}</strong> rejected. ${approvalRate >= 50 ? 'The approval rate reflects strong alignment between proposals and organizational objectives.' : 'Consider reviewing the proposal preparation and feedback process to improve acceptance rates.'}`
+                });
+
+                if (pending > 0) {
+                    const pendingPct = Math.round(pending / total * 100);
+                    ins.push({
+                        icon: 'fa-hourglass-half',
+                        tone: pendingPct >= 50 ? 'caution' : 'neutral',
+                        text: `<strong>${pending}</strong> proposal(s) (<strong>${pendingPct}%</strong>) are still pending review. ${pendingPct >= 50 ? 'A high pending ratio may indicate review bottlenecks—ensure reviewers have adequate bandwidth.' : 'Pending proposals are within a normal range.'}`
+                    });
+                }
+
+                // Department distribution
+                const deptGroups = {};
+                rows.forEach(r => { deptGroups[r.department] = (deptGroups[r.department] || 0) + 1; });
+                const depts = Object.entries(deptGroups).sort((a, b) => b[1] - a[1]);
+                if (depts.length > 1) {
+                    ins.push({
+                        icon: 'fa-building',
+                        tone: 'neutral',
+                        text: `Proposals came from <strong>${depts.length}</strong> department(s). The most active is <strong>${depts[0][0]}</strong> with <strong>${depts[0][1]}</strong> submission(s), indicating strong initiative from that area.`
+                    });
+                }
+
+                if (rejected > 0 && total > 0) {
+                    const rejRate = Math.round(rejected / total * 100);
+                    if (rejRate >= 40) {
+                        ins.push({
+                            icon: 'fa-circle-xmark',
+                            tone: 'negative',
+                            text: `The rejection rate is <strong>${rejRate}%</strong>, which is high. Investigate whether submission guidelines are clear, and consider offering proposal workshops or templates to improve quality.`
+                        });
+                    }
+                }
+
+                return ins;
+            }
+
+            // ── Employees Insights ──
+            function interpretEmployees(report) {
+                const ins = [];
+                const rows = report.rows || [];
+                if (rows.length === 0) {
+                    ins.push({ icon: 'fa-info-circle', tone: 'neutral', text: 'No employees were hired in the selected period.' });
+                    return ins;
+                }
+
+                const total = rows.length;
+                const avgProjects = (rows.reduce((s, r) => s + (r.projectCount || 0), 0) / total).toFixed(1);
+                const avgTasks = (rows.reduce((s, r) => s + (r.taskCount || 0), 0) / total).toFixed(1);
+
+                ins.push({
+                    icon: 'fa-user-plus',
+                    tone: 'positive',
+                    text: `<strong>${total}</strong> employee(s) were hired during this period. On average, each new hire is assigned to <strong>${avgProjects}</strong> project(s) and <strong>${avgTasks}</strong> task(s), indicating ${parseFloat(avgProjects) > 0 ? 'active onboarding and integration into the workforce' : 'new hires are still being onboarded—ensure timely project and task assignment'}.`
+                });
+
+                // Department distribution
+                const deptDistrib = report.deptDistribution || [];
+                if (deptDistrib.length > 1) {
+                    const topDept = deptDistrib[0];
+                    ins.push({
+                        icon: 'fa-building',
+                        tone: 'neutral',
+                        text: `New hires are distributed across <strong>${deptDistrib.length}</strong> department(s). <strong>${topDept.department}</strong> received the most new hires (<strong>${topDept.count}</strong>), suggesting active expansion or higher staffing needs in that area.`
+                    });
+                }
+
+                // Employees with no projects
+                const idle = rows.filter(r => (r.projectCount || 0) === 0);
+                if (idle.length > 0) {
+                    ins.push({
+                        icon: 'fa-user-clock',
+                        tone: 'caution',
+                        text: `<strong>${idle.length}</strong> new hire(s) have not been assigned to any project yet: <strong>${idle.slice(0, 5).map(r => r.name).join(', ')}${idle.length > 5 ? ', ...' : ''}</strong>. Quick project assignment can accelerate integration and productivity.`
+                    });
+                }
+
+                // Employees with high task count
+                const highTask = rows.filter(r => (r.taskCount || 0) >= 10);
+                if (highTask.length > 0) {
+                    ins.push({
+                        icon: 'fa-fire',
+                        tone: 'caution',
+                        text: `<strong>${highTask.length}</strong> new hire(s) already have 10 or more tasks assigned. While this shows rapid integration, monitor for potential overloading during the onboarding period.`
+                    });
+                }
+
+                return ins;
+            }
+
             // ── Search filter ──
             tableSearch.addEventListener('input', function () {
                 if (!currentReport || !currentReport.rows) return;
@@ -392,18 +756,35 @@
 
                 // Temporarily adjust styling for PDF
                 element.style.display = 'block';
-                const opt = {
-                    margin: [0.4, 0.4, 0.6, 0.4],
-                    filename: `${title.replace(/\s+/g, '_')}_${dateStr}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-                };
+
+                // ── Pre-process: prepare content for clean page breaks ──
+                element.classList.add('pdf-exporting');
+
+                // Hide search bar for PDF
+                const searchWrap = element.querySelector('.table-search-wrap');
+                if (searchWrap) searchWrap.style.display = 'none';
+
+                // For long tables, chunk rows with break-after hints every ~18 rows
+                const tableBodyEl = document.getElementById('reportTableBody');
+                const allRows = tableBodyEl ? Array.from(tableBodyEl.querySelectorAll('tr')) : [];
+                const ROWS_PER_PAGE = 18;
+                const insertedBreaks = [];
+
+                if (allRows.length > ROWS_PER_PAGE) {
+                    for (let i = ROWS_PER_PAGE; i < allRows.length; i += ROWS_PER_PAGE) {
+                        const breakRow = document.createElement('tr');
+                        breakRow.className = 'pdf-page-break-row';
+                        const colCount = allRows[0] ? allRows[0].children.length : 1;
+                        breakRow.innerHTML = `<td colspan="${colCount}" style="padding:0;border:none;height:0;line-height:0;font-size:0;"></td>`;
+                        allRows[i].parentNode.insertBefore(breakRow, allRows[i]);
+                        insertedBreaks.push(breakRow);
+                    }
+                }
 
                 // Add PDF header watermark temporarily
                 const watermark = document.createElement('div');
                 watermark.id = 'pdfWatermark';
+                watermark.className = 'pdf-no-break';
                 watermark.style.cssText = 'text-align:center;padding:0.5rem 0 1rem;border-bottom:2px solid #006994;margin-bottom:1rem;';
                 watermark.innerHTML = `
                     <div style="font-size:1.3rem;font-weight:800;color:#006994;">${title}</div>
@@ -411,8 +792,26 @@
                 `;
                 element.prepend(watermark);
 
+                const opt = {
+                    margin: [0.4, 0.4, 0.6, 0.4],
+                    filename: `${title.replace(/\s+/g, '_')}_${dateStr}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
+                    pagebreak: {
+                        mode: ['css'],
+                        before: '.pdf-page-break-before',
+                        after: '.pdf-page-break-row',
+                        avoid: '.pdf-no-break'
+                    }
+                };
+
                 html2pdf().set(opt).from(element).save().then(() => {
+                    // ── Cleanup ──
                     watermark.remove();
+                    insertedBreaks.forEach(br => br.remove());
+                    element.classList.remove('pdf-exporting');
+                    if (searchWrap) searchWrap.style.display = '';
                 });
             });
         })();

@@ -518,6 +518,111 @@
 .badge-status.revision  { background: #dbeafe; color: #1e40af; }
 .badge-status.neutral   { background: #f1f5f9; color: #475569; }
 
+/* ── Report Interpretation / Insights ── */
+.report-interpretation {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,105,148,.05);
+    border: 1px solid rgba(0,105,148,.08);
+    margin-top: 1.75rem;
+    overflow: hidden;
+}
+
+.interpretation-header {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    background: linear-gradient(135deg, rgba(0,105,148,.025), rgba(14,165,233,.02));
+}
+
+.interpretation-header i {
+    font-size: 1.15rem;
+    color: #d97706;
+}
+
+.interpretation-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.interpretation-body {
+    padding: 1.5rem;
+}
+
+.insight-block {
+    display: flex;
+    align-items: flex-start;
+    gap: .85rem;
+    padding: 1rem 1.15rem;
+    border-radius: 12px;
+    margin-bottom: .85rem;
+    line-height: 1.65;
+    font-size: .87rem;
+    color: #334155;
+}
+
+.insight-block:last-child {
+    margin-bottom: 0;
+}
+
+.insight-block.positive {
+    background: rgba(16,185,129,.04);
+    border-left: 3px solid #10b981;
+}
+
+.insight-block.caution {
+    background: rgba(245,158,11,.04);
+    border-left: 3px solid #f59e0b;
+}
+
+.insight-block.negative {
+    background: rgba(239,68,68,.04);
+    border-left: 3px solid #ef4444;
+}
+
+.insight-block.neutral {
+    background: rgba(0,105,148,.03);
+    border-left: 3px solid #006994;
+}
+
+.insight-block .insight-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    margin-top: 1px;
+}
+
+.insight-block.positive .insight-icon { background: rgba(16,185,129,.12); color: #059669; }
+.insight-block.caution .insight-icon  { background: rgba(245,158,11,.12); color: #d97706; }
+.insight-block.negative .insight-icon { background: rgba(239,68,68,.12); color: #dc2626; }
+.insight-block.neutral .insight-icon  { background: rgba(0,105,148,.1); color: #006994; }
+
+.insight-block .insight-text {
+    flex: 1;
+}
+
+.insight-block .insight-text strong {
+    color: #1e293b;
+}
+
+.interpretation-footer {
+    padding: .85rem 1.5rem;
+    border-top: 1px solid #f1f5f9;
+    font-size: .76rem;
+    color: #94a3b8;
+    font-style: italic;
+    text-align: right;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1200px) {
     .config-row {
@@ -580,4 +685,104 @@
         padding: .35rem .5rem;
         font-size: .75rem;
     }
+    .report-table tr {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .report-title-bar {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .summary-section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .summary-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .report-interpretation {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .insight-block {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .interpretation-header {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+    .report-table-panel .panel-header {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+    .table-footer {
+        page-break-before: avoid;
+        break-before: avoid;
+    }
+}
+
+/* ── PDF export mode (applied via JS class) ── */
+.pdf-exporting .report-table-wrap {
+    overflow: visible !important;
+}
+
+.pdf-exporting .report-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-exporting .report-title-bar {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-exporting .summary-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-exporting .summary-cards {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-exporting .report-interpretation {
+    page-break-before: always;
+}
+
+.pdf-exporting .insight-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-exporting .report-table-panel .panel-header {
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+.pdf-exporting .interpretation-header {
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+.pdf-exporting .table-footer {
+    page-break-before: avoid;
+    break-before: avoid;
+}
+
+.pdf-page-break-row {
+    page-break-after: always;
+    break-after: always;
+}
+
+.pdf-no-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-page-break-before {
+    page-break-before: always;
+    break-before: always;
 }

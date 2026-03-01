@@ -237,7 +237,13 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             }
 
             TempData["SuccessMessage"] = "Proposal updated.";
-            await _audit.LogAsync(User, actionType, "Proposal Review", $"{actionType} proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
+
+            // Ensure we never pass a null/empty action into the audit log (DB column is non-nullable)
+            var auditAction = string.IsNullOrWhiteSpace(actionType)
+                ? (string.IsNullOrWhiteSpace(note) ? "Update" : "SendFeedback")
+                : actionType;
+
+            await _audit.LogAsync(User, auditAction, "Proposal Review", $"{auditAction} proposal '{proposal.Title}' (ID: {proposal.Id})", "ProjectProposal", proposal.Id.ToString());
 
             // Notify the proposal's employee
             if (proposal.Employee != null && !string.IsNullOrEmpty(proposal.Employee.UserId))

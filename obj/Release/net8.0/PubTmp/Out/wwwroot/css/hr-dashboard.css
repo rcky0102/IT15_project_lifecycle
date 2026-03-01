@@ -1,0 +1,709 @@
+/* =============================================
+   Human Resource Dashboard – Modernized Design
+   Follows the Employee dashboard pattern with
+   a purple/indigo HR-themed color palette
+   ============================================= */
+
+/* ---------- Dashboard Container ---------- */
+.hr-body .dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: hrDashFadeIn .5s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes hrDashFadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Dashboard Header ---------- */
+.hr-body .dashboard-header {
+    background: linear-gradient(135deg, #006994 0%, #4CA3DD 100%);
+    border-radius: 16px;
+    padding: 2rem 2.25rem;
+    margin-bottom: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.hr-body .dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -8%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hr-body .dashboard-header::after {
+    content: '';
+    position: absolute;
+    bottom: -40%;
+    left: 5%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255,255,255,.04);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hr-body .header-content,
+.hr-body .header-actions {
+    position: relative;
+    z-index: 1;
+}
+
+.hr-body .header-content h1,
+.hr-body .dashboard-title {
+    font-size: 1.65rem !important;
+    font-weight: 800 !important;
+    color: #fff !important;
+    margin: 0 0 .3rem !important;
+    letter-spacing: -.02em;
+}
+
+.hr-body .dashboard-subtitle {
+    color: rgba(255,255,255,.8) !important;
+    font-size: .9rem;
+    margin: 0;
+    font-weight: 400;
+}
+
+.hr-body .header-actions {
+    display: flex;
+    gap: .65rem;
+}
+
+.hr-body .header-actions .btn {
+    padding: .625rem 1.25rem;
+    border-radius: 10px;
+    font-size: .875rem;
+    font-weight: 600;
+    border: none;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+}
+
+.hr-body .header-actions .btn-hr {
+    background: #fff;
+    color: #006994;
+    box-shadow: 0 4px 14px rgba(0,0,0,.1);
+}
+
+.hr-body .header-actions .btn-hr:hover {
+    background: #f0f7fc;
+    color: #004d6d;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.14);
+}
+
+.hr-body .header-actions .btn-outline-hr {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,.3);
+    backdrop-filter: blur(6px);
+}
+
+.hr-body .header-actions .btn-outline-hr:hover {
+    background: rgba(255,255,255,.25);
+    border-color: rgba(255,255,255,.5);
+    transform: translateY(-2px);
+}
+
+/* ===========================================
+   STAT CARDS
+   =========================================== */
+.hr-body .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.15rem;
+    margin-bottom: 1.75rem;
+}
+
+.hr-body .stat-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.35rem 1.4rem;
+    box-shadow: 0 2px 12px rgba(0,105,148,.05);
+    border: 1px solid rgba(0,105,148,.06);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all .3s cubic-bezier(.4,0,.2,1);
+    position: relative;
+    overflow: hidden;
+}
+
+.hr-body .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    border-radius: 14px 0 0 14px;
+    opacity: 0;
+    transition: opacity .3s ease;
+}
+
+.hr-body .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,105,148,.12);
+}
+
+.hr-body .stat-card:hover::after {
+    opacity: 1;
+}
+
+.hr-body .stat-card:nth-child(1)::after { background: linear-gradient(180deg, #006994, #4CA3DD); }
+.hr-body .stat-card:nth-child(2)::after { background: linear-gradient(180deg, #10b981, #34d399); }
+.hr-body .stat-card:nth-child(3)::after { background: linear-gradient(180deg, #f59e0b, #fbbf24); }
+.hr-body .stat-card:nth-child(4)::after { background: linear-gradient(180deg, #ef4444, #f87171); }
+
+.hr-body .stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #fff;
+    flex-shrink: 0;
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
+
+.hr-body .stat-card:hover .stat-icon {
+    transform: scale(1.08);
+}
+
+.hr-body .stat-icon.primary {
+    background: linear-gradient(135deg, #006994, #4CA3DD);
+}
+
+.hr-body .stat-icon.success {
+    background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.hr-body .stat-icon.warning {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.hr-body .stat-icon.danger {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+}
+
+.hr-body .stat-icon.info {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+}
+
+.hr-body .stat-number {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.15;
+    letter-spacing: -.02em;
+    margin-bottom: .15rem;
+}
+
+.hr-body .stat-label {
+    font-size: .8rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: .35rem;
+}
+
+.hr-body .stat-change {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: .2rem .55rem;
+    border-radius: 20px;
+}
+
+.hr-body .stat-change.positive {
+    color: #065f46;
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+}
+
+.hr-body .stat-change.negative {
+    color: #991b1b;
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+}
+
+.hr-body .stat-change.neutral {
+    color: #475569;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+/* ===========================================
+   CHARTS
+   =========================================== */
+.hr-body .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.hr-body .chart-container {
+    background: #fff;
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: 0 2px 12px rgba(0,105,148,.05);
+    border: 1px solid rgba(0,105,148,.06);
+    overflow: hidden;
+    transition: box-shadow .3s ease;
+}
+
+.hr-body .chart-container:hover {
+    box-shadow: 0 6px 28px rgba(0,105,148,.1);
+}
+
+.hr-body .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 0;
+}
+
+.hr-body .chart-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.hr-body .chart-actions .form-select-sm,
+.hr-body .chart-actions .btn {
+    border-radius: 8px;
+    font-size: .78rem;
+    font-weight: 600;
+    border: 1.5px solid rgba(0,105,148,.15);
+    color: #006994;
+    padding: .4rem .75rem;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+}
+
+.hr-body .chart-actions .form-select-sm:focus,
+.hr-body .chart-actions .btn:hover {
+    border-color: #006994;
+    box-shadow: 0 0 0 3px rgba(0,105,148,.08);
+}
+
+.hr-body .chart-actions .btn-outline-hr {
+    background: transparent;
+    color: #006994;
+    border: 1.5px solid rgba(0,105,148,.2);
+}
+
+.hr-body .chart-actions .btn-outline-hr:hover {
+    background: rgba(0,105,148,.06);
+    color: #004d6d;
+}
+
+.hr-body .chart-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+/* ===========================================
+   CONTENT ROW (Activity + Quick Actions)
+   =========================================== */
+.hr-body .content-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.hr-body .activity-panel,
+.hr-body .quick-actions-panel,
+.hr-body .system-status-panel {
+    background: #fff;
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: 0 2px 12px rgba(0,105,148,.05);
+    border: 1px solid rgba(0,105,148,.06);
+    overflow: hidden;
+    transition: box-shadow .3s ease;
+}
+
+.hr-body .activity-panel:hover,
+.hr-body .quick-actions-panel:hover,
+.hr-body .system-status-panel:hover {
+    box-shadow: 0 6px 28px rgba(0,105,148,.1);
+}
+
+.hr-body .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 0;
+}
+
+.hr-body .panel-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.hr-body .panel-header .btn-link {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #006994;
+    text-decoration: none;
+    padding: .35rem .75rem;
+    border-radius: 8px;
+    transition: all .2s ease;
+}
+
+.hr-body .panel-header .btn-link:hover {
+    background: rgba(0,105,148,.06);
+    color: #004d6d;
+}
+
+/* ---------- Activity List ---------- */
+.hr-body .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: .25rem 0;
+}
+
+.hr-body .activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .875rem;
+    padding: .9rem 1.5rem;
+    border-radius: 0;
+    border-bottom: 1px solid #f8fafc;
+    transition: background .2s ease;
+}
+
+.hr-body .activity-item:last-child {
+    border-bottom: none;
+}
+
+.hr-body .activity-item:hover {
+    background: rgba(0,105,148,.015);
+}
+
+.hr-body .activity-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    flex-shrink: 0;
+    transition: transform .25s ease;
+}
+
+.hr-body .activity-item:hover .activity-icon {
+    transform: scale(1.08);
+}
+
+.hr-body .activity-icon.user {
+    background: linear-gradient(135deg, rgba(0,105,148,.1), rgba(76,163,221,.15));
+    color: #006994;
+}
+
+.hr-body .activity-icon.project {
+    background: linear-gradient(135deg, rgba(16,185,129,.1), rgba(52,211,153,.15));
+    color: #059669;
+}
+
+.hr-body .activity-icon.system {
+    background: linear-gradient(135deg, rgba(245,158,11,.1), rgba(251,191,36,.15));
+    color: #d97706;
+}
+
+.hr-body .activity-icon.security {
+    background: linear-gradient(135deg, rgba(239,68,68,.1), rgba(248,113,113,.15));
+    color: #dc2626;
+}
+
+.hr-body .activity-title {
+    font-size: .875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: .12rem;
+}
+
+.hr-body .activity-description {
+    font-size: .8rem;
+    color: #64748b;
+    margin-bottom: .15rem;
+    line-height: 1.4;
+}
+
+.hr-body .activity-time {
+    font-size: .72rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* ---------- Quick Actions ---------- */
+.hr-body .quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: .75rem;
+    padding: 1.15rem 1.25rem;
+}
+
+.hr-body .quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .6rem;
+    padding: 1.25rem 1rem;
+    background: #fafbfc;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 12px;
+    color: #475569;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    text-align: center;
+}
+
+.hr-body .quick-action-btn i {
+    font-size: 1.15rem;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(0,105,148,.08), rgba(76,163,221,.1));
+    color: #006994;
+    transition: transform .25s ease;
+}
+
+.hr-body .quick-action-btn span {
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.hr-body .quick-action-btn:hover {
+    border-color: rgba(0,105,148,.15);
+    background: #f0f7fc;
+    color: #006994;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,105,148,.08);
+}
+
+.hr-body .quick-action-btn:hover i {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #006994, #4CA3DD);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0,105,148,.25);
+}
+
+/* ===========================================
+   WORKFORCE / SYSTEM STATUS
+   =========================================== */
+.hr-body .system-status-panel {
+    margin-bottom: 1.25rem;
+}
+
+.hr-body .system-status-panel .panel-header {
+    padding: 1.1rem 1.5rem;
+}
+
+.hr-body .status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.hr-body .status-indicator.online {
+    color: #059669;
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    padding: .35rem .85rem;
+    border-radius: 20px;
+    border: 1px solid #86efac;
+}
+
+.hr-body .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: hrDashPulse 2s ease-in-out infinite;
+}
+
+@keyframes hrDashPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .6; transform: scale(.85); }
+}
+
+.hr-body .status-grid {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    padding: 1.15rem 1.5rem 1.35rem;
+}
+
+.hr-body .status-item {
+    padding: .9rem 1rem;
+    background: #fafbfc;
+    border-radius: 10px;
+    border: 1px solid #f1f5f9;
+    transition: border-color .25s ease, box-shadow .25s ease;
+}
+
+.hr-body .status-item:hover {
+    border-color: rgba(0,105,148,.1);
+    box-shadow: 0 2px 8px rgba(0,105,148,.04);
+}
+
+.hr-body .status-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .5rem;
+}
+
+.hr-body .status-name {
+    font-weight: 600;
+    font-size: .84rem;
+    color: #374151;
+}
+
+.hr-body .status-value {
+    font-size: .78rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.hr-body .status-bar {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.hr-body .status-progress {
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #006994, #4CA3DD);
+    transition: width .6s cubic-bezier(.4,0,.2,1);
+    position: relative;
+}
+
+.hr-body .status-progress::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.25));
+    border-radius: inherit;
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+@media (max-width: 1200px) {
+    .hr-body .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .hr-body .charts-row {
+        grid-template-columns: 1fr;
+    }
+    .hr-body .content-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .hr-body .dashboard-header {
+        padding: 1.35rem 1.25rem;
+        border-radius: 14px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .hr-body .header-content h1,
+    .hr-body .dashboard-title {
+        font-size: 1.3rem !important;
+    }
+    .hr-body .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: .85rem;
+    }
+    .hr-body .stat-card {
+        padding: 1rem 1.1rem;
+        border-radius: 12px;
+    }
+    .hr-body .stat-number {
+        font-size: 1.4rem;
+    }
+    .hr-body .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1rem;
+    }
+    .hr-body .chart-container,
+    .hr-body .activity-panel,
+    .hr-body .quick-actions-panel,
+    .hr-body .system-status-panel {
+        border-radius: 12px;
+    }
+    .hr-body .chart-header,
+    .hr-body .panel-header {
+        padding: .9rem 1.15rem;
+    }
+    .hr-body .chart-body {
+        padding: 1rem 1.15rem;
+    }
+    .hr-body .activity-item {
+        padding: .75rem 1.15rem;
+    }
+    .hr-body .status-grid {
+        padding: .9rem 1.15rem 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .hr-body .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .hr-body .dashboard-header {
+        padding: 1.15rem 1rem;
+        border-radius: 12px;
+    }
+    .hr-body .header-actions .btn {
+        padding: .5rem 1rem;
+        font-size: .8rem;
+    }
+    .hr-body .quick-actions-grid {
+        padding: .85rem 1rem;
+        gap: .6rem;
+    }
+    .hr-body .quick-action-btn {
+        padding: 1rem .75rem;
+    }
+}
