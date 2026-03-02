@@ -74,6 +74,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                         Id = m.Id,
                         EmployeeId = m.EmployeeId,
                         EmployeeName = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A",
+                        ProfileImage = m.Employee?.ProfileImage,
                         ProjectRoleId = m.ProjectRoleId,
                         ProjectRoleName = m.ProjectRole != null ? m.ProjectRole.Name : "N/A"
                     })

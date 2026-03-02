@@ -106,7 +106,16 @@
                                     <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;">
                                         @foreach (var m in project.Members.Take(4))
                                         {
-                                            <div class="emp-avatar-chip" title="@m.EmployeeName">@GetInitials(m.EmployeeName)</div>
+                                            if (!string.IsNullOrWhiteSpace(m.ProfileImage))
+                                            {
+                                                <div class="emp-avatar-chip" title="@m.EmployeeName">
+                                                    <img src="@Url.Content(m.ProfileImage)" alt="@m.EmployeeName" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" />
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="emp-avatar-chip" title="@m.EmployeeName">@GetInitials(m.EmployeeName)</div>
+                                            }
                                         }
                                         @if (project.Members.Count > 4)
                                         {

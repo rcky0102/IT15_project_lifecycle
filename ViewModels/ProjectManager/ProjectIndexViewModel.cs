@@ -28,6 +28,7 @@ namespace project_lifecycle.ViewModels.ProjectManager
         public int Id { get; set; }
         public int EmployeeId { get; set; }
         public string EmployeeName { get; set; } = string.Empty;
+        public string? ProfileImage { get; set; }
         public int ProjectRoleId { get; set; }
         public string ProjectRoleName { get; set; } = string.Empty;
     }
