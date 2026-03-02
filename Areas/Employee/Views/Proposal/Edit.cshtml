@@ -63,9 +63,21 @@
             </div>
 
             <div class="emp-form-actions" style="justify-content:flex-end;">
-                <button type="submit" id="submitProposalBtn" class="emp-btn emp-btn-primary" style="margin-right:.5rem;"><i class="fas fa-floppy-disk"></i> Save Changes</button>
+                <button type="button" id="submitProposalBtn" class="emp-btn emp-btn-primary" style="margin-right:.5rem;"><i class="fas fa-floppy-disk"></i> Save Changes</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Confirmation modal for Save Changes -->
+<div class="emp-modal-backdrop" id="confirmSaveModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmSaveMessage">Save changes to this proposal?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmSaveCancel">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm" id="confirmSaveConfirm">Save Changes</button>
+        </div>
     </div>
 </div>
 
@@ -511,3 +523,36 @@
         loadStyleSequentially(0);
     });
 </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const saveBtn = document.getElementById('submitProposalBtn');
+        const form = document.querySelector('form.emp-form');
+        const modal = document.getElementById('confirmSaveModal');
+        const cancel = document.getElementById('confirmSaveCancel');
+        const confirm = document.getElementById('confirmSaveConfirm');
+
+        function showModal() {
+            if (!modal) return;
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+        }
+        function hideModal() {
+            if (!modal) return;
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        saveBtn?.addEventListener('click', function (e) {
+            e.preventDefault();
+            showModal();
+        });
+
+        cancel?.addEventListener('click', hideModal);
+        modal?.addEventListener('click', function (e) { if (e.target === modal) hideModal(); });
+
+        confirm?.addEventListener('click', function () {
+            hideModal();
+            if (form) form.submit();
+        });
+    });
+    </script>
