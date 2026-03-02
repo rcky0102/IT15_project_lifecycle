@@ -1,6 +1,25 @@
 ﻿@{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Areas/Employee/Layout.cshtml";
+
+    var approvedProposals = ViewData["ApprovedProposals"] ?? 0;
+    var activeProjects = ViewData["ActiveProjects"] ?? 0;
+    var completedTasks = ViewData["CompletedTasks"] ?? 0;
+    var needsRevision = ViewData["NeedsRevision"] ?? 0;
+
+    var statusChecked = ViewData["StatusChecked"] ?? 0;
+    var statusPending = ViewData["StatusPending"] ?? 0;
+    var statusRevision = ViewData["StatusRevision"] ?? 0;
+
+    var totalAssignedTasks = ViewData["TotalAssignedTasks"] ?? 0;
+    var completionPct = ViewData["CompletionPct"] ?? 0;
+    var documentsOwned = ViewData["DocumentsOwned"] ?? 0;
+    var unreadNotifications = ViewData["UnreadNotifications"] ?? 0;
+
+    var upcomingDeadlines = ViewBag.UpcomingDeadlines as System.Collections.Generic.List<object>
+                            ?? new System.Collections.Generic.List<object>();
+    var recentActivity = ViewBag.RecentActivity as System.Collections.Generic.List<object>
+                         ?? new System.Collections.Generic.List<object>();
 }
 
 <div class="dashboard-container">
@@ -11,11 +30,11 @@
             <p class="dashboard-subtitle">Your work overview and quick actions</p>
         </div>
         <div class="header-actions">
-            <button class="btn btn-ocean">
-                <i class="fas fa-plus"></i>
-                New Task
-            </button>
-            <button class="btn btn-outline-ocean">
+            <a href="@Url.Action("Index","Project", new { area = "Employee" })" class="btn btn-ocean">
+                <i class="fas fa-folder-open"></i>
+                My Projects
+            </a>
+            <button class="btn btn-outline-ocean" onclick="location.reload()">
                 <i class="fas fa-sync"></i>
                 Refresh
             </button>
@@ -26,13 +45,13 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon primary">
-                <i class="fas fa-list-check"></i>
+                <i class="fas fa-lightbulb"></i>
             </div>
             <div class="stat-content">
-                    <div class="stat-number">@ViewData["OpenTasks"]</div>
-                <div class="stat-label">Open Tasks</div>
+                <div class="stat-number">@approvedProposals</div>
+                <div class="stat-label">Approved Proposals</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> 2 new today
+                    <i class="fas fa-check-circle"></i> View all
                 </div>
             </div>
         </div>
@@ -42,36 +61,37 @@
                 <i class="fas fa-folder-open"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">@ViewData["ActiveProjects"]</div>
+                <div class="stat-number">@activeProjects</div>
                 <div class="stat-label">Active Projects</div>
                 <div class="stat-change neutral">
-                    <i class="fas fa-minus"></i> No change
+                    <i class="fas fa-project-diagram"></i> Assigned to you
                 </div>
             </div>
         </div>
 
         <div class="stat-card">
             <div class="stat-icon warning">
-                <i class="fas fa-clock"></i>
+                <i class="fas fa-check-double"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">4h</div>
-                <div class="stat-label">Today Logged</div>
+                <div class="stat-number">@completedTasks</div>
+                <div class="stat-label">Completed Tasks</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +30m
+                    <i class="fas fa-check-circle"></i> Checked off
                 </div>
             </div>
         </div>
 
         <div class="stat-card">
             <div class="stat-icon danger">
-                <i class="fas fa-triangle-exclamation"></i>
+                <i class="fas fa-pen-to-square"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">1</div>
-                <div class="stat-label">Blocked</div>
-                <div class="stat-change negative">
-                    <i class="fas fa-arrow-up"></i> Needs attention
+                <div class="stat-number">@needsRevision</div>
+                <div class="stat-label">Needs Revision</div>
+                <div class="stat-change @(Convert.ToInt32(needsRevision) > 0 ? "negative" : "neutral")">
+                    <i class="fas fa-@(Convert.ToInt32(needsRevision) > 0 ? "exclamation-circle" : "check")"></i>
+                    @(Convert.ToInt32(needsRevision) > 0 ? "Requires attention" : "All clear")
                 </div>
             </div>
         </div>
@@ -99,7 +119,7 @@
             <div class="chart-header">
                 <h3>Task Status</h3>
                 <div class="chart-actions">
-                    <button class="btn btn-sm btn-outline-ocean">View All</button>
+                    <a href="@Url.Action("Index","Project", new { area = "Employee" })" class="btn btn-sm btn-outline-ocean">View All</a>
                 </div>
             </div>
             <div class="chart-body">
@@ -108,70 +128,118 @@
         </div>
     </div>
 
-    <!-- Activity and Quick Actions -->
+    <!-- Activity and Upcoming Deadlines -->
     <div class="content-row">
         <div class="activity-panel">
             <div class="panel-header">
                 <h3>Recent Activity</h3>
-                <button class="btn btn-sm btn-link">View All</button>
             </div>
-            <div class="activity-list">
-                <div class="activity-item">
-                    <div class="activity-icon user">
-                        <i class="fas fa-check"></i>
+            <div class="activity-list" id="activityList">
+                @if (recentActivity.Count == 0)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon system">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">No recent activity</div>
+                            <div class="activity-description">Your notifications will appear here.</div>
+                        </div>
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Task completed</div>
-                        <div class="activity-description">Updated project documentation</div>
-                        <div class="activity-time">10 minutes ago</div>
-                    </div>
-                </div>
+                }
+                else
+                {
+                    @foreach (dynamic item in recentActivity)
+                    {
+                        var iconClass = "system";
+                        var iconStr = (string)item.Icon;
+                        var typeStr = ((string)item.Type).ToLower();
+                        if (typeStr == "success") { iconClass = "user"; }
+                        else if (typeStr == "warning") { iconClass = "project"; }
+                        else if (typeStr == "error") { iconClass = "system"; }
 
-                <div class="activity-item">
-                    <div class="activity-icon project">
-                        <i class="fas fa-folder-plus"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Joined project</div>
-                        <div class="activity-description">UX Improvements initiative</div>
-                        <div class="activity-time">1 hour ago</div>
-                    </div>
-                </div>
+                        var timeAgo = "";
+                        var diff = DateTime.UtcNow - (DateTime)item.CreatedAt;
+                        if (diff.TotalMinutes < 1) { timeAgo = "Just now"; }
+                        else if (diff.TotalMinutes < 60) { timeAgo = $"{(int)diff.TotalMinutes}m ago"; }
+                        else if (diff.TotalHours < 24) { timeAgo = $"{(int)diff.TotalHours}h ago"; }
+                        else if (diff.TotalDays < 7) { timeAgo = $"{(int)diff.TotalDays}d ago"; }
+                        else { timeAgo = ((DateTime)item.CreatedAt).ToString("MMM dd"); }
 
-                <div class="activity-item">
-                    <div class="activity-icon system">
-                        <i class="fas fa-comment"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">New comment</div>
-                        <div class="activity-description">Feedback on wireframes</div>
-                        <div class="activity-time">2 hours ago</div>
-                    </div>
-                </div>
+                        <div class="activity-item @(!item.IsRead ? "unread" : "")">
+                            <div class="activity-icon @iconClass">
+                                <i class="@iconStr"></i>
+                            </div>
+                            <div class="activity-content">
+                                @if (!string.IsNullOrEmpty((string)item.Link))
+                                {
+                                    <a href="@item.Link" class="activity-title">@item.Title</a>
+                                }
+                                else
+                                {
+                                    <div class="activity-title">@item.Title</div>
+                                }
+                                <div class="activity-description">@item.Message</div>
+                                <div class="activity-time">@timeAgo</div>
+                            </div>
+                        </div>
+                    }
+                }
             </div>
         </div>
 
         <div class="quick-actions-panel">
             <div class="panel-header">
+                <h3>Upcoming Deadlines</h3>
+            </div>
+            @if (upcomingDeadlines.Count == 0)
+            {
+                <div class="p-3 text-muted text-center">
+                    <i class="fas fa-calendar-check fa-2x mb-2 d-block"></i>
+                    No upcoming deadlines in the next 7 days.
+                </div>
+            }
+            else
+            {
+                <div class="deadline-list" style="padding: 0.5rem;">
+                    @foreach (dynamic task in upcomingDeadlines)
+                    {
+                        var daysLeft = ((DateTime)task.EndDate - DateTime.Now).TotalDays;
+                        var badgeClass = daysLeft <= 1 ? "bg-danger" : daysLeft <= 3 ? "bg-warning text-dark" : "bg-info";
+                        var daysText = daysLeft < 1 ? "Due today" : $"{(int)Math.Ceiling(daysLeft)}d left";
+
+                        <div class="deadline-item d-flex justify-content-between align-items-center p-2 mb-2 rounded" style="background: var(--card-bg, #f8fafc); border-left: 3px solid var(--ocean-primary, #4CA3DD);">
+                            <div>
+                                <div class="fw-semibold" style="font-size: 0.9rem;">@task.Name</div>
+                                <small class="text-muted">Due @((DateTime)task.EndDate).ToString("MMM dd, yyyy")</small>
+                            </div>
+                            <span class="badge @badgeClass">@daysText</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <hr class="my-2" />
+            <div class="panel-header">
                 <h3>Quick Actions</h3>
             </div>
             <div class="quick-actions-grid">
-                <button class="quick-action-btn">
-                    <i class="fas fa-list-check"></i>
-                    <span>Create Task</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-clock"></i>
-                    <span>Log Time</span>
-                </button>
-                <button class="quick-action-btn">
+                <a href="@Url.Action("Index","Project", new { area = "Employee" })" class="quick-action-btn">
+                    <i class="fas fa-folder-open"></i>
+                    <span>My Projects</span>
+                </a>
+                <a href="@Url.Action("Index","Document", new { area = "Employee" })" class="quick-action-btn">
                     <i class="fas fa-file-alt"></i>
-                    <span>Submit Report</span>
-                </button>
-                <button class="quick-action-btn">
+                    <span>Documents</span>
+                </a>
+                <a href="@Url.Action("Index","Proposal", new { area = "Employee" })" class="quick-action-btn">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Proposals</span>
+                </a>
+                <a href="@Url.Action("Index","Messages", new { area = "Employee" })" class="quick-action-btn">
                     <i class="fas fa-comment"></i>
-                    <span>Send Update</span>
-                </button>
+                    <span>Messages</span>
+                </a>
             </div>
         </div>
     </div>
@@ -179,40 +247,67 @@
     <!-- Workload Status -->
     <div class="system-status-panel">
         <div class="panel-header">
-            <h3>Workload</h3>
-            <div class="status-indicator online">
+            <h3>Workload Overview</h3>
+            @{
+                var pctVal = Convert.ToDouble(completionPct);
+                var statusLabel = pctVal >= 80 ? "Excellent" : pctVal >= 50 ? "Good" : pctVal >= 20 ? "In Progress" : "Getting Started";
+                var statusClass = pctVal >= 80 ? "online" : pctVal >= 50 ? "online" : "warning";
+            }
+            <div class="status-indicator @statusClass">
                 <span class="status-dot"></span>
-                Balanced
+                @statusLabel
             </div>
         </div>
         <div class="status-grid">
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Tasks</div>
-                    <div class="status-value">75% Completed</div>
+                    <div class="status-name">Task Completion</div>
+                    <div class="status-value">@completedTasks / @totalAssignedTasks completed (@completionPct%)</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 75%"></div>
+                    <div class="status-progress" style="width: @(completionPct)%"></div>
                 </div>
             </div>
 
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Meetings</div>
-                    <div class="status-value">2 Scheduled</div>
+                    <div class="status-name">Task Status</div>
+                    <div class="status-value">@statusPending pending, @statusRevision revision</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 40%"></div>
+                    @{
+                        var openTasksCount = Convert.ToInt32(statusPending) + Convert.ToInt32(statusRevision);
+                        var openPct = Convert.ToInt32(totalAssignedTasks) > 0
+                            ? Math.Round((double)openTasksCount / Convert.ToInt32(totalAssignedTasks) * 100, 0)
+                            : 0;
+                    }
+                    <div class="status-progress" style="width: @(openPct)%; background: var(--ocean-warning, #f0ad4e);"></div>
                 </div>
             </div>
 
             <div class="status-item">
                 <div class="status-info">
                     <div class="status-name">Documents</div>
-                    <div class="status-value">3 Pending Review</div>
+                    <div class="status-value">@documentsOwned accessible</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 60%"></div>
+                    @{
+                        var docPct = Math.Min(Convert.ToInt32(documentsOwned) * 10, 100);
+                    }
+                    <div class="status-progress" style="width: @(docPct)%"></div>
+                </div>
+            </div>
+
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">Notifications</div>
+                    <div class="status-value">@unreadNotifications unread</div>
+                </div>
+                <div class="status-bar">
+                    @{
+                        var notifyPct = Math.Min(Convert.ToInt32(unreadNotifications) * 5, 100);
+                    }
+                    <div class="status-progress" style="width: @(notifyPct)%; background: var(--ocean-info, #5bc0de);"></div>
                 </div>
             </div>
         </div>
@@ -222,11 +317,23 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Productivity Chart (Tasks completed over time)
+        // ── Productivity Chart (Tasks completed over time) ──
         const prodCtx = document.getElementById('productivityChart').getContext('2d');
         let productivityChart = new Chart(prodCtx, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: 'Tasks Completed', data: [], borderColor: '#4CA3DD', backgroundColor: 'rgba(76,163,221,0.08)', tension: 0.35, fill: true, pointRadius: 4, pointHoverRadius: 6 }] },
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Tasks Completed',
+                    data: [],
+                    borderColor: '#4CA3DD',
+                    backgroundColor: 'rgba(76,163,221,0.08)',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -247,54 +354,57 @@
             }
         });
 
-        // Fetch completed tasks trend (daily for last 7 days)
         const prodRangeSelect = document.getElementById('prodRangeSelect');
 
         function fetchCompletedTasks(days = 7) {
             const url = '@Url.Action("CompletedTasksTrend","Dashboard", new { area = "Employee" })';
-            // update header immediately
             const titleEl = document.getElementById('prodChartTitle');
             if (titleEl) titleEl.textContent = `Tasks Completed — Last ${days} days`;
             fetch(url + '?days=' + encodeURIComponent(days))
                 .then(r => r.json())
                 .then(payload => {
-                    const labels = Array.from(payload.labels);
-                    const data = Array.from(payload.data);
-                    productivityChart.data.labels = labels.map(l => {
+                    productivityChart.data.labels = Array.from(payload.labels).map(l => {
                         const d = new Date(l);
                         return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
                     });
-                    productivityChart.data.datasets[0].data = data;
+                    productivityChart.data.datasets[0].data = Array.from(payload.data);
                     productivityChart.update();
                 })
-                .catch(err => { console.error('Failed to load completed tasks trend', err); });
+                .catch(err => console.error('Failed to load completed tasks trend', err));
         }
 
-        // initial load
         fetchCompletedTasks(parseInt(prodRangeSelect?.value || 7, 10));
-
-        // update on change
         prodRangeSelect?.addEventListener('change', function () {
-            const days = parseInt(this.value || '7', 10);
-            fetchCompletedTasks(days);
+            fetchCompletedTasks(parseInt(this.value || '7', 10));
         });
 
-        // Task Status Chart
+        // ── Task Status Doughnut Chart (real data from controller) ──
         const statusCtx = document.getElementById('taskStatusChart').getContext('2d');
-        new Chart(statusCtx, {
+        const taskStatusChart = new Chart(statusCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Completed', 'In Progress', 'Pending', 'Blocked'],
+                labels: ['Completed', 'Pending', 'Require Revision'],
                 datasets: [{
-                    data: [60, 25, 10, 5],
-                    backgroundColor: ['#006994', '#4CA3DD', '#94D3FF', '#E8F4F8'],
+                    data: [@statusChecked, @statusPending, @statusRevision],
+                    backgroundColor: ['#006994', '#4CA3DD', '#E8A838'],
                     borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? Math.round(ctx.raw / total * 100) : 0;
+                                return `${ctx.label}: ${ctx.raw} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
             }
         });
     </script>
