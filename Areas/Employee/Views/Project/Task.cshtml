@@ -114,6 +114,18 @@
     </div>
 </div>
 
+<!-- Confirm submit modal -->
+<div class="emp-modal-backdrop" id="confirmSubmitModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmSubmitTitle"><i class="fas fa-exclamation-triangle"></i> Confirm Submit</h4>
+        <p id="confirmSubmitMessage">Submit your input for this task?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmSubmitCancel">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm" id="confirmSubmitConfirm">Submit</button>
+        </div>
+    </div>
+</div>
+
 <!-- ===== Versions Modal ===== -->
 <div id="versionsModal" class="emp-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="versionsModalTitle">
     <div class="emp-modal">
@@ -665,6 +677,42 @@
         observeDynamicButtons();
         wireDraftHandlers();
         loadStyleSequentially(0);
+    });
+
+    // Confirmation wiring for Submit Input button
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form.emp-form');
+        const submitBtn = document.getElementById('submitProposalBtn');
+        const modal = document.getElementById('confirmSubmitModal');
+        const cancel = document.getElementById('confirmSubmitCancel');
+        const confirm = document.getElementById('confirmSubmitConfirm');
+
+        if (!form || !submitBtn || !modal) return;
+
+        submitBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            // show modal
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+        });
+
+        function hide() {
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        cancel?.addEventListener('click', function () { hide(); });
+        modal?.addEventListener('click', function (e) { if (e.target === modal) hide(); });
+
+        confirm?.addEventListener('click', function () {
+            hide();
+            // programmatic submit — prefer requestSubmit if available to trigger submitter behavior
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+        });
     });
 
     function empModalOpen(id) {
