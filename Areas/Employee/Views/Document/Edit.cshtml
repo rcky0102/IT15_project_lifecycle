@@ -232,7 +232,6 @@
 
         let editorInstance = null;
         let pendingUploads = 0;
-        let saveTimeout = null;
         let isSaving = false;
 
         // ── CKEditor CDN loading ────────────────────────────────
@@ -307,7 +306,6 @@
         }
 
         async function saveDocument() {
-            clearTimeout(saveTimeout);
             if (!editorInstance || isSaving || pendingUploads > 0) return;
             isSaving = true;
             updateSaveStatus('Saving…', 'fas fa-spinner fa-spin');
@@ -397,21 +395,12 @@
                     }
 
                     if (canEdit) {
-                        editor.model.document.on('change:data', scheduleAutoSave);
-                        wireFileInsertButton();
+                            wireFileInsertButton();
 
-                        // Manual save button
-                        const saveBtn = document.getElementById('saveDocBtn');
-                        if (saveBtn) saveBtn.addEventListener('click', saveDocument);
-
-                        // Ctrl+S shortcut
-                        document.addEventListener('keydown', function (e) {
-                            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                                e.preventDefault();
-                                saveDocument();
-                            }
-                        });
-                    }
+                            // Manual save button
+                            const saveBtn = document.getElementById('saveDocBtn');
+                            if (saveBtn) saveBtn.addEventListener('click', saveDocument);
+                        }
                 })
                 .catch(err => console.error('CKEditor init error:', err));
         }
