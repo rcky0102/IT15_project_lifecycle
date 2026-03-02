@@ -167,14 +167,17 @@ namespace project_lifecycle.EmployeeArea.Controllers
             // tasks assigned to this employee (via member)
             var taskItems = await _context.TaskMembers
                 .Where(tm => tm.MemberId == member.Id)
-                .Include(tm => tm.ProjectTask)
+                .Include(tm => tm.ProjectTask).ThenInclude(pt => pt.ProjectMilestone).ThenInclude(pm => pm.Milestone)
                 .Select(tm => new
                 {
                     tm.ProjectTask.Id,
                     tm.ProjectTask.Name,
                     tm.ProjectTask.Status,
                     tm.ProjectTask.StartDate,
-                    tm.ProjectTask.EndDate
+                    tm.ProjectTask.EndDate,
+                    MilestoneName = tm.ProjectTask.ProjectMilestone != null && tm.ProjectTask.ProjectMilestone.Milestone != null
+                        ? tm.ProjectTask.ProjectMilestone.Milestone.Name
+                        : string.Empty
                 })
                 .ToListAsync();
 
@@ -187,7 +190,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     Name = t.Name,
                     Status = t.Status,
                     StartDate = t.StartDate,
-                    EndDate = t.EndDate
+                    EndDate = t.EndDate,
+                    MilestoneName = t.MilestoneName ?? string.Empty
                 }).ToList()
             };
 

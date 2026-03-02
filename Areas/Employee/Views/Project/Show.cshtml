@@ -74,6 +74,13 @@
                             <span class="emp-task-status-dot @EmpTaskDotClass(t.Status)"></span>
                             <div class="emp-task-info">
                                 <span class="emp-task-name">@t.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(t.MilestoneName))
+                                {
+                                    <div class="emp-task-milestone" style="font-size:.78rem;color:#64748b;margin-top:.18rem;">
+                                        <i class="fas fa-flag" style="font-size:.72rem;margin-right:.35rem;"></i>
+                                        @t.MilestoneName
+                                    </div>
+                                }
                                 <span class="emp-task-dates">
                                     <i class="far fa-calendar"></i>
                                     @t.StartDate.ToString("MMM dd") &ndash; @t.EndDate.ToString("MMM dd, yyyy")
