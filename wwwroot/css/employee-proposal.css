@@ -118,16 +118,17 @@
 }
 
 .emp-btn-primary {
-    background: #fff;
-    color: var(--emp-ocean);
-    box-shadow: 0 4px 14px rgba(0,0,0,.1);
+    background: linear-gradient(90deg, var(--emp-ocean) 0%, var(--emp-ocean-light) 100%);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(4,50,72,0.18);
+    border: 1px solid rgba(0,0,0,0.06);
 }
 
 .emp-btn-primary:hover {
-    background: #f0f7fc;
-    color: var(--emp-ocean-dark);
+    background: linear-gradient(90deg, var(--emp-ocean-dark) 0%, var(--emp-ocean) 100%);
+    color: #fff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,.14);
+    box-shadow: 0 10px 30px rgba(4,50,72,0.20);
 }
 
 /* ===========================================
