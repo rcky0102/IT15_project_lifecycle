@@ -39,6 +39,12 @@
     overflow-x: hidden;
 }
 
+/* Ensure pagination in employee area matches department head (info left, controls right) */
+.employee-body .emp-pagination {
+    justify-content: space-between;
+    align-items: center;
+}
+
 .employee-layout {
     display: flex;
     min-height: 100vh;
