@@ -128,6 +128,42 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
             if (project == null) return NotFound();
 
+            // load members and milestones for the show view
+            var members = await _context.Members
+                .Where(m => m.ProjectId == id)
+                .Include(m => m.Employee)
+                .Include(m => m.ProjectRole)
+                .ToListAsync();
+
+            project.Members = members
+                .Select(m => new project_lifecycle.ViewModels.ProjectManager.MemberViewModel
+                {
+                    Id = m.Id,
+                    EmployeeId = m.EmployeeId,
+                    EmployeeName = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A",
+                    ProfileImage = m.Employee?.ProfileImage,
+                    ProjectRoleId = m.ProjectRoleId,
+                    ProjectRoleName = m.ProjectRole != null ? m.ProjectRole.Name : "N/A"
+                })
+                .ToList();
+
+            var milestones = await _context.ProjectMilestones
+                .Where(pm => pm.ProjectId == id)
+                .Include(pm => pm.Milestone)
+                .OrderBy(pm => pm.SequenceOrder)
+                .ToListAsync();
+
+            project.Milestones = milestones
+                .Select(ms => new project_lifecycle.ViewModels.ProjectManager.ProjectMilestoneViewModel
+                {
+                    Id = ms.Id,
+                    MilestoneId = ms.MilestoneId,
+                    MilestoneName = ms.Milestone != null ? ms.Milestone.Name : "N/A",
+                    SequenceOrder = ms.SequenceOrder,
+                    Status = ms.Status
+                })
+                .ToList();
+
             // tasks assigned to this employee (via member)
             var taskItems = await _context.TaskMembers
                 .Where(tm => tm.MemberId == member.Id)

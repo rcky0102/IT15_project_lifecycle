@@ -2,7 +2,10 @@
 @{
     ViewData["Title"] = "Project";
     var totalTasks    = Model.Tasks.Count;
-    var doneTasks     = Model.Tasks.Count(t => t.Status == "Completed");
+    var doneTasks     = Model.Tasks.Count(t => {
+        var s = (t.Status ?? "").ToLowerInvariant();
+        return s == "completed" || s == "checked";
+    });
     var pct           = totalTasks > 0 ? (int)Math.Round(doneTasks * 100.0 / totalTasks) : 0;
 }
 
@@ -115,7 +118,16 @@
                     @foreach (var m in Model.Project.Members)
                     {
                         <div class="emp-member-row">
-                            <div class="emp-member-avatar">@m.EmployeeName.Substring(0,1).ToUpper()</div>
+                            <div class="emp-member-avatar">
+                                @if (!string.IsNullOrWhiteSpace(m.ProfileImage))
+                                {
+                                    <img src="@Url.Content(m.ProfileImage)" alt="@m.EmployeeName" style="width:100%;height:100%;border-radius:8px;object-fit:cover;display:block;" />
+                                }
+                                else
+                                {
+                                    @m.EmployeeName.Substring(0,1).ToUpper()
+                                }
+                            </div>
                             <div class="emp-member-info">
                                 <span class="emp-member-name">@m.EmployeeName</span>
                                 <span class="emp-member-role">@m.ProjectRoleName</span>

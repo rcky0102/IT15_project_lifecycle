@@ -3,7 +3,10 @@
     ViewData["Title"] = "My Projects";
     var totalMembers    = Model.Projects.Sum(p => p.Members.Count);
     var totalMilestones = Model.Projects.Sum(p => p.Milestones?.Count ?? 0);
-    var completedMs     = Model.Projects.Sum(p => p.Milestones?.Count(m => (m.Status ?? "").Equals("Completed", StringComparison.OrdinalIgnoreCase)) ?? 0);
+    var completedMs     = Model.Projects.Sum(p => p.Milestones?.Count(m => {
+        var s = (m.Status ?? "").ToLowerInvariant();
+        return s == "completed" || s == "checked";
+    }) ?? 0);
 }
 
 <!-- ===== Page Title Hero ===== -->
@@ -80,7 +83,10 @@
                         {
                             var duration  = (project.EndDate - project.StartDate).Days;
                             var totalPMs  = project.Milestones?.Count ?? 0;
-                            var donePMs   = project.Milestones?.Count(m => (m.Status ?? "").Equals("Completed", StringComparison.OrdinalIgnoreCase)) ?? 0;
+                            var donePMs   = project.Milestones?.Count(m => {
+                                var s = (m.Status ?? "").ToLowerInvariant();
+                                return s == "completed" || s == "checked";
+                            }) ?? 0;
                             var percent   = totalPMs > 0 ? (int)Math.Round((double)donePMs * 100 / totalPMs) : 0;
                             <tr class="emp-row" data-name="@project.Name.ToLower()">
                                 <td>
