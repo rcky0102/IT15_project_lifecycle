@@ -120,11 +120,18 @@
                                         @(proposal.Employee != null ? $"{proposal.Employee.FirstName} {proposal.Employee.LastName}" : "—")
                                     </span>
                                 </td>
-                                <td class="project-date">@proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")</td>
+                                <td class="project-date">
+                                    <span class="project-badge-white" title="Submitted">
+                                        <i class="fas fa-calendar-day"></i>
+                                        @proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")
+                                    </span>
+                                </td>
                                 <td>
-                                    <span class="emp-status-inline @GetStatusClass(proposal.Status)">
-                                        <span class="emp-status-dot"></span>
-                                        <span class="emp-status-text">@proposal.Status</span>
+                                    <span class="project-badge-white" title="Status">
+                                        <span class="emp-status-inline @GetStatusClass(proposal.Status)">
+                                            <span class="emp-status-dot"></span>
+                                            <span class="emp-status-text">@proposal.Status</span>
+                                        </span>
                                     </span>
                                 </td>
                                 <td>

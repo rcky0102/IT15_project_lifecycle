@@ -342,6 +342,20 @@
     font-size: 0.7rem;
 }
 
+/* White badge for inline metadata (calendar/date) used in Submitted column */
+.project-badge-white {
+    background: #f8fafc; /* dark white / off-white */
+    color: #334155;
+    border: 1px solid #e6eef6;
+    padding: .2rem .55rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .82rem;
+    font-weight: 600;
+}
+
 /* Member count */
 .project-member-count {
     display: inline-flex;

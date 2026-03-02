@@ -72,19 +72,19 @@
                         </a>
                     </li>
                     <li class="emp-nav-item">
-                        <a href="@Url.Action("Index", "Project", new { area = "Employee" })"
-                               class="emp-nav-link @(currentController == "Project" ? "active" : "")"
-                               data-tooltip="Projects">
-                            <i class="fas fa-diagram-project"></i>
-                            <span class="emp-nav-text">Projects</span>
-                        </a>
-                    </li>
-                    <li class="emp-nav-item">
                         <a href="@Url.Action("Index", "Proposal", new { area = "Employee" })"
                                class="emp-nav-link @(currentController == "Proposal" ? "active" : "")"
                                data-tooltip="Proposals">
                             <i class="fas fa-file-lines"></i>
                             <span class="emp-nav-text">Proposals</span>
+                        </a>
+                    </li>
+                    <li class="emp-nav-item">
+                        <a href="@Url.Action("Index", "Project", new { area = "Employee" })"
+                               class="emp-nav-link @(currentController == "Project" ? "active" : "")"
+                               data-tooltip="Projects">
+                            <i class="fas fa-diagram-project"></i>
+                            <span class="emp-nav-text">Projects</span>
                         </a>
                     </li>
                     <li class="emp-nav-item">

@@ -745,6 +745,20 @@
     color: #64748b;
 }
 
+/* White badge for small inline metadata (calendar/date) */
+.emp-badge-white {
+    background: #f8fafc; /* dark white / off-white */
+    color: #334155;
+    border: 1px solid #e6eef6;
+    padding: .2rem .55rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .82rem;
+    font-weight: 600;
+}
+
 .emp-pagination-controls {
     display: flex;
     align-items: center;
