@@ -528,7 +528,7 @@
     align-items: center;
     gap: .5rem;
     font-weight: 400;
-    font-size: .88rem;
+    font-size: .82rem;
 }
 
 /* When using the inline variant, neutralize the badge background from status classes */

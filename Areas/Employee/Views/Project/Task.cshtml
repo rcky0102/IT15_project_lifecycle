@@ -69,17 +69,14 @@
     <div class="emp-form-section">
         <div style="margin-bottom:1rem;">
             @{
-                var statusClass = taskStatus switch
-                {
-                    "Checked"          => "emp-status-approved",
-                    "Require Revision" => "emp-status-revision",
-                    _                  => "emp-status-pending"
-                };
-            }
-            <span class="emp-status-badge @statusClass">
-                <span class="emp-status-dot"></span>
-                @taskStatus
-            </span>
+                    // use the same inline status badge pattern as the Project Show page
+                }
+                <span class="emp-badge-white" title="Status">
+                    <span class="emp-status-inline @EmpStatusBadgeClass(taskStatus)">
+                        <span class="emp-status-dot"></span>
+                        <span class="emp-status-text">@taskStatus</span>
+                    </span>
+                </span>
         </div>
 
         @{
@@ -153,6 +150,25 @@
         </div>
     </div>
 </div>
+
+        @functions {
+            private string EmpStatusBadgeClass(string s)
+            {
+                if (string.IsNullOrWhiteSpace(s)) return "emp-status-default";
+                var key = s.Trim().ToLowerInvariant();
+                return key switch
+                {
+                    "completed" => "emp-status-approved",
+                    "checked" => "emp-status-approved",
+                    "finished" => "emp-status-approved",
+                    "in progress" => "emp-status-revision",
+                    "requires revision" => "emp-status-revision",
+                    "require revision" => "emp-status-revision",
+                    "pending" => "emp-status-pending",
+                    _ => "emp-status-default"
+                };
+            }
+        }
 
 <!-- ===== Notes Modal ===== -->
 <div id="notesModal" class="emp-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
