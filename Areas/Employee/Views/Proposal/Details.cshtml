@@ -60,9 +60,11 @@ else
     <!-- ===== Detail card ===== -->
     <div class="emp-detail-card">
         <div class="emp-detail-card-header">
-            <span class="emp-status-badge @GetStatusClass(Model.Status)">
-                <span class="emp-status-dot"></span>
-                @Model.Status
+            <span class="emp-badge-white" title="Status">
+                <span class="emp-status-inline @GetStatusClass(Model.Status)">
+                    <span class="emp-status-dot"></span>
+                    <span class="emp-status-text">@Model.Status</span>
+                </span>
             </span>
             <a asp-area="Employee" asp-controller="Proposal" asp-action="Edit" asp-route-id="@Model.Id"
                class="emp-btn emp-btn-primary" style="font-size:.85rem; padding:.45rem .9rem;">
