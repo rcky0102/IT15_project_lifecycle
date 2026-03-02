@@ -78,9 +78,11 @@
                             </div>
                         </div>
                         <div class="emp-task-row-right">
-                            <span class="emp-status-badge @EmpTaskBadgeClass(t.Status)">
-                                <span class="emp-status-dot"></span>
-                                @t.Status
+                            <span class="emp-badge-white" title="Status">
+                                <span class="emp-status-inline @EmpTaskBadgeClass(t.Status)">
+                                    <span class="emp-status-dot"></span>
+                                    <span class="emp-status-text">@t.Status</span>
+                                </span>
                             </span>
                             <a asp-area="Employee" asp-controller="Project" asp-action="Task" asp-route-id="@t.Id"
                                class="emp-action-btn emp-action-view" title="View Task">
@@ -140,10 +142,12 @@
                             <div class="emp-milestone-dot @EmpMilestoneDotClass(ms.Status)"></div>
                             <div class="emp-milestone-body">
                                 <div class="emp-milestone-title">@ms.MilestoneName</div>
-                                <span class="emp-status-badge @EmpMilestoneBadgeClass(ms.Status)">
-                                    <span class="emp-status-dot"></span>
-                                    @ms.Status
-                                </span>
+                                    <span class="emp-badge-white" title="Status">
+                                        <span class="emp-status-inline @EmpMilestoneBadgeClass(ms.Status)">
+                                            <span class="emp-status-dot"></span>
+                                            <span class="emp-status-text">@ms.Status</span>
+                                        </span>
+                                    </span>
                             </div>
                         </div>
                     }
@@ -155,25 +159,64 @@
 </div>
 
 @functions {
-    private string EmpTaskBadgeClass(string s) => s switch {
-        "Completed"   => "emp-status-approved",
-        "In Progress" => "emp-status-revision",
-        "Pending"     => "emp-status-pending",
-        _             => "emp-status-default"
-    };
-    private string EmpTaskDotClass(string s) => s switch {
-        "Completed"   => "emp-dot-green",
-        "In Progress" => "emp-dot-orange",
-        _             => "emp-dot-gray"
-    };
-    private string EmpMilestoneBadgeClass(string s) => s switch {
-        "Completed"   => "emp-status-approved",
-        "In Progress" => "emp-status-revision",
-        _             => "emp-status-default"
-    };
-    private string EmpMilestoneDotClass(string s) => s switch {
-        "Completed"   => "emp-ms-dot-done",
-        "In Progress" => "emp-ms-dot-active",
-        _             => "emp-ms-dot-idle"
-    };
+    private string EmpTaskBadgeClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-status-default";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed" => "emp-status-approved",
+            "checked" => "emp-status-approved",
+            "in progress" => "emp-status-revision",
+            "requires revision" => "emp-status-revision",
+            "require revision" => "emp-status-revision",
+            "pending" => "emp-status-pending",
+            _ => "emp-status-default"
+        };
+    }
+
+    private string EmpTaskDotClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-dot-gray";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed" => "emp-dot-green",
+            "checked" => "emp-dot-green",
+            "in progress" => "emp-dot-orange",
+            "requires revision" => "emp-dot-orange",
+            "require revision" => "emp-dot-orange",
+            _ => "emp-dot-gray"
+        };
+    }
+
+    private string EmpMilestoneBadgeClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-status-default";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed" => "emp-status-approved",
+            "checked" => "emp-status-approved",
+            "in progress" => "emp-status-revision",
+            "requires revision" => "emp-status-revision",
+            "require revision" => "emp-status-revision",
+            _ => "emp-status-default"
+        };
+    }
+
+    private string EmpMilestoneDotClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-ms-dot-idle";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed" => "emp-ms-dot-done",
+            "checked" => "emp-ms-dot-done",
+            "in progress" => "emp-ms-dot-active",
+            "requires revision" => "emp-ms-dot-active",
+            "require revision" => "emp-ms-dot-active",
+            _ => "emp-ms-dot-idle"
+        };
+    }
 }
