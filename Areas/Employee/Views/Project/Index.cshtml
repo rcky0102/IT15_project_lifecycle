@@ -5,7 +5,7 @@
     var totalMilestones = Model.Projects.Sum(p => p.Milestones?.Count ?? 0);
     var completedMs     = Model.Projects.Sum(p => p.Milestones?.Count(m => {
         var s = (m.Status ?? "").ToLowerInvariant();
-        return s == "completed" || s == "checked";
+        return s == "completed" || s == "checked" || s == "finished";
     }) ?? 0);
 }
 
@@ -85,7 +85,7 @@
                             var totalPMs  = project.Milestones?.Count ?? 0;
                             var donePMs   = project.Milestones?.Count(m => {
                                 var s = (m.Status ?? "").ToLowerInvariant();
-                                return s == "completed" || s == "checked";
+                                return s == "completed" || s == "checked" || s == "finished";
                             }) ?? 0;
                             var percent   = totalPMs > 0 ? (int)Math.Round((double)donePMs * 100 / totalPMs) : 0;
                             <tr class="emp-row" data-name="@project.Name.ToLower()">
