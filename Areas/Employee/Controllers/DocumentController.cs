@@ -48,7 +48,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
         }
 
         // ─── Index ──────────────────────────────────────────────────
-        public async Task<IActionResult> Index(string filter = "my")
+        public async Task<IActionResult> Index(string filter = "my", string archiveFilter = "active")
         {
             ViewData["Title"] = "Documents";
 
@@ -56,6 +56,12 @@ namespace project_lifecycle.EmployeeArea.Controllers
             if (employee == null) return View(new List<Document>());
 
             IQueryable<Document> query;
+
+            // archiveFilter: active (default) => show not archived
+            //                inactive => show only archived
+            //                all => show both
+            var onlyArchived = string.Equals(archiveFilter, "inactive", StringComparison.OrdinalIgnoreCase);
+            var includeAll = string.Equals(archiveFilter, "all", StringComparison.OrdinalIgnoreCase);
 
             if (string.Equals(filter, "shared", StringComparison.OrdinalIgnoreCase))
             {
@@ -65,7 +71,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     .Select(dc => dc.DocumentId);
 
                 query = _context.Documents
-                    .Where(d => sharedDocIds.Contains(d.Id) && !d.IsArchived)
+                    .Where(d => sharedDocIds.Contains(d.Id) && (includeAll || (onlyArchived ? d.IsArchived : !d.IsArchived)))
                     .Include(d => d.OwnerEmployee);
             }
             else if (string.Equals(filter, "all", StringComparison.OrdinalIgnoreCase))
@@ -76,19 +82,20 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     .Select(dc => dc.DocumentId);
 
                 query = _context.Documents
-                    .Where(d => (d.OwnerEmployeeId == employee.Id || sharedDocIds.Contains(d.Id)) && !d.IsArchived)
+                    .Where(d => (d.OwnerEmployeeId == employee.Id || sharedDocIds.Contains(d.Id)) && (includeAll || (onlyArchived ? d.IsArchived : !d.IsArchived)))
                     .Include(d => d.OwnerEmployee);
             }
             else
             {
                 // My own documents
                 query = _context.Documents
-                    .Where(d => d.OwnerEmployeeId == employee.Id && !d.IsArchived)
+                    .Where(d => d.OwnerEmployeeId == employee.Id && (includeAll || (onlyArchived ? d.IsArchived : !d.IsArchived)))
                     .Include(d => d.OwnerEmployee);
             }
 
             var documents = await query.OrderByDescending(d => d.LastModified ?? d.DateCreated).ToListAsync();
             ViewData["Filter"] = filter;
+            ViewData["ArchiveFilter"] = archiveFilter;
             ViewData["CurrentEmployeeId"] = employee.Id;
 
             return View(documents);
@@ -381,6 +388,88 @@ namespace project_lifecycle.EmployeeArea.Controllers
             {
                 _logger.LogError(ex, "Error deleting document {DocumentId}", id);
                 TempData["ErrorMessage"] = "An error occurred while deleting.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        // ─── Archive (POST) ─────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Archive(int id)
+        {
+            try
+            {
+                var employee = await GetCurrentEmployeeAsync();
+                if (employee == null)
+                {
+                    TempData["ErrorMessage"] = "Employee profile not found.";
+                    return RedirectToAction("Index");
+                }
+
+                var doc = await _context.Documents.FindAsync(id);
+                if (doc == null || doc.OwnerEmployeeId != employee.Id)
+                {
+                    TempData["ErrorMessage"] = "Document not found or you are not the owner.";
+                    return RedirectToAction("Index");
+                }
+
+                if (doc.IsArchived)
+                {
+                    TempData["ErrorMessage"] = "Document is already archived.";
+                    return RedirectToAction("Index");
+                }
+
+                doc.IsArchived = true;
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Document archived.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error archiving document {DocumentId}", id);
+                TempData["ErrorMessage"] = "An error occurred while archiving.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        // ─── Unarchive (POST) ───────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Unarchive(int id)
+        {
+            try
+            {
+                var employee = await GetCurrentEmployeeAsync();
+                if (employee == null)
+                {
+                    TempData["ErrorMessage"] = "Employee profile not found.";
+                    return RedirectToAction("Index");
+                }
+
+                var doc = await _context.Documents.FindAsync(id);
+                if (doc == null || doc.OwnerEmployeeId != employee.Id)
+                {
+                    TempData["ErrorMessage"] = "Document not found or you are not the owner.";
+                    return RedirectToAction("Index");
+                }
+
+                if (!doc.IsArchived)
+                {
+                    TempData["ErrorMessage"] = "Document is not archived.";
+                    return RedirectToAction("Index");
+                }
+
+                doc.IsArchived = false;
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Document unarchived.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unarchiving document {DocumentId}", id);
+                TempData["ErrorMessage"] = "An error occurred while unarchiving.";
                 return RedirectToAction("Index");
             }
         }

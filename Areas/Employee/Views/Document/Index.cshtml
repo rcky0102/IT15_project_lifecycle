@@ -2,6 +2,7 @@
 @using project_lifecycle.Models
 @{
     var filter = ViewData["Filter"]?.ToString() ?? "my";
+    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active";
     var currentEmployeeId = (int)(ViewData["CurrentEmployeeId"] ?? 0);
 }
 
@@ -20,6 +21,22 @@
                 <i class="fas fa-file-circle-plus"></i>
                 <span>New Document</span>
             </a>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation modal for archive / unarchive actions -->
+<div class="emp-modal-backdrop" id="confirmActionModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmActionMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmActionCancel">Cancel</button>
+            <form id="confirmActionForm" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="confirmActionId" value="" />
+                <button type="submit" class="emp-btn emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
+            </form>
         </div>
     </div>
 </div>
@@ -57,6 +74,13 @@
             </select>
         </div>
         <div class="emp-select-group">
+            <select id="docArchiveFilter" class="emp-select">
+                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
+        </div>
+        <div class="emp-select-group">
             <label for="docPageSize" style="font-size:.82rem;color:var(--emp-muted);margin-right:.4rem;">Show</label>
             <select id="docPageSize" class="emp-select" style="width:92px;">
                 <option value="5">5</option>
@@ -87,7 +111,7 @@
                         @foreach (var doc in Model)
                         {
                             var isOwner = doc.OwnerEmployeeId == currentEmployeeId;
-                            <tr class="doc-row emp-row" data-title="@doc.Title.ToLower()">
+                            <tr class="doc-row emp-row" data-title="@doc.Title.ToLower()" data-archived="@(doc.IsArchived.ToString().ToLower())">
                                 <td>
                                     <div class="project-name-cell">
                                         <div class="project-name-icon">
@@ -117,19 +141,30 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="emp-table-actions">
-                                        <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id" class="emp-btn emp-btn-sm emp-btn-outline" title="Open">
-                                            <i class="fas fa-pen"></i>
+                                    <div style="display:inline-flex;align-items:center;gap:.35rem;">
+                                        <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id" class="emp-btn emp-btn-xs emp-btn-outline" title="Open" style="color:#2563eb;border-color:#2563eb;">
+                                            <i class="fas fa-pen-to-square"></i>
                                         </a>
                                         @if (isOwner)
                                         {
-                                            <form asp-area="Employee" asp-controller="Document" asp-action="Delete" asp-route-id="@doc.Id" method="post"
-                                                  style="display:inline;" onsubmit="return confirm('Delete this document? This cannot be undone.');">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="emp-btn emp-btn-sm emp-btn-danger" title="Delete">
-                                                    <i class="fas fa-trash"></i>
+                                            if (!doc.IsArchived)
+                                            {
+                                                <button type="button" class="emp-btn emp-btn-xs emp-btn-outline emp-action-archive" title="Archive"
+                                                        data-action="@Url.Action("Archive", "Document", new { area = "Employee" })"
+                                                        data-id="@doc.Id"
+                                                        data-message="Archive this document?" style="color:#f59e0b;border-color:#f59e0b;position:relative;z-index:2;">
+                                                    <i class="fas fa-box-archive"></i>
                                                 </button>
-                                            </form>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="emp-btn emp-btn-xs emp-btn-outline emp-action-unarchive" title="Unarchive"
+                                                        data-action="@Url.Action("Unarchive", "Document", new { area = "Employee" })"
+                                                        data-id="@doc.Id"
+                                                        data-message="Unarchive this document?" style="color:#10b981;border-color:#10b981;">
+                                                    <i class="fas fa-box-open"></i>
+                                                </button>
+                                            }
                                         }
                                     </div>
                                 </td>
@@ -165,9 +200,18 @@
     document.addEventListener('DOMContentLoaded', function () {
         // Filter change -> reload page
         const filterSelect = document.getElementById('docFilter');
+        const archiveSelect = document.getElementById('docArchiveFilter');
+        const baseUrl = '@Url.Action("Index", "Document", new { area = "Employee" })';
         if (filterSelect) {
             filterSelect.addEventListener('change', function () {
-                window.location.href = '@Url.Action("Index", "Document", new { area = "Employee" })' + '?filter=' + this.value;
+                const archiveVal = (archiveSelect && archiveSelect.value) ? archiveSelect.value : '@archiveFilter';
+                window.location.href = baseUrl + '?filter=' + encodeURIComponent(this.value) + '&archiveFilter=' + encodeURIComponent(archiveVal);
+            });
+        }
+        if (archiveSelect) {
+            archiveSelect.addEventListener('change', function () {
+                const filterVal = (filterSelect && filterSelect.value) ? filterSelect.value : '@filter';
+                window.location.href = baseUrl + '?filter=' + encodeURIComponent(filterVal) + '&archiveFilter=' + encodeURIComponent(this.value);
             });
         }
 
@@ -253,4 +297,43 @@
         filteredRows = allRows.slice();
         render();
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('confirmActionModal');
+    const modalMsg = document.getElementById('confirmActionMessage');
+    const modalForm = document.getElementById('confirmActionForm');
+    const modalIdInput = document.getElementById('confirmActionId');
+    const cancelBtn = document.getElementById('confirmActionCancel');
+
+    function showModal(actionUrl, id, message) {
+        if (!modal || !modalForm || !modalIdInput) return;
+        modalForm.action = actionUrl;
+        modalIdInput.value = id;
+        modalMsg.textContent = message || 'Are you sure?';
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    // Wire archive/unarchive buttons
+    document.querySelectorAll('.emp-action-archive, .emp-action-unarchive').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const action = btn.getAttribute('data-action');
+            const id = btn.getAttribute('data-id');
+            const message = btn.getAttribute('data-message') || 'Are you sure?';
+            if (!action || !id) return;
+            showModal(action, id, message);
+        });
+    });
+
+    // Cancel and backdrop
+    cancelBtn?.addEventListener('click', hideModal);
+    modal?.addEventListener('click', function (e) { if (e.target === modal) hideModal(); });
+});
 </script>
