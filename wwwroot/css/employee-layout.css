@@ -45,6 +45,14 @@
     align-items: center;
 }
 
+/* Match DepartmentHead pagination spacing: horizontal padding and top border */
+.employee-body .emp-pagination {
+    padding: .75rem 1.25rem;
+    border-top: 1px solid #f1f5f9;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
 .employee-layout {
     display: flex;
     min-height: 100vh;
