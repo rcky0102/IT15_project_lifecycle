@@ -150,19 +150,19 @@
                                     <div style="display:inline-flex;align-items:center;gap:.35rem;">
                                         <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
                                            class="emp-btn emp-btn-xs emp-btn-primary" title="View details" style="color:#fff;">
-                                            <i class="fas fa-magnifying-glass"></i> View
+                                            <i class="fas fa-magnifying-glass"></i>
                                         </a>
                                                     <a asp-area="Employee" asp-controller="Proposal" asp-action="Edit" asp-route-id="@proposal.Id"
-                                                       class="emp-btn emp-btn-xs emp-btn-primary emp-action-edit" title="Edit" style="color:#fff;background:#006994;border-color:#006994;">
-                                                        <i class="fas fa-pen-to-square"></i> Edit
+                                                       class="emp-btn emp-btn-xs emp-btn-primary emp-action-edit" title="Edit" style="color:#fff;">
+                                                        <i class="fas fa-pen-to-square"></i>
                                                     </a>
                                         @if (!proposal.IsArchived)
                                         {
                                             <button type="button" class="emp-btn emp-btn-xs emp-btn-primary emp-action-archive" title="Archive"
                                                     data-action="@Url.Action("Archive", "Proposal", new { area = "Employee" })"
                                                     data-id="@proposal.Id"
-                                                    data-message="Archive this proposal?" style="color:#fff;background:#dc2626;border-color:#dc2626;">
-                                                <i class="fas fa-box-archive"></i> Archive
+                                                    data-message="Archive this proposal?" style="color:#fff;">
+                                                <i class="fas fa-box-archive"></i>
                                             </button>
                                         }
                                         else
@@ -171,7 +171,7 @@
                                                     data-action="@Url.Action("Unarchive", "Proposal", new { area = "Employee" })"
                                                     data-id="@proposal.Id"
                                                     data-message="Unarchive this proposal?" style="color:#fff;">
-                                                <i class="fas fa-box-open"></i> Unarchive
+                                                <i class="fas fa-box-open"></i>
                                             </button>
                                         }
                                     </div>
