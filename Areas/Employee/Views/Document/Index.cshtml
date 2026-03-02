@@ -87,12 +87,18 @@
                         @foreach (var doc in Model)
                         {
                             var isOwner = doc.OwnerEmployeeId == currentEmployeeId;
-                            <tr class="doc-row" data-title="@doc.Title.ToLower()">
+                            <tr class="doc-row emp-row" data-title="@doc.Title.ToLower()">
                                 <td>
-                                    <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id" class="doc-title-link">
-                                        <i class="fas fa-file-alt" style="margin-right:6px; opacity:.7;"></i>
-                                        @doc.Title
-                                    </a>
+                                    <div class="project-name-cell">
+                                        <div class="project-name-icon">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div>
+                                            <div class="project-name-text">
+                                                <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id" class="doc-title-link">@doc.Title</a>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
                                     @if (isOwner)
@@ -105,7 +111,10 @@
                                     }
                                 </td>
                                 <td>
-                                    @((doc.LastModified ?? doc.DateCreated).ToString("MMM dd, yyyy h:mm tt"))
+                                    <span class="emp-badge-white" title="Last modified">
+                                        <i class="fas fa-calendar-day"></i>
+                                        @((doc.LastModified ?? doc.DateCreated).ToString("MMM dd, yyyy h:mm tt"))
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="emp-table-actions">
@@ -130,7 +139,12 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
+            <div id="noFilterResults" class="project-empty-state" style="display:none;">
+                <div class="project-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <div class="project-empty-title">No matching documents</div>
+                <div class="project-empty-text">Try adjusting your search or filters.</div>
+            </div>
+
             <div class="emp-pagination" id="docPagination"></div>
         }
         else
@@ -157,58 +171,86 @@
             });
         }
 
-        // Client-side search + pagination
+        // Enhanced client-side search + pagination (matches proposals)
         const searchInput = document.getElementById('docSearch');
         const pageSizeSelect = document.getElementById('docPageSize');
         const table = document.getElementById('documentsTable');
         const paginationEl = document.getElementById('docPagination');
-        if (!table) return;
+        if (!table || !paginationEl) return;
 
-        const allRows = Array.from(table.querySelectorAll('tbody .doc-row'));
-        let visibleRows = [...allRows];
-        let pageSize = parseInt(pageSizeSelect?.value || '10');
+        const allRows = Array.from(table.querySelectorAll('tbody .emp-row'));
+        const noResults = document.getElementById('noFilterResults');
+        let PAGE_SIZE = parseInt(pageSizeSelect?.value || '10');
         let currentPage = 1;
+        let filteredRows = allRows.slice();
 
-        function applyFilter() {
+        // prepare pagination containers
+        paginationEl.innerHTML = '<div class="emp-pagination-info" id="docPaginationInfo"></div><div class="emp-pagination-controls" id="docPaginationControls"></div>';
+        const pageInfo = document.getElementById('docPaginationInfo');
+        const pageControls = document.getElementById('docPaginationControls');
+
+        function applyFilters() {
             const term = (searchInput?.value || '').toLowerCase().trim();
-            visibleRows = allRows.filter(r => !term || r.dataset.title.includes(term));
+            filteredRows = allRows.filter(r => !term || (r.dataset.title || '').includes(term));
             currentPage = 1;
-            renderPage();
+            render();
         }
 
-        function renderPage() {
-            const total = visibleRows.length;
-            const pages = Math.ceil(total / pageSize) || 1;
-            if (currentPage > pages) currentPage = pages;
+        function render() {
+            const total = filteredRows.length;
+            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            currentPage = Math.min(currentPage, totalPages);
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
 
             allRows.forEach(r => r.style.display = 'none');
-            const start = (currentPage - 1) * pageSize;
-            visibleRows.slice(start, start + pageSize).forEach(r => r.style.display = '');
+            filteredRows.forEach((r, i) => { r.style.display = (i >= start && i < end) ? '' : 'none'; });
 
-            // Pagination controls
-            if (!paginationEl) return;
-            if (pages <= 1) { paginationEl.innerHTML = ''; return; }
+            if (noResults) noResults.style.display = total === 0 ? '' : 'none';
 
-            let html = '<button class="emp-page-btn" data-page="prev">&laquo;</button>';
-            for (let i = 1; i <= pages; i++) {
-                html += '<button class="emp-page-btn' + (i === currentPage ? ' active' : '') + '" data-page="' + i + '">' + i + '</button>';
+            if (pageInfo) {
+                pageInfo.textContent = total === 0 ? '' : `Showing ${total === 0 ? 0 : start + 1}–${Math.min(end, total)} of ${total}`;
             }
-            html += '<button class="emp-page-btn" data-page="next">&raquo;</button>';
-            paginationEl.innerHTML = html;
 
-            paginationEl.querySelectorAll('.emp-page-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const p = this.dataset.page;
-                    if (p === 'prev') { if (currentPage > 1) currentPage--; }
-                    else if (p === 'next') { if (currentPage < pages) currentPage++; }
-                    else currentPage = parseInt(p);
-                    renderPage();
-                });
+            if (pageControls) {
+                pageControls.innerHTML = '';
+                const makeBtn = (label, page, disabled, active) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'emp-page-btn' + (active ? ' active' : '');
+                    btn.innerHTML = label;
+                    btn.disabled = !!disabled;
+                    btn.addEventListener('click', () => { currentPage = page; render(); });
+                    return btn;
+                };
+
+                pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', Math.max(1, currentPage - 1), currentPage === 1, false));
+                const w = 2;
+                for (let p = 1; p <= totalPages; p++) {
+                    if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
+                        pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                    } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                        const el = document.createElement('span');
+                        el.className = 'emp-page-ellipsis';
+                        el.textContent = '…';
+                        pageControls.appendChild(el);
+                    }
+                }
+                pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false));
+            }
+        }
+
+        if (searchInput) searchInput.addEventListener('input', applyFilters);
+        if (pageSizeSelect) {
+            pageSizeSelect.value = String(PAGE_SIZE);
+            pageSizeSelect.addEventListener('change', function () {
+                const val = parseInt(pageSizeSelect.value, 10) || 10;
+                PAGE_SIZE = Math.max(5, val);
+                currentPage = 1;
+                render();
             });
         }
 
-        searchInput?.addEventListener('input', applyFilter);
-        pageSizeSelect?.addEventListener('change', function () { pageSize = parseInt(this.value); applyFilter(); });
-        renderPage();
+        filteredRows = allRows.slice();
+        render();
     });
 </script>
