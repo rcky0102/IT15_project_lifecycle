@@ -41,46 +41,7 @@
         <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
 }
-
-<!-- ===== Stats Bar ===== -->
-<div class="project-stats-bar">
-        <div class="project-stat-card">
-            <div class="project-stat-icon blue">
-                <i class="fas fa-diagram-project"></i>
-            </div>
-            <div class="project-stat-info">
-                <span class="project-stat-value">@Model.Projects.Count</span>
-                <span class="project-stat-label">Total Projects</span>
-            </div>
-        </div>
-        <div class="project-stat-card">
-            <div class="project-stat-icon green">
-                <i class="fas fa-file-circle-check"></i>
-            </div>
-            <div class="project-stat-info">
-                <span class="project-stat-value">@Model.AvailableProposals.Count</span>
-                <span class="project-stat-label">Available Proposals</span>
-            </div>
-        </div>
-        <div class="project-stat-card">
-            <div class="project-stat-icon purple">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="project-stat-info">
-                <span class="project-stat-value">@totalMembers</span>
-                <span class="project-stat-label">Total Members</span>
-            </div>
-        </div>
-        <div class="project-stat-card">
-            <div class="project-stat-icon amber">
-                <i class="fas fa-user-tie"></i>
-            </div>
-            <div class="project-stat-info">
-                <span class="project-stat-value">@Model.AvailableProjectManagers.Count</span>
-                <span class="project-stat-label">Project Managers</span>
-            </div>
-    </div>
-</div>
+<!-- Stats bar removed -->
 
 <!-- ===== Filters ===== -->
 <div class="emp-filters-card">
@@ -167,7 +128,7 @@
                 <div class="project-empty-text">Try adjusting your search or filters.</div>
             </div>
 
-            <div class="emp-pagination" id="paginationContainer">
+            <div class="emp-pagination" id="paginationContainer" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding:.75rem 1.25rem;box-sizing:border-box;">
                 <div class="emp-pagination-info" id="paginationInfo"></div>
                 <div class="emp-pagination-controls" id="paginationControls"></div>
             </div>

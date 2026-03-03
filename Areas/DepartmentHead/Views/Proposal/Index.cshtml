@@ -83,6 +83,11 @@
 </div>
 
 <!-- ===== Table ===== -->
+    <style>
+        /* Scoped tweaks for DeptHead proposal badges: keep on one line and truncate if too long */
+        .project-table-card .project-badge-white { white-space: nowrap; }
+        .project-table-card .project-badge-white > span { display: inline-block; max-width: 10.5rem; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+    </style>
 <div class="project-table-section">
     <div class="project-table-card">
         @if (Model.Any())
