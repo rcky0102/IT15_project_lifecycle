@@ -266,6 +266,47 @@
     color: #64748b;
 }
 
+/* ── Modernized Selects (role dropdowns etc.) ── */
+.collab-role-select,
+.em-picker-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: .42rem .9rem .42rem .7rem;
+    border: 1.5px solid #e6eef6;
+    border-radius: 10px;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'><path d='M5.23 7.21a.75.75 0 0 1 1.06-.02L10 10.67l3.71-3.48a.75.75 0 1 1 1.04 1.08l-4.24 4a.75.75 0 0 1-1.04 0l-4.24-4a.75.75 0 0 1-.02-1.06z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right .6rem center;
+    background-size: 14px;
+    font-size: .82rem;
+    color: #0f172a;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .08s ease;
+    min-width: 110px;
+}
+
+.collab-role-select:focus,
+.em-picker-select:focus {
+    border-color: #4CA3DD;
+    box-shadow: 0 6px 18px rgba(76,163,221,.08);
+    outline: none;
+}
+
+.collab-role-select[disabled],
+.em-picker-select[disabled] {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+/* Compact variant for inline collaborator list */
+.doc-collab-item .collab-role-select {
+    min-width: 100px;
+    padding: .35rem .7rem .35rem .6rem;
+    font-size: .8rem;
+}
+
 /* ─── Table Actions for Documents ─── */
 .emp-table-actions {
     display: flex;

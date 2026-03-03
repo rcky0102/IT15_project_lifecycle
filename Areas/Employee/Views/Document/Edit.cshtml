@@ -127,12 +127,18 @@
                             <div class="doc-collab-avatar">@(c.Employee?.FirstName?.Substring(0,1))@(c.Employee?.LastName?.Substring(0,1))</div>
                             <div>
                                 <div class="doc-collab-name">@c.Employee?.FirstName @c.Employee?.LastName</div>
-                                <div class="doc-collab-meta">@c.Employee?.EmployeeNumber · @c.Role</div>
+                                <div class="doc-collab-meta"><span class="collab-empno">@c.Employee?.EmployeeNumber</span> · <span class="collab-role-text">@c.Role</span></div>
                             </div>
                         </div>
-                        <button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="@c.Id" title="Remove">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <select class="collab-role-select" data-collab-id="@c.Id" data-role="@c.Role" aria-label="Change access for @c.Employee?.FirstName @c.Employee?.LastName">
+                                <option value="Editor">Editor</option>
+                                <option value="Viewer">Viewer</option>
+                            </select>
+                            <button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="@c.Id" title="Remove">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 }
             </div>
@@ -231,6 +237,7 @@
         const departmentEndpoint = '@Url.Action("DepartmentEmployees", "Document", new { area = "Employee" })';
         const addCollabEndpoint = '@Url.Action("AddCollaborator", "Document", new { area = "Employee" })';
         const removeCollabEndpoint = '@Url.Action("RemoveCollaborator", "Document", new { area = "Employee" })';
+        const updateCollabEndpoint = '@Url.Action("UpdateCollaboratorRole", "Document", new { area = "Employee" })';
         const documentId = @Model.Id;
         const canEdit = @(canEdit ? "true" : "false");
         const isOwner = @(isOwner ? "true" : "false");
@@ -679,10 +686,16 @@
                                         '<div class="doc-collab-info">' +
                                         '<div class="doc-collab-avatar">' + c.name.split(' ').map(w => w[0]).join('') + '</div>' +
                                         '<div><div class="doc-collab-name">' + c.name + '</div>' +
-                                        '<div class="doc-collab-meta">' + c.employeeNumber + ' · ' + c.role + '</div></div></div>' +
-                                        '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>';
+                                        '<div class="doc-collab-meta"><span class="collab-empno">' + c.employeeNumber + '</span> · <span class="collab-role-text">' + c.role + '</span></div></div></div>' +
+                                        '<div style="display:flex; gap:8px; align-items:center;">' +
+                                        '<select class="collab-role-select" data-collab-id="' + c.id + '" data-role="' + c.role + '">' +
+                                        '<option value="Editor">Editor</option>' +
+                                        '<option value="Viewer">Viewer</option>' +
+                                        '</select>' +
+                                        '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>' +
+                                        '</div>';
                                     collabList.appendChild(item);
-                                    wireRemoveButtons();
+                                    wireRemoveButtons(); wireRoleSelects();
                                     if (collabCount) collabCount.textContent = collabList.querySelectorAll('.doc-collab-item').length;
                                     // remove row checkbox if present
                                     const cb = tbody.querySelector('.emp-select-checkbox[data-num="' + empNum + '"]'); if (cb) cb.checked = false;
@@ -737,15 +750,21 @@
                                             '<div class="doc-collab-info">' +
                                             '<div class="doc-collab-avatar">' + c.name.split(' ').map(w => w[0]).join('') + '</div>' +
                                             '<div><div class="doc-collab-name">' + c.name + '</div>' +
-                                            '<div class="doc-collab-meta">' + c.employeeNumber + ' · ' + c.role + '</div></div></div>' +
-                                            '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>';
+                                            '<div class="doc-collab-meta"><span class="collab-empno">' + c.employeeNumber + '</span> · <span class="collab-role-text">' + c.role + '</span></div></div></div>' +
+                                            '<div style="display:flex; gap:8px; align-items:center;">' +
+                                            '<select class="collab-role-select" data-collab-id="' + c.id + '" data-role="' + c.role + '">' +
+                                            '<option value="Editor">Editor</option>' +
+                                            '<option value="Viewer">Viewer</option>' +
+                                            '</select>' +
+                                            '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>' +
+                                            '</div>';
                                         collabList.appendChild(item);
                                     } else {
                                         errors.push(empName + ': ' + (data.message || 'Failed'));
                                     }
                                 } catch (e) { errors.push(empName + ': network error'); }
                             }
-                            wireRemoveButtons();
+                            wireRemoveButtons(); wireRoleSelects();
                             if (collabCount) collabCount.textContent = collabList.querySelectorAll('.doc-collab-item').length;
                             // Clear selections and close modal
                             empModalTable.querySelectorAll('.emp-select-checkbox').forEach(cb => cb.checked = false);
@@ -828,7 +847,41 @@
                     });
                 });
             }
-            wireRemoveButtons();
+            wireRemoveButtons(); wireRoleSelects();
+            // wire role change selects
+            function wireRoleSelects() {
+                document.querySelectorAll('.collab-role-select').forEach(sel => {
+                    sel.replaceWith(sel.cloneNode(true)); // remove old listeners
+                });
+                document.querySelectorAll('.collab-role-select').forEach(sel => {
+                    // set initial value from data-role if present
+                    try { if (sel.dataset && sel.dataset.role) sel.value = sel.dataset.role; } catch (e) {}
+                    sel.addEventListener('change', async function () {
+                        const collabId = this.dataset.collabId;
+                        const newRole = this.value;
+                        const fd = new FormData();
+                        fd.append('collaboratorId', collabId);
+                        fd.append('role', newRole);
+                        fd.append('__RequestVerificationToken', antiForgeryToken);
+                        try {
+                            const resp = await fetch(updateCollabEndpoint, { method: 'POST', body: fd });
+                            const data = await resp.json();
+                            if (data.success) {
+                                const item = collabList.querySelector('[data-collab-id="' + collabId + '"]');
+                                if (item) {
+                                    const rt = item.querySelector('.collab-role-text');
+                                    if (rt) rt.textContent = data.role || newRole;
+                                    // keep data-role in sync
+                                    const selEl = item.querySelector('.collab-role-select'); if (selEl) selEl.dataset.role = data.role || newRole;
+                                }
+                            } else {
+                                alert(data.message || 'Failed to update access.');
+                            }
+                        } catch (e) { alert('Failed to update access.'); }
+                    });
+                });
+            }
+            wireRoleSelects();
         }
 
         // Hidden anti-forgery token for AJAX

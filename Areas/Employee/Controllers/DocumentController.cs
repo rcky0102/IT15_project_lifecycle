@@ -644,6 +644,41 @@ namespace project_lifecycle.EmployeeArea.Controllers
             }
         }
 
+        // ─── Update Collaborator Role (POST) ───────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateCollaboratorRole(int collaboratorId, string role)
+        {
+            try
+            {
+                var employee = await GetCurrentEmployeeAsync();
+                if (employee == null)
+                    return Json(new { success = false, message = "Employee profile not found." });
+
+                var collab = await _context.DocumentCollaborators
+                    .Include(dc => dc.Document)
+                    .FirstOrDefaultAsync(dc => dc.Id == collaboratorId);
+
+                if (collab == null)
+                    return Json(new { success = false, message = "Collaborator not found." });
+
+                // Only document owner can change roles
+                if (collab.Document?.OwnerEmployeeId != employee.Id)
+                    return Json(new { success = false, message = "Only the document owner can change collaborator access." });
+
+                collab.Role = role == "Viewer" ? "Viewer" : "Editor";
+                _context.DocumentCollaborators.Update(collab);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Collaborator access updated.", role = collab.Role });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating collaborator {CollaboratorId}", collaboratorId);
+                return Json(new { success = false, message = "An error occurred." });
+            }
+        }
+
         // ─── Search Employees (AJAX) ────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> SearchEmployees(string term, int documentId)
