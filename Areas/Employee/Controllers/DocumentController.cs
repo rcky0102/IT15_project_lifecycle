@@ -682,5 +682,38 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
             return Json(results);
         }
+
+        // ─── Department Employees (AJAX) ──────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> DepartmentEmployees(int documentId)
+        {
+            var employee = await GetCurrentEmployeeAsync();
+            if (employee == null)
+                return Json(new List<object>());
+
+            // Get IDs of employees already on this document
+            var existingIds = await _context.DocumentCollaborators
+                .Where(dc => dc.DocumentId == documentId)
+                .Select(dc => dc.EmployeeId)
+                .ToListAsync();
+
+            existingIds.Add(employee.Id); // exclude self
+
+            if (employee.DepartmentId == null)
+                return Json(new List<object>());
+
+            var results = await _context.Employees
+                .Where(e => e.DepartmentId == employee.DepartmentId && !existingIds.Contains(e.Id))
+                .OrderBy(e => e.FirstName).ThenBy(e => e.LastName)
+                .Select(e => new
+                {
+                    id = e.Id,
+                    name = e.FirstName + " " + e.LastName,
+                    employeeNumber = e.EmployeeNumber
+                })
+                .ToListAsync();
+
+            return Json(results);
+        }
     }
 }

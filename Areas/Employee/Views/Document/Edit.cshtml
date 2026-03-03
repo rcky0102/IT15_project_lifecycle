@@ -236,6 +236,7 @@
         const uploadEndpoint = '@Url.Action("UploadFile", "Document", new { area = "Employee" })';
         const saveEndpoint = '@Url.Action("Save", "Document", new { area = "Employee" })';
         const searchEndpoint = '@Url.Action("SearchEmployees", "Document", new { area = "Employee" })';
+        const departmentEndpoint = '@Url.Action("DepartmentEmployees", "Document", new { area = "Employee" })';
         const addCollabEndpoint = '@Url.Action("AddCollaborator", "Document", new { area = "Employee" })';
         const removeCollabEndpoint = '@Url.Action("RemoveCollaborator", "Document", new { area = "Employee" })';
         const documentId = @Model.Id;
@@ -522,15 +523,25 @@
                     <table class="sa-table" id="empModalTable" style="width:100%;">
                         <thead>
                             <tr>
+                                <th style="width:48px;"><input type="checkbox" id="empModalSelectAll" /></th>
                                 <th>Name</th>
                                 <th>Employee #</th>
-                                <th style="width:120px;">Action</th>
+                                <th style="width:120px; text-align:right;">Action</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
                 </div>
                 <div id="empModalEmpty" style="text-align:center; padding:18px; display:none; color:#666;"><i class="fas fa-user-group"></i> No employees found</div>
+                <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px;">
+                    <select id="empModalRole" class="emp-select" style="min-width:140px;">
+                        <option value="Editor">Editor</option>
+                        <option value="Viewer">Viewer</option>
+                    </select>
+                    <button type="button" id="empModalAddBtn" class="emp-btn emp-btn-primary emp-btn-sm" disabled>
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -569,8 +580,8 @@
                     document.body.style.overflow = 'hidden';
                 }
 
-                // fetch department employees - backend expected to accept departmentOnly=1
-                fetch(searchEndpoint + '?departmentOnly=1&documentId=' + documentId)
+                // fetch department employees (server returns employees in current user's department)
+                fetch(departmentEndpoint + '?documentId=' + documentId)
                     .then(r => r.json())
                     .then(results => {
                         const tbody = empModalTable.querySelector('tbody');
@@ -580,18 +591,126 @@
                         }
                         results.forEach(e => {
                             const tr = document.createElement('tr');
-                            tr.innerHTML = '<td>' + (e.name || '') + '</td>' +
+                            tr.innerHTML = '<td style="text-align:center;"><input type="checkbox" class="emp-select-checkbox" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '" /></td>' +
+                                '<td>' + (e.name || '') + '</td>' +
                                 '<td>' + (e.employeeNumber || '') + '</td>' +
-                                '<td><button type="button" class="emp-btn emp-btn-sm emp-btn-outline emp-select-emp" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '">Select</button></td>';
+                                '<td style="width:120px; text-align:right;"><button type="button" class="emp-btn emp-btn-sm emp-btn-outline emp-select-now" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '">Select</button></td>';
                             tbody.appendChild(tr);
                         });
-                        // wire select buttons
-                        tbody.querySelectorAll('.emp-select-emp').forEach(b => b.addEventListener('click', function () {
-                            selectedEmployee = { id: parseInt(this.dataset.id), name: this.dataset.name, num: this.dataset.num };
-                            searchInput.value = selectedEmployee.name;
-                            addBtn.disabled = false;
-                            closeEmployeeModal();
+                        // wire checkbox change handlers
+                        function updateSelectionState() {
+                            const any = empModalTable.querySelectorAll('.emp-select-checkbox:checked').length > 0;
+                            addBtn.disabled = !any;
+                        }
+                        tbody.querySelectorAll('.emp-select-checkbox').forEach(cb => cb.addEventListener('change', updateSelectionState));
+                        const selectAll = document.getElementById('empModalSelectAll');
+                        if (selectAll) {
+                            selectAll.checked = false;
+                            selectAll.addEventListener('change', function () {
+                                const checked = !!this.checked;
+                                tbody.querySelectorAll('.emp-select-checkbox').forEach(cb => { cb.checked = checked; });
+                                updateSelectionState();
+                            });
+                        }
+                        // wire instant select buttons (per-row)
+                        tbody.querySelectorAll('.emp-select-now').forEach(btn => btn.addEventListener('click', async function () {
+                            const empNum = this.dataset.num;
+                            const empName = this.dataset.name;
+                            this.disabled = true;
+                            try {
+                                const fd = new FormData();
+                                fd.append('documentId', documentId);
+                                fd.append('employeeSearch', empNum);
+                                fd.append('role', roleSelect.value);
+                                fd.append('__RequestVerificationToken', antiForgeryToken);
+
+                                const resp = await fetch(addCollabEndpoint, { method: 'POST', body: fd });
+                                const data = await resp.json();
+                                if (data.success) {
+                                    const c = data.collaborator;
+                                    const empty = document.getElementById('collabEmpty'); if (empty) empty.remove();
+                                    const item = document.createElement('div');
+                                    item.className = 'doc-collab-item';
+                                    item.dataset.collabId = c.id;
+                                    item.innerHTML =
+                                        '<div class="doc-collab-info">' +
+                                        '<div class="doc-collab-avatar">' + c.name.split(' ').map(w => w[0]).join('') + '</div>' +
+                                        '<div><div class="doc-collab-name">' + c.name + '</div>' +
+                                        '<div class="doc-collab-meta">' + c.employeeNumber + ' · ' + c.role + '</div></div></div>' +
+                                        '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>';
+                                    collabList.appendChild(item);
+                                    wireRemoveButtons();
+                                    if (collabCount) collabCount.textContent = collabList.querySelectorAll('.doc-collab-item').length;
+                                    // remove row checkbox if present
+                                    const cb = tbody.querySelector('.emp-select-checkbox[data-num="' + empNum + '"]'); if (cb) cb.checked = false;
+                                    // close modal after selecting one
+                                    closeEmployeeModal();
+                                } else {
+                                    alert(data.message || 'Failed to add collaborator.');
+                                }
+                            } catch (e) {
+                                alert('Failed to add collaborator.');
+                            } finally { this.disabled = false; }
                         }));
+
+                        // wire modal Add button and enable state
+                        const empModalRole = document.getElementById('empModalRole');
+                        const empModalAddBtn = document.getElementById('empModalAddBtn');
+                        function updateModalAddState() {
+                            const any = empModalTable.querySelectorAll('.emp-select-checkbox:checked').length > 0;
+                            if (empModalAddBtn) empModalAddBtn.disabled = !any;
+                        }
+                        // reuse updateSelectionState for checkboxes
+                        tbody.querySelectorAll('.emp-select-checkbox').forEach(cb => cb.addEventListener('change', updateModalAddState));
+                        const selectAll2 = document.getElementById('empModalSelectAll');
+                        if (selectAll2) {
+                            selectAll2.addEventListener('change', updateModalAddState);
+                        }
+
+                        empModalAddBtn?.addEventListener('click', async function () {
+                            const checked = empModalTable.querySelectorAll('.emp-select-checkbox:checked');
+                            if (!checked.length) return;
+                            empModalAddBtn.disabled = true;
+                            const errors = [];
+                            for (const cb of Array.from(checked)) {
+                                const empNum = cb.dataset.num;
+                                const empName = cb.dataset.name;
+                                try {
+                                    const fd = new FormData();
+                                    fd.append('documentId', documentId);
+                                    fd.append('employeeSearch', empNum);
+                                    fd.append('role', (empModalRole?.value) || roleSelect.value);
+                                    fd.append('__RequestVerificationToken', antiForgeryToken);
+
+                                    const resp = await fetch(addCollabEndpoint, { method: 'POST', body: fd });
+                                    const data = await resp.json();
+                                    if (data.success) {
+                                        const c = data.collaborator;
+                                        const empty = document.getElementById('collabEmpty'); if (empty) empty.remove();
+                                        const item = document.createElement('div');
+                                        item.className = 'doc-collab-item';
+                                        item.dataset.collabId = c.id;
+                                        item.innerHTML =
+                                            '<div class="doc-collab-info">' +
+                                            '<div class="doc-collab-avatar">' + c.name.split(' ').map(w => w[0]).join('') + '</div>' +
+                                            '<div><div class="doc-collab-name">' + c.name + '</div>' +
+                                            '<div class="doc-collab-meta">' + c.employeeNumber + ' · ' + c.role + '</div></div></div>' +
+                                            '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>';
+                                        collabList.appendChild(item);
+                                    } else {
+                                        errors.push(empName + ': ' + (data.message || 'Failed'));
+                                    }
+                                } catch (e) { errors.push(empName + ': network error'); }
+                            }
+                            wireRemoveButtons();
+                            if (collabCount) collabCount.textContent = collabList.querySelectorAll('.doc-collab-item').length;
+                            // Clear selections and close modal
+                            empModalTable.querySelectorAll('.emp-select-checkbox').forEach(cb => cb.checked = false);
+                            const selectAll3 = document.getElementById('empModalSelectAll'); if (selectAll3) selectAll3.checked = false;
+                            empModalAddBtn.disabled = true;
+                            closeEmployeeModal();
+                            if (errors.length) alert('Some invites failed:\n' + errors.join('\n'));
+                        });
                     })
                     .catch(() => { empModalEmpty.style.display = 'block'; });
             }
@@ -612,8 +731,8 @@
             empModalFilter?.addEventListener('input', function () {
                 const q = this.value.trim().toLowerCase();
                 empModalTable.querySelectorAll('tbody tr').forEach(tr => {
-                    const name = tr.cells[0].textContent.toLowerCase();
-                    const num = tr.cells[1].textContent.toLowerCase();
+                    const name = tr.cells[1].textContent.toLowerCase();
+                    const num = tr.cells[2].textContent.toLowerCase();
                     tr.style.display = (!q || name.includes(q) || num.includes(q)) ? '' : 'none';
                 });
             });
@@ -625,47 +744,58 @@
                 }
             });
 
-            // Add collaborator
+            // Add collaborator - supports multiple selections
             addBtn?.addEventListener('click', async function () {
-                if (!selectedEmployee) return;
+                const checked = empModalTable.querySelectorAll('.emp-select-checkbox:checked');
+                if (!checked.length) return;
                 addBtn.disabled = true;
+                const errors = [];
 
-                try {
-                    const fd = new FormData();
-                    fd.append('documentId', documentId);
-                    fd.append('employeeSearch', selectedEmployee.num);
-                    fd.append('role', roleSelect.value);
-                    fd.append('__RequestVerificationToken', antiForgeryToken);
+                for (const cb of Array.from(checked)) {
+                    const empNum = cb.dataset.num;
+                    const empName = cb.dataset.name;
+                    try {
+                        const fd = new FormData();
+                        fd.append('documentId', documentId);
+                        fd.append('employeeSearch', empNum);
+                        fd.append('role', roleSelect.value);
+                        fd.append('__RequestVerificationToken', antiForgeryToken);
 
-                    const resp = await fetch(addCollabEndpoint, { method: 'POST', body: fd });
-                    const data = await resp.json();
+                        const resp = await fetch(addCollabEndpoint, { method: 'POST', body: fd });
+                        const data = await resp.json();
 
-                    if (data.success) {
-                        const c = data.collaborator;
-                        // Remove empty state
-                        const empty = document.getElementById('collabEmpty');
-                        if (empty) empty.remove();
+                        if (data.success) {
+                            const c = data.collaborator;
+                            const empty = document.getElementById('collabEmpty');
+                            if (empty) empty.remove();
 
-                        const item = document.createElement('div');
-                        item.className = 'doc-collab-item';
-                        item.dataset.collabId = c.id;
-                        item.innerHTML =
-                            '<div class="doc-collab-info">' +
-                            '<div class="doc-collab-avatar">' + c.name.split(' ').map(w => w[0]).join('') + '</div>' +
-                            '<div><div class="doc-collab-name">' + c.name + '</div>' +
-                            '<div class="doc-collab-meta">' + c.employeeNumber + ' · ' + c.role + '</div></div></div>' +
-                            '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>';
-                        collabList.appendChild(item);
-
-                        wireRemoveButtons();
-                        if (collabCount) collabCount.textContent = collabList.querySelectorAll('.doc-collab-item').length;
-                        searchInput.value = '';
-                        selectedEmployee = null;
-                    } else {
-                        alert(data.message);
+                            const item = document.createElement('div');
+                            item.className = 'doc-collab-item';
+                            item.dataset.collabId = c.id;
+                            item.innerHTML =
+                                '<div class="doc-collab-info">' +
+                                '<div class="doc-collab-avatar">' + c.name.split(' ').map(w => w[0]).join('') + '</div>' +
+                                '<div><div class="doc-collab-name">' + c.name + '</div>' +
+                                '<div class="doc-collab-meta">' + c.employeeNumber + ' · ' + c.role + '</div></div></div>' +
+                                '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>';
+                            collabList.appendChild(item);
+                        } else {
+                            errors.push(empName + ': ' + (data.message || 'Failed'));
+                        }
+                    } catch (e) {
+                        errors.push(empName + ': network error');
                     }
-                } catch { alert('Failed to add collaborator.'); }
-                finally { addBtn.disabled = !selectedEmployee; }
+                }
+
+                wireRemoveButtons();
+                if (collabCount) collabCount.textContent = collabList.querySelectorAll('.doc-collab-item').length;
+                // Clear selections and close modal
+                empModalTable.querySelectorAll('.emp-select-checkbox').forEach(cb => cb.checked = false);
+                const selectAll = document.getElementById('empModalSelectAll'); if (selectAll) selectAll.checked = false;
+                addBtn.disabled = true;
+                closeEmployeeModal();
+
+                if (errors.length) alert('Some invites failed:\n' + errors.join('\n'));
             });
 
             // Remove collaborator
