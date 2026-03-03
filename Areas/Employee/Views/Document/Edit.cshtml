@@ -108,15 +108,7 @@
                     <input type="text" id="collabSearchInput" class="emp-form-control" placeholder="Click to pick from department list…" autocomplete="off" readonly />
                     <div class="doc-collab-suggestions" id="collabSuggestions" style="display:none;"></div>
                 </div>
-                <div class="doc-collab-role-row">
-                    <select id="collabRole" class="emp-select" style="flex:1;">
-                        <option value="Editor">Editor</option>
-                        <option value="Viewer">Viewer</option>
-                    </select>
-                    <button type="button" id="addCollabBtn" class="emp-btn emp-btn-primary emp-btn-sm" disabled>
-                        <i class="fas fa-plus"></i> Add
-                    </button>
-                </div>
+                @* <p style="margin:.5rem 0 0; font-size:.85rem; color:#64748b;">Use the <strong>Pick from department</strong> dialog to select and add collaborators.</p> *@
             </div>
 
             <!-- Collaborator list -->
@@ -583,8 +575,6 @@
                         // ensure modal stacks above the side panel/offcanvas
                         const empModalZ = 2060;
                         const empModalBackdropZ = 2050;
-            const addBtn = document.getElementById('addCollabBtn');
-            const roleSelect = document.getElementById('collabRole');
             const collabList = document.getElementById('collabList');
             const collabCount = document.getElementById('collabCount');
             let selectedEmployee = null;
@@ -648,7 +638,8 @@
                         // wire checkbox change handlers
                         function updateSelectionState() {
                             const any = empModalTable.querySelectorAll('.emp-select-checkbox:checked').length > 0;
-                            addBtn.disabled = !any;
+                            const modalAdd = document.getElementById('empModalAddBtn');
+                            if (modalAdd) modalAdd.disabled = !any;
                         }
                         tbody.querySelectorAll('.emp-select-checkbox').forEach(cb => cb.addEventListener('change', updateSelectionState));
                         const selectAll = document.getElementById('empModalSelectAll');
@@ -672,7 +663,8 @@
                                 const fd = new FormData();
                                 fd.append('documentId', documentId);
                                 fd.append('employeeSearch', empNum);
-                                fd.append('role', roleSelect.value);
+                                const role = document.getElementById('empModalRole')?.value || 'Editor';
+                                fd.append('role', role);
                                 fd.append('__RequestVerificationToken', antiForgeryToken);
 
                                 const resp = await fetch(addCollabEndpoint, { method: 'POST', body: fd });
@@ -807,59 +799,7 @@
                 }
             });
 
-            // Add collaborator - supports multiple selections
-            addBtn?.addEventListener('click', async function () {
-                const checked = empModalTable.querySelectorAll('.emp-select-checkbox:checked');
-                if (!checked.length) return;
-                addBtn.disabled = true;
-                const errors = [];
-
-                for (const cb of Array.from(checked)) {
-                    const empNum = cb.dataset.num;
-                    const empName = cb.dataset.name;
-                    try {
-                        const fd = new FormData();
-                        fd.append('documentId', documentId);
-                        fd.append('employeeSearch', empNum);
-                        fd.append('role', roleSelect.value);
-                        fd.append('__RequestVerificationToken', antiForgeryToken);
-
-                        const resp = await fetch(addCollabEndpoint, { method: 'POST', body: fd });
-                        const data = await resp.json();
-
-                        if (data.success) {
-                            const c = data.collaborator;
-                            const empty = document.getElementById('collabEmpty');
-                            if (empty) empty.remove();
-
-                            const item = document.createElement('div');
-                            item.className = 'doc-collab-item';
-                            item.dataset.collabId = c.id;
-                            item.innerHTML =
-                                '<div class="doc-collab-info">' +
-                                '<div class="doc-collab-avatar">' + c.name.split(' ').map(w => w[0]).join('') + '</div>' +
-                                '<div><div class="doc-collab-name">' + c.name + '</div>' +
-                                '<div class="doc-collab-meta">' + c.employeeNumber + ' · ' + c.role + '</div></div></div>' +
-                                '<button type="button" class="emp-btn emp-btn-sm emp-btn-danger remove-collab-btn" data-id="' + c.id + '" title="Remove"><i class="fas fa-times"></i></button>';
-                            collabList.appendChild(item);
-                        } else {
-                            errors.push(empName + ': ' + (data.message || 'Failed'));
-                        }
-                    } catch (e) {
-                        errors.push(empName + ': network error');
-                    }
-                }
-
-                wireRemoveButtons();
-                if (collabCount) collabCount.textContent = collabList.querySelectorAll('.doc-collab-item').length;
-                // Clear selections and close modal
-                empModalTable.querySelectorAll('.emp-select-checkbox').forEach(cb => cb.checked = false);
-                const selectAll = document.getElementById('empModalSelectAll'); if (selectAll) selectAll.checked = false;
-                addBtn.disabled = true;
-                closeEmployeeModal();
-
-                if (errors.length) alert('Some invites failed:\n' + errors.join('\n'));
-            });
+            // Note: off-canvas Add button removed; use the department picker modal Add instead.
 
             // Remove collaborator
             function wireRemoveButtons() {
