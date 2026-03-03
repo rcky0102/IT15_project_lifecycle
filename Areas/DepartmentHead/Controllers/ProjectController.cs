@@ -283,7 +283,8 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
                 DateCreated = p.DateCreated,
-                MemberCount = memberCountByProjectId.TryGetValue(p.Id, out var count) ? count : 0
+                MemberCount = memberCountByProjectId.TryGetValue(p.Id, out var count) ? count : 0,
+                Status = (p.EndDate.Date < DateTime.Today) ? "Finished" : "Unfinished"
             }).ToList();
 
             var usedProposalIds = await _context.Projects.Select(p => p.ProjectProposalId).ToListAsync();

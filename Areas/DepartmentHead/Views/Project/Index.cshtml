@@ -76,6 +76,7 @@
                             <th>Project Manager</th>
                             <th>Timeline</th>
                             <th>Members</th>
+                            <th>Status</th>
                             <th>Created</th>
                         </tr>
                     </thead>
@@ -113,6 +114,14 @@
                                     <td>
                                         <span class="project-member-count">
                                             <i class="fas fa-users"></i> @project.MemberCount
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="emp-badge-white" title="Status">
+                                            <span class="emp-status-inline @GetStatusClass(project.Status)">
+                                                <span class="emp-status-dot"></span>
+                                                <span class="emp-status-text">@project.Status</span>
+                                            </span>
                                         </span>
                                     </td>
                                     <td class="project-date">@project.DateCreated.ToString("MMM dd, yyyy")</td>
@@ -711,4 +720,13 @@
             }
         })();
     </script>
+}
+
+@functions {
+    private string GetStatusClass(string status) => status switch
+    {
+        "Unfinished" => "emp-status-pending",
+        "Finished"   => "emp-status-approved",
+        _             => "emp-status-default"
+    };
 }

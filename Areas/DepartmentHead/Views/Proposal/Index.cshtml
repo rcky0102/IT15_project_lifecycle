@@ -134,7 +134,10 @@
                                 <td>
                                     <span class="project-badge-white" title="Status">
                                         <span class="emp-status-inline @GetStatusClass(proposal.Status)">
-                                            <span class="emp-status-dot"></span>
+                                              <span class="emp-status-dot" aria-hidden="true"
+                                                  style="width:7px;height:7px;border-radius:50%;display:inline-block;vertical-align:middle;background:@GetStatusColor(proposal.Status);transition:transform .18s cubic-bezier(.2,.9,.3,1),box-shadow .18s ease;animation:emp-dot-breath 3s ease-in-out infinite;"
+                                                  onmouseenter="this.style.transform='scale(1.35)';this.style.boxShadow='0 6px 18px rgba(0,0,0,.06), 0 0 18px '+this.style.backgroundColor;"
+                                                  onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='none';"></span>
                                             <span class="emp-status-text">@proposal.Status</span>
                                         </span>
                                     </span>
@@ -308,6 +311,15 @@
         "Rejected"          => "emp-status-rejected",
         "Requires Revision" => "emp-status-revision",
         _                   => "emp-status-default"
+    };
+
+    private string GetStatusColor(string status) => status switch
+    {
+        "Pending" => "#f59e0b",
+        "Approved" => "#10b981",
+        "Rejected" => "#ef4444",
+        "Requires Revision" => "#f97316",
+        _ => "#94a3b8"
     };
 }
 

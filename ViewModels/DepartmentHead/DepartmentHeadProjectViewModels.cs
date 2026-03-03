@@ -26,6 +26,7 @@ namespace project_lifecycle.ViewModels.DepartmentHead
         public DateTime EndDate { get; set; }
         public DateTime DateCreated { get; set; }
         public int MemberCount { get; set; }
+        public string Status { get; set; } = "Unfinished";
     }
 
     public class CreateDepartmentHeadProjectViewModel
