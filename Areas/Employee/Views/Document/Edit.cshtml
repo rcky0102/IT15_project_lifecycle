@@ -218,10 +218,11 @@
         <div style="display:flex; gap:8px; align-items:center;">
             @if (canEdit)
             {
-                <button type="button" id="insertRichFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
-                    <i class="fas fa-paperclip"></i> Add file/image
+                <button type="button" id="insertRichFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px; color:#333; background:#fff; border:1px solid rgba(0,0,0,0.06); display:inline-flex; align-items:center; gap:8px;">
+                    <i class="fas fa-paperclip" style="color:inherit;"></i>
+                    <span style="color:inherit;">Add file/image</span>
                 </button>
-                <span style="font-size:12px; opacity:.8;">Max 10 MB</span>
+                <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
             }
         </div>
     </div>
