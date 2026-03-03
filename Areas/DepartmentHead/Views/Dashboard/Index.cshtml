@@ -26,26 +26,13 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon primary">
-                <i class="fas fa-users"></i>
+                <i class="fas fa-file-lines"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">@ViewData["TotalEmployees"]</div>
-                <div class="stat-label">Team Members</div>
+                <div class="stat-number">@ViewData["TotalProposals"]</div>
+                <div class="stat-label">Total Proposals</div>
                 <div class="stat-change neutral">
                     <i class="fas fa-building"></i> @ViewData["DepartmentName"]
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon success">
-                <i class="fas fa-diagram-project"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@ViewData["ActiveProjects"]</div>
-                <div class="stat-label">Active Projects</div>
-                <div class="stat-change neutral">
-                    <i class="fas fa-minus"></i> Department scope
                 </div>
             </div>
         </div>
@@ -65,15 +52,27 @@
         </div>
 
         <div class="stat-card">
-            <div class="stat-icon danger">
-                <i class="fas fa-list-check"></i>
+            <div class="stat-icon success">
+                <i class="fas fa-diagram-project"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">@ViewData["OpenTasks"]</div>
-                <div class="stat-label">Open Tasks</div>
+                <div class="stat-number">@ViewData["ActiveProjects"]</div>
+                <div class="stat-label">Active Projects</div>
                 <div class="stat-change neutral">
-                    <i class="fas fa-check-circle"></i>
-                    @ViewData["CompletedTasksThisMonth"] done this month
+                    <i class="fas fa-spinner"></i> Unfinished
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon danger">
+                <i class="fas fa-flag-checkered"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number">@ViewData["FinishedProjects"]</div>
+                <div class="stat-label">Finished Projects</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-check-circle"></i> Completed
                 </div>
             </div>
         </div>

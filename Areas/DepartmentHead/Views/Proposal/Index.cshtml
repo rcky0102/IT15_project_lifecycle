@@ -115,9 +115,9 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="project-pm-badge">
+                                    <span class="project-badge-white" title="Submitted by">
                                         <i class="fas fa-user"></i>
-                                        @(proposal.Employee != null ? $"{proposal.Employee.FirstName} {proposal.Employee.LastName}" : "—")
+                                        <span style="margin-left:.35rem;">@(proposal.Employee != null ? $"{proposal.Employee.FirstName} {proposal.Employee.LastName}" : "—")</span>
                                     </span>
                                 </td>
                                 <td class="project-date">
@@ -174,7 +174,7 @@
                 <div class="project-empty-text">Try adjusting your search or filters.</div>
             </div>
 
-            <div class="emp-pagination" id="paginationContainer">
+            <div class="emp-pagination" id="paginationContainer" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding:.75rem 1.25rem;box-sizing:border-box;">
                 <div class="emp-pagination-info" id="paginationInfo"></div>
                 <div class="emp-pagination-controls" id="paginationControls"></div>
             </div>

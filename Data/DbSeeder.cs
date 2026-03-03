@@ -86,6 +86,17 @@ namespace project_lifecycle.Data
                 }
             }
 
+            // Fix existing projects that have an empty Status
+            var emptyStatusProjects = await context.Projects
+                .Where(p => p.Status == null || p.Status == "")
+                .ToListAsync();
+            if (emptyStatusProjects.Any())
+            {
+                foreach (var proj in emptyStatusProjects)
+                    proj.Status = "Unfinished";
+                await context.SaveChangesAsync();
+            }
+
         }
     }
 }

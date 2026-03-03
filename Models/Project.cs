@@ -35,6 +35,12 @@ namespace project_lifecycle.Models
         [Required]
         public DateTime DateCreated { get; set; } = DateTime.Now;
 
+        // Project status: Unfinished or Finished
+        [Required]
+        [StringLength(20)]
+        [RegularExpression("^(Unfinished|Finished)$", ErrorMessage = "Status must be Unfinished or Finished.")]
+        public string Status { get; set; } = "Unfinished";
+
         // Indicates whether the project has been archived and should be hidden from active lists
         public bool IsArchived { get; set; } = false;
     }

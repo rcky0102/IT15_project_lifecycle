@@ -52,19 +52,21 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             int totalEmployees = await deptEmpIds.CountAsync();
 
             // Projects where at least one dept employee is a member
-            var deptProjectIds = _context.Projects
-                .Where(p => _context.Members.Any(m => m.ProjectId == p.Id && deptEmpIds.Contains(m.EmployeeId)))
-                .Select(p => p.Id);
+            var deptProjects = _context.Projects
+                .Where(p => _context.Members.Any(m => m.ProjectId == p.Id && deptEmpIds.Contains(m.EmployeeId)));
 
-            int activeProjects = await deptProjectIds.CountAsync();
+            var deptProjectIds = deptProjects.Select(p => p.Id);
+
+            int activeProjects = await deptProjects.CountAsync(p => p.Status == "Unfinished");
+            int finishedProjects = await deptProjects.CountAsync(p => p.Status == "Finished");
 
             // Proposals from dept employees (not archived)
-            int pendingProposals = await _context.ProjectProposals
-                .Where(pp => deptEmpIds.Contains(pp.EmployeeId) && pp.Status == "Pending" && !pp.IsArchived)
-                .CountAsync();
-
             int totalProposals = await _context.ProjectProposals
                 .Where(pp => deptEmpIds.Contains(pp.EmployeeId) && !pp.IsArchived)
+                .CountAsync();
+
+            int pendingProposals = await _context.ProjectProposals
+                .Where(pp => deptEmpIds.Contains(pp.EmployeeId) && pp.Status == "Pending" && !pp.IsArchived)
                 .CountAsync();
 
             // Open tasks (Pending) across department projects
@@ -85,6 +87,7 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             ViewData["DHName"] = dhName;
             ViewData["TotalEmployees"] = totalEmployees;
             ViewData["ActiveProjects"] = activeProjects;
+            ViewData["FinishedProjects"] = finishedProjects;
             ViewData["PendingProposals"] = pendingProposals;
             ViewData["TotalProposals"] = totalProposals;
             ViewData["OpenTasks"] = openTasks;
