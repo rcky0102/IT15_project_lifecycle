@@ -22,9 +22,13 @@
     <link rel="stylesheet" href="~/css/proposal.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/depthead-project.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/depthead-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-proposal.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/employee-dashboard.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/employee-proposal.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-news.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-project.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-document.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/messenger.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
 </head>
@@ -89,6 +93,14 @@
                             <i class="fas fa-comment-dots"></i>
                             <span class="dh-nav-text">Messages</span>
                             <span class="msg-nav-badge" style="display:none"></span>
+                        </a>
+                    </li>
+                    <li class="dh-nav-item">
+                        <a href="@Url.Action("Index", "News", new { area = "DepartmentHead" })"
+                           class="dh-nav-link @(currentController == "News" ? "active" : "")"
+                           data-tooltip="News">
+                            <i class="fas fa-newspaper"></i>
+                            <span class="dh-nav-text">News</span>
                         </a>
                     </li>
                 </ul>

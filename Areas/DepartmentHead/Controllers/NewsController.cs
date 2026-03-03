@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using project_lifecycle.Models;
 
-namespace project_lifecycle.Areas.Employee.Controllers
+namespace project_lifecycle.Areas.DepartmentHead.Controllers
 {
-    [Area("Employee")]
+    [Area("DepartmentHead")]
     public class NewsController : Controller
     {
         private readonly IConfiguration _config;
@@ -20,7 +20,7 @@ namespace project_lifecycle.Areas.Employee.Controllers
         }
 
         /// <summary>
-        /// GET: /Employee/News?q=technology&sortBy=publishedAt&language=en&pageSize=10
+        /// GET: /DepartmentHead/News?q=technology&sortBy=publishedAt&language=en&pageSize=10
         /// </summary>
         public async Task<IActionResult> Index(
             string? q,
