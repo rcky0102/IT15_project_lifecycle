@@ -1,147 +1,53 @@
 @model project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
 @{
     ViewData["Title"] = Model.Project.Name;
-    var duration = (Model.Project.EndDate - Model.Project.StartDate).Days;
-    var totalMs = Model.Project.Milestones.Count;
-    var finishedMs = Model.Project.Milestones.Count(m => m.Status == "Finished");
-    var progressPct = totalMs > 0 ? (int)Math.Round((double)finishedMs / totalMs * 100) : 0;
-    var nextOrder  = Model.Project.Milestones.Any() ? Model.Project.Milestones.Max(m => m.SequenceOrder) + 1 : 1;
+    var duration    = (Model.Project.EndDate - Model.Project.StartDate).Days;
+    var totalMs     = Model.Project.Milestones.Count;
+    var finishedMs  = Model.Project.Milestones.Count(m => m.Status == "Finished");
+    var pct         = totalMs > 0 ? (int)Math.Round((double)finishedMs / totalMs * 100) : 0;
+    var nextOrder   = Model.Project.Milestones.Any() ? Model.Project.Milestones.Max(m => m.SequenceOrder) + 1 : 1;
 }
 
 <style>
-    /* ---- info strip ---- */
-    .det-info-strip { display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; padding:1rem 1.5rem; background:#fff; border-radius:12px; border:1px solid #e0f2fe; margin-bottom:1.75rem; }
-    .det-info-item  { display:flex; align-items:center; gap:.45rem; font-size:.82rem; color:#475569; }
-    .det-info-item i { color:#0284c7; width:14px; text-align:center; }
-    .det-info-item strong { color:#1e293b; }
-
-    /* ---- asymmetric grid ---- */
-    .det-grid { display:grid; grid-template-columns:5fr 3fr; gap:1.75rem; align-items:start; }
-    @@media(max-width:1024px){ .det-grid{grid-template-columns:1.4fr 1fr;} }
-    @@media(max-width:800px){ .det-grid{grid-template-columns:1fr;} }
-
-    /* ---- glass panel card ---- */
-    .det-panel { background:#fff; border-radius:16px; border:1px solid #e0f2fe; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.04); }
-    .det-panel-head { display:flex; align-items:center; justify-content:space-between; padding:1.15rem 1.5rem; background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%); border-bottom:1px solid #bae6fd; }
-    .det-panel-title { font-weight:800; font-size:1rem; color:#0c4a6e; display:flex; align-items:center; gap:.55rem; }
-    .det-panel-title i { font-size:.9rem; color:#0284c7; }
-    .det-panel-body  { padding:1.25rem 1.5rem; }
-    .det-panel-add-btn { display:inline-flex; align-items:center; gap:.35rem; background:linear-gradient(135deg,#0284c7,#0ea5e9); color:#fff; border:none; padding:.45rem .9rem; font-size:.76rem; font-weight:700; border-radius:8px; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(2,132,199,.25); }
-    .det-panel-add-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(2,132,199,.35); }
-
-    /* ---- progress summary bar ---- */
-    .det-progress-wrap { display:flex; align-items:center; gap:1rem; padding:.85rem 0 .5rem; margin-bottom:.5rem; }
-    .det-progress-bar-bg { flex:1; height:6px; background:#e0f2fe; border-radius:3px; overflow:hidden; }
-    .det-progress-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#0284c7,#38bdf8); transition:width .5s ease; }
-    .det-progress-label { font-size:.72rem; font-weight:700; color:#0284c7; white-space:nowrap; }
-
-    /* ========== TIMELINE ========== */
-    .det-timeline { position:relative; padding:.25rem 0 .25rem 0; }
-    .det-timeline::before { content:''; position:absolute; left:15px; top:0; bottom:0; width:2.5px; background:linear-gradient(180deg,#bae6fd 0%,#0284c7 30%,#0284c7 70%,#bae6fd 100%); border-radius:2px; }
-
-    /* timeline node row */
-    .det-tl-node { display:flex; align-items:stretch; gap:0; padding:0; position:relative; margin-bottom:6px; }
-    .det-tl-node:last-child { margin-bottom:0; }
-
-    /* left connector column */
-    .det-tl-left { width:32px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; position:relative; z-index:2; padding-top:1.35rem; }
-
-    /* dot */
-    .det-tl-dot { width:14px; height:14px; border-radius:50%; border:2.5px solid #bae6fd; background:#fff; flex-shrink:0; transition:all .3s; position:relative; }
-    .det-tl-dot::after { content:''; position:absolute; inset:-4px; border-radius:50%; transition:box-shadow .3s; }
-    .det-tl-node.finished .det-tl-dot { border-color:#0284c7; background:#0284c7; }
-    .det-tl-node.finished .det-tl-dot::after { box-shadow:0 0 0 4px rgba(2,132,199,.15); }
-    .det-tl-node.in_progress .det-tl-dot { border-color:#0ea5e9; background:#0ea5e9; animation:tlPulse 2s infinite; }
-    .det-tl-node.in_progress .det-tl-dot::after { box-shadow:0 0 0 4px rgba(14,165,233,.15); }
-    .det-tl-node.unfinished .det-tl-dot { border-color:#7dd3fc; background:#fff; }
-    @@keyframes tlPulse { 0%,100%{box-shadow:0 0 0 0 rgba(14,165,233,.3)} 50%{box-shadow:0 0 0 6px rgba(14,165,233,0)} }
-
-    /* right card */
-    .det-tl-card { flex:1; min-width:0; background:#fff; border:1px solid #e0f2fe; border-radius:12px; padding:1rem 1.15rem; margin-left:.55rem; transition:all .25s ease; position:relative; }
-    .det-tl-card::before { content:''; position:absolute; left:-7px; top:1.35rem; width:12px; height:12px; background:#fff; border-left:1px solid #e0f2fe; border-bottom:1px solid #e0f2fe; transform:rotate(45deg); }
-    .det-tl-card:hover { border-color:#7dd3fc; box-shadow:0 6px 20px rgba(2,132,199,.08); transform:translateX(3px); }
-    .det-tl-node.finished .det-tl-card { border-left:3px solid #0284c7; }
-    .det-tl-node.in_progress .det-tl-card { border-left:3px solid #0ea5e9; background:linear-gradient(135deg,#f0f9ff 0%,#fff 100%); }
-    .det-tl-node.unfinished .det-tl-card { border-left:3px solid #7dd3fc; }
-
-    /* card internals */
-    .det-tl-card-header { display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.5rem; }
-    .det-tl-card-order { font-size:.65rem; font-weight:800; color:#0369a1; background:#e0f2fe; padding:.2rem .5rem; border-radius:5px; letter-spacing:.5px; }
-    .det-tl-card-name { font-weight:700; font-size:.92rem; color:#1e293b; line-height:1.35; }
-    .det-tl-status { display:inline-flex; align-items:center; gap:.3rem; font-size:.65rem; font-weight:800; text-transform:uppercase; padding:.25rem .6rem; border-radius:6px; letter-spacing:.4px; margin-top:.35rem; }
-    .det-tl-status i { font-size:.55rem; }
-    .det-tl-status.finished { background:#e0f2fe; color:#0369a1; }
-    .det-tl-status.in_progress { background:#bae6fd; color:#0c4a6e; }
-    .det-tl-status.unfinished { background:#f0f9ff; color:#0284c7; }
-    .det-tl-actions { display:flex; gap:.35rem; align-items:center; margin-top:.7rem; padding-top:.65rem; border-top:1px dashed #e0f2fe; }
-
-    /* ---- compact badge accents (ocean blue) ---- */
-    .badge-accent { display:inline-block; padding:.18rem .55rem; border-radius:999px; font-weight:800; font-size:.72rem; color:#fff; background:linear-gradient(90deg,#0369a1,#0284c7); box-shadow:0 6px 18px rgba(2,132,199,.08); }
-    .role-badge { display:inline-flex; align-items:center; gap:.35rem; padding:.15rem .55rem; border-radius:999px; font-weight:700; font-size:.72rem; color:#023e5a; background:linear-gradient(90deg,#e6f9ff,#dff6ff); border:1px solid rgba(2,132,199,.12); }
-    .det-tl-action-btn { display:inline-flex; align-items:center; gap:.3rem; padding:.3rem .55rem; border:none; border-radius:6px; font-size:.7rem; font-weight:600; cursor:pointer; transition:all .2s; }
-    .det-tl-action-btn.view { background:#0284c7; color:#fff; }
-    .det-tl-action-btn.view:hover { background:#0369a1; }
-    .det-tl-action-btn.edit { background:#0ea5e9; color:#fff; }
-    .det-tl-action-btn.edit:hover { background:#0284c7; }
-    .det-tl-action-btn.delete { background:#f87171; color:#fff; }
-    .det-tl-action-btn.delete:hover { background:#ef4444; }
-
-    /* ========== TEAM MEMBERS ========== */
-    .det-member-card { display:flex; align-items:center; gap:.85rem; padding:.85rem; background:#f0f9ff; border:1px solid #e0f2fe; border-radius:12px; margin-bottom:.55rem; transition:all .25s ease; }
-    .det-member-card:last-child { margin-bottom:0; }
-    .det-member-card:hover { border-color:#7dd3fc; background:#fff; box-shadow:0 4px 14px rgba(2,132,199,.06); transform:translateY(-1px); }
-    .det-member-avatar { width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg,#0284c7,#38bdf8); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:.82rem; flex-shrink:0; box-shadow:0 2px 8px rgba(2,132,199,.2); }
-    .det-member-info { flex:1; min-width:0; }
-    .det-member-name { font-weight:700; font-size:.85rem; color:#1e293b; margin-bottom:.15rem; }
-    .det-member-role { display:inline-flex; align-items:center; gap:.25rem; font-size:.68rem; color:#0369a1; font-weight:700; background:#e0f2fe; padding:.15rem .5rem; border-radius:5px; }
-    .det-member-actions { display:flex; gap:.3rem; flex-shrink:0; }
-    .det-member-action { width:28px; height:28px; border:none; border-radius:7px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; font-size:.72rem; }
-    .det-member-action.edit { background:#0ea5e9; color:#fff; }
-    .det-member-action.edit:hover { background:#0284c7; }
-    .det-member-action.delete { background:#f87171; color:#fff; }
-    .det-member-action.delete:hover { background:#ef4444; }
-    .det-member-count { display:flex; align-items:center; gap:.5rem; padding:.65rem .85rem; background:#f0f9ff; border:1px dashed #bae6fd; border-radius:10px; margin-bottom:.85rem; }
-    .det-member-count-icon { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,#0284c7,#0ea5e9); display:flex; align-items:center; justify-content:center; color:#fff; font-size:.7rem; }
-    .det-member-count-text { font-size:.76rem; color:#64748b; }
-    .det-member-count-text strong { color:#0c4a6e; font-weight:800; }
-
-    /* ---- empty states ---- */
-    .det-empty { text-align:center; padding:2.5rem 1.5rem; color:#94a3b8; }
-    .det-empty i { font-size:2.2rem; display:block; margin-bottom:.6rem; opacity:.5; }
-    .det-empty span { font-size:.85rem; }
-
-    /* ---- modal ---- */
-    .det-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(12,74,110,.35); backdrop-filter:blur(4px); z-index:1040; align-items:center; justify-content:center; }
-    .det-modal-backdrop.open { display:flex; }
-    .det-modal { background:#fff; border-radius:18px; width:100%; max-width:480px; box-shadow:0 25px 60px rgba(2,132,199,.15); overflow:hidden; animation:detModalIn .25s ease; }
-    @@keyframes detModalIn { from{opacity:0;transform:translateY(-20px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
-    .det-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.5rem; background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border-bottom:1px solid #bae6fd; }
-    .det-modal-title { font-weight:800; font-size:1rem; color:#0c4a6e; display:flex; align-items:center; gap:.5rem; }
-    .det-modal-close { background:none; border:none; font-size:1.15rem; color:#94a3b8; cursor:pointer; line-height:1; padding:.35rem .5rem; border-radius:8px; transition:all .2s; }
-    .det-modal-close:hover { background:#e0f2fe; color:#0369a1; }
-    .det-modal-body { padding:1.5rem; }
-    .det-modal-footer { padding:.75rem 1.5rem 1.25rem; display:flex; gap:.6rem; justify-content:flex-end; }
+    /* Page-specific: modal + delete action + step chip (not in shared CSS) */
+    .pm-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,105,148,.25); backdrop-filter:blur(4px); z-index:1040; align-items:center; justify-content:center; }
+    .pm-modal-backdrop.open { display:flex; }
+    .pm-modal { background:#fff; border-radius:16px; width:100%; max-width:480px; box-shadow:0 25px 60px rgba(0,105,148,.15); overflow:hidden; animation:pmModalIn .25s ease; }
+    @@keyframes pmModalIn { from{opacity:0;transform:translateY(-16px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .pm-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; background:linear-gradient(135deg,#f0f7fc,#e8f4fb); border-bottom:1px solid rgba(0,105,148,.08); }
+    .pm-modal-title { font-weight:700; font-size:.95rem; color:var(--emp-ocean); display:flex; align-items:center; gap:.5rem; }
+    .pm-modal-close { background:none; border:none; font-size:1.1rem; color:#94a3b8; cursor:pointer; padding:.3rem .45rem; border-radius:8px; transition:all .2s; }
+    .pm-modal-close:hover { background:rgba(0,105,148,.06); color:var(--emp-ocean); }
+    .pm-modal-body { padding:1.5rem; }
+    .pm-modal-footer { padding:.75rem 1.5rem 1.25rem; display:flex; gap:.6rem; justify-content:flex-end; }
+    .emp-action-delete { color:#ef4444; border-color:rgba(239,68,68,.15); }
+    .emp-action-delete:hover { background:linear-gradient(135deg,#ef4444,#f87171); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(239,68,68,.25); }
+    .pm-step-chip { font-size:.65rem; font-weight:800; color:var(--emp-ocean); background:rgba(0,105,148,.06); padding:.2rem .5rem; border-radius:5px; letter-spacing:.4px; white-space:nowrap; }
+    .pm-member-actions { display:flex; gap:.3rem; flex-shrink:0; margin-left:auto; }
 </style>
 
-<!-- ===== Hero ===== -->
+<!-- ===== Page Hero ===== -->
 <div class="emp-page-hero">
     <div class="emp-page-hero-content">
         <div class="emp-page-hero-left">
-            <div class="emp-page-title-icon"><i class="fas fa-diagram-project"></i></div>
-            <div>
-                <h1 class="emp-page-title">@Model.Project.Name</h1>
-                <p class="emp-page-subtitle">@Model.Project.ProposalTitle</p>
-            </div>
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-diagram-project"></i></span>
+                @Model.Project.Name
+            </h1>
+            <p class="emp-page-subtitle">Proposal: @Model.Project.ProposalTitle</p>
         </div>
         <div class="emp-page-hero-right" style="display:flex;gap:.6rem;flex-wrap:wrap;">
             <button type="button" class="emp-btn emp-btn-outline" onclick="openModal('membersModal')">
-                <i class="fas fa-users me-1"></i>Members
+                <i class="fas fa-user-plus"></i>
+                <span>Add Member</span>
             </button>
             <button type="button" class="emp-btn emp-btn-outline" onclick="openModal('milestonesModal')">
-                <i class="fas fa-flag-checkered me-1"></i>Milestones
+                <i class="fas fa-flag-checkered"></i>
+                <span>Add Milestone</span>
             </button>
-            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Index" class="emp-btn emp-btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i>Back to Projects
+            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Index" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Projects</span>
             </a>
         </div>
     </div>
@@ -164,243 +70,318 @@
     </div>
 }
 
-<!-- ===== Info Strip ===== -->
-<div class="det-info-strip">
-    <div class="det-info-item">
-        <i class="fas fa-calendar-alt"></i>
-        <span><strong>Start:</strong> @Model.Project.StartDate.ToString("MMM d, yyyy")</span>
+<!-- ===== Info strip ===== -->
+<div class="emp-info-strip">
+    <div class="emp-info-item">
+        <i class="fas fa-calendar-days"></i>
+        <span>@Model.Project.StartDate.ToString("MMM dd, yyyy") &ndash; @Model.Project.EndDate.ToString("MMM dd, yyyy")</span>
     </div>
-    <div class="det-info-item">
-        <i class="fas fa-calendar-check"></i>
-        <span><strong>End:</strong> @Model.Project.EndDate.ToString("MMM d, yyyy")</span>
-    </div>
-    <div class="det-info-item">
+    <div class="emp-info-item">
         <i class="fas fa-clock"></i>
-        <span><strong>Duration:</strong> @duration days</span>
+        <span>@duration days</span>
     </div>
-    <div class="det-info-item">
+    <div class="emp-info-item">
         <i class="fas fa-users"></i>
-        <span><strong>Members:</strong> @Model.Project.Members.Count</span>
+        <span>@Model.Project.Members.Count member@(Model.Project.Members.Count == 1 ? "" : "s")</span>
     </div>
-    <div class="det-info-item">
+    <div class="emp-info-item">
         <i class="fas fa-flag-checkered"></i>
-        <span><strong>Milestones:</strong> @Model.Project.Milestones.Count (@finishedMs finished)</span>
+        <span>@finishedMs / @totalMs milestones completed</span>
     </div>
+    @if (totalMs > 0)
+    {
+        <div class="emp-info-progress">
+            <div class="emp-info-progress-bar">
+                <div class="emp-info-progress-fill" style="width:@pct%"></div>
+            </div>
+            <span class="emp-info-progress-label">@pct%</span>
+        </div>
+    }
 </div>
 
-<!-- ===== Two-Column Grid ===== -->
-<div class="det-grid">
-    <!-- ===== Project Timeline (Left - Larger) ===== -->
-    <div class="det-panel">
-        <div class="det-panel-head">
-            <div class="det-panel-title">
-                <i class="fas fa-stream" style="color:#0284c7;"></i>Project Timeline
+<div class="emp-show-grid">
+
+    <!-- ===== Milestones card ===== -->
+    <div class="emp-show-tasks-card">
+        <div class="emp-table-toolbar">
+            <div class="emp-table-toolbar-left">
+                <h3 class="emp-table-title"><i class="fas fa-flag-checkered"></i> Project Milestones</h3>
+                <span class="emp-count-chip">@totalMs</span>
             </div>
-            <button type="button" class="det-panel-add-btn" onclick="openModal('milestonesModal')">
-                <i class="fas fa-plus"></i>Add Milestone
+            <button type="button" class="emp-btn emp-btn-primary" style="padding:.45rem .9rem;font-size:.78rem;" onclick="openModal('milestonesModal')">
+                <i class="fas fa-plus"></i> Add
             </button>
         </div>
-        <div class="det-panel-body">
-            @if (!Model.Project.Milestones.Any())
-            {
-                <div class="det-empty">
-                    <i class="fas fa-route"></i>
-                    <span>No milestones yet. Start building your project timeline.</span>
-                </div>
-            }
-            else
-            {
-                <div class="det-progress-wrap">
-                    <div class="det-progress-bar-bg">
-                        <div class="det-progress-bar-fill" style="width:@(progressPct)%"></div>
-                    </div>
-                    <span class="det-progress-label">@finishedMs / @totalMs completed</span>
-                </div>
 
-                <div class="det-timeline">
-                    @foreach (var ms in Model.Project.Milestones.OrderBy(m => m.SequenceOrder))
-                    {
-                        var statusClass = ms.Status?.ToLower().Replace(" ", "_") ?? "unfinished";
-                        var statusIcon = statusClass == "finished" ? "fa-check-circle" : statusClass == "in_progress" ? "fa-spinner" : "fa-circle";
-                        <div class="det-tl-node @statusClass">
-                            <div class="det-tl-left">
-                                <div class="det-tl-dot"></div>
-                            </div>
-                            <div class="det-tl-card">
-                                <div class="det-tl-card-header">
-                                    <span class="det-tl-card-order">STEP @ms.SequenceOrder</span>
-                                    <span class="det-tl-status @statusClass badge-accent"><i class="fas @statusIcon"></i> @ms.Status</span>
-                                </div>
-                                <div class="det-tl-card-name">@ms.MilestoneName</div>
-                                <div class="det-tl-actions">
-                                    <a asp-area="ProjectManager"
-                                       asp-controller="Project"
-                                       asp-action="Milestone"
-                                       asp-route-projectMilestoneId="@ms.Id"
-                                       class="det-tl-action-btn view" title="View Milestone">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                    <button type="button" class="det-tl-action-btn edit"
-                                            onclick="editMilestone(@ms.Id, '@ms.MilestoneId', '@ms.SequenceOrder', 'milestonesModal')" title="Edit">
-                                        <i class="fas fa-pencil"></i> Edit
-                                    </button>
-                                    <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" style="margin:0;display:inline;">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
-                                        <button type="submit" class="det-tl-action-btn delete"
-                                                onclick="return confirm('Remove @ms.MilestoneName from this project?')">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- ===== Team Members (Right - Smaller) ===== -->
-    <div class="det-panel">
-        <div class="det-panel-head">
-            <div class="det-panel-title">
-                <i class="fas fa-users" style="color:#0284c7;"></i>Team
-            </div>
-            <button type="button" class="det-panel-add-btn" onclick="openModal('membersModal')">
-                <i class="fas fa-plus"></i>Add
-            </button>
-        </div>
-        <div class="det-panel-body">
-            @if (!Model.Project.Members.Any())
-            {
-                <div class="det-empty">
-                    <i class="fas fa-user-plus"></i>
-                    <span>No team members yet. Add people to get started.</span>
-                </div>
-            }
-            else
-            {
-                <div class="det-member-count">
-                    <div class="det-member-count-icon"><i class="fas fa-user-group"></i></div>
-                    <div class="det-member-count-text"><strong>@Model.Project.Members.Count</strong> member@(Model.Project.Members.Count != 1 ? "s" : "") assigned</div>
-                </div>
-
-                foreach (var m in Model.Project.Members)
+        @if (Model.Project.Milestones.Any())
+        {
+            <div class="emp-task-list">
+                @foreach (var ms in Model.Project.Milestones.OrderBy(m => m.SequenceOrder))
                 {
-                    var initials = string.Concat(m.EmployeeName.Split(' ').Take(2).Select(s => s.Length > 0 ? s[0].ToString() : ""));
-                    <div class="det-member-card">
-                        <div class="det-member-avatar">@initials</div>
-                        <div class="det-member-info">
-                            <div class="det-member-name">@m.EmployeeName</div>
-                            <div class="det-member-role role-badge"><i class="fas fa-shield-halved"></i> @m.ProjectRoleName</div>
+                    <div class="emp-task-row">
+                        <div class="emp-task-row-left">
+                            <span class="emp-task-status-dot @MsDotClass(ms.Status)"></span>
+                            <div class="emp-task-info">
+                                <span class="emp-task-name">@ms.MilestoneName</span>
+                                <span class="emp-task-dates">
+                                    <span class="pm-step-chip">STEP @ms.SequenceOrder</span>
+                                </span>
+                            </div>
                         </div>
-                        <div class="det-member-actions">
-                            <button type="button" class="det-member-action edit"
-                                    onclick="editMember(@m.Id, '@m.EmployeeId', '@m.ProjectRoleId', 'membersModal')" title="Edit">
+                        <div class="emp-task-row-right">
+                            <span class="emp-badge-white" title="Status">
+                                <span class="emp-status-inline @MsBadgeClass(ms.Status)">
+                                    <span class="emp-status-dot"></span>
+                                    <span class="emp-status-text">@ms.Status</span>
+                                </span>
+                            </span>
+                            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone"
+                               asp-route-projectMilestoneId="@ms.Id"
+                               class="emp-action-btn emp-action-view" title="View Milestone">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <button type="button" class="emp-action-btn emp-action-edit" title="Edit"
+                                    onclick="editMilestone(@ms.Id, '@ms.MilestoneId', '@ms.SequenceOrder', 'milestonesModal')">
                                 <i class="fas fa-pencil"></i>
                             </button>
-                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;">
+                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" style="margin:0;display:inline;">
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" name="memberId" value="@m.Id" />
-                                <button type="submit" class="det-member-action delete"
-                                        onclick="return confirm('Remove @m.EmployeeName from this project?')">
+                                <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
+                                <button type="submit" class="emp-action-btn emp-action-delete" title="Remove"
+                                        onclick="return confirm('Remove @ms.MilestoneName from this project?')">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
                         </div>
                     </div>
                 }
+            </div>
+        }
+        else
+        {
+            <div class="emp-empty-state">
+                <div class="emp-empty-icon"><i class="fas fa-flag-checkered"></i></div>
+                <h4 class="emp-empty-title">No milestones yet</h4>
+                <p class="emp-empty-text">Start building your project timeline by adding milestones.</p>
+            </div>
+        }
+    </div>
+
+    <!-- ===== Side panel ===== -->
+    <div class="emp-show-side">
+
+        <!-- Team Members -->
+        <div class="emp-side-card">
+            <div class="emp-side-card-title">
+                <i class="fas fa-users"></i> Team Members
+                <span class="emp-count-chip" style="margin-left:auto;">@Model.Project.Members.Count</span>
+            </div>
+            @if (Model.Project.Members.Any())
+            {
+                <div class="emp-member-stack">
+                    @foreach (var m in Model.Project.Members)
+                    {
+                        <div class="emp-member-row">
+                            <div class="emp-member-avatar">
+                                @if (!string.IsNullOrWhiteSpace(m.ProfileImage))
+                                {
+                                    <img src="@Url.Content(m.ProfileImage)" alt="@m.EmployeeName" style="width:100%;height:100%;border-radius:8px;object-fit:cover;display:block;" />
+                                }
+                                else
+                                {
+                                    @m.EmployeeName.Substring(0, 1).ToUpper()
+                                }
+                            </div>
+                            <div class="emp-member-info">
+                                <span class="emp-member-name">@m.EmployeeName</span>
+                                <span class="emp-member-role">@m.ProjectRoleName</span>
+                            </div>
+                            <div class="pm-member-actions">
+                                <button type="button" class="emp-action-btn emp-action-edit" title="Edit"
+                                        style="width:28px;height:28px;font-size:.72rem;"
+                                        onclick="editMember(@m.Id, '@m.EmployeeId', '@m.ProjectRoleId', 'membersModal')">
+                                    <i class="fas fa-pencil"></i>
+                                </button>
+                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="memberId" value="@m.Id" />
+                                    <button type="submit" class="emp-action-btn emp-action-delete" title="Remove"
+                                            style="width:28px;height:28px;font-size:.72rem;"
+                                            onclick="return confirm('Remove @m.EmployeeName from this project?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="emp-empty-state" style="padding:1.5rem;">
+                    <div class="emp-empty-icon"><i class="fas fa-user-plus"></i></div>
+                    <h4 class="emp-empty-title">No team members</h4>
+                    <p class="emp-empty-text">Add people to get started.</p>
+                </div>
             }
         </div>
+
+        <!-- Milestone Summary -->
+        @if (Model.Project.Milestones.Any())
+        {
+            <div class="emp-side-card">
+                <div class="emp-side-card-title"><i class="fas fa-flag"></i> Milestone Summary</div>
+                <div class="emp-milestone-timeline">
+                    @foreach (var ms in Model.Project.Milestones.OrderBy(x => x.SequenceOrder))
+                    {
+                        <div class="emp-milestone">
+                            <div class="emp-milestone-dot @MsSideDotClass(ms.Status)"></div>
+                            <div class="emp-milestone-body">
+                                <div class="emp-milestone-title">@ms.MilestoneName</div>
+                                <span class="emp-badge-white" title="Status">
+                                    <span class="emp-status-inline @MsBadgeClass(ms.Status)">
+                                        <span class="emp-status-dot"></span>
+                                        <span class="emp-status-text">@ms.Status</span>
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
     </div>
+
 </div>
 
 <!-- ===== Members Modal ===== -->
-<div class="det-modal-backdrop" id="membersModal" onclick="closeOnBackdrop(event,'membersModal')">
-    <div class="det-modal">
-        <div class="det-modal-header">
-            <div class="det-modal-title"><i class="fas fa-user-plus" style="color:#0284c7;"></i><span id="memberModalTitle">Add Team Member</span></div>
-            <button class="det-modal-close" onclick="closeModal('membersModal')">&times;</button>
+<div class="pm-modal-backdrop" id="membersModal" onclick="closeOnBackdrop(event,'membersModal')">
+    <div class="pm-modal">
+        <div class="pm-modal-header">
+            <div class="pm-modal-title"><i class="fas fa-user-plus"></i> <span id="memberModalTitle">Add Team Member</span></div>
+            <button class="pm-modal-close" onclick="closeModal('membersModal')">&times;</button>
         </div>
         <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMember" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
             <input type="hidden" id="editMemberId" name="MemberId" value="" />
-            <div class="det-modal-body">
+            <div class="pm-modal-body">
                 <div class="emp-form-row">
-                    <div class="emp-form-group" style="flex:1">
-                        <label class="emp-form-label">Employee</label>
-                        <select id="memberEmployeeSelect" name="EmployeeId" class="emp-form-control" required>
-                            <option value="">-- Select Employee --</option>
-                            @foreach (var e in Model.AvailableEmployees)
-                            {
-                                <option value="@e.Value">@e.Text</option>
-                            }
-                        </select>
-                    </div>
+                    <label class="emp-form-label">Employee</label>
+                    <select id="memberEmployeeSelect" name="EmployeeId" class="emp-form-control" required>
+                        <option value="">-- Select Employee --</option>
+                        @foreach (var e in Model.AvailableEmployees)
+                        {
+                            <option value="@e.Value">@e.Text</option>
+                        }
+                    </select>
                 </div>
-                <div class="emp-form-row" style="margin-top:.85rem;">
-                    <div class="emp-form-group" style="flex:1">
-                        <label class="emp-form-label">Project Role</label>
-                        <select id="memberRoleSelect" name="ProjectRoleId" class="emp-form-control" required>
-                            <option value="">-- Select Role --</option>
-                            @foreach (var r in Model.AvailableProjectRoles)
-                            {
-                                <option value="@r.Value">@r.Text</option>
-                            }
-                        </select>
-                    </div>
+                <div class="emp-form-row">
+                    <label class="emp-form-label">Project Role</label>
+                    <select id="memberRoleSelect" name="ProjectRoleId" class="emp-form-control" required>
+                        <option value="">-- Select Role --</option>
+                        @foreach (var r in Model.AvailableProjectRoles)
+                        {
+                            <option value="@r.Value">@r.Text</option>
+                        }
+                    </select>
                 </div>
             </div>
-            <div class="det-modal-footer">
-                <button type="button" class="emp-btn emp-btn-outline" onclick="closeModal('membersModal')">Cancel</button>
-                <button type="submit" id="memberSubmitBtn" class="emp-btn emp-btn-primary"><i class="fas fa-plus me-1"></i><span id="memberSubmitText">Add Member</span></button>
+            <div class="pm-modal-footer">
+                <button type="button" class="emp-btn emp-btn-secondary" onclick="closeModal('membersModal')">Cancel</button>
+                <button type="submit" id="memberSubmitBtn" class="emp-btn emp-btn-primary"><i class="fas fa-plus"></i> <span id="memberSubmitText">Add Member</span></button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- ===== Milestones Modal ===== -->
-<div class="det-modal-backdrop" id="milestonesModal" onclick="closeOnBackdrop(event,'milestonesModal')">
-    <div class="det-modal">
-        <div class="det-modal-header">
-            <div class="det-modal-title"><i class="fas fa-flag-checkered" style="color:#0284c7;"></i><span id="milestoneModalTitle">Add Milestone</span></div>
-            <button class="det-modal-close" onclick="closeModal('milestonesModal')">&times;</button>
+<div class="pm-modal-backdrop" id="milestonesModal" onclick="closeOnBackdrop(event,'milestonesModal')">
+    <div class="pm-modal">
+        <div class="pm-modal-header">
+            <div class="pm-modal-title"><i class="fas fa-flag-checkered"></i> <span id="milestoneModalTitle">Add Milestone</span></div>
+            <button class="pm-modal-close" onclick="closeModal('milestonesModal')">&times;</button>
         </div>
         <form asp-area="ProjectManager" asp-controller="Project" asp-action="AddMilestone" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
             <input type="hidden" id="editProjectMilestoneId" name="ProjectMilestoneId" value="" />
-            <div class="det-modal-body">
+            <div class="pm-modal-body">
                 <div class="emp-form-row">
-                    <div class="emp-form-group" style="flex:1">
-                        <label class="emp-form-label">Milestone Template</label>
-                        <select id="milestoneSelect" name="MilestoneId" class="emp-form-control" required>
-                            <option value="">-- Select Milestone --</option>
-                            @foreach (var t in Model.AvailableMilestones)
-                            {
-                                <option value="@t.Value">@t.Text</option>
-                            }
-                        </select>
-                    </div>
+                    <label class="emp-form-label">Milestone Template</label>
+                    <select id="milestoneSelect" name="MilestoneId" class="emp-form-control" required>
+                        <option value="">-- Select Milestone --</option>
+                        @foreach (var t in Model.AvailableMilestones)
+                        {
+                            <option value="@t.Value">@t.Text</option>
+                        }
+                    </select>
                 </div>
-                <div class="emp-form-row" style="margin-top:.85rem;">
-                    <div class="emp-form-group" style="flex:1">
-                        <label class="emp-form-label">Sequence Order</label>
-                        <input id="sequenceOrderInput" name="SequenceOrder" type="number" min="1" class="emp-form-control"
-                               value="@nextOrder" required />
-                        <span style="font-size:.75rem;color:#64748b;margin-top:.3rem;display:block;">Order determines the milestone's position in the project timeline.</span>
-                    </div>
+                <div class="emp-form-row">
+                    <label class="emp-form-label">Sequence Order</label>
+                    <input id="sequenceOrderInput" name="SequenceOrder" type="number" min="1" class="emp-form-control"
+                           value="@nextOrder" required />
+                    <span style="font-size:.75rem;color:#64748b;margin-top:.15rem;">Order determines the milestone's position in the timeline.</span>
                 </div>
             </div>
-            <div class="det-modal-footer">
-                <button type="button" class="emp-btn emp-btn-outline" onclick="closeModal('milestonesModal')">Cancel</button>
-                <button type="submit" id="milestoneSubmitBtn" class="emp-btn emp-btn-primary"><i class="fas fa-plus me-1"></i><span id="milestoneSubmitText">Add Milestone</span></button>
+            <div class="pm-modal-footer">
+                <button type="button" class="emp-btn emp-btn-secondary" onclick="closeModal('milestonesModal')">Cancel</button>
+                <button type="submit" id="milestoneSubmitBtn" class="emp-btn emp-btn-primary"><i class="fas fa-plus"></i> <span id="milestoneSubmitText">Add Milestone</span></button>
             </div>
         </form>
     </div>
 </div>
+
+@functions {
+    private string MsBadgeClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-status-default";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed"         => "emp-status-approved",
+            "checked"           => "emp-status-approved",
+            "finished"          => "emp-status-approved",
+            "in progress"       => "emp-status-revision",
+            "requires revision" => "emp-status-revision",
+            "require revision"  => "emp-status-revision",
+            "pending"           => "emp-status-pending",
+            _                   => "emp-status-default"
+        };
+    }
+
+    private string MsDotClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-dot-gray";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed"         => "emp-dot-green",
+            "checked"           => "emp-dot-green",
+            "finished"          => "emp-dot-green",
+            "in progress"       => "emp-dot-orange",
+            "requires revision" => "emp-dot-orange",
+            "require revision"  => "emp-dot-orange",
+            _                   => "emp-dot-gray"
+        };
+    }
+
+    private string MsSideDotClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-ms-dot-idle";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed"         => "emp-ms-dot-done",
+            "checked"           => "emp-ms-dot-done",
+            "finished"          => "emp-ms-dot-done",
+            "in progress"       => "emp-ms-dot-active",
+            "requires revision" => "emp-ms-dot-active",
+            "require revision"  => "emp-ms-dot-active",
+            _                   => "emp-ms-dot-idle"
+        };
+    }
+}
 
 @section Scripts {
 <script>
@@ -420,21 +401,19 @@ function closeOnBackdrop(e, id) {
 }
 
 function resetModals() {
-    // Reset members modal
     document.getElementById('editMemberId').value = '';
     document.getElementById('memberEmployeeSelect').value = '';
     document.getElementById('memberRoleSelect').value = '';
     document.getElementById('memberSubmitText').textContent = 'Add Member';
     document.getElementById('memberModalTitle').textContent = 'Add Team Member';
-    document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-plus me-1"></i><span id="memberSubmitText">Add Member</span>';
-    
-    // Reset milestones modal
+    document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> <span id="memberSubmitText">Add Member</span>';
+
     document.getElementById('editProjectMilestoneId').value = '';
     document.getElementById('milestoneSelect').value = '';
     document.getElementById('sequenceOrderInput').value = '@nextOrder';
     document.getElementById('milestoneSubmitText').textContent = 'Add Milestone';
     document.getElementById('milestoneModalTitle').textContent = 'Add Milestone';
-    document.getElementById('milestoneSubmitBtn').innerHTML = '<i class="fas fa-plus me-1"></i><span id="milestoneSubmitText">Add Milestone</span>';
+    document.getElementById('milestoneSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> <span id="milestoneSubmitText">Add Milestone</span>';
 }
 
 function editMember(memberId, employeeId, projectRoleId, modalId) {
@@ -443,7 +422,7 @@ function editMember(memberId, employeeId, projectRoleId, modalId) {
     document.getElementById('memberRoleSelect').value = projectRoleId;
     document.getElementById('memberSubmitText').textContent = 'Update Member';
     document.getElementById('memberModalTitle').textContent = 'Edit Team Member';
-    document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-check me-1"></i><span id="memberSubmitText">Update Member</span>';
+    document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-check"></i> <span id="memberSubmitText">Update Member</span>';
     openModal(modalId);
 }
 
@@ -453,13 +432,13 @@ function editMilestone(projectMilestoneId, milestoneId, sequenceOrder, modalId) 
     document.getElementById('sequenceOrderInput').value = sequenceOrder;
     document.getElementById('milestoneSubmitText').textContent = 'Update Milestone';
     document.getElementById('milestoneModalTitle').textContent = 'Edit Milestone';
-    document.getElementById('milestoneSubmitBtn').innerHTML = '<i class="fas fa-check me-1"></i><span id="milestoneSubmitText">Update Milestone</span>';
+    document.getElementById('milestoneSubmitBtn').innerHTML = '<i class="fas fa-check"></i> <span id="milestoneSubmitText">Update Milestone</span>';
     openModal(modalId);
 }
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        document.querySelectorAll('.det-modal-backdrop.open').forEach(m => {
+        document.querySelectorAll('.pm-modal-backdrop.open').forEach(m => {
             m.classList.remove('open');
         });
         document.body.style.overflow = '';
