@@ -84,9 +84,16 @@
 
 <!-- ===== Table ===== -->
     <style>
-        /* Scoped tweaks for DeptHead proposal badges: keep on one line and truncate if too long */
+        /* Scoped tweaks for DeptHead proposal badges: keep on one line and truncate if too long
+           Exclude the status inline element so the status dot (and its glow/hover) are not clipped. */
         .project-table-card .project-badge-white { white-space: nowrap; }
-        .project-table-card .project-badge-white > span { display: inline-block; max-width: 10.5rem; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+        .project-table-card .project-badge-white > span:not(.emp-status-inline) {
+            display: inline-block;
+            max-width: 10.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
     </style>
 <div class="project-table-section">
     <div class="project-table-card">
