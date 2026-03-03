@@ -88,6 +88,46 @@
                     <div class="messenger-chat-header-name" id="chatHeaderName">Select a chat</div>
                     <div class="messenger-chat-header-status" id="chatHeaderStatus"></div>
                 </div>
+                <button class="group-settings-btn" id="groupSettingsBtn" title="Group Settings" style="display:none;">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+
+            <!-- Group Settings Drawer (slides in from right) -->
+            <div class="group-settings-drawer" id="groupSettingsDrawer" style="display:none;">
+                <div class="group-settings-header">
+                    <button class="group-settings-back-btn" id="groupSettingsBackBtn" title="Back to chat">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h3>Group Settings</h3>
+                </div>
+                <div class="group-settings-body">
+                    <!-- Group Name Section -->
+                    <div class="group-settings-section">
+                        <label class="group-settings-label">Group Name</label>
+                        <div class="group-rename-row">
+                            <input type="text" id="groupRenameInput" class="group-rename-input" maxlength="200" autocomplete="off" />
+                            <button class="group-rename-save-btn" id="groupRenameSaveBtn" title="Save">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Members Section -->
+                    <div class="group-settings-section">
+                        <label class="group-settings-label">Members <span id="groupSettingsMemberCount"></span></label>
+                        <div class="group-settings-members" id="groupSettingsMembers">
+                            <div class="messenger-loading"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Leave Group -->
+                    <div class="group-settings-section group-settings-danger">
+                        <button class="group-leave-btn" id="groupLeaveBtn">
+                            <i class="fas fa-sign-out-alt"></i> Leave Group
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Messages -->

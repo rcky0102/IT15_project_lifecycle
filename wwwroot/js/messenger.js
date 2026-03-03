@@ -35,9 +35,21 @@
 
     let currentConversationId = null;
     let currentUserId = null;
+    let currentConvIsGroup = false;
+    let currentConvCreatedBy = null;
     let connection = null;
     let allContacts = [];           // cached contacts for group selection
     let selectedGroupMembers = {};  // { userId: { name, initials } }
+
+    // Group settings DOM refs
+    const groupSettingsBtn      = document.getElementById('groupSettingsBtn');
+    const groupSettingsDrawer   = document.getElementById('groupSettingsDrawer');
+    const groupSettingsBackBtn  = document.getElementById('groupSettingsBackBtn');
+    const groupRenameInput      = document.getElementById('groupRenameInput');
+    const groupRenameSaveBtn    = document.getElementById('groupRenameSaveBtn');
+    const groupSettingsMembers  = document.getElementById('groupSettingsMembers');
+    const groupSettingsMemberCount = document.getElementById('groupSettingsMemberCount');
+    const groupLeaveBtn         = document.getElementById('groupLeaveBtn');
 
     // ── Initialize ────────────────────────────────────────────────────
     async function init() {
@@ -50,6 +62,7 @@
         setupInput();
         setupBackButton();
         setupGroupCreation();
+        setupGroupSettings();
 
         await loadConversations();
         await loadContacts();
@@ -77,6 +90,24 @@
         });
 
         connection.on('ConversationUpdated', (data) => {
+            loadConversations();
+            updateNavBadge();
+            // If the current conversation's settings drawer is open, refresh it
+            if (data.conversationId === currentConversationId && groupSettingsDrawer && groupSettingsDrawer.style.display !== 'none') {
+                loadGroupDetails(currentConversationId);
+            }
+        });
+
+        connection.on('RemovedFromGroup', (data) => {
+            // If currently viewing this conversation, close it
+            if (data.conversationId === currentConversationId) {
+                chatPlaceholder.style.display = '';
+                chatActive.style.display = 'none';
+                if (groupSettingsDrawer) groupSettingsDrawer.style.display = 'none';
+                currentConversationId = null;
+                currentConvIsGroup = false;
+                currentConvCreatedBy = null;
+            }
             loadConversations();
             updateNavBadge();
         });
@@ -237,7 +268,7 @@
                 </div>
                 ${unreadBadge}`;
 
-            item.addEventListener('click', () => openConversation(conv.id, conv.displayName, conv.initials));
+            item.addEventListener('click', () => openConversation(conv.id, conv.displayName, conv.initials, conv.isGroup, conv.createdByUserId));
             convList.appendChild(item);
         });
     }
@@ -315,7 +346,7 @@
                 // Switch to chats tab
                 tabChats?.click();
                 await loadConversations();
-                openConversation(data.conversationId, name, initials);
+                openConversation(data.conversationId, name, initials, false, null);
             }
         } catch (err) {
             console.error('Failed to create conversation:', err);
@@ -324,18 +355,27 @@
     }
 
     // ── Open Conversation ─────────────────────────────────────────────
-    async function openConversation(convId, name, initials) {
+    async function openConversation(convId, name, initials, isGroup, createdByUserId) {
         // Leave previous conversation group
         if (currentConversationId && connection) {
             connection.invoke('LeaveConversation', currentConversationId.toString()).catch(() => {});
         }
 
         currentConversationId = convId;
+        currentConvIsGroup = !!isGroup;
+        currentConvCreatedBy = createdByUserId || null;
 
         // Update header
         chatHeaderAvatar.textContent = initials;
         chatHeaderName.textContent = name;
         chatHeaderStatus.textContent = 'Active';
+
+        // Show/hide group settings button
+        if (groupSettingsBtn) {
+            groupSettingsBtn.style.display = currentConvIsGroup ? '' : 'none';
+        }
+        // Hide group settings drawer when switching conversations
+        if (groupSettingsDrawer) groupSettingsDrawer.style.display = 'none';
 
         // Show chat, hide placeholder
         chatPlaceholder.style.display = 'none';
@@ -652,7 +692,7 @@
                 // Switch to chats tab
                 tabChats?.click();
                 await loadConversations();
-                openConversation(data.conversationId, data.groupName, data.initials);
+                openConversation(data.conversationId, data.groupName, data.initials, true, currentUserId);
             }
         } catch (err) {
             console.error('Failed to create group:', err);
@@ -660,6 +700,188 @@
         } finally {
             groupCreateBtn.disabled = false;
             groupCreateBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Create Group';
+        }
+    }
+
+    // ── Group Settings ─────────────────────────────────────────────────
+    function setupGroupSettings() {
+        // Open drawer
+        groupSettingsBtn?.addEventListener('click', () => {
+            if (!currentConversationId || !currentConvIsGroup) return;
+            groupSettingsDrawer.style.display = 'flex';
+            loadGroupDetails(currentConversationId);
+        });
+
+        // Close drawer
+        groupSettingsBackBtn?.addEventListener('click', () => {
+            groupSettingsDrawer.style.display = 'none';
+        });
+
+        // Save renamed group
+        groupRenameSaveBtn?.addEventListener('click', () => renameCurrentGroup());
+        groupRenameInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                renameCurrentGroup();
+            }
+        });
+
+        // Leave group
+        groupLeaveBtn?.addEventListener('click', leaveCurrentGroup);
+    }
+
+    async function loadGroupDetails(convId) {
+        if (!groupSettingsMembers) return;
+        groupSettingsMembers.innerHTML = '<div class="messenger-loading"><div class="spinner"></div></div>';
+
+        try {
+            const res = await fetch(`/api/messages/conversations/${convId}/details`);
+            if (!res.ok) {
+                groupSettingsMembers.innerHTML = '<p style="color:red;padding:10px;">Failed to load details.</p>';
+                return;
+            }
+            const data = await res.json();
+
+            // Populate rename input
+            if (groupRenameInput) groupRenameInput.value = data.groupName || '';
+
+            // Update member count
+            if (groupSettingsMemberCount) {
+                groupSettingsMemberCount.textContent = `(${data.members.length})`;
+            }
+
+            // Update createdBy from server (in case stale)
+            currentConvCreatedBy = data.createdByUserId;
+
+            // Render members
+            groupSettingsMembers.innerHTML = '';
+            data.members.forEach(m => {
+                const memberEl = document.createElement('div');
+                memberEl.className = 'group-settings-member';
+
+                const isCreator = m.userId === data.createdByUserId;
+                const canRemove = data.isCreator && m.userId !== currentUserId;
+                const isSelf = m.userId === currentUserId;
+
+                let badges = '';
+                if (isCreator) badges += '<span class="group-member-badge creator">Creator</span>';
+                if (isSelf) badges += '<span class="group-member-badge you">You</span>';
+
+                let removeBtn = '';
+                if (canRemove) {
+                    removeBtn = `<button class="group-remove-member-btn" data-user-id="${m.userId}" title="Remove from group"><i class="fas fa-user-minus"></i></button>`;
+                }
+
+                memberEl.innerHTML = `
+                    <div class="messenger-people-avatar" style="width:36px;height:36px;font-size:.7rem;">${escapeHtml(m.initials)}</div>
+                    <div class="group-settings-member-info">
+                        <div class="group-settings-member-name">${escapeHtml(m.name)} ${badges}</div>
+                        <div class="group-settings-member-role">${m.department ? escapeHtml(m.department) : ''}${m.position ? ' · ' + escapeHtml(m.position) : ''}</div>
+                    </div>
+                    ${removeBtn}`;
+
+                // Attach remove handler
+                const rmBtn = memberEl.querySelector('.group-remove-member-btn');
+                if (rmBtn) {
+                    rmBtn.addEventListener('click', () => removeMemberFromGroup(convId, m.userId, m.name));
+                }
+
+                groupSettingsMembers.appendChild(memberEl);
+            });
+        } catch (err) {
+            console.error('Failed to load group details:', err);
+            groupSettingsMembers.innerHTML = '<p style="color:red;padding:10px;">Error loading details.</p>';
+        }
+    }
+
+    async function renameCurrentGroup() {
+        if (!currentConversationId) return;
+        const newName = groupRenameInput?.value?.trim();
+        if (!newName) {
+            alert('Group name cannot be empty.');
+            groupRenameInput?.focus();
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/messages/conversations/${currentConversationId}/rename`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupName: newName })
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                alert('Failed to rename group. ' + (err || ''));
+                return;
+            }
+
+            const data = await res.json();
+            // Update header
+            chatHeaderName.textContent = data.groupName;
+            chatHeaderAvatar.textContent = data.groupName.length >= 2
+                ? data.groupName.substring(0, 2).toUpperCase()
+                : data.groupName.toUpperCase();
+
+            await loadConversations();
+        } catch (err) {
+            console.error('Failed to rename group:', err);
+            alert('Failed to rename group. Please try again.');
+        }
+    }
+
+    async function leaveCurrentGroup() {
+        if (!currentConversationId) return;
+        if (!confirm('Are you sure you want to leave this group?')) return;
+
+        try {
+            const res = await fetch(`/api/messages/conversations/${currentConversationId}/leave`, {
+                method: 'POST'
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                alert('Failed to leave group. ' + (err || ''));
+                return;
+            }
+
+            // Close chat view
+            chatPlaceholder.style.display = '';
+            chatActive.style.display = 'none';
+            groupSettingsDrawer.style.display = 'none';
+            currentConversationId = null;
+            currentConvIsGroup = false;
+            currentConvCreatedBy = null;
+            sidebar?.classList.remove('hidden-mobile');
+
+            await loadConversations();
+            updateNavBadge();
+        } catch (err) {
+            console.error('Failed to leave group:', err);
+            alert('Failed to leave group. Please try again.');
+        }
+    }
+
+    async function removeMemberFromGroup(convId, userId, userName) {
+        if (!confirm(`Remove ${userName} from this group?`)) return;
+
+        try {
+            const res = await fetch(`/api/messages/conversations/${convId}/members/${encodeURIComponent(userId)}`, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                alert('Failed to remove member. ' + (err || ''));
+                return;
+            }
+
+            // Refresh group details
+            await loadGroupDetails(convId);
+            await loadConversations();
+        } catch (err) {
+            console.error('Failed to remove member:', err);
+            alert('Failed to remove member. Please try again.');
         }
     }
 

@@ -14,6 +14,9 @@ namespace project_lifecycle.Models
         [MaxLength(200)]
         public string? GroupName { get; set; }
 
+        /// <summary>UserId of the person who created this group conversation.</summary>
+        public string? CreatedByUserId { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

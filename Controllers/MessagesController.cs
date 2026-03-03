@@ -198,6 +198,7 @@ namespace project_lifecycle.Controllers
                     displayName,
                     initials,
                     isGroup = conv.IsGroup,
+                    createdByUserId = conv.CreatedByUserId,
                     lastMessage = lastMessage != null ? new
                     {
                         content = lastMessage.Content.Length > 60
@@ -281,6 +282,7 @@ namespace project_lifecycle.Controllers
             {
                 IsGroup = true,
                 GroupName = request.GroupName.Trim(),
+                CreatedByUserId = currentUserId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -437,6 +439,164 @@ namespace project_lifecycle.Controllers
             return Ok(messageDto);
         }
 
+        // ───────── GROUP DETAILS ─────────
+
+        [HttpGet("conversations/{conversationId}/details")]
+        public async Task<IActionResult> GetConversationDetails(int conversationId)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (currentUserId == null) return Unauthorized();
+
+            var isParticipant = await _db.ConversationParticipants
+                .AnyAsync(cp => cp.ConversationId == conversationId && cp.UserId == currentUserId);
+            if (!isParticipant) return Forbid();
+
+            var conv = await _db.Conversations
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == conversationId);
+            if (conv == null) return NotFound();
+
+            var participantIds = conv.Participants.Select(p => p.UserId).ToList();
+            var userInfoMap = await ResolveUsersInfoAsync(participantIds);
+
+            var members = conv.Participants.Select(p =>
+            {
+                userInfoMap.TryGetValue(p.UserId, out var info);
+                return new
+                {
+                    userId = p.UserId,
+                    name = info?.FullName ?? "Unknown",
+                    initials = info?.Initials ?? "??",
+                    department = info?.Department ?? "",
+                    position = info?.Position ?? "",
+                    joinedAt = p.JoinedAt
+                };
+            }).ToList();
+
+            return Ok(new
+            {
+                id = conv.Id,
+                isGroup = conv.IsGroup,
+                groupName = conv.GroupName,
+                createdByUserId = conv.CreatedByUserId,
+                isCreator = conv.CreatedByUserId == currentUserId,
+                members
+            });
+        }
+
+        // ───────── LEAVE GROUP ─────────
+
+        [HttpPost("conversations/{conversationId}/leave")]
+        public async Task<IActionResult> LeaveGroup(int conversationId)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (currentUserId == null) return Unauthorized();
+
+            var conv = await _db.Conversations
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == conversationId);
+            if (conv == null) return NotFound();
+            if (!conv.IsGroup) return BadRequest("Cannot leave a direct conversation.");
+
+            var participant = conv.Participants.FirstOrDefault(p => p.UserId == currentUserId);
+            if (participant == null) return NotFound("You are not in this group.");
+
+            _db.ConversationParticipants.Remove(participant);
+            conv.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            // Notify remaining members
+            var remainingIds = conv.Participants
+                .Where(p => p.UserId != currentUserId)
+                .Select(p => p.UserId).ToList();
+            foreach (var pid in remainingIds)
+            {
+                await _chatHub.Clients.Group($"user_{pid}")
+                    .SendAsync("ConversationUpdated", new { conversationId });
+            }
+
+            return Ok();
+        }
+
+        // ───────── RENAME GROUP ─────────
+
+        [HttpPut("conversations/{conversationId}/rename")]
+        public async Task<IActionResult> RenameGroup(int conversationId, [FromBody] RenameGroupRequest request)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (currentUserId == null) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(request.GroupName))
+                return BadRequest("Group name is required.");
+
+            var conv = await _db.Conversations
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == conversationId);
+            if (conv == null) return NotFound();
+            if (!conv.IsGroup) return BadRequest("Cannot rename a direct conversation.");
+
+            var isParticipant = conv.Participants.Any(p => p.UserId == currentUserId);
+            if (!isParticipant) return Forbid();
+
+            conv.GroupName = request.GroupName.Trim();
+            conv.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            // Notify all participants
+            foreach (var p in conv.Participants)
+            {
+                await _chatHub.Clients.Group($"user_{p.UserId}")
+                    .SendAsync("ConversationUpdated", new { conversationId });
+            }
+
+            return Ok(new { groupName = conv.GroupName });
+        }
+
+        // ───────── REMOVE MEMBER FROM GROUP (creator only) ─────────
+
+        [HttpDelete("conversations/{conversationId}/members/{userId}")]
+        public async Task<IActionResult> RemoveMember(int conversationId, string userId)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            if (currentUserId == null) return Unauthorized();
+
+            var conv = await _db.Conversations
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.Id == conversationId);
+            if (conv == null) return NotFound();
+            if (!conv.IsGroup) return BadRequest("Cannot remove members from a direct conversation.");
+
+            // Only the creator can remove members
+            if (conv.CreatedByUserId != currentUserId)
+                return Forbid();
+
+            if (userId == currentUserId)
+                return BadRequest("Use the leave endpoint to leave the group.");
+
+            var participant = conv.Participants.FirstOrDefault(p => p.UserId == userId);
+            if (participant == null) return NotFound("User is not in this group.");
+
+            _db.ConversationParticipants.Remove(participant);
+            conv.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            // Notify the removed user
+            await _chatHub.Clients.Group($"user_{userId}")
+                .SendAsync("RemovedFromGroup", new { conversationId });
+
+            // Notify remaining participants
+            var remainingIds = conv.Participants
+                .Where(p => p.UserId != userId)
+                .Select(p => p.UserId).ToList();
+            foreach (var pid in remainingIds)
+            {
+                await _chatHub.Clients.Group($"user_{pid}")
+                    .SendAsync("ConversationUpdated", new { conversationId });
+            }
+
+            return Ok();
+        }
+
         // ───────── MARK CONVERSATION AS READ ─────────
 
         [HttpPost("conversations/{conversationId}/read")]
@@ -496,6 +656,11 @@ namespace project_lifecycle.Controllers
         public class SendMessageRequest
         {
             public string Content { get; set; } = string.Empty;
+        }
+
+        public class RenameGroupRequest
+        {
+            public string GroupName { get; set; } = string.Empty;
         }
 
         // ───────── HELPERS ─────────
