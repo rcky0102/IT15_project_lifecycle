@@ -5,6 +5,13 @@
     var versions = ViewBag.ProjectProposalVersions as List<project_lifecycle.Models.ProjectProposalVersion> ?? new List<project_lifecycle.Models.ProjectProposalVersion>();
     var notes    = ViewBag.ProposalNoteVersions    as List<project_lifecycle.Models.ProposalNoteVersion>    ?? new List<project_lifecycle.Models.ProposalNoteVersion>();
     var orderedNotes = notes.OrderByDescending(n => n.VersionNumber).ToList();
+    var submitterName = Model?.Employee != null
+        ? (
+            Model.Employee.FirstName
+            + (string.IsNullOrWhiteSpace(Model.Employee.MiddleName) ? "" : " " + Model.Employee.MiddleName.Trim().Substring(0, 1) + ".")
+            + " " + Model.Employee.LastName
+          )
+        : "Unknown";
 }
 
 @if (Model == null)
@@ -25,7 +32,7 @@ else
                 <span class="emp-page-title-icon"><i class="fas fa-file-lines"></i></span>
                 @Model.Title
             </h1>
-            <p class="emp-page-subtitle">Submitted @Model.DateCreated.ToString("MMMM dd, yyyy")</p>
+            <p class="emp-page-subtitle">Submitted @Model.DateCreated.ToString("MMMM dd, yyyy") <span style="opacity:.85;margin:0 .5rem;">•</span> <strong>@submitterName</strong></p>
         </div>
         <div class="emp-page-hero-right" style="display:flex;gap:.5rem;flex-wrap:wrap;">
             <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('versionsModal')">

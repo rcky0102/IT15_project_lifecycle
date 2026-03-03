@@ -489,6 +489,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
                 var note = await _context.ProposalNoteVersions
                     .Include(n => n.ProjectProposal)
+                        .ThenInclude(p => p.Employee)
+                    .Include(n => n.DepartmentHead)
                     .FirstOrDefaultAsync(n => n.Id == id && n.ProjectProposal.EmployeeId == employee.Id);
 
                 if (note == null) return NotFound();

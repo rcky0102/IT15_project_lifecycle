@@ -11,9 +11,17 @@
                 <span class="emp-page-title-icon"><i class="fas fa-note-sticky"></i></span>
                 Note@(Model != null ? $" (v{Model.VersionNumber})" : "")
             </h1>
+            @{
+                var dhName = Model?.DepartmentHead != null
+                    ? (Model.DepartmentHead.FirstName
+                       + (string.IsNullOrWhiteSpace(Model.DepartmentHead.MiddleName) ? "" : " " + Model.DepartmentHead.MiddleName.Trim().Substring(0,1) + ".")
+                       + " " + Model.DepartmentHead.LastName)
+                    : null;
+            }
             <p class="emp-page-subtitle">
                 @Model?.ProjectProposal?.Title
                 <span style="opacity:.75;"> &mdash; Saved @Model?.DateCreated.ToString("MMM dd, yyyy h:mm tt")</span>
+                @if (!string.IsNullOrEmpty(dhName)) { <span style="opacity:.75;"> &mdash; Written by <strong>@dhName</strong></span> }
             </p>
         </div>
         <div class="emp-page-hero-right">
