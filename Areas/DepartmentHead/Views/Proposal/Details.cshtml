@@ -112,8 +112,9 @@ else
                 </div>
 
                 <div style="display:flex;align-items:center;">
-                    <button type="submit" name="actionType" value="SendFeedback"
-                        class="emp-btn" style="background:linear-gradient(135deg,#006994,#4CA3DD);color:#fff;">
+                    <button type="button"
+                        class="emp-btn" style="background:linear-gradient(135deg,#006994,#4CA3DD);color:#fff;"
+                        onclick="document.getElementById('actionTypeHidden').value='SendFeedback'; document.getElementById('reviewForm').submit();">
                         <i class="fas fa-paper-plane"></i> Send Feedback
                     </button>
                 </div>
