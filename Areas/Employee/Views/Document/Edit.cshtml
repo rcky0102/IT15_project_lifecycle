@@ -548,6 +548,9 @@
 </div>`;
                         document.body.insertAdjacentHTML('beforeend', empModalHtml);
                         const empModalEl = document.getElementById('collabEmployeeModal');
+                        // ensure modal stacks above the side panel/offcanvas
+                        const empModalZ = 2060;
+                        const empModalBackdropZ = 2050;
             const addBtn = document.getElementById('addCollabBtn');
             const roleSelect = document.getElementById('collabRole');
             const collabList = document.getElementById('collabList');
@@ -575,8 +578,19 @@
                 // show modal (use Bootstrap if available)
                 if (window.jQuery && typeof $().modal === 'function') {
                     $('#collabEmployeeModal').modal('show');
+                    // after shown, bump z-index of backdrop and modal so it overlays side panels
+                    $('#collabEmployeeModal').on('shown.bs.modal.empTop', function () {
+                        try { $('.modal-backdrop').last().css('z-index', empModalBackdropZ); } catch (e) { }
+                        try { $('#collabEmployeeModal').css('z-index', empModalZ); } catch (e) { }
+                    });
                 } else {
                     empModalEl.style.display = 'block';
+                    empModalEl.style.position = 'fixed';
+                    empModalEl.style.left = '0';
+                    empModalEl.style.top = '0';
+                    empModalEl.style.width = '100%';
+                    empModalEl.style.height = '100%';
+                    empModalEl.style.zIndex = empModalZ;
                     document.body.style.overflow = 'hidden';
                 }
 
@@ -718,8 +732,15 @@
             function closeEmployeeModal() {
                 if (window.jQuery && typeof $().modal === 'function') {
                     $('#collabEmployeeModal').modal('hide');
+                    try { $('#collabEmployeeModal').off('shown.bs.modal.empTop'); } catch (e) { }
                 } else {
                     empModalEl.style.display = 'none';
+                    empModalEl.style.zIndex = '';
+                    empModalEl.style.position = '';
+                    empModalEl.style.left = '';
+                    empModalEl.style.top = '';
+                    empModalEl.style.width = '';
+                    empModalEl.style.height = '';
                     document.body.style.overflow = '';
                 }
             }
