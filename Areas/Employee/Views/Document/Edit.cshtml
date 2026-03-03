@@ -510,38 +510,70 @@
                         const empModalHtml = `
 <div class="modal fade" id="collabEmployeeModal" tabindex="-1" aria-labelledby="collabEmployeeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content cp-modal">
-            <div class="cp-modal-header">
+        <div class="modal-content em-picker-modal">
+            <!-- Gradient Header -->
+            <div class="em-picker-header">
                 <div>
-                    <h5 class="cp-modal-title" id="collabEmployeeModalLabel"><i class="fas fa-users"></i> Pick employee from your department</h5>
+                    <h5 class="em-picker-title" id="collabEmployeeModalLabel"><i class="fas fa-user-plus"></i> Add Collaborator</h5>
+                    <p class="em-picker-subtitle">Select employees from your department</p>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body cp-modal-body" style="max-height:400px; overflow:auto;">
-                <div style="margin-bottom:8px;"><input type="text" id="empModalFilter" class="emp-form-control" placeholder="Filter list…" /></div>
-                <div class="sa-table-responsive">
-                    <table class="sa-table" id="empModalTable" style="width:100%;">
-                        <thead>
-                            <tr>
-                                <th style="width:48px;"><input type="checkbox" id="empModalSelectAll" /></th>
-                                <th>Name</th>
-                                <th>Employee #</th>
-                                <th style="width:120px; text-align:right;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+
+            <!-- Filter Bar -->
+            <div class="em-picker-filters">
+                <div class="em-picker-filters-row">
+                    <div class="em-picker-search-group">
+                        <i class="fas fa-magnifying-glass em-picker-search-icon"></i>
+                        <input type="text" id="empModalFilter" class="em-picker-search-input" placeholder="Search employees\u2026" autocomplete="off" />
+                    </div>
+                    <div class="em-picker-select-group">
+                        <label class="em-picker-select-label">Role</label>
+                        <select id="empModalRole" class="em-picker-select">
+                            <option value="Editor">Editor</option>
+                            <option value="Viewer">Viewer</option>
+                        </select>
+                    </div>
                 </div>
-                <div id="empModalEmpty" style="text-align:center; padding:18px; display:none; color:#666;"><i class="fas fa-user-group"></i> No employees found</div>
-                <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px;">
-                    <select id="empModalRole" class="emp-select" style="min-width:140px;">
-                        <option value="Editor">Editor</option>
-                        <option value="Viewer">Viewer</option>
-                    </select>
-                    <button type="button" id="empModalAddBtn" class="emp-btn emp-btn-primary emp-btn-sm" disabled>
-                        <i class="fas fa-plus"></i> Add
-                    </button>
+            </div>
+
+            <!-- Table Body -->
+            <div class="modal-body em-picker-body">
+                <div class="em-picker-table-card">
+                    <div class="em-picker-table-responsive">
+                        <table class="em-picker-table" id="empModalTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:44px;text-align:center;"><input type="checkbox" id="empModalSelectAll" class="em-picker-checkbox" /></th>
+                                    <th>Employee</th>
+                                    <th>Employee #</th>
+                                    <th style="width:100px;text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="empModalEmpty" class="em-picker-empty" style="display:none;">
+                        <div class="em-picker-empty-icon"><i class="fas fa-user-group"></i></div>
+                        <div class="em-picker-empty-title">No employees found</div>
+                        <div class="em-picker-empty-text">There are no available employees in your department.</div>
+                    </div>
+
+                    <!-- Pagination info -->
+                    <div class="em-picker-pagination" id="empModalPagination">
+                        <div class="em-picker-pagination-info" id="empModalPaginationInfo"></div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="em-picker-footer">
+                <button type="button" class="em-picker-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="empModalAddBtn" class="em-picker-btn-add" disabled>
+                    <i class="fas fa-plus"></i> Add Selected
+                </button>
             </div>
         </div>
     </div>
@@ -604,11 +636,13 @@
                             return;
                         }
                         results.forEach(e => {
+                            const initials = (e.name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
                             const tr = document.createElement('tr');
-                            tr.innerHTML = '<td style="text-align:center;"><input type="checkbox" class="emp-select-checkbox" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '" /></td>' +
-                                '<td>' + (e.name || '') + '</td>' +
-                                '<td>' + (e.employeeNumber || '') + '</td>' +
-                                '<td style="width:120px; text-align:right;"><button type="button" class="emp-btn emp-btn-sm emp-btn-outline emp-select-now" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '">Select</button></td>';
+                            tr.className = 'em-picker-row';
+                            tr.innerHTML = '<td style="text-align:center;"><input type="checkbox" class="emp-select-checkbox em-picker-checkbox" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '" /></td>' +
+                                '<td><div class="em-picker-name-cell"><div class="em-picker-avatar">' + initials + '</div><div class="em-picker-name-text">' + (e.name || '') + '</div></div></td>' +
+                                '<td><span class="em-picker-empno">' + (e.employeeNumber || '') + '</span></td>' +
+                                '<td style="text-align:center;"><button type="button" class="em-picker-select-btn emp-select-now" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '" title="Quick add"><i class="fas fa-plus"></i></button></td>';
                             tbody.appendChild(tr);
                         });
                         // wire checkbox change handlers
@@ -626,6 +660,9 @@
                                 updateSelectionState();
                             });
                         }
+                        // update pagination info
+                        const pInfo = document.getElementById('empModalPaginationInfo');
+                        if (pInfo) pInfo.textContent = 'Showing ' + results.length + ' employee' + (results.length !== 1 ? 's' : '');
                         // wire instant select buttons (per-row)
                         tbody.querySelectorAll('.emp-select-now').forEach(btn => btn.addEventListener('click', async function () {
                             const empNum = this.dataset.num;
@@ -751,11 +788,16 @@
             // client-side filter inside modal
             empModalFilter?.addEventListener('input', function () {
                 const q = this.value.trim().toLowerCase();
+                let visible = 0;
                 empModalTable.querySelectorAll('tbody tr').forEach(tr => {
-                    const name = tr.cells[1].textContent.toLowerCase();
-                    const num = tr.cells[2].textContent.toLowerCase();
-                    tr.style.display = (!q || name.includes(q) || num.includes(q)) ? '' : 'none';
+                    const name = (tr.querySelector('.em-picker-name-text')?.textContent || tr.cells[1]?.textContent || '').toLowerCase();
+                    const num = (tr.querySelector('.em-picker-empno')?.textContent || tr.cells[2]?.textContent || '').toLowerCase();
+                    const show = !q || name.includes(q) || num.includes(q);
+                    tr.style.display = show ? '' : 'none';
+                    if (show) visible++;
                 });
+                const pInfo = document.getElementById('empModalPaginationInfo');
+                if (pInfo) pInfo.textContent = visible === 0 ? 'No matches' : 'Showing ' + visible + ' employee' + (visible !== 1 ? 's' : '');
             });
 
             // Close suggestions on outside click
