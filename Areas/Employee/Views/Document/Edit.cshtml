@@ -105,7 +105,7 @@
             <div class="doc-collab-add">
                 <label class="emp-form-label">Invite Employee</label>
                 <div class="doc-collab-search-wrap">
-                    <input type="text" id="collabSearchInput" class="emp-form-control" placeholder="Search by name or ID…" autocomplete="off" />
+                    <input type="text" id="collabSearchInput" class="emp-form-control" placeholder="Click to pick from department list…" autocomplete="off" readonly />
                     <div class="doc-collab-suggestions" id="collabSuggestions" style="display:none;"></div>
                 </div>
                 <div class="doc-collab-role-row">
@@ -506,7 +506,37 @@
             const toggleBtn = document.getElementById('toggleCollabPanel');
             const closeBtn = document.getElementById('closeCollabPanel');
             const searchInput = document.getElementById('collabSearchInput');
-            const suggestions = document.getElementById('collabSuggestions');
+                        const empModalHtml = `
+<div class="modal fade" id="collabEmployeeModal" tabindex="-1" aria-labelledby="collabEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content cp-modal">
+            <div class="cp-modal-header">
+                <div>
+                    <h5 class="cp-modal-title" id="collabEmployeeModalLabel"><i class="fas fa-users"></i> Pick employee from your department</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body cp-modal-body" style="max-height:400px; overflow:auto;">
+                <div style="margin-bottom:8px;"><input type="text" id="empModalFilter" class="emp-form-control" placeholder="Filter list…" /></div>
+                <div class="sa-table-responsive">
+                    <table class="sa-table" id="empModalTable" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Employee #</th>
+                                <th style="width:120px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="empModalEmpty" style="text-align:center; padding:18px; display:none; color:#666;"><i class="fas fa-user-group"></i> No employees found</div>
+            </div>
+        </div>
+    </div>
+</div>`;
+                        document.body.insertAdjacentHTML('beforeend', empModalHtml);
+                        const empModalEl = document.getElementById('collabEmployeeModal');
             const addBtn = document.getElementById('addCollabBtn');
             const roleSelect = document.getElementById('collabRole');
             const collabList = document.getElementById('collabList');
@@ -520,35 +550,72 @@
             closeBtn?.addEventListener('click', closePanel);
             backdrop?.addEventListener('click', closePanel);
 
-            // Search employees
-            searchInput?.addEventListener('input', function () {
-                clearTimeout(searchTimer);
-                selectedEmployee = null;
-                addBtn.disabled = true;
-                const term = this.value.trim();
-                if (term.length < 2) { suggestions.style.display = 'none'; return; }
-                searchTimer = setTimeout(async () => {
-                    try {
-                        const resp = await fetch(searchEndpoint + '?term=' + encodeURIComponent(term) + '&documentId=' + documentId);
-                        const results = await resp.json();
-                        if (!results.length) { suggestions.innerHTML = '<div class="doc-collab-no-result">No employees found</div>'; suggestions.style.display = 'block'; return; }
-                        suggestions.innerHTML = results.map(e =>
-                            '<div class="doc-collab-suggestion" data-id="' + e.id + '" data-name="' + e.name + '" data-num="' + e.employeeNumber + '">' +
-                            '<strong>' + e.name + '</strong> <span style="opacity:.7;">(' + e.employeeNumber + ')</span>' +
-                            '</div>'
-                        ).join('');
-                        suggestions.style.display = 'block';
+            // Open a modal with department employees when clicking the input
+            const empModalCloseBtn = empModalEl.querySelector('.btn-close');
+            const empModalTable = document.getElementById('empModalTable');
+            const empModalEmpty = document.getElementById('empModalEmpty');
+            const empModalFilter = document.getElementById('empModalFilter');
 
-                        suggestions.querySelectorAll('.doc-collab-suggestion').forEach(el => {
-                            el.addEventListener('click', function () {
-                                selectedEmployee = { id: parseInt(this.dataset.id), name: this.dataset.name, num: this.dataset.num };
-                                searchInput.value = selectedEmployee.name;
-                                suggestions.style.display = 'none';
-                                addBtn.disabled = false;
-                            });
+            function openEmployeeModal() {
+                // clear previous
+                empModalTable.querySelector('tbody').innerHTML = '';
+                empModalEmpty.style.display = 'none';
+                empModalFilter.value = '';
+                // show modal (use Bootstrap if available)
+                if (window.jQuery && typeof $().modal === 'function') {
+                    $('#collabEmployeeModal').modal('show');
+                } else {
+                    empModalEl.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                }
+
+                // fetch department employees - backend expected to accept departmentOnly=1
+                fetch(searchEndpoint + '?departmentOnly=1&documentId=' + documentId)
+                    .then(r => r.json())
+                    .then(results => {
+                        const tbody = empModalTable.querySelector('tbody');
+                        if (!results || !results.length) {
+                            empModalEmpty.style.display = 'block';
+                            return;
+                        }
+                        results.forEach(e => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = '<td>' + (e.name || '') + '</td>' +
+                                '<td>' + (e.employeeNumber || '') + '</td>' +
+                                '<td><button type="button" class="emp-btn emp-btn-sm emp-btn-outline emp-select-emp" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '">Select</button></td>';
+                            tbody.appendChild(tr);
                         });
-                    } catch { }
-                }, 300);
+                        // wire select buttons
+                        tbody.querySelectorAll('.emp-select-emp').forEach(b => b.addEventListener('click', function () {
+                            selectedEmployee = { id: parseInt(this.dataset.id), name: this.dataset.name, num: this.dataset.num };
+                            searchInput.value = selectedEmployee.name;
+                            addBtn.disabled = false;
+                            closeEmployeeModal();
+                        }));
+                    })
+                    .catch(() => { empModalEmpty.style.display = 'block'; });
+            }
+
+            function closeEmployeeModal() {
+                if (window.jQuery && typeof $().modal === 'function') {
+                    $('#collabEmployeeModal').modal('hide');
+                } else {
+                    empModalEl.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            }
+            // open on click
+            searchInput?.addEventListener('click', function () { openEmployeeModal(); });
+            empModalCloseBtn?.addEventListener('click', closeEmployeeModal);
+            empModalEl.addEventListener('click', function (e) { if (e.target === empModalEl) closeEmployeeModal(); });
+            // client-side filter inside modal
+            empModalFilter?.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                empModalTable.querySelectorAll('tbody tr').forEach(tr => {
+                    const name = tr.cells[0].textContent.toLowerCase();
+                    const num = tr.cells[1].textContent.toLowerCase();
+                    tr.style.display = (!q || name.includes(q) || num.includes(q)) ? '' : 'none';
+                });
             });
 
             // Close suggestions on outside click
