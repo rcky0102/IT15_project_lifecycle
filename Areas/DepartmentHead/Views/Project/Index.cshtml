@@ -76,56 +76,87 @@
                             <th>Project Manager</th>
                             <th>Timeline</th>
                             <th>Members</th>
-                            <th>Status</th>
-                            <th>Created</th>
+                            <th>Progress</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="projectsBody">
                         @foreach (var project in Model.Projects)
                         {
-                            var duration = (project.EndDate - project.StartDate).Days;
+                            var duration  = (project.EndDate - project.StartDate).Days;
+                            var totalPMs  = project.Milestones?.Count ?? 0;
+                            var donePMs   = project.Milestones?.Count(m => {
+                                var s = (m.Status ?? "").ToLowerInvariant();
+                                return s == "completed" || s == "checked" || s == "finished";
+                            }) ?? 0;
+                            var percent   = totalPMs > 0 ? (int)Math.Round((double)donePMs * 100 / totalPMs) : 0;
                             <tr class="emp-row" data-name="@project.Name.ToLower()">
-                                    <td>
-                                        <div class="project-name-cell">
-                                            <div class="project-name-icon">
-                                                <i class="fas fa-folder"></i>
-                                            </div>
-                                            <div>
-                                                <div class="project-name-text">@project.Name</div>
-                                            </div>
+                                <td>
+                                    <div class="project-name-cell">
+                                        <div class="project-name-icon">
+                                            <i class="fas fa-folder"></i>
                                         </div>
-                                    </td>
-                                    <td>@project.ProposalTitle</td>
-                                    <td>
-                                        <span class="project-pm-badge">
-                                            <i class="fas fa-user-tie"></i> @project.ProjectManagerName
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="project-timeline">
-                                            <div class="project-timeline-dates">
-                                                <span>@project.StartDate.ToString("MMM dd")</span>
-                                                <i class="fas fa-arrow-right project-timeline-arrow"></i>
-                                                <span>@project.EndDate.ToString("MMM dd, yyyy")</span>
-                                            </div>
-                                            <span class="project-timeline-duration">@duration days</span>
+                                        <div>
+                                            <div class="project-name-text">@project.Name</div>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <span class="project-member-count">
-                                            <i class="fas fa-users"></i> @project.MemberCount
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="emp-badge-white" title="Status">
-                                            <span class="emp-status-inline @GetStatusClass(project.Status)">
-                                                <span class="emp-status-dot"></span>
-                                                <span class="emp-status-text">@project.Status</span>
-                                            </span>
-                                        </span>
-                                    </td>
-                                    <td class="project-date">@project.DateCreated.ToString("MMM dd, yyyy")</td>
-                                </tr>
+                                    </div>
+                                </td>
+                                <td class="project-proposal">@project.ProposalTitle</td>
+                                <td>
+                                    <span class="project-badge-white">
+                                        <i class="fas fa-user-tie"></i>
+                                        <span style="margin-left:.5rem;">@project.ProjectManagerName</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="project-timeline">
+                                        <div class="project-timeline-dates">
+                                            <span>@project.StartDate.ToString("MMM dd, yyyy")</span>
+                                            <i class="fas fa-arrow-right project-timeline-arrow"></i>
+                                            <span>@project.EndDate.ToString("MMM dd, yyyy")</span>
+                                        </div>
+                                        <span class="project-timeline-duration">@duration days</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;">
+                                        @foreach (var m in project.Members.Take(4))
+                                        {
+                                            if (!string.IsNullOrWhiteSpace(m.ProfileImage))
+                                            {
+                                                <div class="emp-avatar-chip" title="@m.EmployeeName">
+                                                    <img src="@Url.Content(m.ProfileImage)" alt="@m.EmployeeName" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" />
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="emp-avatar-chip" title="@m.EmployeeName">@GetInitials(m.EmployeeName)</div>
+                                            }
+                                        }
+                                        @if (project.Members.Count > 4)
+                                        {
+                                            <div class="emp-avatar-chip more">+@(project.Members.Count - 4)</div>
+                                        }
+                                    </div>
+                                </td>
+                                <td style="min-width:130px;">
+                                    <div style="display:flex;flex-direction:column;gap:.25rem;">
+                                        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:#64748b;font-weight:600;">
+                                            <span>@donePMs / @totalPMs milestones</span>
+                                            <span>@percent%</span>
+                                        </div>
+                                        <div style="height:6px;background:#f1f5f9;border-radius:6px;overflow:hidden;">
+                                            <div style="height:100%;width:@(percent)%;background:linear-gradient(90deg,#006994,#4CA3DD);border-radius:6px;transition:width .5s;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Show" asp-route-id="@project.Id"
+                                       class="emp-action-btn emp-action-view" title="View project">
+                                        <i class="fas fa-magnifying-glass"></i>
+                                    </a>
+                                </td>
+                            </tr>
                         }
                     </tbody>
                 </table>
@@ -729,4 +760,15 @@
         "Finished"   => "emp-status-approved",
         _             => "emp-status-default"
     };
+    private string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            var s = parts[0];
+            return s.Length >= 2 ? s.Substring(0, 2).ToUpperInvariant() : s.Substring(0, 1).ToUpperInvariant();
+        }
+        return char.ToUpperInvariant(parts[0][0]).ToString() + char.ToUpperInvariant(parts[1][0]).ToString();
+    }
 }

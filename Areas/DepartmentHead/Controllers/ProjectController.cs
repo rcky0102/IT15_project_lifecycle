@@ -274,6 +274,61 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 .Select(g => new { ProjectId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.ProjectId, x => x.Count);
 
+            var memberRows = await _context.Members
+                .Where(m => projectIds.Contains(m.ProjectId))
+                .Include(m => m.Employee)
+                .Include(m => m.ProjectRole)
+                .Select(m => new
+                {
+                    m.ProjectId,
+                    m.Id,
+                    m.EmployeeId,
+                    EmployeeFirst = m.Employee != null ? m.Employee.FirstName : null,
+                    EmployeeMiddle = m.Employee != null ? m.Employee.MiddleName : null,
+                    EmployeeLast = m.Employee != null ? m.Employee.LastName : null,
+                    ProfileImage = m.Employee != null ? m.Employee.ProfileImage : null,
+                    m.ProjectRoleId,
+                    ProjectRoleName = m.ProjectRole != null ? m.ProjectRole.Name : null
+                })
+                .ToListAsync();
+
+            var membersByProjectId = memberRows
+                .GroupBy(m => m.ProjectId)
+                .ToDictionary(g => g.Key, g => g.Select(m => new ViewModels.DepartmentHead.MemberViewModel
+                {
+                    Id = m.Id,
+                    EmployeeId = m.EmployeeId,
+                    EmployeeName = BuildFullName(m.EmployeeFirst, m.EmployeeMiddle, m.EmployeeLast),
+                    ProfileImage = m.ProfileImage,
+                    ProjectRoleId = m.ProjectRoleId,
+                    ProjectRoleName = m.ProjectRoleName ?? string.Empty
+                }).ToList());
+
+            var milestoneRows = await _context.ProjectMilestones
+                .Where(pm => projectIds.Contains(pm.ProjectId))
+                .Include(pm => pm.Milestone)
+                .Select(pm => new
+                {
+                    pm.ProjectId,
+                    pm.Id,
+                    pm.MilestoneId,
+                    MilestoneName = pm.Milestone != null ? pm.Milestone.Name : null,
+                    pm.SequenceOrder,
+                    pm.Status
+                })
+                .ToListAsync();
+
+            var milestonesByProjectId = milestoneRows
+                .GroupBy(m => m.ProjectId)
+                .ToDictionary(g => g.Key, g => g.Select(m => new ViewModels.DepartmentHead.ProjectMilestoneViewModel
+                {
+                    Id = m.Id,
+                    ProjectMilestoneId = m.Id,
+                    MilestoneName = m.MilestoneName ?? string.Empty,
+                    SequenceOrder = m.SequenceOrder,
+                    Status = m.Status ?? string.Empty
+                }).ToList());
+
             var projects = projectRows.Select(p => new DepartmentHeadProjectListItemViewModel
             {
                 Id = p.Id,
@@ -284,6 +339,8 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 EndDate = p.EndDate,
                 DateCreated = p.DateCreated,
                 MemberCount = memberCountByProjectId.TryGetValue(p.Id, out var count) ? count : 0,
+                Members = membersByProjectId.TryGetValue(p.Id, out var mems) ? mems : new List<ViewModels.DepartmentHead.MemberViewModel>(),
+                Milestones = milestonesByProjectId.TryGetValue(p.Id, out var ms) ? ms : new List<ViewModels.DepartmentHead.ProjectMilestoneViewModel>(),
                 Status = (p.EndDate.Date < DateTime.Today) ? "Finished" : "Unfinished"
             }).ToList();
 

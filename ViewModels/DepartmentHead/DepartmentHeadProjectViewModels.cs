@@ -26,7 +26,28 @@ namespace project_lifecycle.ViewModels.DepartmentHead
         public DateTime EndDate { get; set; }
         public DateTime DateCreated { get; set; }
         public int MemberCount { get; set; }
+        public List<MemberViewModel> Members { get; set; } = new();
+        public List<ProjectMilestoneViewModel> Milestones { get; set; } = new();
         public string Status { get; set; } = "Unfinished";
+    }
+
+    public class MemberViewModel
+    {
+        public int Id { get; set; }
+        public int EmployeeId { get; set; }
+        public string EmployeeName { get; set; } = string.Empty;
+        public string? ProfileImage { get; set; }
+        public int ProjectRoleId { get; set; }
+        public string ProjectRoleName { get; set; } = string.Empty;
+    }
+
+    public class ProjectMilestoneViewModel
+    {
+        public int Id { get; set; }
+        public int ProjectMilestoneId { get; set; }
+        public string MilestoneName { get; set; } = string.Empty;
+        public int SequenceOrder { get; set; }
+        public string Status { get; set; } = string.Empty;
     }
 
     public class CreateDepartmentHeadProjectViewModel
