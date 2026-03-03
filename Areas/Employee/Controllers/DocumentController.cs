@@ -203,7 +203,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
         // ─── Save (AJAX) ────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(int id, string Content)
+        public async Task<IActionResult> Save(int id, string Content, string? Title)
         {
             try
             {
@@ -238,6 +238,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
                 // ── Now update the document ──
                 doc.Content = Content ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(Title))
+                    doc.Title = Title.Trim();
                 doc.LastModified = DateTime.Now;
                 await _context.SaveChangesAsync();
 
@@ -247,6 +249,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 {
                     success = true,
                     message = "Saved.",
+                    title = doc.Title,
                     lastModified = doc.LastModified?.ToString("MMM dd, yyyy h:mm tt"),
                     versionNumber = version.VersionNumber,
                     versionCount
