@@ -72,11 +72,13 @@ else
 }
 
 <!-- ===== Proposal content card ===== -->
-<div class="emp-detail-card">
+    <div class="emp-detail-card">
     <div class="emp-detail-card-header">
-        <span class="emp-status-badge @GetStatusClass(Model.Status)">
-            <span class="emp-status-dot"></span>
-            @Model.Status
+        <span class="project-badge-white" title="Status">
+            <span class="emp-status-inline @GetStatusClass(Model.Status)">
+                <span class="emp-status-dot" aria-hidden="true"></span>
+                <span class="emp-status-text">@Model.Status</span>
+            </span>
         </span>
     </div>
     <div class="emp-detail-body">
