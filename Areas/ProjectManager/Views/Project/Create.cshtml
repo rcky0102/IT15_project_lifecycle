@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = "Create Task — " + Model.Project.Name;
     var _milestonesTyped = Model.Project.Milestones.Cast<project_lifecycle.ViewModels.ProjectManager.ProjectMilestoneViewModel>().ToList();
+    var projectStart = Model.Project.StartDate.ToString("yyyy-MM-dd");
+    var projectEnd = Model.Project.EndDate.ToString("yyyy-MM-dd");
 }
 
 <style>
@@ -114,11 +116,15 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
                     <div>
                         <label class="emp-form-label">Start Date</label>
-                        <input name="StartDate" id="taskStartDate" type="date" class="emp-form-control" required />
+                           <input name="StartDate" id="taskStartDate" type="date" class="emp-form-control" required
+                               min='@projectStart'
+                               max='@projectEnd' />
                     </div>
                     <div>
                         <label class="emp-form-label">End Date</label>
-                        <input name="EndDate" id="taskEndDate" type="date" class="emp-form-control" required />
+                           <input name="EndDate" id="taskEndDate" type="date" class="emp-form-control" required
+                               min='@projectStart'
+                               max='@projectEnd' />
                     </div>
                 </div>
             </div>
@@ -157,6 +163,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const taskNameInput = document.getElementById('taskName');
     let editorInstance = null, pendingUploads = 0, explicitSubmitRequested = false, isSubmitting = false;
     const draftStorageKey = 'pm-create-task-draft';
+
+    // Project date range (server-rendered). Enforce on the date inputs.
+    const projectStart = '@projectStart';
+    const projectEnd = '@projectEnd';
+    // Apply min/max client-side as a safety net for browsers that respect it, and clamp on change.
+    (function enforceProjectDateRange(){
+        const sd = document.getElementById('taskStartDate');
+        const ed = document.getElementById('taskEndDate');
+        if(sd){ sd.min = projectStart; sd.max = projectEnd; sd.addEventListener('change', function(){ if(!sd.value) return; if(sd.value < projectStart){ alert('Start date must be on or after project start date.'); sd.value = projectStart; } else if(sd.value > projectEnd){ alert('Start date must be on or before project end date.'); sd.value = projectEnd; } }); }
+        if(ed){ ed.min = projectStart; ed.max = projectEnd; ed.addEventListener('change', function(){ if(!ed.value) return; if(ed.value < projectStart){ alert('End date must be on or after project start date.'); ed.value = projectStart; } else if(ed.value > projectEnd){ alert('End date must be on or before project end date.'); ed.value = projectEnd; } }); }
+    })();
 
     function saveDraft() {
         if (isSubmitting) return;
