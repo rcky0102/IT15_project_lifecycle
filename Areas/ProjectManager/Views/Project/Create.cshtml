@@ -99,15 +99,9 @@
                 }
                 else
                 {
-                    <div class="emp-form-control" style="padding:.6rem .85rem;height:auto;">
-                        @foreach (var m in Model.Project.Members)
-                        {
-                            <div class="milestone-member-check">
-                                <input type="checkbox" name="assignedMemberIds" id="ctmember_@m.Id" value="@m.Id" />
-                                <label for="ctmember_@m.Id">@m.EmployeeName <span style="color:#6366f1;font-size:.8rem;">(@m.ProjectRoleName)</span></label>
-                            </div>
-                        }
-                    </div>
+                    <input type="text" id="assignMemberInput" class="emp-form-control" placeholder="Click to pick from project members…" autocomplete="off" readonly style="cursor:pointer;" />
+                    <div id="assignedMemberChips" style="display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.5rem;"></div>
+                    <div id="assignedMemberHiddenInputs"></div>
                 }
                 <span class="emp-form-hint">Selected members will share the same task submission.</span>
             </div>
@@ -164,6 +158,264 @@ document.addEventListener('DOMContentLoaded', function () {
     let editorInstance = null, pendingUploads = 0, explicitSubmitRequested = false, isSubmitting = false;
     const draftStorageKey = 'pm-create-task-draft';
 
+    // ═══════ Member Picker Modal ══════════════════════════════════
+    const projectMembers = [
+        @foreach (var m in Model.Project.Members)
+        {
+            @Html.Raw("{id:" + m.Id + ",name:'" + m.EmployeeName.Replace("'", "\\'") + "',role:'" + m.ProjectRoleName.Replace("'", "\\'") + "',profileImage:'" + (m.ProfileImage ?? "").Replace("'", "\\'") + "'},")
+        }
+    ];
+    const selectedMemberIds = new Set();
+    const chipsContainer = document.getElementById('assignedMemberChips');
+    const hiddenContainer = document.getElementById('assignedMemberHiddenInputs');
+    const assignInput = document.getElementById('assignMemberInput');
+
+    // Inject modal HTML
+    if (projectMembers.length > 0) {
+        const memberModalHtml = `
+<div class="modal fade" id="memberPickerModal" tabindex="-1" aria-labelledby="memberPickerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content em-picker-modal">
+            <div class="em-picker-header">
+                <div>
+                    <h5 class="em-picker-title" id="memberPickerModalLabel"><i class="fas fa-user-plus"></i> Assign Members</h5>
+                    <p class="em-picker-subtitle">Select project members to assign to this task</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" id="memberPickerCloseBtn" aria-label="Close"></button>
+            </div>
+            <div class="em-picker-filters">
+                <div class="em-picker-filters-row">
+                    <div class="em-picker-search-group">
+                        <i class="fas fa-magnifying-glass em-picker-search-icon"></i>
+                        <input type="text" id="memberPickerFilter" class="em-picker-search-input" placeholder="Search members\u2026" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body em-picker-body">
+                <div class="em-picker-table-card">
+                    <div class="em-picker-table-responsive">
+                        <table class="em-picker-table" id="memberPickerTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:44px;text-align:center;"><input type="checkbox" id="memberPickerSelectAll" class="em-picker-checkbox" /></th>
+                                    <th>Member</th>
+                                    <th>Project Role</th>
+                                    <th style="width:100px;text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div id="memberPickerEmpty" class="em-picker-empty" style="display:none;">
+                        <div class="em-picker-empty-icon"><i class="fas fa-user-group"></i></div>
+                        <div class="em-picker-empty-title">No members found</div>
+                        <div class="em-picker-empty-text">No matching project members.</div>
+                    </div>
+                    <div class="em-picker-pagination" id="memberPickerPagination">
+                        <div class="em-picker-pagination-info" id="memberPickerPaginationInfo"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="em-picker-footer">
+                <button type="button" class="em-picker-btn-cancel" id="memberPickerCancelBtn">Cancel</button>
+                <button type="button" id="memberPickerAddBtn" class="em-picker-btn-add" disabled>
+                    <i class="fas fa-plus"></i> Add Selected
+                </button>
+            </div>
+        </div>
+    </div>
+</div>`;
+        document.body.insertAdjacentHTML('beforeend', memberModalHtml);
+    }
+
+    const memberModalEl = document.getElementById('memberPickerModal');
+    const memberModalTable = document.getElementById('memberPickerTable');
+    const memberModalEmpty = document.getElementById('memberPickerEmpty');
+    const memberModalFilter = document.getElementById('memberPickerFilter');
+    const memberModalAddBtn = document.getElementById('memberPickerAddBtn');
+    const memberModalCloseBtn = document.getElementById('memberPickerCloseBtn');
+    const memberModalCancelBtn = document.getElementById('memberPickerCancelBtn');
+    const memberModalSelectAll = document.getElementById('memberPickerSelectAll');
+
+    function renderChips() {
+        if (!chipsContainer || !hiddenContainer) return;
+        chipsContainer.innerHTML = '';
+        hiddenContainer.innerHTML = '';
+        selectedMemberIds.forEach(id => {
+            const m = projectMembers.find(x => x.id === id);
+            if (!m) return;
+            const initials = (m.name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            // Chip
+            const chip = document.createElement('span');
+            chip.className = 'em-picker-chip';
+            chip.style.cssText = 'display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .6rem .25rem .4rem;border-radius:20px;background:linear-gradient(135deg,#e0f2fe,#dbeafe);color:#1e40af;font-size:.82rem;font-weight:600;border:1px solid rgba(30,64,175,.12);';
+            chip.innerHTML = '<span style="width:22px;height:22px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;">' + initials + '</span>' +
+                '<span>' + m.name + '</span>' +
+                '<button type="button" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:.75rem;padding:0 0 0 .2rem;line-height:1;" data-remove-id="' + id + '" title="Remove"><i class="fas fa-times"></i></button>';
+            chip.querySelector('button').addEventListener('click', function () {
+                selectedMemberIds.delete(id);
+                renderChips();
+                saveDraft();
+            });
+            chipsContainer.appendChild(chip);
+            // Hidden input
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = 'assignedMemberIds';
+            inp.value = id;
+            hiddenContainer.appendChild(inp);
+        });
+        // Update input placeholder
+        if (assignInput) {
+            assignInput.placeholder = selectedMemberIds.size > 0
+                ? selectedMemberIds.size + ' member' + (selectedMemberIds.size !== 1 ? 's' : '') + ' selected — click to change'
+                : 'Click to pick from project members\u2026';
+        }
+    }
+
+    function openMemberModal() {
+        if (!memberModalEl) return;
+        const tbody = memberModalTable.querySelector('tbody');
+        tbody.innerHTML = '';
+        memberModalEmpty.style.display = 'none';
+        if (memberModalFilter) memberModalFilter.value = '';
+        if (memberModalSelectAll) memberModalSelectAll.checked = false;
+
+        if (!projectMembers.length) {
+            memberModalEmpty.style.display = 'block';
+        } else {
+            projectMembers.forEach(m => {
+                const initials = (m.name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                const isSelected = selectedMemberIds.has(m.id);
+                const tr = document.createElement('tr');
+                tr.className = 'em-picker-row';
+                tr.innerHTML =
+                    '<td style="text-align:center;"><input type="checkbox" class="member-select-checkbox em-picker-checkbox" data-id="' + m.id + '"' + (isSelected ? ' checked' : '') + ' /></td>' +
+                    '<td><div class="em-picker-name-cell"><div class="em-picker-avatar">' + initials + '</div><div class="em-picker-name-text">' + (m.name || '') + '</div></div></td>' +
+                    '<td><span style="color:#6366f1;font-size:.82rem;font-weight:500;">' + (m.role || '') + '</span></td>' +
+                    '<td style="text-align:center;"><button type="button" class="em-picker-select-btn member-quick-add" data-id="' + m.id + '" title="Quick add"><i class="fas fa-' + (isSelected ? 'check' : 'plus') + '"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Wire checkbox change
+        function updateModalAddState() {
+            const any = memberModalTable.querySelectorAll('.member-select-checkbox:checked').length > 0;
+            if (memberModalAddBtn) memberModalAddBtn.disabled = !any;
+        }
+        tbody.querySelectorAll('.member-select-checkbox').forEach(cb => cb.addEventListener('change', updateModalAddState));
+        if (memberModalSelectAll) {
+            memberModalSelectAll.addEventListener('change', function () {
+                const checked = !!this.checked;
+                // Only toggle visible rows
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    if (tr.style.display === 'none') return;
+                    const cb = tr.querySelector('.member-select-checkbox');
+                    if (cb) cb.checked = checked;
+                });
+                updateModalAddState();
+            });
+        }
+        updateModalAddState();
+
+        // Pagination info
+        const pInfo = document.getElementById('memberPickerPaginationInfo');
+        if (pInfo) pInfo.textContent = 'Showing ' + projectMembers.length + ' member' + (projectMembers.length !== 1 ? 's' : '');
+
+        // Quick add buttons
+        tbody.querySelectorAll('.member-quick-add').forEach(btn => btn.addEventListener('click', function () {
+            const mId = parseInt(this.dataset.id);
+            if (selectedMemberIds.has(mId)) {
+                selectedMemberIds.delete(mId);
+                this.querySelector('i').className = 'fas fa-plus';
+                const cb = tbody.querySelector('.member-select-checkbox[data-id="' + mId + '"]');
+                if (cb) cb.checked = false;
+            } else {
+                selectedMemberIds.add(mId);
+                this.querySelector('i').className = 'fas fa-check';
+                const cb = tbody.querySelector('.member-select-checkbox[data-id="' + mId + '"]');
+                if (cb) cb.checked = true;
+            }
+            renderChips();
+            saveDraft();
+            updateModalAddState();
+        }));
+
+        // Show modal
+        if (window.bootstrap && window.bootstrap.Modal) {
+            const modalInstance = new bootstrap.Modal(memberModalEl);
+            modalInstance.show();
+        } else if (window.jQuery && typeof $().modal === 'function') {
+            $('#memberPickerModal').modal('show');
+        } else {
+            memberModalEl.style.display = 'block';
+            memberModalEl.style.position = 'fixed';
+            memberModalEl.style.left = '0';
+            memberModalEl.style.top = '0';
+            memberModalEl.style.width = '100%';
+            memberModalEl.style.height = '100%';
+            memberModalEl.style.zIndex = '2060';
+            memberModalEl.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeMemberModal() {
+        if (!memberModalEl) return;
+        if (window.bootstrap && window.bootstrap.Modal) {
+            const inst = bootstrap.Modal.getInstance(memberModalEl);
+            if (inst) inst.hide();
+        } else if (window.jQuery && typeof $().modal === 'function') {
+            $('#memberPickerModal').modal('hide');
+        } else {
+            memberModalEl.style.display = 'none';
+            memberModalEl.classList.remove('show');
+            memberModalEl.style.zIndex = '';
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Wire open/close
+    if (assignInput) assignInput.addEventListener('click', openMemberModal);
+    if (memberModalCloseBtn) memberModalCloseBtn.addEventListener('click', closeMemberModal);
+    if (memberModalCancelBtn) memberModalCancelBtn.addEventListener('click', closeMemberModal);
+    if (memberModalEl) memberModalEl.addEventListener('click', function (e) { if (e.target === memberModalEl) closeMemberModal(); });
+
+    // Add Selected button
+    if (memberModalAddBtn) {
+        memberModalAddBtn.addEventListener('click', function () {
+            const checked = memberModalTable.querySelectorAll('.member-select-checkbox:checked');
+            checked.forEach(cb => {
+                selectedMemberIds.add(parseInt(cb.dataset.id));
+            });
+            // Also remove unchecked ones (so the modal acts as the source of truth)
+            const unchecked = memberModalTable.querySelectorAll('.member-select-checkbox:not(:checked)');
+            unchecked.forEach(cb => {
+                selectedMemberIds.delete(parseInt(cb.dataset.id));
+            });
+            renderChips();
+            saveDraft();
+            closeMemberModal();
+        });
+    }
+
+    // Client-side filter
+    if (memberModalFilter) {
+        memberModalFilter.addEventListener('input', function () {
+            const q = this.value.trim().toLowerCase();
+            let visible = 0;
+            memberModalTable.querySelectorAll('tbody tr').forEach(tr => {
+                const name = (tr.querySelector('.em-picker-name-text')?.textContent || '').toLowerCase();
+                const role = (tr.cells[2]?.textContent || '').toLowerCase();
+                const show = !q || name.includes(q) || role.includes(q);
+                tr.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            const pInfo = document.getElementById('memberPickerPaginationInfo');
+            if (pInfo) pInfo.textContent = visible === 0 ? 'No matches' : 'Showing ' + visible + ' member' + (visible !== 1 ? 's' : '');
+        });
+    }
+
     // Project date range (server-rendered). Enforce on the date inputs.
     const projectStart = '@projectStart';
     const projectEnd = '@projectEnd';
@@ -180,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const el = document.querySelector(editorSelector);
         const startDateInput = document.getElementById('taskStartDate');
         const endDateInput = document.getElementById('taskEndDate');
-        const checkedIds = Array.from(document.querySelectorAll('input[name="assignedMemberIds"]:checked')).map(cb => cb.value);
+        const checkedIds = Array.from(selectedMemberIds);
         try {
             sessionStorage.setItem(draftStorageKey, JSON.stringify({
                 name: taskNameInput ? taskNameInput.value : '',
@@ -256,9 +508,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if(draft&&taskNameInput&&draft.name&&taskNameInput.value.trim()==='') taskNameInput.value=draft.name;
             // Restore assigned members
             if(draft&&draft.assignedMemberIds&&draft.assignedMemberIds.length>0){
-                document.querySelectorAll('input[name="assignedMemberIds"]').forEach(cb=>{
-                    if(draft.assignedMemberIds.includes(cb.value)) cb.checked=true;
+                draft.assignedMemberIds.forEach(id => {
+                    const numId = parseInt(id);
+                    if (projectMembers.find(m => m.id === numId)) selectedMemberIds.add(numId);
                 });
+                renderChips();
             }
             // Restore start/end dates
             const startDateInput=document.getElementById('taskStartDate');
@@ -286,8 +540,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if(taskNameInput) taskNameInput.addEventListener('input',saveDraft);
-    // Save draft when assign-to checkboxes or date fields change
-    document.querySelectorAll('input[name="assignedMemberIds"]').forEach(cb=>cb.addEventListener('change',saveDraft));
+    // Save draft when date fields change
     const _sd=document.getElementById('taskStartDate'); if(_sd) _sd.addEventListener('change',saveDraft);
     const _ed=document.getElementById('taskEndDate'); if(_ed) _ed.addEventListener('change',saveDraft);
 

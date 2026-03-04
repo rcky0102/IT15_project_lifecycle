@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: Microsoft.AspNetCore.Identity.UI.UIFrameworkAttribute("Bootstrap5")]
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("aspnet-project_lifecycle-375b3283-f082-4e15-939d-7a444a6300c2")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("project_lifecycle")]
-[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9d91045a42663446025b84e9feae59e602e14705")]
 [assembly: System.Reflection.AssemblyProductAttribute("project_lifecycle")]
