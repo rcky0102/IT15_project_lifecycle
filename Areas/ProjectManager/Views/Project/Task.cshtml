@@ -1,4 +1,4 @@
-@model project_lifecycle.ViewModels.ProjectManager.ProjectTaskReviewViewModel
+ @model project_lifecycle.ViewModels.ProjectManager.ProjectTaskReviewViewModel
 @using project_lifecycle.Models
 @{
     ViewData["Title"] = "Review Task";
@@ -99,9 +99,11 @@
 <div class="emp-detail-card" style="margin-top:1.25rem;">
     <div class="emp-detail-card-header">
         <span style="font-size:.95rem;font-weight:700;color:#1e293b;"><i class="fas fa-pen-to-square" style="color:#006994;margin-right:.4rem;"></i>Review &amp; Feedback</span>
-        <span class="emp-status-badge @GetStatusClass(Model.Status)">
-            <span class="emp-status-dot"></span>
-            @Model.Status
+        <span class="emp-badge-white" title="Status">
+            <span class="emp-status-inline @GetStatusClass(Model.Status)">
+                <span class="emp-status-dot"></span>
+                <span class="emp-status-text">@Model.Status</span>
+            </span>
         </span>
     </div>
     <div class="emp-detail-body">

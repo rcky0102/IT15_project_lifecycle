@@ -48,5 +48,8 @@ namespace project_lifecycle.Models
 
         // When task was completed (set when Status transitions to "Checked")
         public DateTime? CompletedAt { get; set; }
+
+        // Marks whether this task has been archived (soft-delete)
+        public bool IsArchived { get; set; } = false;
     }
 }

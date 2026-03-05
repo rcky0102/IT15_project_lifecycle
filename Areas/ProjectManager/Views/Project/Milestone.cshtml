@@ -10,6 +10,14 @@
 <style>
     .emp-show-grid { display:grid; grid-template-columns:1fr 300px; gap:1.5rem; align-items:start; }
     @@media (max-width:900px) { .emp-show-grid { grid-template-columns:1fr; } }
+    /* Modal backdrop (hidden by default) */
+    .emp-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.12); z-index:2100; align-items:center; justify-content:center; }
+    .emp-modal-backdrop.open { display:flex; }
+    .emp-modal { background:#fff; border-radius:12px; width:100%; max-width:480px; box-shadow:0 25px 60px rgba(0,0,0,.15); overflow:hidden; }
+    .pm-modal-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #eef2f6; }
+    .pm-modal-title { font-weight:700; display:flex; align-items:center; gap:.5rem; }
+    .pm-modal-body { padding:1rem 1.25rem; }
+    .pm-modal-footer { padding:.75rem 1.25rem; display:flex; gap:.5rem; justify-content:flex-end; }
     .emp-show-tasks-card { background:#fff; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden; }
     .emp-task-list { padding:.25rem 1.25rem; }
     .emp-task-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.85rem 0; border-bottom:1px solid #f8fafc; }
@@ -172,6 +180,15 @@
                                asp-route-id="@t.Id" class="emp-action-btn emp-action-edit" title="Edit Task">
                                 <i class="fas fa-pen-to-square"></i>
                             </a>
+                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="ArchiveTask" method="post" style="margin:0;display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="projectTaskId" value="@t.Id" />
+                                <button type="button" class="emp-action-btn emp-action-archive" title="Archive Task"
+                                        data-task-name="@t.Name"
+                                        onclick="openArchiveModal(this.form, this.getAttribute('data-task-name'))">
+                                    <i class="fas fa-archive"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 }
@@ -245,6 +262,39 @@
     </div>
 
 </div>
+
+<!-- Archive confirmation modal (styled like employee confirm dialog) -->
+<div class="emp-modal-backdrop" id="archiveConfirmModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;" onclick="if(event.target === this) closeArchiveModal()">
+    <div class="emp-modal" role="document">
+        <h4 id="archiveConfirmTitle"><i class="fas fa-archive"></i> Confirm Archive</h4>
+        <p id="archiveConfirmMessage">Archive this task?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="archiveCancelBtn" onclick="closeArchiveModal()">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm emp-btn-danger" id="archiveConfirmBtn" onclick="confirmArchive()">Archive</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let __archiveFormToSubmit = null;
+    function openArchiveModal(form, name) {
+        __archiveFormToSubmit = form;
+        const msg = document.getElementById('archiveConfirmMessage');
+        if (msg) msg.textContent = `Archive task "${name}"?`;
+        const modal = document.getElementById('archiveConfirmModal');
+        if (modal) { modal.classList.add('open'); modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
+    }
+    function closeArchiveModal() {
+        __archiveFormToSubmit = null;
+        const modal = document.getElementById('archiveConfirmModal');
+        if (modal) { modal.classList.remove('open'); modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+    }
+    function confirmArchive() {
+        if (!__archiveFormToSubmit) return closeArchiveModal();
+        // submit the stored form
+        __archiveFormToSubmit.submit();
+    }
+</script>
 
 @functions {
     private string PmTaskBadgeClass(string s) => s switch {

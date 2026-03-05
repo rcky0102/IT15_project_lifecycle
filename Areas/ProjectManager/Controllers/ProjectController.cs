@@ -35,6 +35,34 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveTask(int projectTaskId)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone).ThenInclude(pmst => pmst.Project)
+                .FirstOrDefaultAsync(t => t.Id == projectTaskId);
+
+            if (task == null) return NotFound();
+
+            if (task.ProjectMilestone == null || task.ProjectMilestone.Project == null || task.ProjectMilestone.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            // Soft-archive the task instead of deleting related data
+            task.IsArchived = true;
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Archive", "Tasks", $"Archived task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
+
+            TempData["SuccessMessage"] = "Task archived.";
+            return RedirectToAction(nameof(Milestone), new { projectMilestoneId = task.ProjectMilestoneId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateMilestoneStatus(int projectMilestoneId, string newStatus)
         {
             var pm = await GetCurrentProjectManagerAsync();
@@ -368,6 +396,9 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var tasks = await _context.ProjectTasks
                 .Where(t => t.ProjectMilestoneId == pmst.Id)
                 .ToListAsync();
+
+            // Filter out archived tasks on the client side to avoid translation issues
+            tasks = tasks.Where(t => !t.IsArchived).ToList();
 
             var taskMembers = await _context.TaskMembers
                 .Where(tm => tasks.Select(t => t.Id).Contains(tm.ProjectTaskId))
