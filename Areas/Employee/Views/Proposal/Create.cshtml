@@ -77,6 +77,18 @@
     </div>
 </div>
 
+    <!-- Reset confirmation modal (styled like Proposal Index archive modal) -->
+    <div class="emp-modal-backdrop" id="resetConfirmModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+        <div class="emp-modal" role="document">
+            <h4 id="resetConfirmTitle"><i class="fas fa-exclamation-triangle"></i> Confirm Reset</h4>
+            <p id="resetConfirmMessage">This will clear the form and remove any saved draft. Are you sure you want to continue?</p>
+            <div class="emp-modal-actions">
+                <button type="button" class="emp-btn emp-btn-cancel" id="resetConfirmCancelBtn">Cancel</button>
+                <button type="button" class="emp-btn emp-btn-danger" id="resetConfirmOkBtn">Reset</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const editorSelector = '#Input';
@@ -374,12 +386,8 @@
                 });
             }
 
+            // Reset button will show a confirmation modal (wired later)
             const resetButton = formElement.querySelector('button[type="reset"]');
-            if (resetButton) {
-                resetButton.addEventListener('click', function () {
-                    explicitResetRequested = true;
-                });
-            }
 
             formElement.addEventListener('reset', function (event) {
                 if (!explicitResetRequested) {
@@ -390,6 +398,17 @@
                 explicitResetRequested = false;
                 explicitSubmitRequested = false;
                 clearDraft();
+
+                // Clear editor and textarea content
+                var inputElement = document.querySelector(editorSelector);
+                try {
+                    if (inputElement) inputElement.value = '';
+                    if (editorInstance && typeof editorInstance.setData === 'function') {
+                        editorInstance.setData('');
+                    }
+                } catch (e) {
+                    console.error('Failed to clear editor on reset:', e);
+                }
             });
 
             formElement.addEventListener('submit', function (event) {
@@ -563,6 +582,47 @@
                         formElement.requestSubmit(submitButton);
                     } else if (formElement) {
                         formElement.submit();
+                    }
+                });
+            }
+        })();
+
+        // Confirmation modal for reset
+        (function () {
+            var modal = document.getElementById('resetConfirmModal');
+            var cancelBtn = document.getElementById('resetConfirmCancelBtn');
+            var okBtn = document.getElementById('resetConfirmOkBtn');
+            var resetBtn = formElement ? formElement.querySelector('button[type="reset"]') : null;
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (modal) modal.style.display = 'flex';
+                });
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function () { if (modal) modal.style.display = 'none'; });
+            }
+
+            if (modal) {
+                modal.addEventListener('click', function (e) { if (e.target === modal) modal.style.display = 'none'; });
+            }
+
+            if (okBtn) {
+                okBtn.addEventListener('click', function () {
+                    if (modal) modal.style.display = 'none';
+                    explicitResetRequested = true;
+                    if (formElement) {
+                        try {
+                            formElement.reset();
+                        } catch (e) {
+                            // fallback: manually clear
+                            var inputElement = document.querySelector(editorSelector);
+                            if (inputElement) inputElement.value = '';
+                            if (editorInstance && typeof editorInstance.setData === 'function') editorInstance.setData('');
+                            clearDraft();
+                        }
                     }
                 });
             }
