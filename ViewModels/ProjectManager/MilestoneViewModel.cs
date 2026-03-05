@@ -26,5 +26,6 @@ namespace project_lifecycle.ViewModels.ProjectManager
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public string? AssignedMemberName { get; set; }
+        public bool IsArchived { get; set; }
     }
 }

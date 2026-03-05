@@ -155,6 +155,13 @@
                         </select>
                     </div>
                     <div style="display:flex;align-items:center;gap:.4rem;">
+                        <select id="taskArchiveFilter" class="emp-select">
+                            <option value="active" selected>Active</option>
+                            <option value="archived">Archived</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.4rem;">
                         <label for="taskPageSizeSelect" style="font-size:.82rem;color:#64748b;margin-right:.4rem;">Show</label>
                         <select id="taskPageSizeSelect" class="emp-select" style="width:92px;">
                             <option value="5">5</option>
@@ -172,7 +179,7 @@
             <div class="emp-task-list" id="tasksList">
                 @foreach (var t in Model.Tasks)
                 {
-                    <div class="emp-task-row emp-task-row-item" data-name="@t.Name.ToLower()" data-status="@(t.Status?.ToLowerInvariant() ?? "")">
+                    <div class="emp-task-row emp-task-row-item" data-name="@t.Name.ToLower()" data-status="@(t.Status?.ToLowerInvariant() ?? "")" data-archived="@(t.IsArchived ? "true" : "false")">
                         <div class="emp-task-row-left">
                             <span class="emp-task-status-dot @PmTaskDotClass(t.Status)"></span>
                             <div class="emp-task-info">
@@ -342,6 +349,7 @@
     const pageControls   = document.getElementById('taskPaginationControls');
     const pageSizeSelect = document.getElementById('taskPageSizeSelect');
     const statusSelect   = document.getElementById('taskStatusFilter');
+    const archiveSelect  = document.getElementById('taskArchiveFilter');
 
     function applyFilters() {
         const query = (searchInput?.value ?? '').toLowerCase().trim();
@@ -349,9 +357,14 @@
         filteredRows = allRows.filter(row => {
             const nameMatch = !query || (row.dataset.name || '').includes(query);
             const status = (row.dataset.status || '').toLowerCase();
+            const isArchived = (row.dataset.archived || 'false') === 'true';
             let statusMatch = true;
             if (statusFilter !== 'all') statusMatch = status === statusFilter;
-            return nameMatch && statusMatch;
+            let archiveMatch = true;
+            const archiveFilter = (archiveSelect?.value ?? 'active').toLowerCase();
+            if (archiveFilter === 'active') archiveMatch = !isArchived;
+            else if (archiveFilter === 'archived') archiveMatch = isArchived;
+            return nameMatch && statusMatch && archiveMatch;
         });
         currentPage = 1;
         render();
@@ -367,7 +380,7 @@
         allRows.forEach(r => r.style.display = 'none'); 
         filteredRows.forEach((r, i) => { r.style.display = (i >= start && i < end) ? '' : 'none'; }); 
 
-        if (noResults)  noResults.style.display  = total === 0 ? '' : 'none'; 
+        if (noResults)  noResults.style.display  = total === 0 ? '' : 'none';
         if (pageInfo)   pageInfo.textContent      = total === 0 ? '' : `Showing ${start + 1}${Math.min(end, total)} of ${total}`;
 
         if (pageControls) {
@@ -398,6 +411,7 @@
 
     if (searchInput)    searchInput.addEventListener('input', applyFilters);
     if (statusSelect)   statusSelect.addEventListener('change', applyFilters);
+    if (archiveSelect)  archiveSelect.addEventListener('change', applyFilters);
     if (pageSizeSelect) {
         pageSizeSelect.value = String(PAGE_SIZE);
         pageSizeSelect.addEventListener('change', function () {

@@ -397,8 +397,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 .Where(t => t.ProjectMilestoneId == pmst.Id)
                 .ToListAsync();
 
-            // Filter out archived tasks on the client side to avoid translation issues
-            tasks = tasks.Where(t => !t.IsArchived).ToList();
+            // Do not filter out archived tasks here; the view will let the user filter (Active/Archived/All)
 
             var taskMembers = await _context.TaskMembers
                 .Where(tm => tasks.Select(t => t.Id).Contains(tm.ProjectTaskId))
@@ -428,7 +427,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 Status = t.Status,
                 StartDate = t.StartDate,
                 EndDate = t.EndDate,
-                AssignedMemberName = taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)?.Member?.Employee != null ? string.Join(" ", new[] { taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.FirstName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.MiddleName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null
+                AssignedMemberName = taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)?.Member?.Employee != null ? string.Join(" ", new[] { taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.FirstName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.MiddleName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null,
+                IsArchived = t.IsArchived
             }).ToList();
 
             vm.AvailableMembers = members.Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
