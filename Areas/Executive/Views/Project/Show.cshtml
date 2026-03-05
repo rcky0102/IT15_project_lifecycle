@@ -1,0 +1,243 @@
+@model project_lifecycle.ViewModels.Employee.EmployeeProjectViewModel
+@{
+    ViewData["Title"] = "Project";
+    var totalTasks    = Model.Tasks.Count;
+    var doneTasks     = Model.Tasks.Count(t => {
+        var s = (t.Status ?? "").ToLowerInvariant();
+        return s == "completed" || s == "checked";
+    });
+    var pct           = totalTasks > 0 ? (int)Math.Round(doneTasks * 100.0 / totalTasks) : 0;
+}
+
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-diagram-project"></i></span>
+                @Model.Project.Name
+            </h1>
+            <p class="emp-page-subtitle">Proposal: @Model.Project.ProposalTitle</p>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="Executive" asp-controller="Project" asp-action="Index" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Projects</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Info strip ===== -->
+<div class="emp-info-strip">
+    <div class="emp-info-item">
+        <i class="fas fa-calendar-days"></i>
+        <span>@Model.Project.StartDate.ToString("MMM dd, yyyy") &ndash; @Model.Project.EndDate.ToString("MMM dd, yyyy")</span>
+    </div>
+    <div class="emp-info-item">
+        <i class="fas fa-users"></i>
+        <span>@Model.Project.Members.Count member@(Model.Project.Members.Count == 1 ? "" : "s")</span>
+    </div>
+    <div class="emp-info-item">
+        <i class="fas fa-list-check"></i>
+        <span>@doneTasks / @totalTasks tasks completed</span>
+    </div>
+    @if (totalTasks > 0)
+    {
+        <div class="emp-info-progress">
+            <div class="emp-info-progress-bar">
+                <div class="emp-info-progress-fill" style="width:@pct%"></div>
+            </div>
+            <span class="emp-info-progress-label">@pct%</span>
+        </div>
+    }
+</div>
+
+<div class="emp-show-grid">
+
+    <!-- ===== Tasks card ===== -->
+    <div class="emp-show-tasks-card">
+        <div class="emp-table-toolbar">
+            <div class="emp-table-toolbar-left">
+                <h3 class="emp-table-title"><i class="fas fa-list-check"></i> All Tasks</h3>
+                <span class="emp-count-chip">@totalTasks</span>
+            </div>
+        </div>
+
+        @if (Model.Tasks.Any())
+        {
+            <div class="emp-task-list">
+                @foreach (var t in Model.Tasks)
+                {
+                    <div class="emp-task-row">
+                        <div class="emp-task-row-left">
+                            <span class="emp-task-status-dot @EmpTaskDotClass(t.Status)"></span>
+                            <div class="emp-task-info">
+                                <span class="emp-task-name">@t.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(t.MilestoneName))
+                                {
+                                    <div class="emp-task-milestone" style="font-size:.78rem;color:#64748b;margin-top:.18rem;">
+                                        <i class="fas fa-flag" style="font-size:.72rem;margin-right:.35rem;"></i>
+                                        @t.MilestoneName
+                                    </div>
+                                }
+                                <span class="emp-task-dates">
+                                    <i class="far fa-calendar"></i>
+                                    @t.StartDate.ToString("MMM dd") &ndash; @t.EndDate.ToString("MMM dd, yyyy")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="emp-task-row-right">
+                            <span class="emp-badge-white" title="Status">
+                                <span class="emp-status-inline @EmpTaskBadgeClass(t.Status)">
+                                    <span class="emp-status-dot"></span>
+                                    <span class="emp-status-text">@t.Status</span>
+                                </span>
+                            </span>
+                            <a asp-area="Executive" asp-controller="Project" asp-action="Task" asp-route-id="@t.Id"
+                               class="emp-action-btn emp-action-view" title="View Task">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="emp-empty-state">
+                <div class="emp-empty-icon"><i class="fas fa-list-check"></i></div>
+                <h4 class="emp-empty-title">No tasks</h4>
+                <p class="emp-empty-text">No tasks have been created for this project.</p>
+            </div>
+        }
+    </div>
+
+    <!-- ===== Side panel ===== -->
+    <div class="emp-show-side">
+
+        <!-- Members -->
+        <div class="emp-side-card">
+            <div class="emp-side-card-title"><i class="fas fa-users"></i> Team Members</div>
+            @if (Model.Project.Members.Any())
+            {
+                <div class="emp-member-stack">
+                    @foreach (var m in Model.Project.Members)
+                    {
+                        <div class="emp-member-row">
+                            <div class="emp-member-avatar">
+                                @if (!string.IsNullOrWhiteSpace(m.ProfileImage))
+                                {
+                                    <img src="@Url.Content(m.ProfileImage)" alt="@m.EmployeeName" style="width:100%;height:100%;border-radius:8px;object-fit:cover;display:block;" />
+                                }
+                                else
+                                {
+                                    @m.EmployeeName.Substring(0,1).ToUpper()
+                                }
+                            </div>
+                            <div class="emp-member-info">
+                                <span class="emp-member-name">@m.EmployeeName</span>
+                                <span class="emp-member-role">@m.ProjectRoleName</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted" style="font-size:.85rem;">No members listed.</p>
+            }
+        </div>
+
+        <!-- Milestones -->
+        @if (Model.Project.Milestones.Any())
+        {
+            <div class="emp-side-card">
+                <div class="emp-side-card-title"><i class="fas fa-flag"></i> Milestones</div>
+                <div class="emp-milestone-timeline">
+                    @foreach (var ms in Model.Project.Milestones.OrderBy(x => x.SequenceOrder))
+                    {
+                        <div class="emp-milestone">
+                            <div class="emp-milestone-dot @EmpMilestoneDotClass(ms.Status)"></div>
+                            <div class="emp-milestone-body">
+                                <div class="emp-milestone-title">@ms.MilestoneName</div>
+                                    <span class="emp-badge-white" title="Status">
+                                        <span class="emp-status-inline @EmpMilestoneBadgeClass(ms.Status)">
+                                            <span class="emp-status-dot"></span>
+                                            <span class="emp-status-text">@ms.Status</span>
+                                        </span>
+                                    </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+@functions {
+    private string EmpTaskBadgeClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-status-default";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed" => "emp-status-approved",
+            "checked" => "emp-status-approved",
+            "in progress" => "emp-status-revision",
+            "requires revision" => "emp-status-revision",
+            "require revision" => "emp-status-revision",
+            "pending" => "emp-status-pending",
+            _ => "emp-status-default"
+        };
+    }
+
+    private string EmpTaskDotClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-dot-gray";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed" => "emp-dot-green",
+            "checked" => "emp-dot-green",
+            "in progress" => "emp-dot-orange",
+            "requires revision" => "emp-dot-orange",
+            "require revision" => "emp-dot-orange",
+            _ => "emp-dot-gray"
+        };
+    }
+
+    private string EmpMilestoneBadgeClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-status-default";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed" => "emp-status-approved",
+            "checked" => "emp-status-approved",
+            "finished" => "emp-status-approved",
+            "in progress" => "emp-status-revision",
+            "requires revision" => "emp-status-revision",
+            "require revision" => "emp-status-revision",
+            _ => "emp-status-default"
+        };
+    }
+
+    private string EmpMilestoneDotClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-ms-dot-idle";
+        var key = s.Trim().ToLowerInvariant();
+        return key switch
+        {
+            "completed" => "emp-ms-dot-done",
+            "checked" => "emp-ms-dot-done",
+            "finished" => "emp-ms-dot-done",
+            "in progress" => "emp-ms-dot-active",
+            "requires revision" => "emp-ms-dot-active",
+            "require revision" => "emp-ms-dot-active",
+            _ => "emp-ms-dot-idle"
+        };
+    }
+}

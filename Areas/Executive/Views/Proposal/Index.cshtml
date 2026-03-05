@@ -1,0 +1,255 @@
+@model List<ProjectProposal>
+@using project_lifecycle.Models
+@{
+    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active";
+}
+
+<!-- ===== Page Title Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-file-lines"></i></span>
+                All Proposals
+            </h1>
+            <p class="emp-page-subtitle">View all submitted proposals across the organization</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Filters ===== -->
+<div class="emp-filters-card">
+    <div class="emp-filters-row">
+        <div class="emp-search-group">
+            <i class="fas fa-magnifying-glass emp-search-icon"></i>
+            <input id="proposalSearch" type="text" class="emp-search-input" placeholder="Search proposals…" autocomplete="off" />
+        </div>
+        <div class="emp-select-group">
+            <select id="statusFilter" class="emp-select">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Requires Revision">Requires Revision</option>
+            </select>
+        </div>
+        <div class="emp-select-group">
+            <select id="archiveFilter" class="emp-select">
+                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
+        </div>
+        <div class="emp-select-group">
+            <label for="pageSizeSelect" style="font-size:.82rem;color:var(--emp-muted);margin-right:.4rem;">Show</label>
+            <select id="pageSizeSelect" class="emp-select" style="width:92px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Table ===== -->
+<div class="project-table-section">
+    <div class="project-table-card">
+        @if (Model.Any())
+        {
+            <div class="project-table-responsive">
+                <table class="project-table" id="proposalsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Submitted By</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proposalsBody">
+                        @foreach (var proposal in Model)
+                        {
+                            var employeeName = proposal.Employee != null
+                                ? string.Join(" ", new[] { proposal.Employee.FirstName, proposal.Employee.MiddleName, proposal.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                                : "Unknown";
+                            <tr class="emp-row"
+                                data-title="@proposal.Title.ToLower()"
+                                data-employee="@employeeName.ToLower()"
+                                data-status="@proposal.Status"
+                                data-archived="@(proposal.IsArchived.ToString().ToLower())">
+                                <td>
+                                    <div class="project-name-cell">
+                                        <div class="project-name-icon">
+                                            <i class="fas fa-file-lines"></i>
+                                        </div>
+                                        <div>
+                                            <div class="project-name-text">@proposal.Title</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="font-size:.85rem;">@employeeName</span>
+                                </td>
+                                <td class="project-date">
+                                    <span class="emp-badge-white" title="Submitted">
+                                        <i class="fas fa-calendar-day"></i>
+                                        <span style="font-weight:normal">@proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="emp-badge-white" title="Status">
+                                        <span class="emp-status-inline @GetStatusClass(proposal.Status)">
+                                            <span class="emp-status-dot"></span>
+                                            <span class="emp-status-text">@proposal.Status</span>
+                                        </span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="emp-action-group">
+                                        <a asp-area="Executive" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
+                                           class="emp-action-btn emp-action-view" title="View details">
+                                            <i class="fas fa-magnifying-glass"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="noFilterResults" class="project-empty-state" style="display:none;">
+                <div class="project-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <div class="project-empty-title">No matching proposals</div>
+                <div class="project-empty-text">Try adjusting your search or filters.</div>
+            </div>
+
+            <div class="emp-pagination" id="paginationContainer">
+                <div class="emp-pagination-info" id="paginationInfo"></div>
+                <div class="emp-pagination-controls" id="paginationControls"></div>
+            </div>
+        }
+        else
+        {
+            <div class="project-empty-state">
+                <div class="project-empty-icon"><i class="fas fa-inbox"></i></div>
+                <div class="project-empty-title">No proposals yet</div>
+                <div class="project-empty-text">No proposals have been submitted.</div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+(function () {
+    let PAGE_SIZE = 10;
+    let currentPage = 1;
+    let filteredRows = [];
+
+    const searchInput  = document.getElementById('proposalSearch');
+    const statusSelect = document.getElementById('statusFilter');
+    const allRows      = Array.from(document.querySelectorAll('.emp-row'));
+    const noResults    = document.getElementById('noFilterResults');
+    const pageInfo     = document.getElementById('paginationInfo');
+    const pageControls = document.getElementById('paginationControls');
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+    function applyFilters() {
+        const query  = (searchInput?.value ?? '').toLowerCase().trim();
+        const status = statusSelect?.value ?? '';
+        filteredRows = allRows.filter(row => {
+            const title = (row.dataset.title || '');
+            const employee = (row.dataset.employee || '');
+            const titleMatch  = !query || title.includes(query) || employee.includes(query);
+            const statusMatch = !status || row.dataset.status === status;
+            return titleMatch && statusMatch;
+        });
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        const total = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end   = start + PAGE_SIZE;
+
+        allRows.forEach(r => r.style.display = 'none');
+        filteredRows.forEach((r, i) => {
+            r.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        if (noResults) noResults.style.display = total === 0 ? '' : 'none';
+
+        if (pageInfo) {
+            pageInfo.textContent = total === 0 ? '' : `Showing ${start + 1}–${Math.min(end, total)} of ${total}`;
+        }
+
+        if (pageControls) {
+            pageControls.innerHTML = '';
+            const makeBtn = (label, page, disabled, active) => {
+                const btn = document.createElement('button');
+                btn.className = 'emp-page-btn' + (active ? ' active' : '');
+                btn.innerHTML = label;
+                btn.disabled  = disabled;
+                btn.addEventListener('click', () => { currentPage = page; render(); });
+                return btn;
+            };
+
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
+            const w = 2;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
+                    pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                    const el = document.createElement('span');
+                    el.className = 'emp-page-ellipsis';
+                    el.textContent = '…';
+                    pageControls.appendChild(el);
+                }
+            }
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
+        }
+    }
+
+    if (searchInput)  searchInput.addEventListener('input', applyFilters);
+    if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+
+    if (pageSizeSelect) {
+        pageSizeSelect.value = String(PAGE_SIZE);
+        pageSizeSelect.addEventListener('change', function () {
+            const val = parseInt(pageSizeSelect.value, 10) || 10;
+            PAGE_SIZE = Math.max(5, val);
+            currentPage = 1;
+            render();
+        });
+    }
+
+    const archiveSelect = document.getElementById('archiveFilter');
+    if (archiveSelect) archiveSelect.addEventListener('change', () => {
+        const url = new URL(window.location.href);
+        if (archiveSelect.value === 'active') url.searchParams.delete('archiveFilter');
+        else url.searchParams.set('archiveFilter', archiveSelect.value);
+        window.location.href = url.toString();
+    });
+
+    filteredRows = allRows.slice();
+    render();
+})();
+</script>
+}
+
+@functions {
+    private string GetStatusClass(string status) => status switch
+    {
+        "Pending"           => "emp-status-pending",
+        "Approved"          => "emp-status-approved",
+        "Rejected"          => "emp-status-rejected",
+        "Requires Revision" => "emp-status-revision",
+        _                   => "emp-status-default"
+    };
+}

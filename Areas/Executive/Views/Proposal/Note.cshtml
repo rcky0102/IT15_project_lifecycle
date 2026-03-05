@@ -1,0 +1,48 @@
+@model project_lifecycle.Models.ProposalNoteVersion
+@{
+    ViewData["Title"] = $"Note v{Model?.VersionNumber} - {Model?.ProjectProposal?.Title}";
+}
+
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-note-sticky"></i></span>
+                Note@(Model != null ? $" (v{Model.VersionNumber})" : "")
+            </h1>
+            @{
+                var dhName = Model?.DepartmentHead != null
+                    ? (Model.DepartmentHead.FirstName
+                       + (string.IsNullOrWhiteSpace(Model.DepartmentHead.MiddleName) ? "" : " " + Model.DepartmentHead.MiddleName.Trim().Substring(0,1) + ".")
+                       + " " + Model.DepartmentHead.LastName)
+                    : null;
+            }
+            <p class="emp-page-subtitle">
+                @Model?.ProjectProposal?.Title
+                <span style="opacity:.75;"> &mdash; Saved @Model?.DateCreated.ToString("MMM dd, yyyy h:mm tt")</span>
+                @if (!string.IsNullOrEmpty(dhName)) { <span style="opacity:.75;"> &mdash; Written by <strong>@dhName</strong></span> }
+            </p>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="Executive" asp-controller="Proposal" asp-action="Details"
+               asp-route-id="@Model?.ProjectProposalId" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Proposal</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Note content card ===== -->
+<div class="emp-detail-card">
+    <div class="emp-detail-card-header">
+        <span class="emp-status-badge emp-status-default">
+            <span class="emp-status-dot"></span>
+                Note v@(Model?.VersionNumber)
+        </span>
+    </div>
+    <div class="emp-detail-body">
+        @Html.Raw(Model?.Note ?? string.Empty)
+    </div>
+</div>

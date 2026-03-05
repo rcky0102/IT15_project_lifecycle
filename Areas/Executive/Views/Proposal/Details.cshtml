@@ -1,0 +1,200 @@
+@model ProjectProposal
+@using project_lifecycle.Models
+@{
+    ViewData["Title"] = Model?.Title ?? "Proposal";
+    var versions = ViewBag.ProjectProposalVersions as List<project_lifecycle.Models.ProjectProposalVersion> ?? new List<project_lifecycle.Models.ProjectProposalVersion>();
+    var notes    = ViewBag.ProposalNoteVersions    as List<project_lifecycle.Models.ProposalNoteVersion>    ?? new List<project_lifecycle.Models.ProposalNoteVersion>();
+    var orderedNotes = notes.OrderByDescending(n => n.VersionNumber).ToList();
+    var employeeName = Model?.Employee != null
+        ? string.Join(" ", new[] { Model.Employee.FirstName, Model.Employee.MiddleName, Model.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+        : "Unknown";
+}
+
+@if (Model == null)
+{
+    <div class="emp-page-container">
+        <div class="emp-alert emp-alert-error">
+            <div class="emp-alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <span>Proposal not found or has been removed.</span>
+            <button class="emp-alert-close" onclick="this.parentElement.remove()" aria-label="Close"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="margin-top:0.5rem">
+            <a asp-area="Executive" asp-controller="Proposal" asp-action="Index" class="emp-btn emp-btn-outline">Back</a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- ===== Page Hero ===== -->
+    <div class="emp-page-hero">
+        <div class="emp-page-hero-content">
+            <div class="emp-page-hero-left">
+                <h1 class="emp-page-title">
+                    <span class="emp-page-title-icon"><i class="fas fa-file-lines"></i></span>
+                    @Model.Title
+                </h1>
+                <p class="emp-page-subtitle">Submitted by @employeeName &mdash; @Model.DateCreated.ToString("MMMM dd, yyyy")</p>
+            </div>
+            <div class="emp-page-hero-right" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('versionsModal')">
+                    <i class="fas fa-clock-rotate-left"></i>
+                    <span>Versions</span>
+                    @if (versions.Any())
+                    {
+                        <span class="emp-modal-count-chip">@versions.Count</span>
+                    }
+                </button>
+                <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('notesModal')">
+                    <i class="fas fa-note-sticky"></i>
+                    <span>Notes</span>
+                    @if (notes.Any())
+                    {
+                        <span class="emp-modal-count-chip">@notes.Count</span>
+                    }
+                </button>
+                <a asp-area="Executive" asp-controller="Proposal" asp-action="Index" class="emp-btn emp-btn-outline">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Detail card ===== -->
+    <div class="emp-detail-card">
+        <div class="emp-detail-card-header">
+            <span class="emp-badge-white" title="Status">
+                <span class="emp-status-inline @GetStatusClass(Model.Status)">
+                    <span class="emp-status-dot"></span>
+                    <span class="emp-status-text">@Model.Status</span>
+                </span>
+            </span>
+        </div>
+        <div class="emp-detail-body">
+            @Html.Raw(Model.Input ?? string.Empty)
+        </div>
+    </div>
+
+    <!-- ===== Versions Modal ===== -->
+    <div id="versionsModal" class="emp-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="versionsModalTitle">
+        <div class="emp-modal">
+            <div class="emp-modal-header">
+                <h5 id="versionsModalTitle" class="emp-modal-title"><i class="fas fa-clock-rotate-left"></i> Versions</h5>
+                <button class="emp-modal-close" onclick="empModalClose('versionsModal')" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                <div class="emp-version-item emp-version-current mb-2">
+                    <strong>Current</strong> — @Model.Title
+                    <div class="emp-modal-meta"><i class="far fa-calendar"></i> Updated @Model.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                </div>
+
+                @if (versions.Any())
+                {
+                    @foreach (var v in versions)
+                    {
+                        <div class="emp-version-item mb-2">
+                            <a asp-area="Executive" asp-controller="Proposal" asp-action="Version" asp-route-id="@v.Id">
+                                <strong>Version @v.VersionNumber</strong>
+                            </a>
+                            &nbsp;&mdash;&nbsp;@v.Title
+                            <div class="emp-modal-meta"><i class="far fa-calendar"></i> Saved @v.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="emp-modal-empty">
+                        <i class="fas fa-layer-group"></i>
+                        <span>No previous versions.</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Notes Modal ===== -->
+    <div id="notesModal" class="emp-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
+        <div class="emp-modal">
+            <div class="emp-modal-header">
+                <h5 id="notesModalTitle" class="emp-modal-title"><i class="fas fa-note-sticky"></i> Notes</h5>
+                <button class="emp-modal-close" onclick="empModalClose('notesModal')" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="emp-modal-body">
+                @if (orderedNotes.Any())
+                {
+                    var current = orderedNotes.First();
+                    <div class="emp-note-item emp-note-current mb-2">
+                        <strong>
+                            <a asp-area="Executive" asp-controller="Proposal" asp-action="Note" asp-route-id="@current.Id">Current version</a>
+                        </strong>@(current.VersionNumber > 0 ? (" (v" + current.VersionNumber + ")") : "")
+                        <div class="emp-modal-meta"><i class="far fa-calendar"></i> Saved @current.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="emp-note-content mt-2">@Html.Raw(current.Note)</div>
+                    </div>
+
+                    @foreach (var n in orderedNotes.Skip(1))
+                    {
+                        <div class="emp-note-item mb-2">
+                            <strong>
+                                <a asp-area="Executive" asp-controller="Proposal" asp-action="Note" asp-route-id="@n.Id">Version @n.VersionNumber</a>
+                            </strong>
+                            <div class="emp-modal-meta"><i class="far fa-calendar"></i> Saved @n.DateCreated.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div class="emp-note-content mt-2">@Html.Raw(n.Note)</div>
+                        </div>
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(Model.Note))
+                {
+                    <div class="emp-note-item emp-note-current mb-2">
+                        <strong>Current version</strong>
+                        <div class="emp-note-content mt-2">@Html.Raw(Model.Note)</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="emp-modal-empty">
+                        <i class="fas fa-note-sticky"></i>
+                        <span>No notes available.</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function empModalOpen(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add('emp-modal-visible');
+        document.body.style.overflow = 'hidden';
+    }
+    function empModalClose(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('emp-modal-visible');
+        document.body.style.overflow = '';
+    }
+    document.querySelectorAll('.emp-modal-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) empModalClose(overlay.id);
+        });
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.emp-modal-overlay.emp-modal-visible').forEach(function(m) {
+                empModalClose(m.id);
+            });
+        }
+    });
+    </script>
+}
+
+@functions {
+    private string GetStatusClass(string status) => status switch
+    {
+        "Pending"           => "emp-status-pending",
+        "Approved"          => "emp-status-approved",
+        "Rejected"          => "emp-status-rejected",
+        "Requires Revision" => "emp-status-revision",
+        _                   => "emp-status-default"
+    };
+}

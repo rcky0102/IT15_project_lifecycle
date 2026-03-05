@@ -19,6 +19,11 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/proposal.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/depthead-project.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-proposal.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-project.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/superadmin-layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/superadmin-dashboard.css" asp-append-version="true" />
@@ -69,6 +74,22 @@
                            data-tooltip="Users">
                             <i class="fas fa-users"></i>
                             <span class="sa-nav-text">User Management</span>
+                        </a>
+                    </li>
+                    <li class="sa-nav-item">
+                        <a href="@Url.Action("Index", "Proposal", new { area = "SuperAdmin" })"
+                           class="sa-nav-link @(currentController == "Proposal" ? "active" : "")"
+                           data-tooltip="Proposals">
+                            <i class="fas fa-file-lines"></i>
+                            <span class="sa-nav-text">Proposals</span>
+                        </a>
+                    </li>
+                    <li class="sa-nav-item">
+                        <a href="@Url.Action("Index", "Project", new { area = "SuperAdmin" })"
+                           class="sa-nav-link @(currentController == "Project" ? "active" : "")"
+                           data-tooltip="Projects">
+                            <i class="fas fa-diagram-project"></i>
+                            <span class="sa-nav-text">Projects</span>
                         </a>
                     </li>
                     <li class="sa-nav-item">
