@@ -140,16 +140,39 @@
                 <span class="emp-count-chip">@totalTasks</span>
             </div>
             <div class="emp-table-toolbar-right">
-                
+                <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:.4rem;">
+                        <i class="fas fa-magnifying-glass emp-search-icon"></i>
+                        <input id="taskSearch" type="text" class="emp-search-input" placeholder="Search tasks…" autocomplete="off" />
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.4rem;">
+                        <select id="taskStatusFilter" class="emp-select">
+                            <option value="all" selected>All</option>
+                            <option value="pending">Pending</option>
+                            <option value="checked">Checked</option>
+                            <option value="require revision">Require Revision</option>
+                            <option value="in progress">In Progress</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.4rem;">
+                        <label for="taskPageSizeSelect" style="font-size:.82rem;color:#64748b;margin-right:.4rem;">Show</label>
+                        <select id="taskPageSizeSelect" class="emp-select" style="width:92px;">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
 
         @if (Model.Tasks.Any())
         {
-            <div class="emp-task-list">
+            <div class="emp-task-list" id="tasksList">
                 @foreach (var t in Model.Tasks)
                 {
-                    <div class="emp-task-row">
+                    <div class="emp-task-row emp-task-row-item" data-name="@t.Name.ToLower()" data-status="@(t.Status?.ToLowerInvariant() ?? "")">
                         <div class="emp-task-row-left">
                             <span class="emp-task-status-dot @PmTaskDotClass(t.Status)"></span>
                             <div class="emp-task-info">
@@ -192,6 +215,16 @@
                         </div>
                     </div>
                 }
+            </div>
+            <div id="noTaskResults" class="emp-empty-state" style="display:none;margin-top:1rem;">
+                <div class="emp-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <h4 class="emp-empty-title">No matching tasks</h4>
+                <p class="emp-empty-text">Try adjusting your search or filters.</p>
+            </div>
+
+            <div class="emp-pagination" id="taskPaginationContainer" style="margin-top:1rem;">
+                <div class="emp-pagination-info" id="taskPaginationInfo"></div>
+                <div class="emp-pagination-controls" id="taskPaginationControls"></div>
             </div>
         }
         else
@@ -294,6 +327,89 @@
         // submit the stored form
         __archiveFormToSubmit.submit();
     }
+</script>
+
+<script>
+(function () {
+    let PAGE_SIZE = 10;
+    let currentPage = 1;
+    let filteredRows = [];
+
+    const searchInput    = document.getElementById('taskSearch');
+    const allRows        = Array.from(document.querySelectorAll('.emp-task-row-item'));
+    const noResults      = document.getElementById('noTaskResults');
+    const pageInfo       = document.getElementById('taskPaginationInfo');
+    const pageControls   = document.getElementById('taskPaginationControls');
+    const pageSizeSelect = document.getElementById('taskPageSizeSelect');
+    const statusSelect   = document.getElementById('taskStatusFilter');
+
+    function applyFilters() {
+        const query = (searchInput?.value ?? '').toLowerCase().trim();
+        const statusFilter = (statusSelect?.value ?? 'all').toLowerCase();
+        filteredRows = allRows.filter(row => {
+            const nameMatch = !query || (row.dataset.name || '').includes(query);
+            const status = (row.dataset.status || '').toLowerCase();
+            let statusMatch = true;
+            if (statusFilter !== 'all') statusMatch = status === statusFilter;
+            return nameMatch && statusMatch;
+        });
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        const total      = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        currentPage      = Math.min(currentPage, totalPages);
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end   = start + PAGE_SIZE;
+
+        allRows.forEach(r => r.style.display = 'none'); 
+        filteredRows.forEach((r, i) => { r.style.display = (i >= start && i < end) ? '' : 'none'; }); 
+
+        if (noResults)  noResults.style.display  = total === 0 ? '' : 'none'; 
+        if (pageInfo)   pageInfo.textContent      = total === 0 ? '' : `Showing ${start + 1}${Math.min(end, total)} of ${total}`;
+
+        if (pageControls) {
+            pageControls.innerHTML = '';
+            const makeBtn = (label, page, disabled, active) => {
+                const btn = document.createElement('button');
+                btn.className = 'emp-page-btn' + (active ? ' active' : '');
+                btn.innerHTML = label;
+                btn.disabled  = disabled;
+                btn.addEventListener('click', () => { currentPage = page; render(); });
+                return btn;
+            };
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
+            const w = 2;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
+                    pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                    const el = document.createElement('span');
+                    el.className = 'emp-page-ellipsis';
+                    el.textContent = '\u2026';
+                    pageControls.appendChild(el);
+                }
+            }
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
+        }
+    }
+
+    if (searchInput)    searchInput.addEventListener('input', applyFilters);
+    if (statusSelect)   statusSelect.addEventListener('change', applyFilters);
+    if (pageSizeSelect) {
+        pageSizeSelect.value = String(PAGE_SIZE);
+        pageSizeSelect.addEventListener('change', function () {
+            PAGE_SIZE = Math.max(5, parseInt(this.value, 10) || 10);
+            currentPage = 1;
+            render();
+        });
+    }
+
+    filteredRows = allRows.slice();
+    applyFilters();
+})();
 </script>
 
 @functions {
