@@ -19,10 +19,12 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/executive-layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/executive-dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/executive-reports.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-news.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/messenger.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
 </head>
@@ -79,6 +81,14 @@
                             <i class="fas fa-comment-dots"></i>
                             <span class="exec-nav-text">Messages</span>
                             <span class="msg-nav-badge" style="display:none"></span>
+                        </a>
+                    </li>
+                    <li class="exec-nav-item">
+                        <a href="@Url.Action("Index", "News", new { area = "Executive" })"
+                           class="exec-nav-link @(currentController == "News" ? "active" : "")"
+                           data-tooltip="News">
+                            <i class="fas fa-newspaper"></i>
+                            <span class="exec-nav-text">News</span>
                         </a>
                     </li>
                 </ul>
