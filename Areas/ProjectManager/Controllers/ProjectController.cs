@@ -1297,12 +1297,14 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             }
 
             // When unarchiving, place the milestone at the end of active sequence
-            // so existing sequence ordering is preserved.
-            var maxOrder = await _context.ProjectMilestones
+            // so existing sequence ordering is preserved. EF Core cannot translate
+            // DefaultIfEmpty + Max in all cases, so compute in two steps.
+            var activeQuery = _context.ProjectMilestones
                 .Where(x => x.ProjectId == pmst.ProjectId && !x.IsArchived)
-                .Select(x => x.SequenceOrder)
-                .DefaultIfEmpty(0)
-                .MaxAsync();
+                .Select(x => x.SequenceOrder);
+
+            var hasActive = await activeQuery.AnyAsync();
+            var maxOrder = hasActive ? await activeQuery.MaxAsync() : 0;
 
             pmst.IsArchived = false;
             pmst.SequenceOrder = maxOrder + 1;

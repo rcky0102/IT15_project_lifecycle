@@ -1,9 +1,10 @@
 @model project_lifecycle.ViewModels.ProjectManager.MilestoneViewModel
 @{
     ViewData["Title"] = Model.MilestoneName;
-    var totalTasks = Model.Tasks.Count;
+    // Exclude archived tasks from counts/progress so archiving a task removes it from the active progress calculation
+    var totalTasks = Model.Tasks.Count(t => !t.IsArchived);
     // Consider a task "done" when its status is "Checked" (employee submission approved)
-    var doneTasks  = Model.Tasks.Count(t => string.Equals(t.Status, "Checked", StringComparison.OrdinalIgnoreCase));
+    var doneTasks  = Model.Tasks.Count(t => !t.IsArchived && string.Equals(t.Status, "Checked", StringComparison.OrdinalIgnoreCase));
     var pct        = totalTasks > 0 ? (int)Math.Round(doneTasks * 100.0 / totalTasks) : 0;
 }
 
@@ -177,7 +178,7 @@
         @if (Model.Tasks.Any())
         {
             <div class="emp-task-list" id="tasksList">
-                @foreach (var t in Model.Tasks)
+                @foreach (var t in Model.Tasks.OrderBy(x => x.IsArchived).ThenBy(x => x.StartDate))
                 {
                     <div class="emp-task-row emp-task-row-item" data-name="@t.Name.ToLower()" data-status="@(t.Status?.ToLowerInvariant() ?? "")" data-archived="@(t.IsArchived ? "true" : "false")">
                         <div class="emp-task-row-left">
@@ -185,8 +186,15 @@
                             <div class="emp-task-info">
                                 <span class="emp-task-name">@t.Name</span>
                                 <span class="emp-task-dates">
-                                    <i class="far fa-calendar"></i>
-                                    @t.StartDate.ToString("MMM dd") &ndash; @t.EndDate.ToString("MMM dd, yyyy")
+                                    @if (t.IsArchived)
+                                    {
+                                        <span style="font-size:.75rem;color:#94a3b8;">ARCHIVED</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="far fa-calendar"></i>
+                                        @t.StartDate.ToString("MMM dd") <text>&ndash;</text> @t.EndDate.ToString("MMM dd, yyyy")
+                                    }
                                 </span>
                                 <span class="emp-task-meta-assignee">
                                     <i class="fas fa-user" style="font-size:.65rem;"></i>
