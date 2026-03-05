@@ -3,6 +3,20 @@
     Layout = "~/Areas/ProjectManager/Layout.cshtml";
 
     var tasksCompletion = (int)(ViewData["TasksCompletion"] ?? 0);
+    var totalTasks = (int)(ViewData["TotalTasks"] ?? 0);
+    var checkedTasks = (int)(ViewData["CheckedTasks"] ?? 0);
+    var pendingTasks = (int)(ViewData["PendingTasks"] ?? 0);
+    var revisionTasks = (int)(ViewData["RevisionTasks"] ?? 0);
+    var overdueTasks = (int)(ViewData["OverdueTasks"] ?? 0);
+    var totalMilestones = (int)(ViewData["TotalMilestones"] ?? 0);
+    var finishedMilestones = (int)(ViewData["FinishedMilestones"] ?? 0);
+    var milestonePct = (int)(ViewData["MilestonePct"] ?? 0);
+    var duePct = (int)(ViewData["DuePct"] ?? 0);
+    var openTasksPct = (int)(ViewData["OpenTasksPct"] ?? 0);
+
+    var recentActivity = ViewData["RecentActivity"] as dynamic ?? new List<object>();
+    var deadlineProjects = ViewData["DeadlineProjects"] as dynamic ?? new List<object>();
+    var overdueTasksList = ViewData["OverdueTasksList"] as dynamic ?? new List<object>();
 }
 
 <div class="dashboard-container">
@@ -10,12 +24,12 @@
     <div class="dashboard-header">
         <div class="header-content">
             <h1 class="dashboard-title">Project Manager Dashboard</h1>
-            <p class="dashboard-subtitle">Executive overview of projects, milestones, and team health</p>
+            <p class="dashboard-subtitle">Overview of your projects, milestones, tasks, and team</p>
         </div>
         <div class="header-actions">
             <a href="@Url.Action("Index", "Project", new { area = "ProjectManager" })" class="btn btn-ocean">
-                <i class="fas fa-plus"></i>
-                New Project
+                <i class="fas fa-diagram-project"></i>
+                My Projects
             </a>
             <a href="@Url.Action("Index", "Dashboard", new { area = "ProjectManager" })" class="btn btn-outline-ocean">
                 <i class="fas fa-sync"></i>
@@ -31,10 +45,17 @@
                 <i class="fas fa-list-check"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-number">@ViewData["OpenTasks"]</div>
-                <div class="stat-label">Open Tasks</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> pending
+                <div class="stat-number">@pendingTasks</div>
+                <div class="stat-label">Pending Tasks</div>
+                <div class="stat-change @(revisionTasks > 0 ? "negative" : "positive")">
+                    @if (revisionTasks > 0)
+                    {
+                        <i class="fas fa-rotate-left"></i> @revisionTasks @(revisionTasks == 1 ? "revision" : "revisions")
+                    }
+                    else
+                    {
+                        <i class="fas fa-check"></i> <text>all clear</text>
+                    }
                 </div>
             </div>
         </div>
@@ -47,7 +68,7 @@
                 <div class="stat-number">@ViewData["ActiveProjects"]</div>
                 <div class="stat-label">Active Projects</div>
                 <div class="stat-change neutral">
-                    <i class="fas fa-minus"></i> stable
+                    <i class="fas fa-tasks"></i> @totalTasks total tasks
                 </div>
             </div>
         </div>
@@ -59,8 +80,15 @@
             <div class="stat-content">
                 <div class="stat-number">@ViewData["UpcomingDeadlines"]</div>
                 <div class="stat-label">Due in 30 days</div>
-                <div class="stat-change negative">
-                    <i class="fas fa-exclamation-triangle"></i> attention
+                <div class="stat-change @(overdueTasks > 0 ? "negative" : "neutral")">
+                    @if (overdueTasks > 0)
+                    {
+                        <i class="fas fa-exclamation-triangle"></i> @overdueTasks @(overdueTasks == 1 ? "task overdue" : "tasks overdue")
+                    }
+                    else
+                    {
+                        <i class="fas fa-clock"></i> <text>on track</text>
+                    }
                 </div>
             </div>
         </div>
@@ -118,38 +146,68 @@
                 <a href="@Url.Action("Index", "Project", new { area = "ProjectManager" })" class="btn btn-sm btn-link">View All</a>
             </div>
             <div class="activity-list">
-                <div class="activity-item">
-                    <div class="activity-icon project">
-                        <i class="fas fa-folder-plus"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Project created</div>
-                        <div class="activity-description">A new project has been assigned to you</div>
-                        <div class="activity-time">Recently</div>
-                    </div>
-                </div>
+                @{ var activityList = recentActivity as System.Collections.IEnumerable; }
+                @if (activityList != null)
+                {
+                    var hasItems = false;
+                    foreach (dynamic item in activityList)
+                    {
+                        hasItems = true;
+                        string action = item.Action;
+                        string module = item.Module;
+                        string description = item.Description;
+                        string time = item.Time;
 
-                <div class="activity-item">
-                    <div class="activity-icon user">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Task marked complete</div>
-                        <div class="activity-description">A team member completed a milestone task</div>
-                        <div class="activity-time">Today</div>
-                    </div>
-                </div>
+                        string iconClass = "system";
+                        string iconName = "fas fa-circle-info";
 
-                <div class="activity-item">
-                    <div class="activity-icon system">
-                        <i class="fas fa-flag-checkered"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Milestone reached</div>
-                        <div class="activity-description">Project phase milestone has been achieved</div>
-                        <div class="activity-time">This week</div>
-                    </div>
-                </div>
+                        if (action.Contains("Create", StringComparison.OrdinalIgnoreCase))
+                        {
+                            iconClass = "project";
+                            iconName = "fas fa-plus-circle";
+                        }
+                        else if (action.Contains("Update", StringComparison.OrdinalIgnoreCase))
+                        {
+                            iconClass = "user";
+                            iconName = "fas fa-pen";
+                        }
+                        else if (action.Contains("Delete", StringComparison.OrdinalIgnoreCase) || action.Contains("Remove", StringComparison.OrdinalIgnoreCase))
+                        {
+                            iconClass = "security";
+                            iconName = "fas fa-trash-alt";
+                        }
+                        else if (action.Contains("Archive", StringComparison.OrdinalIgnoreCase))
+                        {
+                            iconClass = "system";
+                            iconName = "fas fa-box-archive";
+                        }
+
+                        <div class="activity-item">
+                            <div class="activity-icon @iconClass">
+                                <i class="@iconName"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">@action — @module</div>
+                                <div class="activity-description">@description</div>
+                                <div class="activity-time">@time</div>
+                            </div>
+                        </div>
+                    }
+
+                    if (!hasItems)
+                    {
+                        <div class="activity-item">
+                            <div class="activity-icon system">
+                                <i class="fas fa-circle-info"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">No recent activity</div>
+                                <div class="activity-description">Your actions will appear here as you manage projects and tasks.</div>
+                                <div class="activity-time">—</div>
+                            </div>
+                        </div>
+                    }
+                }
             </div>
         </div>
 
@@ -170,11 +228,46 @@
                     <i class="fas fa-user-tag"></i>
                     <span>Roles</span>
                 </a>
-                <a class="quick-action-btn" href="@Url.Action("Index", "Proposal", new { area = "ProjectManager" })">
-                    <i class="fas fa-file-lines"></i>
-                    <span>Proposals</span>
+                <a class="quick-action-btn" href="@Url.Action("Index", "News", new { area = "ProjectManager" })">
+                    <i class="fas fa-newspaper"></i>
+                    <span>News</span>
                 </a>
             </div>
+
+            @{ var deadlines = deadlineProjects as System.Collections.IEnumerable; }
+            @if (deadlines != null)
+            {
+                var hasDeadlines = false;
+                foreach (dynamic _ in deadlines) { hasDeadlines = true; break; }
+
+                if (hasDeadlines)
+                {
+                    <div class="panel-header" style="border-top: 1px solid #f1f5f9;">
+                        <h3 style="font-size:.92rem"><i class="fas fa-clock" style="color:#f59e0b;margin-right:.35rem"></i>Upcoming Deadlines</h3>
+                    </div>
+                    <div class="activity-list" style="padding:.25rem 0;">
+                        @foreach (dynamic proj in deadlines)
+                        {
+                            string projName = proj.Name;
+                            string endDate = proj.EndDate;
+                            int daysLeft = proj.DaysLeft;
+
+                            <div class="activity-item" style="padding:.6rem 1.25rem;">
+                                <div class="activity-icon system" style="width:32px;height:32px;font-size:.72rem">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title" style="font-size:.82rem">@projName</div>
+                                    <div class="activity-description" style="font-size:.75rem">
+                                        Due @endDate —
+                                        <strong style="color:@(daysLeft <= 7 ? "#ef4444" : "#f59e0b")">@daysLeft @(daysLeft == 1 ? "day" : "days") left</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
         </div>
     </div>
 
@@ -190,8 +283,8 @@
         <div class="status-grid">
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Tasks</div>
-                    <div class="status-value">@tasksCompletion% Completed</div>
+                    <div class="status-name">Tasks Completion</div>
+                    <div class="status-value">@checkedTasks / @totalTasks — @tasksCompletion%</div>
                 </div>
                 <div class="status-bar">
                     <div class="status-progress" id="tasksCompletionBar" style="width: @(tasksCompletion)%"></div>
@@ -200,21 +293,31 @@
 
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Due Projects</div>
-                    <div class="status-value">@ViewData["UpcomingDeadlines"] due soon</div>
+                    <div class="status-name">Milestones</div>
+                    <div class="status-value">@finishedMilestones / @totalMilestones finished — @milestonePct%</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 40%"></div>
+                    <div class="status-progress" style="width: @(milestonePct)%"></div>
                 </div>
             </div>
 
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Open Tasks</div>
-                    <div class="status-value">@ViewData["OpenTasks"] in progress</div>
+                    <div class="status-name">Due Projects</div>
+                    <div class="status-value">@ViewData["UpcomingDeadlines"] due soon — @duePct% of active</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 60%"></div>
+                    <div class="status-progress" style="width: @(duePct)%"></div>
+                </div>
+            </div>
+
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">Pending Tasks</div>
+                    <div class="status-value">@pendingTasks pending — @openTasksPct% of total</div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-progress" style="width: @(openTasksPct)%"></div>
                 </div>
             </div>
         </div>
@@ -279,13 +382,12 @@
                         projectsChart.update();
                     })
                     .catch(() => {
-                        // fallback placeholder
                         const now = new Date();
                         const labels = [], data = [];
                         for (let i = days - 1; i >= 0; i--) {
                             const d = new Date(now); d.setDate(d.getDate() - i);
                             labels.push(d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }));
-                            data.push(Math.floor(Math.random() * 5));
+                            data.push(0);
                         }
                         projectsChart.data.labels = labels;
                         projectsChart.data.datasets[0].data = data;
@@ -298,22 +400,41 @@
             });
             fetchCompletedTasks(parseInt(projRangeSelect?.value || '7', 10));
 
-            // --- Task Status (doughnut chart) ---
+            // --- Task Status (doughnut chart) — real data ---
+            const checkedVal = @checkedTasks;
+            const pendingVal = @pendingTasks;
+            const revisionVal = @revisionTasks;
+            const totalVal = checkedVal + pendingVal + revisionVal;
+
             const distCtx = document.getElementById('taskDistributionChart').getContext('2d');
             new Chart(distCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Completed', 'In Progress', 'Pending', 'Blocked'],
+                    labels: ['Checked', 'Pending', 'Require Revision'],
                     datasets: [{
-                        data: [60, 25, 10, 5],
-                        backgroundColor: ['#006994', '#4CA3DD', '#94D3FF', '#E8F4F8'],
+                        data: totalVal > 0 ? [checkedVal, pendingVal, revisionVal] : [1],
+                        backgroundColor: totalVal > 0
+                            ? ['#006994', '#4CA3DD', '#f59e0b']
+                            : ['#e2e8f0'],
                         borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    if (totalVal === 0) return 'No tasks';
+                                    const val = ctx.parsed;
+                                    const pct = Math.round(val / totalVal * 100);
+                                    return `${ctx.label}: ${val} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         })();
