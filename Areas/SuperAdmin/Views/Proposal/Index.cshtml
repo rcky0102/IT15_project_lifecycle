@@ -35,12 +35,28 @@
     </div>
 }
 
+<!-- Confirmation modal for archive / unarchive / delete actions -->
+<div class="emp-modal-backdrop" id="confirmActionModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmActionMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmActionCancel">Cancel</button>
+            <form id="confirmActionForm" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="confirmActionId" value="" />
+                <button type="submit" class="emp-btn emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- ===== Filters ===== -->
 <div class="emp-filters-card">
     <div class="emp-filters-row">
         <div class="emp-search-group">
             <i class="fas fa-magnifying-glass emp-search-icon"></i>
-            <input id="proposalSearch" type="text" class="emp-search-input" placeholder="Search proposals…" autocomplete="off" />
+            <input id="proposalSearch" type="text" class="emp-search-input" placeholder="Search proposalsï¿½" autocomplete="off" />
         </div>
         <div class="emp-select-group">
             <select id="statusFilter" class="emp-select">
@@ -132,31 +148,29 @@
                                         </a>
                                         @if (!proposal.IsArchived)
                                         {
-                                            <form asp-area="SuperAdmin" asp-controller="Proposal" asp-action="Archive" method="post" class="emp-action-form" onsubmit="return confirm('Archive this proposal?');">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="id" value="@proposal.Id" />
-                                                <button type="submit" class="emp-action-btn emp-action-archive" title="Archive">
-                                                    <i class="fas fa-box-archive"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
+                                                    data-action="@Url.Action("Archive", "Proposal", new { area = "SuperAdmin" })"
+                                                    data-id="@proposal.Id"
+                                                    data-message="Archive this proposal?">
+                                                <i class="fas fa-box-archive"></i>
+                                            </button>
                                         }
                                         else
                                         {
-                                            <form asp-area="SuperAdmin" asp-controller="Proposal" asp-action="Unarchive" method="post" class="emp-action-form" onsubmit="return confirm('Restore this proposal?');">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="id" value="@proposal.Id" />
-                                                <button type="submit" class="emp-action-btn emp-action-restore" title="Restore">
-                                                    <i class="fas fa-box-open"></i>
-                                                </button>
-                                            </form>
-                                        }
-                                        <form asp-area="SuperAdmin" asp-controller="Proposal" asp-action="Delete" method="post" class="emp-action-form" onsubmit="return confirm('Permanently delete this proposal? This cannot be undone.');">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@proposal.Id" />
-                                            <button type="submit" class="emp-action-btn" title="Delete" style="color:#ef4444;border-color:rgba(239,68,68,.15);">
-                                                <i class="fas fa-trash-can"></i>
+                                            <button type="button" class="emp-action-btn emp-action-restore" title="Restore"
+                                                    data-action="@Url.Action("Unarchive", "Proposal", new { area = "SuperAdmin" })"
+                                                    data-id="@proposal.Id"
+                                                    data-message="Restore this proposal?">
+                                                <i class="fas fa-box-open"></i>
                                             </button>
-                                        </form>
+                                        }
+                                        <button type="button" class="emp-action-btn emp-action-delete" title="Delete"
+                                                style="color:#ef4444;border-color:rgba(239,68,68,.15);"
+                                                data-action="@Url.Action("Delete", "Proposal", new { area = "SuperAdmin" })"
+                                                data-id="@proposal.Id"
+                                                data-message="Permanently delete this proposal? This cannot be undone.">
+                                            <i class="fas fa-trash-can"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -231,7 +245,7 @@
         if (noResults) noResults.style.display = total === 0 ? '' : 'none';
 
         if (pageInfo) {
-            pageInfo.textContent = total === 0 ? '' : `Showing ${start + 1}–${Math.min(end, total)} of ${total}`;
+            pageInfo.textContent = total === 0 ? '' : `Showing ${start + 1}ï¿½${Math.min(end, total)} of ${total}`;
         }
 
         if (pageControls) {
@@ -253,7 +267,7 @@
                 } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
                     const el = document.createElement('span');
                     el.className = 'emp-page-ellipsis';
-                    el.textContent = '…';
+                    el.textContent = 'ï¿½';
                     pageControls.appendChild(el);
                 }
             }
@@ -285,6 +299,43 @@
     filteredRows = allRows.slice();
     render();
 })();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('confirmActionModal');
+    const modalMsg = document.getElementById('confirmActionMessage');
+    const modalForm = document.getElementById('confirmActionForm');
+    const modalIdInput = document.getElementById('confirmActionId');
+    const cancelBtn = document.getElementById('confirmActionCancel');
+
+    function showModal(actionUrl, id, message) {
+        if (!modal || !modalForm || !modalIdInput) return;
+        modalForm.action = actionUrl;
+        modalIdInput.value = id;
+        modalMsg.textContent = message || 'Are you sure?';
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.querySelectorAll('.emp-action-archive, .emp-action-restore, .emp-action-delete').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const action = btn.getAttribute('data-action');
+            const id = btn.getAttribute('data-id');
+            const message = btn.getAttribute('data-message') || 'Are you sure?';
+            if (!action || !id) return;
+            showModal(action, id, message);
+        });
+    });
+
+    cancelBtn?.addEventListener('click', hideModal);
+    modal?.addEventListener('click', function (e) { if (e.target === modal) hideModal(); });
+});
 </script>
 }
 

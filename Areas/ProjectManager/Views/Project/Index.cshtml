@@ -34,6 +34,22 @@
     </div>
 }
 
+<!-- Confirmation modal for archive / unarchive actions -->
+<div class="emp-modal-backdrop" id="confirmActionModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmActionMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmActionCancel">Cancel</button>
+            <form id="confirmActionForm" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="confirmActionId" value="" />
+                <button type="submit" class="emp-btn emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- ===== Filters ===== -->
 <div class="emp-filters-card">
     <div class="emp-filters-row">
@@ -153,23 +169,21 @@
                                         </a>
                                         @if (!project.IsArchived)
                                         {
-                                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="Archive" method="post" class="emp-action-form" onclick="return confirm('Archive this project?');" style="margin:0;">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="id" value="@project.Id" />
-                                                <button type="submit" class="emp-action-btn emp-action-archive" title="Archive">
-                                                    <i class="fas fa-box-archive"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
+                                                    data-action="@Url.Action("Archive", "Project", new { area = "ProjectManager" })"
+                                                    data-id="@project.Id"
+                                                    data-message="Archive this project?">
+                                                <i class="fas fa-box-archive"></i>
+                                            </button>
                                         }
                                         else
                                         {
-                                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="Unarchive" method="post" class="emp-action-form" onclick="return confirm('Unarchive this project?');" style="margin:0;">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="id" value="@project.Id" />
-                                                <button type="submit" class="emp-action-btn emp-action-unarchive" title="Unarchive">
-                                                    <i class="fas fa-box-open"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="emp-action-btn emp-action-unarchive" title="Unarchive"
+                                                    data-action="@Url.Action("Unarchive", "Project", new { area = "ProjectManager" })"
+                                                    data-id="@project.Id"
+                                                    data-message="Unarchive this project?">
+                                                <i class="fas fa-box-open"></i>
+                                            </button>
                                         }
                                     </div>
                                 </td>
@@ -284,6 +298,43 @@
     filteredRows = allRows.slice();
     applyFilters();  // Apply default "Active" filter on page load
 })();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('confirmActionModal');
+    const modalMsg = document.getElementById('confirmActionMessage');
+    const modalForm = document.getElementById('confirmActionForm');
+    const modalIdInput = document.getElementById('confirmActionId');
+    const cancelBtn = document.getElementById('confirmActionCancel');
+
+    function showModal(actionUrl, id, message) {
+        if (!modal || !modalForm || !modalIdInput) return;
+        modalForm.action = actionUrl;
+        modalIdInput.value = id;
+        modalMsg.textContent = message || 'Are you sure?';
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.querySelectorAll('.emp-action-archive, .emp-action-unarchive').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const action = btn.getAttribute('data-action');
+            const id = btn.getAttribute('data-id');
+            const message = btn.getAttribute('data-message') || 'Are you sure?';
+            if (!action || !id) return;
+            showModal(action, id, message);
+        });
+    });
+
+    cancelBtn?.addEventListener('click', hideModal);
+    modal?.addEventListener('click', function (e) { if (e.target === modal) hideModal(); });
+});
 </script>
 }
 

@@ -17,6 +17,18 @@
     .task-review-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-top: 1.25rem; }
 </style>
 
+<!-- Confirmation modal for status update -->
+<div class="emp-modal-backdrop" id="confirmActionModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmActionMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmActionCancel">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
+        </div>
+    </div>
+</div>
+
 <!-- Hero -->
 <div class="emp-page-hero">
     <div class="emp-page-hero-content">
@@ -150,7 +162,37 @@ function confirmUpdateStatus() {
     if (!sel) return;
     const v = sel.value;
     if (v === 'Checked') {
-        if (confirm('Mark this task as Checked?')) document.getElementById('taskReviewForm').submit();
+        // Show confirmation modal
+        const modal = document.getElementById('confirmActionModal');
+        const modalMsg = document.getElementById('confirmActionMessage');
+        const cancelBtn = document.getElementById('confirmActionCancel');
+        const confirmBtn = document.getElementById('confirmActionConfirm');
+        if (!modal) { document.getElementById('taskReviewForm').submit(); return; }
+
+        if (modalMsg) modalMsg.textContent = 'Mark this task as Checked?';
+
+        function hideModal() {
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            cleanup();
+        }
+        function onConfirm() {
+            hideModal();
+            document.getElementById('taskReviewForm').submit();
+        }
+        function onOverlay(e) { if (e.target === modal) hideModal(); }
+        function cleanup() {
+            cancelBtn?.removeEventListener('click', hideModal);
+            confirmBtn?.removeEventListener('click', onConfirm);
+            modal?.removeEventListener('click', onOverlay);
+        }
+
+        cancelBtn?.addEventListener('click', hideModal);
+        confirmBtn?.addEventListener('click', onConfirm);
+        modal?.addEventListener('click', onOverlay);
+
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
         return;
     }
     // Require Revision — submit without extra confirmation

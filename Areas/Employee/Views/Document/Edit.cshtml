@@ -180,11 +180,11 @@
                             </div>
                             @if (canEdit)
                             {
-                                <form asp-area="Employee" asp-controller="Document" asp-action="RestoreVersion" method="post" style="margin:0;"
-                                      onsubmit="return confirm('Restore to version @v.VersionNumber? Your current content will be saved as a new version first.');">
+                                <form asp-area="Employee" asp-controller="Document" asp-action="RestoreVersion" method="post" style="margin:0;" class="restore-version-form">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="versionId" value="@v.Id" />
-                                    <button type="submit" class="emp-btn emp-btn-sm emp-btn-outline" title="Restore this version" style="white-space:nowrap;">
+                                    <button type="button" class="emp-btn emp-btn-sm emp-btn-outline restore-version-btn" title="Restore this version" style="white-space:nowrap;"
+                                            data-message="Restore to version @v.VersionNumber? Your current content will be saved as a new version first.">
                                         <i class="fas fa-rotate-left"></i> Restore
                                     </button>
                                 </form>
@@ -226,6 +226,21 @@
     </div>
     <input type="file" id="richFileInput" style="display:none;" />
     <textarea id="docContent" name="Content" style="display:none;">@Html.Raw(Model.Content)</textarea>
+</div>
+
+<!-- ===== Restore Version Confirmation Modal ===== -->
+<div class="emp-modal-backdrop" id="restoreVersionModal" style="display:none;">
+    <div class="emp-modal">
+        <div class="emp-modal-icon">
+            <i class="fas fa-question-circle"></i>
+        </div>
+        <h5 class="emp-modal-title">Confirm Restore</h5>
+        <p class="emp-modal-message" id="restoreVersionMessage"></p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn-cancel" id="restoreVersionCancelBtn">Cancel</button>
+            <button type="button" class="emp-btn-confirm" id="restoreVersionOkBtn">Restore</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -827,8 +842,31 @@
                 });
                 document.querySelectorAll('.remove-collab-btn').forEach(btn => {
                     btn.addEventListener('click', async function () {
-                        if (!confirm('Remove this collaborator?')) return;
                         const cId = this.dataset.id;
+                        const confirmed = await new Promise(function(resolve) {
+                            var existing = document.getElementById('docRemoveCollabModal');
+                            if (existing) existing.remove();
+                            var backdrop = document.createElement('div');
+                            backdrop.id = 'docRemoveCollabModal';
+                            backdrop.className = 'emp-modal-backdrop';
+                            backdrop.style.display = 'flex';
+                            backdrop.innerHTML =
+                                '<div class="emp-modal">' +
+                                    '<div class="emp-modal-icon emp-modal-icon-danger"><i class="fas fa-exclamation-triangle"></i></div>' +
+                                    '<h5 class="emp-modal-title">Remove Collaborator</h5>' +
+                                    '<p class="emp-modal-message">Are you sure you want to remove this collaborator?</p>' +
+                                    '<div class="emp-modal-actions">' +
+                                        '<button type="button" class="emp-btn-cancel" id="rcCancelBtn">Cancel</button>' +
+                                        '<button type="button" class="emp-btn-confirm emp-btn-danger" id="rcOkBtn">Remove</button>' +
+                                    '</div>' +
+                                '</div>';
+                            document.body.appendChild(backdrop);
+                            function cleanup(r) { backdrop.remove(); resolve(r); }
+                            document.getElementById('rcCancelBtn').addEventListener('click', function(){ cleanup(false); });
+                            document.getElementById('rcOkBtn').addEventListener('click', function(){ cleanup(true); });
+                            backdrop.addEventListener('click', function(e){ if(e.target===backdrop) cleanup(false); });
+                        });
+                        if (!confirmed) return;
                         try {
                             const fd = new FormData();
                             fd.append('collaboratorId', cId);
@@ -891,6 +929,34 @@
             tokenHolder.innerHTML = '@Html.AntiForgeryToken()';
             document.body.appendChild(tokenHolder);
         }
+
+        // ═══════ Restore Version Confirm ═══════════════════════════
+        (function () {
+            var modal = document.getElementById('restoreVersionModal');
+            var msgEl = document.getElementById('restoreVersionMessage');
+            var pendingForm = null;
+
+            document.querySelectorAll('.restore-version-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    pendingForm = this.closest('.restore-version-form');
+                    msgEl.textContent = this.getAttribute('data-message') || 'Restore this version?';
+                    modal.style.display = 'flex';
+                });
+            });
+
+            document.getElementById('restoreVersionCancelBtn').addEventListener('click', function () {
+                modal.style.display = 'none';
+                pendingForm = null;
+            });
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) { modal.style.display = 'none'; pendingForm = null; }
+            });
+
+            document.getElementById('restoreVersionOkBtn').addEventListener('click', function () {
+                if (pendingForm) pendingForm.submit();
+            });
+        })();
 
         // ═══════ Versions Modal ════════════════════════════════════
         window.empModalOpen = function (id) {

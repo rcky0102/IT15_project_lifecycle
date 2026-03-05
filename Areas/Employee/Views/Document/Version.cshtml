@@ -21,11 +21,10 @@
             </p>
         </div>
         <div class="emp-page-hero-right" style="display:flex;gap:.5rem;flex-wrap:wrap;">
-            <form asp-area="Employee" asp-controller="Document" asp-action="RestoreVersion" method="post"
-                  onsubmit="return confirm('Restore this version? Current content will be saved as a new version first.');">
+            <form id="restoreVersionForm" asp-area="Employee" asp-controller="Document" asp-action="RestoreVersion" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="versionId" value="@Model?.Id" />
-                <button type="submit" class="emp-btn emp-btn-primary">
+                <button type="button" class="emp-btn emp-btn-primary" id="restoreVersionBtn">
                     <i class="fas fa-rotate-left"></i>
                     <span>Restore this Version</span>
                 </button>
@@ -51,3 +50,43 @@
         @Html.Raw(Model?.Content ?? string.Empty)
     </div>
 </div>
+
+<!-- ===== Restore Confirmation Modal ===== -->
+<div class="emp-modal-backdrop" id="restoreConfirmModal" style="display:none;">
+    <div class="emp-modal">
+        <div class="emp-modal-icon">
+            <i class="fas fa-question-circle"></i>
+        </div>
+        <h5 class="emp-modal-title">Confirm Restore</h5>
+        <p class="emp-modal-message">Restore this version? Current content will be saved as a new version first.</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn-cancel" id="restoreCancelBtn">Cancel</button>
+            <button type="button" class="emp-btn-confirm" id="restoreOkBtn">Restore</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var modal = document.getElementById('restoreConfirmModal');
+            var form  = document.getElementById('restoreVersionForm');
+
+            document.getElementById('restoreVersionBtn').addEventListener('click', function () {
+                modal.style.display = 'flex';
+            });
+
+            document.getElementById('restoreCancelBtn').addEventListener('click', function () {
+                modal.style.display = 'none';
+            });
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+
+            document.getElementById('restoreOkBtn').addEventListener('click', function () {
+                form.submit();
+            });
+        })();
+    </script>
+}

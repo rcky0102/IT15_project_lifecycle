@@ -213,40 +213,22 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteRoleModal" tabindex="-1" aria-labelledby="deleteRoleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content emp-modal-modern">
-            <div class="emp-modal-header emp-modal-header-danger">
-                <h5 class="emp-modal-title" id="deleteRoleModalLabel">
-                    <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
-                </h5>
-                <button type="button" class="emp-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="emp-modal-body">
-                <div class="emp-danger-alert">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <div>
-                        <strong>Warning:</strong> Are you sure you want to delete this project role? This action cannot be undone.
-                    </div>
-                </div>
-                
-                <div class="emp-info-box mt-4">
-                    <strong>Role Name:</strong> <span id="deleteRoleName" class="emp-highlight-text"></span>
-                </div>
-                
-                <form id="deleteRoleForm">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" id="deleteRoleId" />
-                </form>
-            </div>
-            <div class="emp-modal-footer">
-                <button type="button" class="emp-btn emp-btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button type="button" class="emp-btn emp-btn-danger" id="confirmDeleteRoleBtn">
-                    <i class="fas fa-trash"></i> Delete Role
-                </button>
-            </div>
+<div class="emp-modal-backdrop" id="deleteRoleModal" style="display:none;">
+    <div class="emp-modal">
+        <div class="emp-modal-icon emp-modal-icon-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h5 class="emp-modal-title">Confirm Deletion</h5>
+        <p class="emp-modal-message">Are you sure you want to delete <strong><span id="deleteRoleName"></span></strong>? This action cannot be undone.</p>
+        <form id="deleteRoleForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="deleteRoleId" />
+        </form>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn-cancel" id="cancelDeleteRoleBtn">Cancel</button>
+            <button type="button" class="emp-btn-confirm emp-btn-danger" id="confirmDeleteRoleBtn">
+                <i class="fas fa-trash"></i> Delete Role
+            </button>
         </div>
     </div>
 </div>
@@ -509,11 +491,21 @@
                 });
             });
 
+            function hideDeleteRoleModal() {
+                document.getElementById('deleteRoleModal').style.display = 'none';
+                $('#deleteRoleForm')[0].reset();
+            }
+
             window.confirmDelete = function(id, name) {
                 $('#deleteRoleId').val(id);
                 $('#deleteRoleName').text(name);
-                $('#deleteRoleModal').modal('show');
+                document.getElementById('deleteRoleModal').style.display = 'flex';
             };
+
+            $('#cancelDeleteRoleBtn').click(hideDeleteRoleModal);
+            $('#deleteRoleModal').click(function(e) {
+                if (e.target === this) hideDeleteRoleModal();
+            });
 
             $('#confirmDeleteRoleBtn').click(function() {
                 var form = $('#deleteRoleForm');
@@ -526,6 +518,7 @@
                     headers: { 'RequestVerificationToken': token },
                     data: { id: id },
                     success: function(res) {
+                        hideDeleteRoleModal();
                         if (res.success) location.reload();
                         else alert(res.message || 'Unable to delete');
                     }

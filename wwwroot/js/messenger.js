@@ -5,6 +5,39 @@
 (function () {
     'use strict';
 
+    // ── Confirmation modal helper (emp-modal pattern) ─────────────
+    function showConfirmModal(message) {
+        return new Promise(function (resolve) {
+            var existing = document.getElementById('messengerConfirmModal');
+            if (existing) existing.remove();
+
+            var backdrop = document.createElement('div');
+            backdrop.id = 'messengerConfirmModal';
+            backdrop.className = 'emp-modal-backdrop';
+            backdrop.style.display = 'flex';
+            backdrop.innerHTML =
+                '<div class="emp-modal">' +
+                    '<div class="emp-modal-icon"><i class="fas fa-question-circle"></i></div>' +
+                    '<h5 class="emp-modal-title">Confirm Action</h5>' +
+                    '<p class="emp-modal-message">' + message + '</p>' +
+                    '<div class="emp-modal-actions">' +
+                        '<button type="button" class="emp-btn-cancel" id="msgConfirmCancel">Cancel</button>' +
+                        '<button type="button" class="emp-btn-confirm" id="msgConfirmOk">Confirm</button>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(backdrop);
+
+            function cleanup(result) {
+                backdrop.remove();
+                resolve(result);
+            }
+
+            document.getElementById('msgConfirmCancel').addEventListener('click', function () { cleanup(false); });
+            document.getElementById('msgConfirmOk').addEventListener('click', function () { cleanup(true); });
+            backdrop.addEventListener('click', function (e) { if (e.target === backdrop) cleanup(false); });
+        });
+    }
+
     // ── DOM refs ──────────────────────────────────────────────────────
     const sidebar       = document.getElementById('messengerSidebar');
     const convList      = document.getElementById('convList');
@@ -832,7 +865,7 @@
 
     async function leaveCurrentGroup() {
         if (!currentConversationId) return;
-        if (!confirm('Are you sure you want to leave this group?')) return;
+        if (!(await showConfirmModal('Are you sure you want to leave this group?'))) return;
 
         try {
             const res = await fetch(`/api/messages/conversations/${currentConversationId}/leave`, {
@@ -863,7 +896,7 @@
     }
 
     async function removeMemberFromGroup(convId, userId, userName) {
-        if (!confirm(`Remove ${userName} from this group?`)) return;
+        if (!(await showConfirmModal('Remove ' + userName + ' from this group?'))) return;
 
         try {
             const res = await fetch(`/api/messages/conversations/${convId}/members/${encodeURIComponent(userId)}`, {

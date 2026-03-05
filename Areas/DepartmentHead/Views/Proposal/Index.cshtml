@@ -44,6 +44,22 @@
     </div>
 }
 
+<!-- ===== Confirmation Modal ===== -->
+<div class="emp-modal-backdrop" id="confirmActionModal" style="display:none;">
+    <div class="emp-modal">
+        <div class="emp-modal-icon">
+            <i class="fas fa-question-circle"></i>
+        </div>
+        <h5 class="emp-modal-title">Confirm Action</h5>
+        <p class="emp-modal-message" id="confirmMessage"></p>
+        @Html.AntiForgeryToken()
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn-cancel" id="confirmCancelBtn">Cancel</button>
+            <button type="button" class="emp-btn-confirm" id="confirmOkBtn">Confirm</button>
+        </div>
+    </div>
+</div>
+
 <!-- ===== Filters ===== -->
 <div class="emp-filters-card">
     <div class="emp-filters-row">
@@ -157,23 +173,25 @@
                                         </a>
                                         @if (!proposal.IsArchived)
                                         {
-                                            <form asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Archive" method="post" class="emp-action-form" onsubmit="return confirm('Archive this proposal?');">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="id" value="@proposal.Id" />
-                                                <button type="submit" class="emp-action-btn emp-action-archive" title="Archive">
-                                                    <i class="fas fa-box-archive"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                    class="emp-action-btn emp-action-archive dh-action-confirm"
+                                                    title="Archive"
+                                                    data-action="@Url.Action("Archive", "Proposal", new { area = "DepartmentHead" })"
+                                                    data-id="@proposal.Id"
+                                                    data-message="Are you sure you want to archive this proposal?">
+                                                <i class="fas fa-box-archive"></i>
+                                            </button>
                                         }
                                         else
                                         {
-                                            <form asp-area="DepartmentHead" asp-controller="Proposal" asp-action="Unarchive" method="post" class="emp-action-form" onsubmit="return confirm('Unarchive this proposal?');">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="id" value="@proposal.Id" />
-                                                <button type="submit" class="emp-action-btn emp-action-unarchive" title="Unarchive">
-                                                    <i class="fas fa-box-open"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                    class="emp-action-btn emp-action-unarchive dh-action-confirm"
+                                                    title="Unarchive"
+                                                    data-action="@Url.Action("Unarchive", "Proposal", new { area = "DepartmentHead" })"
+                                                    data-id="@proposal.Id"
+                                                    data-message="Are you sure you want to unarchive this proposal?">
+                                                <i class="fas fa-box-open"></i>
+                                            </button>
                                         }
                                     </div>
                                 </td>
@@ -208,6 +226,54 @@
 @section Scripts {
     <script>
 (function () {
+    // ===== Confirmation modal logic =====
+    var backdrop   = document.getElementById('confirmActionModal');
+    var msgEl      = document.getElementById('confirmMessage');
+    var cancelBtn  = document.getElementById('confirmCancelBtn');
+    var okBtn      = document.getElementById('confirmOkBtn');
+    var pendingAction = null;
+    var pendingId     = null;
+
+    document.querySelectorAll('.dh-action-confirm').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            pendingAction = this.getAttribute('data-action');
+            pendingId     = this.getAttribute('data-id');
+            msgEl.textContent = this.getAttribute('data-message') || 'Are you sure?';
+            backdrop.style.display = 'flex';
+        });
+    });
+
+    function hideModal() {
+        backdrop.style.display = 'none';
+        pendingAction = null;
+        pendingId = null;
+    }
+
+    cancelBtn.addEventListener('click', hideModal);
+    backdrop.addEventListener('click', function (e) {
+        if (e.target === backdrop) hideModal();
+    });
+
+    okBtn.addEventListener('click', function () {
+        if (!pendingAction) return;
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.action = pendingAction;
+        form.style.display = 'none';
+
+        var token = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (token) {
+            var t = document.createElement('input');
+            t.type = 'hidden'; t.name = '__RequestVerificationToken'; t.value = token.value;
+            form.appendChild(t);
+        }
+        var idInput = document.createElement('input');
+        idInput.type = 'hidden'; idInput.name = 'id'; idInput.value = pendingId;
+        form.appendChild(idInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    });
     let PAGE_SIZE = 10;
     let currentPage = 1;
     let filteredRows = [];

@@ -71,6 +71,18 @@
             <p class="emp-page-subtitle">Proposal: @Model.Project.ProposalTitle</p>
         </div>
 
+<!-- Confirmation modal for remove member -->
+<div class="emp-modal-backdrop" id="confirmRemoveModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmRemoveTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmRemoveMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmRemoveCancel">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm" id="confirmRemoveConfirm">Remove</button>
+        </div>
+    </div>
+</div>
+
 <!-- Archive confirmation modal for milestones -->
 <div class="emp-modal-backdrop" id="archiveConfirmModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;" onclick="if(event.target === this) closeArchiveModal()">
     <div class="emp-modal" role="document">
@@ -290,10 +302,11 @@
                                 <button type="button" class="emp-action-btn emp-action-edit" title="Edit" onclick="editMember(@m.Id, '@m.EmployeeId', '@m.ProjectRoleId', 'membersModal')">
                                     <i class="fas fa-pen-to-square"></i>
                                 </button>
-                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;">
+                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;" class="remove-member-form">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="memberId" value="@m.Id" />
-                                    <button type="submit" class="emp-action-btn emp-action-delete" title="Remove" onclick="return confirm('Remove @m.EmployeeName from this project?')">
+                                    <button type="button" class="emp-action-btn emp-action-delete remove-member-btn" title="Remove"
+                                            data-member-name="@m.EmployeeName">
                                         <i class="fas fa-xmark" aria-hidden="true"></i>
                                     </button>
                                 </form>
@@ -584,6 +597,45 @@ document.addEventListener('keydown', function(e) {
     milestoneFilter.addEventListener('change', applyMilestoneFilter);
     // initialize
     applyMilestoneFilter();
+})();
+</script>
+<script>
+(function() {
+    const modal = document.getElementById('confirmRemoveModal');
+    const modalMsg = document.getElementById('confirmRemoveMessage');
+    const cancelBtn = document.getElementById('confirmRemoveCancel');
+    const confirmBtn = document.getElementById('confirmRemoveConfirm');
+    let formToSubmit = null;
+
+    function showModal(form, name) {
+        if (!modal) { form.submit(); return; }
+        formToSubmit = form;
+        if (modalMsg) modalMsg.textContent = 'Remove ' + name + ' from this project?';
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+        if (!modal) return;
+        formToSubmit = null;
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.querySelectorAll('.remove-member-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const form = btn.closest('.remove-member-form');
+            const name = btn.getAttribute('data-member-name') || '';
+            if (form) showModal(form, name);
+        });
+    });
+
+    cancelBtn?.addEventListener('click', hideModal);
+    modal?.addEventListener('click', function(e) { if (e.target === modal) hideModal(); });
+    confirmBtn?.addEventListener('click', function() {
+        if (formToSubmit) formToSubmit.submit();
+        hideModal();
+    });
 })();
 </script>
 }
