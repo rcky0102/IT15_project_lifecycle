@@ -1,0 +1,366 @@
+@model project_lifecycle.ViewModels.ProjectManager.ProjectTaskEditViewModel
+@{
+    ViewData["Title"] = "Edit Task";
+    var projectStart = ViewData["ProjectStart"] as string ?? string.Empty;
+    var projectEnd = ViewData["ProjectEnd"] as string ?? string.Empty;
+}
+
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title"><span class="emp-page-title-icon"><i class="fas fa-pen"></i></span> Edit Task</h1>
+            <p class="emp-page-subtitle">Project: @Model.ProjectName</p>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone" asp-route-projectMilestoneId="@Model.ProjectMilestoneId" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i> Back to Milestone
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="emp-form-card">
+    <div class="emp-form-section">
+        <div class="emp-form-section-title"><i class="fas fa-list-check"></i> Task Details</div>
+
+        <form asp-area="ProjectManager" asp-controller="Project" asp-action="EditTask" method="post" class="emp-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="emp-form-row">
+                <label class="emp-form-label">Task Name</label>
+                <input name="Name" id="taskName" class="emp-form-control" value="@Model.Name" required />
+            </div>
+
+            <div class="emp-form-row">
+                <label class="emp-form-label">Assign To</label>
+                @if (!Model.AvailableMembers.Any())
+                {
+                    <div class="emp-form-control" style="color:#94a3b8;cursor:default;">No project members yet.</div>
+                }
+                else
+                {
+                    <div id="assignedMemberChips" style="display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.5rem;"></div>
+                    <div id="assignedMemberHiddenInputs">
+                        @foreach (var id in Model.AssignedMemberIds)
+                        {
+                            <input type="hidden" name="assignedMemberIds" value="@id" />
+                        }
+                    </div>
+                    <input type="text" id="assignMemberInput" class="emp-form-control" placeholder="Click to pick from project members…" readonly />
+                }
+            </div>
+
+            <div class="emp-form-row">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                        <label class="emp-form-label">Start Date</label>
+                        <input name="StartDate" id="taskStartDate" type="date" class="emp-form-control" value="@Model.StartDate.ToString("yyyy-MM-dd")" required min="@projectStart" max="@projectEnd" />
+                    </div>
+                    <div>
+                        <label class="emp-form-label">End Date</label>
+                        <input name="EndDate" id="taskEndDate" type="date" class="emp-form-control" value="@Model.EndDate.ToString("yyyy-MM-dd")" required min="@projectStart" max="@projectEnd" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="emp-form-row">
+                <label class="emp-form-label">Instructions</label>
+                <textarea id="EditTaskInstructions" name="Instructions" class="emp-form-control">@Model.Instructions</textarea>
+                <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+                    <button type="button" id="insertEditTaskFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
+                        <i class="fas fa-paperclip"></i> Add file/image
+                    </button>
+                    <span style="font-size:12px;opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
+                </div>
+            </div>
+
+            <div class="emp-form-actions" style="justify-content:flex-end;">
+                <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone" asp-route-projectMilestoneId="@Model.ProjectMilestoneId" class="emp-btn emp-btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button id="submitEditTaskBtn" type="submit" class="emp-btn emp-btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ??????? Member Picker Modal (same as Create page) ??????????????????????????????????
+    const projectMembers = [
+        @foreach (var m in Model.AvailableMembers)
+        {
+            @Html.Raw("{id:" + m.Value + ",name:'" + m.Text.Replace("'","\\'") + "',role:''},")
+        }
+    ];
+
+    const selectedMemberIds = new Set();
+    // restore assigned from server
+    @if (Model.AssignedMemberIds != null && Model.AssignedMemberIds.Any())
+    {
+        foreach (var id in Model.AssignedMemberIds)
+        {
+            <text>selectedMemberIds.add(@id);</text>
+        }
+    }
+
+    const chipsContainer = document.getElementById('assignedMemberChips');
+    const hiddenContainer = document.getElementById('assignedMemberHiddenInputs');
+    const assignInputEl = document.getElementById('assignMemberInput');
+
+    // Inject modal HTML
+    if (projectMembers.length > 0) {
+        const memberModalHtml = `
+<div class="modal fade" id="memberPickerModal" tabindex="-1" aria-labelledby="memberPickerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content em-picker-modal">
+            <div class="em-picker-header">
+                <div>
+                    <h5 class="em-picker-title" id="memberPickerModalLabel"><i class="fas fa-user-plus"></i> Assign Members</h5>
+                    <p class="em-picker-subtitle">Select project members to assign to this task</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" id="memberPickerCloseBtn" aria-label="Close"></button>
+            </div>
+
+            <div class="em-picker-filters">
+                <div class="em-picker-filters-row">
+                    <div class="em-picker-search-group">
+                        <i class="fas fa-magnifying-glass em-picker-search-icon"></i>
+                        <input type="text" id="memberPickerFilter" class="em-picker-search-input" placeholder="Search members\u2026" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-body em-picker-body">
+                <div class="em-picker-table-card">
+                    <div class="em-picker-table-responsive">
+                        <table class="em-picker-table" id="memberPickerTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:44px;text-align:center;"><input type="checkbox" id="memberPickerSelectAll" class="em-picker-checkbox" /></th>
+                                    <th>Member</th>
+                                    <th>Project Role</th>
+                                    <th style="width:100px;text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div id="memberPickerEmpty" class="em-picker-empty" style="display:none;">
+                        <div class="em-picker-empty-icon"><i class="fas fa-user-group"></i></div>
+                        <div class="em-picker-empty-title">No members found</div>
+                        <div class="em-picker-empty-text">No matching project members.</div>
+                    </div>
+
+                    <div class="em-picker-pagination" id="memberPickerPagination">
+                        <div class="em-picker-pagination-info" id="memberPickerPaginationInfo"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="em-picker-footer">
+                <button type="button" class="em-picker-btn-cancel" id="memberPickerCancelBtn">Cancel</button>
+                <button type="button" id="memberPickerAddBtn" class="em-picker-btn-add" disabled>
+                    <i class="fas fa-plus"></i> Add Selected
+                </button>
+            </div>
+        </div>
+    </div>
+</div>`;
+        document.body.insertAdjacentHTML('beforeend', memberModalHtml);
+    }
+
+    const memberModalEl = document.getElementById('memberPickerModal');
+    const memberModalTable = document.getElementById('memberPickerTable');
+    const memberModalEmpty = document.getElementById('memberPickerEmpty');
+    const memberModalFilter = document.getElementById('memberPickerFilter');
+    const memberModalAddBtn = document.getElementById('memberPickerAddBtn');
+    const memberModalCloseBtn = document.getElementById('memberPickerCloseBtn');
+    const memberModalCancelBtn = document.getElementById('memberPickerCancelBtn');
+    const memberModalSelectAll = document.getElementById('memberPickerSelectAll');
+
+    function renderChips() {
+        if (!chipsContainer || !hiddenContainer) return;
+        chipsContainer.innerHTML = '';
+        hiddenContainer.innerHTML = '';
+        selectedMemberIds.forEach(id => {
+            const m = projectMembers.find(x => parseInt(x.id) === parseInt(id));
+            if (!m) return;
+            const initials = (m.name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            const chip = document.createElement('span');
+            chip.className = 'em-picker-chip';
+            chip.style.cssText = 'display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .6rem .25rem .4rem;border-radius:20px;background:linear-gradient(135deg,#e0f2fe,#dbeafe);color:#1e40af;font-size:.82rem;font-weight:600;border:1px solid rgba(30,64,175,.12);';
+            chip.innerHTML = '<span style="width:22px;height:22px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;">' + initials + '</span>' +
+                '<span>' + m.name + '</span>' +
+                '<button type="button" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:.75rem;padding:0 0 0 .2rem;line-height:1;" data-remove-id="' + id + '" title="Remove"><i class="fas fa-times"></i></button>';
+            chip.querySelector('button').addEventListener('click', function () {
+                selectedMemberIds.delete(id);
+                renderChips();
+            });
+            chipsContainer.appendChild(chip);
+            const inp = document.createElement('input'); inp.type = 'hidden'; inp.name = 'assignedMemberIds'; inp.value = id; hiddenContainer.appendChild(inp);
+        });
+        if (assignInputEl) {
+            assignInputEl.placeholder = selectedMemberIds.size > 0
+                ? selectedMemberIds.size + ' member' + (selectedMemberIds.size !== 1 ? 's' : '') + ' selected — click to change'
+                : 'Click to pick from project members\u2026';
+        }
+    }
+
+    function openMemberModal() {
+        if (!memberModalEl) return;
+        const tbody = memberModalTable.querySelector('tbody');
+        tbody.innerHTML = '';
+        memberModalEmpty.style.display = 'none';
+        if (memberModalFilter) memberModalFilter.value = '';
+        if (memberModalSelectAll) memberModalSelectAll.checked = false;
+
+        if (!projectMembers.length) {
+            memberModalEmpty.style.display = 'block';
+        } else {
+            projectMembers.forEach(m => {
+                const initials = (m.name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                const isSelected = selectedMemberIds.has(parseInt(m.id));
+                const tr = document.createElement('tr');
+                tr.className = 'em-picker-row';
+                tr.innerHTML =
+                    '<td style="text-align:center;"><input type="checkbox" class="member-select-checkbox em-picker-checkbox" data-id="' + m.id + '"' + (isSelected ? ' checked' : '') + ' /></td>' +
+                    '<td><div class="em-picker-name-cell"><div class="em-picker-avatar">' + initials + '</div><div class="em-picker-name-text">' + (m.name || '') + '</div></div></td>' +
+                    '<td><span style="color:#6366f1;font-size:.82rem;font-weight:500;">' + (m.role || '') + '</span></td>' +
+                    '<td style="text-align:center;"><button type="button" class="em-picker-select-btn member-quick-add" data-id="' + m.id + '" title="Quick add"><i class="fas fa-' + (isSelected ? 'check' : 'plus') + '"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateModalAddState() {
+            const any = memberModalTable.querySelectorAll('.member-select-checkbox:checked').length > 0;
+            if (memberModalAddBtn) memberModalAddBtn.disabled = !any;
+        }
+        tbody.querySelectorAll('.member-select-checkbox').forEach(cb => cb.addEventListener('change', updateModalAddState));
+        if (memberModalSelectAll) {
+            memberModalSelectAll.addEventListener('change', function () {
+                const checked = !!this.checked;
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    if (tr.style.display === 'none') return;
+                    const cb = tr.querySelector('.member-select-checkbox');
+                    if (cb) cb.checked = checked;
+                });
+                updateModalAddState();
+            });
+        }
+        updateModalAddState();
+
+        const pInfo = document.getElementById('memberPickerPaginationInfo');
+        if (pInfo) pInfo.textContent = 'Showing ' + projectMembers.length + ' member' + (projectMembers.length !== 1 ? 's' : '');
+
+        tbody.querySelectorAll('.member-quick-add').forEach(btn => btn.addEventListener('click', function () {
+            const mId = parseInt(this.dataset.id);
+            if (selectedMemberIds.has(mId)) {
+                selectedMemberIds.delete(mId);
+                this.querySelector('i').className = 'fas fa-plus';
+                const cb = tbody.querySelector('.member-select-checkbox[data-id="' + mId + '"]');
+                if (cb) cb.checked = false;
+            } else {
+                selectedMemberIds.add(mId);
+                this.querySelector('i').className = 'fas fa-check';
+                const cb = tbody.querySelector('.member-select-checkbox[data-id="' + mId + '"]');
+                if (cb) cb.checked = true;
+            }
+            renderChips();
+            updateModalAddState();
+        }));
+
+        if (window.bootstrap && window.bootstrap.Modal) {
+            const modalInstance = new bootstrap.Modal(memberModalEl);
+            modalInstance.show();
+        } else if (window.jQuery && typeof $().modal === 'function') {
+            $('#memberPickerModal').modal('show');
+        } else {
+            memberModalEl.style.display = 'block';
+            memberModalEl.style.position = 'fixed';
+            memberModalEl.style.left = '0';
+            memberModalEl.style.top = '0';
+            memberModalEl.style.width = '100%';
+            memberModalEl.style.height = '100%';
+            memberModalEl.style.zIndex = '2060';
+            memberModalEl.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeMemberModal() {
+        if (!memberModalEl) return;
+        if (window.bootstrap && window.bootstrap.Modal) {
+            const inst = bootstrap.Modal.getInstance(memberModalEl);
+            if (inst) inst.hide();
+        } else if (window.jQuery && typeof $().modal === 'function') {
+            $('#memberPickerModal').modal('hide');
+        } else {
+            memberModalEl.style.display = 'none';
+            memberModalEl.classList.remove('show');
+            memberModalEl.style.zIndex = '';
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Wire open/close
+    if (assignInputEl) assignInputEl.addEventListener('click', openMemberModal);
+    if (memberModalCloseBtn) memberModalCloseBtn.addEventListener('click', closeMemberModal);
+    if (memberModalCancelBtn) memberModalCancelBtn.addEventListener('click', closeMemberModal);
+    if (memberModalEl) memberModalEl.addEventListener('click', function (e) { if (e.target === memberModalEl) closeMemberModal(); });
+
+    if (memberModalAddBtn) {
+        memberModalAddBtn.addEventListener('click', function () {
+            const checked = memberModalTable.querySelectorAll('.member-select-checkbox:checked');
+            checked.forEach(cb => {
+                selectedMemberIds.add(parseInt(cb.dataset.id));
+            });
+            const unchecked = memberModalTable.querySelectorAll('.member-select-checkbox:not(:checked)');
+            unchecked.forEach(cb => {
+                selectedMemberIds.delete(parseInt(cb.dataset.id));
+            });
+            renderChips();
+            closeMemberModal();
+        });
+    }
+
+    if (memberModalFilter) {
+        memberModalFilter.addEventListener('input', function () {
+            const q = this.value.trim().toLowerCase();
+            let visible = 0;
+            memberModalTable.querySelectorAll('tbody tr').forEach(tr => {
+                const name = (tr.querySelector('.em-picker-name-text')?.textContent || '').toLowerCase();
+                const role = (tr.cells[2]?.textContent || '').toLowerCase();
+                const show = !q || name.includes(q) || role.includes(q);
+                tr.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            const pInfo = document.getElementById('memberPickerPaginationInfo');
+            if (pInfo) pInfo.textContent = visible === 0 ? 'No matches' : 'Showing ' + visible + ' member' + (visible !== 1 ? 's' : '');
+        });
+    }
+
+    renderChips();
+
+    // Simple file upload + CKEditor similar to Create
+    const editorSelector = '#EditTaskInstructions';
+    const uploadEndpoint = '@Url.Action("UploadRichText","Project", new { area = "ProjectManager" })';
+    let editorInstance = null, pendingUploads = 0;
+    function beginUpload(){ pendingUploads++; document.getElementById('submitEditTaskBtn').disabled = true; }
+    function endUpload(){ pendingUploads = Math.max(0,pendingUploads-1); document.getElementById('submitEditTaskBtn').disabled = pendingUploads>0; }
+    class CTUploadAdapter{ constructor(l){ this.loader=l; this.ctrl=new AbortController(); } async upload(){ const f=await this.loader.file; const r=await uploadFile(f,this.ctrl.signal); return {default:r.url}; } abort(){ this.ctrl.abort(); } }
+    function CTUploadAdapterPlugin(ed){ ed.plugins.get('FileRepository').createUploadAdapter=(l)=>new CTUploadAdapter(l); }
+    async function uploadFile(file, signal){ beginUpload(); try{ const fd=new FormData(); fd.append('upload',file); const resp=await fetch(uploadEndpoint,{method:'POST',body:fd,signal}); const p=await resp.json(); if(!resp.ok) throw new Error(p?.error?.message||'Upload failed'); return p; } finally { endUpload(); } }
+    function wireFileInsertButton(){ const btn=document.getElementById('insertEditTaskFileBtn'); if(!btn) return; btn.addEventListener('click', function(){ if(!editorInstance) return; const inp=document.createElement('input'); inp.type='file'; inp.style.display='none'; inp.addEventListener('change', async function(){ if(!inp.files||!inp.files.length){ document.body.removeChild(inp); return; } const file=inp.files[0]; document.body.removeChild(inp); btn.disabled=true; try{ const r=await uploadFile(file); if(file.type.startsWith('image/')){ editorInstance.model.change(w=>{ const img=w.createElement('imageBlock',{src:r.url}); editorInstance.model.insertContent(img, editorInstance.model.document.selection); }); } else { editorInstance.model.change(w=>{ const t=w.createText(r.fileName||file.name, { linkHref: r.url }); editorInstance.model.insertContent(t, editorInstance.model.document.selection); }); } } catch(e){ alert('Upload failed.'); } finally { btn.disabled=false; } }); document.body.appendChild(inp); inp.click(); }); }
+    function initEditor(){ if(!window.CKEDITOR||!window.CKEDITOR.ClassicEditor) return; const {ClassicEditor,Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,ImageResize,ImageResizeEditing,ImageResizeHandles,MediaEmbed,Alignment} = window.CKEDITOR; ClassicEditor.create(document.querySelector(editorSelector),{ licenseKey:'GPL', plugins:[Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,ImageResize,ImageResizeEditing,ImageResizeHandles,MediaEmbed,Alignment], extraPlugins:[CTUploadAdapterPlugin], toolbar:{ items:['undo','redo','|','heading','|','bold','italic','link','|','alignment','|','bulletedList','numberedList','|','outdent','indent','|','imageUpload','insertTable','mediaEmbed','blockQuote'], shouldNotGroupWhenFull:true }, image:{ toolbar:['imageTextAlternative','toggleImageCaption','|','imageStyle:inline','imageStyle:block','imageStyle:side','|','resizeImage'], resizeOptions:[{name:'resizeImage:original',value:null,label:'Original'},{name:'resizeImage:50',value:'50',label:'50%'},{name:'resizeImage:75',value:'75',label:'75%'}], resizeUnit:'%' }, alignment:{ options:['left','center','right','justify'] }, table:{ contentToolbar:['tableColumn','tableRow','mergeTableCells'] } }).then(ed=>{ editorInstance=ed; wireFileInsertButton(); }).catch(e=>console.error(e)); }
+    function loadScript(i){ if(window.CKEDITOR&&window.CKEDITOR.ClassicEditor){ initEditor(); return; } if(i>=2){ initEditor(); return; } const s=document.createElement('script'); s.src=['https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js','https://unpkg.com/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js'][i]; s.async=true; s.onload=initEditor; s.onerror=()=>loadScript(i+1); document.head.appendChild(s); }
+    function loadStyle(i){ if(document.querySelector('link[data-ckeditor-style]')){ loadScript(0); return; } if(i>=2){ loadScript(0); return; } const l=document.createElement('link'); l.rel='stylesheet'; l.href=['https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/ckeditor5.css','https://unpkg.com/ckeditor5@47.1.0/dist/ckeditor5.css'][i]; l.setAttribute('data-ckeditor-style','true'); l.onload=()=>loadScript(0); l.onerror=()=>{ l.remove(); loadStyle(i+1); }; document.head.appendChild(l); }
+    loadStyle(0);
+});
+</script>
+}

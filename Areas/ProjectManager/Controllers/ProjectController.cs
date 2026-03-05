@@ -33,6 +33,37 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             _notif = notif;
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateMilestoneStatus(int projectMilestoneId, string newStatus)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var pmst = await _context.ProjectMilestones.Include(p => p.Project).FirstOrDefaultAsync(p => p.Id == projectMilestoneId);
+            if (pmst == null) return NotFound();
+
+            if (pmst.Project == null || pmst.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            newStatus = (newStatus ?? string.Empty).Trim();
+            if (!string.Equals(newStatus, "Finished", StringComparison.OrdinalIgnoreCase) && !string.Equals(newStatus, "Unfinished", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "Invalid status.";
+                return RedirectToAction(nameof(Milestone), new { projectMilestoneId });
+            }
+
+            pmst.Status = string.Equals(newStatus, "Finished", StringComparison.OrdinalIgnoreCase) ? "Finished" : "Unfinished";
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Milestone status updated.";
+            await _audit.LogAsync(User, "Update", "Project Milestones", $"Updated milestone status (ID: {pmst.Id}) to {pmst.Status}", "ProjectMilestone", pmst.Id.ToString());
+
+            return RedirectToAction(nameof(Milestone), new { projectMilestoneId = pmst.Id });
+        }
+
         private async Task<ProjectManager?> GetCurrentProjectManagerAsync()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -547,6 +578,118 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             // Note-only save: stay on the task page so the PM can see the updated note/version history
             if (string.IsNullOrEmpty(action))
                 return RedirectToAction(nameof(Task), new { id });
+
+            return RedirectToAction(nameof(Milestone), new { projectMilestoneId = task.ProjectMilestoneId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditTask(int id)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone).ThenInclude(pmst => pmst.Project)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null) return NotFound();
+
+            if (task.ProjectMilestone == null || task.ProjectMilestone.Project == null || task.ProjectMilestone.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            var projectId = task.ProjectMilestone.ProjectId;
+
+            var members = await _context.Members
+                .Where(m => m.ProjectId == projectId)
+                .Include(m => m.Employee)
+                .ToListAsync();
+
+            var assigned = await _context.TaskMembers
+                .Where(tm => tm.ProjectTaskId == id)
+                .Select(tm => tm.MemberId)
+                .ToListAsync();
+
+            var vm = new ProjectTaskEditViewModel
+            {
+                Id = task.Id,
+                ProjectId = projectId,
+                ProjectName = task.ProjectMilestone.Project?.Name ?? string.Empty,
+                ProjectMilestoneId = task.ProjectMilestoneId,
+                Name = task.Name,
+                Instructions = task.Instructions ?? string.Empty,
+                StartDate = task.StartDate,
+                EndDate = task.EndDate,
+                AssignedMemberIds = assigned ?? new System.Collections.Generic.List<int>(),
+                AvailableMembers = members.Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = m.Id.ToString(),
+                    Text = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A"
+                }).ToList()
+            };
+
+            ViewData["ProjectStart"] = task.ProjectMilestone.Project?.StartDate.ToString("yyyy-MM-dd") ?? string.Empty;
+            ViewData["ProjectEnd"] = task.ProjectMilestone.Project?.EndDate.ToString("yyyy-MM-dd") ?? string.Empty;
+
+            return View("Edit", vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            // Backwards-friendly route: forward to EditTask implementation
+            return await EditTask(id);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditTask(int id, ProjectTask input, int[]? assignedMemberIds)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone).ThenInclude(pmst => pmst.Project)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null) return NotFound();
+
+            if (task.ProjectMilestone == null || task.ProjectMilestone.Project == null || task.ProjectMilestone.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            if (input.EndDate < input.StartDate)
+            {
+                TempData["ErrorMessage"] = "End date must be on or after start date.";
+                return RedirectToAction(nameof(EditTask), new { id });
+            }
+
+            // Update fields
+            task.Name = input.Name?.Trim() ?? task.Name;
+            task.Instructions = input.Instructions ?? string.Empty;
+            task.StartDate = input.StartDate;
+            task.EndDate = input.EndDate;
+
+            // Update assigned members
+            var selectedIds = (assignedMemberIds ?? System.Array.Empty<int>()).Where(x => x > 0).Distinct().ToArray();
+            var validMembers = await _context.Members.Where(m => m.ProjectId == task.ProjectMilestone.ProjectId && selectedIds.Contains(m.Id)).ToListAsync();
+
+            // Remove existing task members
+            var existing = await _context.TaskMembers.Where(tm => tm.ProjectTaskId == id).ToListAsync();
+            _context.TaskMembers.RemoveRange(existing);
+
+            // Add new task members
+            foreach (var m in validMembers)
+            {
+                _context.TaskMembers.Add(new Models.TaskMember { ProjectTaskId = task.Id, MemberId = m.Id, DateCreated = System.DateTime.Now });
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Task updated.";
+            await _audit.LogAsync(User, "Update", "Tasks", $"Edited task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
 
             return RedirectToAction(nameof(Milestone), new { projectMilestoneId = task.ProjectMilestoneId });
         }

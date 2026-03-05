@@ -2,7 +2,8 @@
 @{
     ViewData["Title"] = Model.MilestoneName;
     var totalTasks = Model.Tasks.Count;
-    var doneTasks  = Model.Tasks.Count(t => t.Status == "Completed");
+    // Consider a task "done" when its status is "Checked" (employee submission approved)
+    var doneTasks  = Model.Tasks.Count(t => string.Equals(t.Status, "Checked", StringComparison.OrdinalIgnoreCase));
     var pct        = totalTasks > 0 ? (int)Math.Round(doneTasks * 100.0 / totalTasks) : 0;
 }
 
@@ -58,7 +59,7 @@
         <div class="emp-page-hero-right" style="display:flex;gap:.6rem;flex-wrap:wrap;">
             <a asp-area="ProjectManager" asp-controller="Project" asp-action="Create"
                asp-route-id="@Model.ProjectId" asp-route-milestoneId="@Model.ProjectMilestoneId"
-               class="emp-btn emp-btn-primary">
+               class="emp-btn emp-btn-outline">
                 <i class="fas fa-plus me-1"></i>
                 <span>Create Task</span>
             </a>
@@ -96,7 +97,15 @@
     </div>
     <div class="emp-info-item">
         <i class="fas fa-circle-half-stroke"></i>
-        <span>Status: <strong>@Model.Status</strong></span>
+        <form asp-area="ProjectManager" asp-controller="Project" asp-action="UpdateMilestoneStatus" method="post" style="display:inline;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="projectMilestoneId" value="@Model.ProjectMilestoneId" />
+            <input type="hidden" name="newStatus" value="@(string.Equals(Model.Status, "Finished", StringComparison.OrdinalIgnoreCase) ? "Unfinished" : "Finished")" />
+            <button type="submit" class="emp-ms-status-badge @PmMilestoneStatusClass(Model.Status)" style="border:none; background:transparent; cursor:pointer; padding:.2rem .5rem;">
+                <span class="emp-status-dot"></span>
+                @Model.Status
+            </button>
+        </form>
     </div>
     <div class="emp-info-item">
         <i class="fas fa-list-check"></i>
@@ -155,9 +164,14 @@
                                 <span class="emp-status-dot"></span>
                                 @t.Status
                             </span>
+                            
                             <a asp-area="ProjectManager" asp-controller="Project" asp-action="Task"
                                asp-route-id="@t.Id" class="emp-action-btn emp-action-view" title="View Task">
-                                <i class="fas fa-arrow-right"></i>
+                                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                            </a>
+                            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Edit"
+                               asp-route-id="@t.Id" class="emp-action-btn emp-action-edit" title="Edit Task" style="margin-left:.35rem;">
+                                <i class="fas fa-pen-to-square"></i>
                             </a>
                         </div>
                     </div>
@@ -194,8 +208,15 @@
             </div>
             <div class="ms-info-row">
                 <span class="ms-info-label">Status</span>
-                <span class="emp-ms-status-badge @PmMilestoneStatusClass(Model.Status)">
-                    <span class="emp-status-dot"></span>@Model.Status
+                <span>
+                    <form asp-area="ProjectManager" asp-controller="Project" asp-action="UpdateMilestoneStatus" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="projectMilestoneId" value="@Model.ProjectMilestoneId" />
+                        <input type="hidden" name="newStatus" value="@(string.Equals(Model.Status, "Finished", StringComparison.OrdinalIgnoreCase) ? "Unfinished" : "Finished")" />
+                        <button type="submit" class="emp-ms-status-badge @PmMilestoneStatusClass(Model.Status)" style="border:none; background:transparent; cursor:pointer; padding:.25rem .6rem;">
+                            <span class="emp-status-dot"></span>@Model.Status
+                        </button>
+                    </form>
                 </span>
             </div>
             <div class="ms-info-row">
