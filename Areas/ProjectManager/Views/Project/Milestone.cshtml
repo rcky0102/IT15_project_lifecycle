@@ -141,9 +141,9 @@
             </div>
             <div class="emp-table-toolbar-right">
                 <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
-                    <div style="display:flex;align-items:center;gap:.4rem;">
-                        <i class="fas fa-magnifying-glass emp-search-icon"></i>
-                        <input id="taskSearch" type="text" class="emp-search-input" placeholder="Search tasks…" autocomplete="off" />
+                    <div style="display:flex;align-items:center;gap:.4rem;position:relative;">
+                        <i class="fas fa-magnifying-glass emp-search-icon" style="color:#64748b;font-size:0.95rem;opacity:1;"> </i>
+                        <input id="taskSearch" type="text" class="emp-search-input" placeholder="Search tasks…" autocomplete="off" style="padding-left:2.6rem;" />
                     </div>
                     <div style="display:flex;align-items:center;gap:.4rem;">
                         <select id="taskStatusFilter" class="emp-select">
@@ -210,15 +210,30 @@
                                asp-route-id="@t.Id" class="emp-action-btn emp-action-edit" title="Edit Task">
                                 <i class="fas fa-pen-to-square"></i>
                             </a>
-                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="ArchiveTask" method="post" style="margin:0;display:inline;">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="projectTaskId" value="@t.Id" />
-                                <button type="button" class="emp-action-btn emp-action-archive" title="Archive Task"
-                                        data-task-name="@t.Name"
-                                        onclick="openArchiveModal(this.form, this.getAttribute('data-task-name'))">
-                                    <i class="fas fa-archive"></i>
-                                </button>
-                            </form>
+                            @if (!t.IsArchived)
+                            {
+                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="ArchiveTask" method="post" style="margin:0;display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="projectTaskId" value="@t.Id" />
+                                    <button type="button" class="emp-action-btn emp-action-archive" title="Archive Task"
+                                            data-task-name="@t.Name"
+                                            onclick="openArchiveModal(this.form, this.getAttribute('data-task-name'))">
+                                        <i class="fas fa-archive"></i>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="UnarchiveTask" method="post" style="margin:0;display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="projectTaskId" value="@t.Id" />
+                                    <button type="button" class="emp-action-btn emp-action-unarchive" title="Unarchive Task"
+                                            data-task-name="@t.Name"
+                                            onclick="openUnarchiveModal(this.form, this.getAttribute('data-task-name'))">
+                                        <i class="fas fa-box-open"></i>
+                                    </button>
+                                </form>
+                            }
                         </div>
                     </div>
                 }
@@ -315,6 +330,18 @@
     </div>
 </div>
 
+<!-- Unarchive confirmation modal -->
+<div class="emp-modal-backdrop" id="unarchiveConfirmModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;" onclick="if(event.target === this) closeUnarchiveModal()">
+    <div class="emp-modal" role="document">
+        <h4 id="unarchiveConfirmTitle"><i class="fas fa-box-open"></i> Confirm Unarchive</h4>
+        <p id="unarchiveConfirmMessage">Unarchive this task?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="unarchiveCancelBtn" onclick="closeUnarchiveModal()">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm emp-btn-primary" id="unarchiveConfirmBtn" onclick="confirmUnarchive()">Unarchive</button>
+        </div>
+    </div>
+</div>
+
 <script>
     let __archiveFormToSubmit = null;
     function openArchiveModal(form, name) {
@@ -333,6 +360,26 @@
         if (!__archiveFormToSubmit) return closeArchiveModal();
         // submit the stored form
         __archiveFormToSubmit.submit();
+    }
+</script>
+
+<script>
+    let __unarchiveFormToSubmit = null;
+    function openUnarchiveModal(form, name) {
+        __unarchiveFormToSubmit = form;
+        const msg = document.getElementById('unarchiveConfirmMessage');
+        if (msg) msg.textContent = `Unarchive task "${name}"?`;
+        const modal = document.getElementById('unarchiveConfirmModal');
+        if (modal) { modal.classList.add('open'); modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
+    }
+    function closeUnarchiveModal() {
+        __unarchiveFormToSubmit = null;
+        const modal = document.getElementById('unarchiveConfirmModal');
+        if (modal) { modal.classList.remove('open'); modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+    }
+    function confirmUnarchive() {
+        if (!__unarchiveFormToSubmit) return closeUnarchiveModal();
+        __unarchiveFormToSubmit.submit();
     }
 </script>
 

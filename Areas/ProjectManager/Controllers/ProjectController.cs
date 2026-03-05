@@ -63,6 +63,33 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchiveTask(int projectTaskId)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone).ThenInclude(pmst => pmst.Project)
+                .FirstOrDefaultAsync(t => t.Id == projectTaskId);
+
+            if (task == null) return NotFound();
+
+            if (task.ProjectMilestone == null || task.ProjectMilestone.Project == null || task.ProjectMilestone.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            task.IsArchived = false;
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Unarchive", "Tasks", $"Unarchived task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
+
+            TempData["SuccessMessage"] = "Task unarchived.";
+            return RedirectToAction(nameof(Milestone), new { projectMilestoneId = task.ProjectMilestoneId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateMilestoneStatus(int projectMilestoneId, string newStatus)
         {
             var pm = await GetCurrentProjectManagerAsync();
