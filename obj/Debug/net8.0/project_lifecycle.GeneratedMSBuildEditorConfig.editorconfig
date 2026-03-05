@@ -250,6 +250,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSHVtYW5SZXNvdXJjZVxMYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/HumanResource/Views/AuditLog/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSHVtYW5SZXNvdXJjZVxWaWV3c1xBdWRpdExvZ1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/HumanResource/Views/Dashboard/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSHVtYW5SZXNvdXJjZVxWaWV3c1xEYXNoYm9hcmRcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

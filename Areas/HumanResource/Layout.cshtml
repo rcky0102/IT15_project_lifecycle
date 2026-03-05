@@ -106,6 +106,18 @@
                         </a>
                     </li>
                 </ul>
+
+                <span class="hr-nav-section-title">Activity</span>
+                <ul class="hr-nav-list">
+                    <li class="hr-nav-item">
+                        <a href="@Url.Action("Index", "AuditLog", new { area = "HumanResource" })"
+                           class="hr-nav-link @(currentController == "AuditLog" ? "active" : "")"
+                           data-tooltip="Audit Logs">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span class="hr-nav-text">Audit Logs</span>
+                        </a>
+                    </li>
+                </ul>
             </nav>
 
         </aside>

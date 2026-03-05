@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
+using project_lifecycle.Services;
 
 namespace project_lifecycle.Controllers
 {
@@ -15,13 +16,15 @@ namespace project_lifecycle.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IWebHostEnvironment _env;
+        private readonly IAuditLogService _audit;
 
-        public ProfileApiController(ApplicationDbContext context, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IWebHostEnvironment env)
+        public ProfileApiController(ApplicationDbContext context, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IWebHostEnvironment env, IAuditLogService audit)
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
             _env = env;
+            _audit = audit;
         }
 
         // ─── GET api/profileapi/me ───
@@ -239,6 +242,19 @@ namespace project_lifecycle.Controllers
                     var emp = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
                     if (emp != null)
                     {
+                        var empChanges = new List<string>();
+                        if (!string.IsNullOrEmpty(firstName) && firstName != emp.FirstName) empChanges.Add("First Name");
+                        if (!string.IsNullOrEmpty(lastName) && lastName != emp.LastName) empChanges.Add("Last Name");
+                        if (middleName != (emp.MiddleName ?? "")) empChanges.Add("Middle Name");
+                        if (addressLine != (emp.AddressLine ?? "")) empChanges.Add("Address Line");
+                        if (region != (emp.Region ?? "")) empChanges.Add("Region");
+                        if (province != (emp.Province ?? "")) empChanges.Add("Province");
+                        if (city != (emp.City ?? "")) empChanges.Add("City");
+                        if (barangay != (emp.Barangay ?? "")) empChanges.Add("Barangay");
+                        if (imagePath != null) empChanges.Add("Profile Image");
+                        if (!string.IsNullOrEmpty(newEmail) && newEmail != user.Email) empChanges.Add("Email");
+                        if (!string.IsNullOrEmpty(newPassword)) empChanges.Add("Password");
+
                         if (!string.IsNullOrEmpty(firstName)) emp.FirstName = firstName;
                         if (!string.IsNullOrEmpty(lastName)) emp.LastName = lastName;
                         emp.MiddleName = string.IsNullOrEmpty(middleName) ? null : middleName;
@@ -248,6 +264,12 @@ namespace project_lifecycle.Controllers
                         emp.City = city;
                         emp.Barangay = barangay;
                         if (imagePath != null) emp.ProfileImage = imagePath;
+
+                        if (empChanges.Any())
+                        {
+                            var desc = $"{emp.FirstName} {emp.LastName} updated profile: {string.Join(", ", empChanges)}";
+                            await _audit.LogAsync(User, "Update", "Profile", desc, "Employee", emp.Id.ToString());
+                        }
                     }
                     break;
 
@@ -255,6 +277,20 @@ namespace project_lifecycle.Controllers
                     var pm = await _context.ProjectManagers.FirstOrDefaultAsync(e => e.UserId == userId);
                     if (pm != null)
                     {
+                        var pmChanges = new List<string>();
+                        if (!string.IsNullOrEmpty(firstName) && firstName != pm.FirstName) pmChanges.Add("First Name");
+                        if (!string.IsNullOrEmpty(lastName) && lastName != pm.LastName) pmChanges.Add("Last Name");
+                        if (middleName != (pm.MiddleName ?? "")) pmChanges.Add("Middle Name");
+                        if (!string.IsNullOrEmpty(contact) && contact != pm.Contact) pmChanges.Add("Contact");
+                        if (addressLine != (pm.AddressLine ?? "")) pmChanges.Add("Address Line");
+                        if (region != (pm.Region ?? "")) pmChanges.Add("Region");
+                        if (province != (pm.Province ?? "")) pmChanges.Add("Province");
+                        if (city != (pm.City ?? "")) pmChanges.Add("City");
+                        if (barangay != (pm.Barangay ?? "")) pmChanges.Add("Barangay");
+                        if (imagePath != null) pmChanges.Add("Profile Image");
+                        if (!string.IsNullOrEmpty(newEmail) && newEmail != user.Email) pmChanges.Add("Email");
+                        if (!string.IsNullOrEmpty(newPassword)) pmChanges.Add("Password");
+
                         if (!string.IsNullOrEmpty(firstName)) pm.FirstName = firstName;
                         if (!string.IsNullOrEmpty(lastName)) pm.LastName = lastName;
                         pm.MiddleName = string.IsNullOrEmpty(middleName) ? null : middleName;
@@ -265,6 +301,12 @@ namespace project_lifecycle.Controllers
                         pm.City = city;
                         pm.Barangay = barangay;
                         if (imagePath != null) pm.ProfileImage = imagePath;
+
+                        if (pmChanges.Any())
+                        {
+                            var desc = $"{pm.FirstName} {pm.LastName} updated profile: {string.Join(", ", pmChanges)}";
+                            await _audit.LogAsync(User, "Update", "Profile", desc, "ProjectManager", pm.Id.ToString());
+                        }
                     }
                     break;
 
@@ -272,6 +314,20 @@ namespace project_lifecycle.Controllers
                     var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(e => e.UserId == userId);
                     if (dh != null)
                     {
+                        var dhChanges = new List<string>();
+                        if (!string.IsNullOrEmpty(firstName) && firstName != dh.FirstName) dhChanges.Add("First Name");
+                        if (!string.IsNullOrEmpty(lastName) && lastName != dh.LastName) dhChanges.Add("Last Name");
+                        if (middleName != (dh.MiddleName ?? "")) dhChanges.Add("Middle Name");
+                        if (!string.IsNullOrEmpty(contact) && contact != dh.Contact) dhChanges.Add("Contact");
+                        if (addressLine != (dh.AddressLine ?? "")) dhChanges.Add("Address Line");
+                        if (region != (dh.Region ?? "")) dhChanges.Add("Region");
+                        if (province != (dh.Province ?? "")) dhChanges.Add("Province");
+                        if (city != (dh.City ?? "")) dhChanges.Add("City");
+                        if (barangay != (dh.Barangay ?? "")) dhChanges.Add("Barangay");
+                        if (imagePath != null) dhChanges.Add("Profile Image");
+                        if (!string.IsNullOrEmpty(newEmail) && newEmail != user.Email) dhChanges.Add("Email");
+                        if (!string.IsNullOrEmpty(newPassword)) dhChanges.Add("Password");
+
                         if (!string.IsNullOrEmpty(firstName)) dh.FirstName = firstName;
                         if (!string.IsNullOrEmpty(lastName)) dh.LastName = lastName;
                         dh.MiddleName = string.IsNullOrEmpty(middleName) ? null : middleName;
@@ -282,6 +338,12 @@ namespace project_lifecycle.Controllers
                         dh.City = city;
                         dh.Barangay = barangay;
                         if (imagePath != null) dh.ProfileImage = imagePath;
+
+                        if (dhChanges.Any())
+                        {
+                            var desc = $"{dh.FirstName} {dh.LastName} updated profile: {string.Join(", ", dhChanges)}";
+                            await _audit.LogAsync(User, "Update", "Profile", desc, "DepartmentHead", dh.Id.ToString());
+                        }
                     }
                     break;
 
@@ -289,6 +351,20 @@ namespace project_lifecycle.Controllers
                     var hr = await _context.HumanResources.FirstOrDefaultAsync(e => e.UserId == userId);
                     if (hr != null)
                     {
+                        var changedFields = new List<string>();
+                        if (!string.IsNullOrEmpty(firstName) && firstName != hr.FirstName) changedFields.Add("First Name");
+                        if (!string.IsNullOrEmpty(lastName) && lastName != hr.LastName) changedFields.Add("Last Name");
+                        if (middleName != (hr.MiddleName ?? "")) changedFields.Add("Middle Name");
+                        if (!string.IsNullOrEmpty(contact) && contact != hr.Contact) changedFields.Add("Contact");
+                        if (addressLine != (hr.AddressLine ?? "")) changedFields.Add("Address Line");
+                        if (region != (hr.Region ?? "")) changedFields.Add("Region");
+                        if (province != (hr.Province ?? "")) changedFields.Add("Province");
+                        if (city != (hr.City ?? "")) changedFields.Add("City");
+                        if (barangay != (hr.Barangay ?? "")) changedFields.Add("Barangay");
+                        if (imagePath != null) changedFields.Add("Profile Image");
+                        if (!string.IsNullOrEmpty(newEmail) && newEmail != user.Email) changedFields.Add("Email");
+                        if (!string.IsNullOrEmpty(newPassword)) changedFields.Add("Password");
+
                         if (!string.IsNullOrEmpty(firstName)) hr.FirstName = firstName;
                         if (!string.IsNullOrEmpty(lastName)) hr.LastName = lastName;
                         hr.MiddleName = string.IsNullOrEmpty(middleName) ? null : middleName;
@@ -299,6 +375,12 @@ namespace project_lifecycle.Controllers
                         hr.City = city;
                         hr.Barangay = barangay;
                         if (imagePath != null) hr.ProfileImage = imagePath;
+
+                        if (changedFields.Any())
+                        {
+                            var desc = $"{hr.FirstName} {hr.LastName} updated profile: {string.Join(", ", changedFields)}";
+                            await _audit.LogAsync(User, "Update", "Profile", desc, "HumanResource", hr.Id.ToString());
+                        }
                     }
                     break;
 
@@ -306,6 +388,20 @@ namespace project_lifecycle.Controllers
                     var ex = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == userId);
                     if (ex != null)
                     {
+                        var exChanges = new List<string>();
+                        if (!string.IsNullOrEmpty(firstName) && firstName != ex.FirstName) exChanges.Add("First Name");
+                        if (!string.IsNullOrEmpty(lastName) && lastName != ex.LastName) exChanges.Add("Last Name");
+                        if (middleName != (ex.MiddleName ?? "")) exChanges.Add("Middle Name");
+                        if (!string.IsNullOrEmpty(contact) && contact != ex.Contact) exChanges.Add("Contact");
+                        if (addressLine != (ex.AddressLine ?? "")) exChanges.Add("Address Line");
+                        if (region != (ex.Region ?? "")) exChanges.Add("Region");
+                        if (province != (ex.Province ?? "")) exChanges.Add("Province");
+                        if (city != (ex.City ?? "")) exChanges.Add("City");
+                        if (barangay != (ex.Barangay ?? "")) exChanges.Add("Barangay");
+                        if (imagePath != null) exChanges.Add("Profile Image");
+                        if (!string.IsNullOrEmpty(newEmail) && newEmail != user.Email) exChanges.Add("Email");
+                        if (!string.IsNullOrEmpty(newPassword)) exChanges.Add("Password");
+
                         if (!string.IsNullOrEmpty(firstName)) ex.FirstName = firstName;
                         if (!string.IsNullOrEmpty(lastName)) ex.LastName = lastName;
                         ex.MiddleName = string.IsNullOrEmpty(middleName) ? null : middleName;
@@ -316,6 +412,12 @@ namespace project_lifecycle.Controllers
                         ex.City = city;
                         ex.Barangay = barangay;
                         if (imagePath != null) ex.ProfileImage = imagePath;
+
+                        if (exChanges.Any())
+                        {
+                            var desc = $"{ex.FirstName} {ex.LastName} updated profile: {string.Join(", ", exChanges)}";
+                            await _audit.LogAsync(User, "Update", "Profile", desc, "Executive", ex.Id.ToString());
+                        }
                     }
                     break;
             }
