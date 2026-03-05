@@ -2,8 +2,10 @@
 @{
     ViewData["Title"] = "My Projects";
     var totalMembers    = Model.Projects.Sum(p => p.Members.Count);
-    var totalMilestones = Model.Projects.Sum(p => p.Milestones?.Count ?? 0);
+    // Exclude archived milestones from global totals
+    var totalMilestones = Model.Projects.Sum(p => p.Milestones?.Count(m => !m.IsArchived) ?? 0);
     var completedMs     = Model.Projects.Sum(p => p.Milestones?.Count(m => {
+        if (m.IsArchived) return false;
         var s = (m.Status ?? "").ToLowerInvariant();
         return s == "completed" || s == "checked" || s == "finished";
     }) ?? 0);
@@ -79,11 +81,13 @@
                         </tr>
                     </thead>
                     <tbody id="projectsBody">
-                        @foreach (var project in Model.Projects)
+                        @foreach (var project in Model.Projects.OrderBy(p => p.IsArchived))
                         {
                             var duration  = (project.EndDate - project.StartDate).Days;
-                            var totalPMs  = project.Milestones?.Count ?? 0;
+                            // Exclude archived milestones from per-project counts/progress
+                            var totalPMs  = project.Milestones?.Count(m => !m.IsArchived) ?? 0;
                             var donePMs   = project.Milestones?.Count(m => {
+                                if (m.IsArchived) return false;
                                 var s = (m.Status ?? "").ToLowerInvariant();
                                 return s == "completed" || s == "checked" || s == "finished";
                             }) ?? 0;

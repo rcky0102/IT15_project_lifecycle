@@ -88,7 +88,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
                         MilestoneId = ms.MilestoneId,
                         MilestoneName = ms.Milestone != null ? ms.Milestone.Name : "N/A",
                         SequenceOrder = ms.SequenceOrder,
-                        Status = ms.Status
+                        Status = ms.Status,
+                        IsArchived = ms.IsArchived
                     })
                     .ToList();
             }
