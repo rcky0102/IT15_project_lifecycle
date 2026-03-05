@@ -182,7 +182,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                         MilestoneId = ms.MilestoneId,
                         MilestoneName = ms.Milestone != null ? ms.Milestone.Name : "N/A",
                         SequenceOrder = ms.SequenceOrder,
-                        Status = ms.Status
+                    Status = ms.Status,
+                    IsArchived = (ms as project_lifecycle.Models.ProjectMilestone) != null && false
                     })
                     .ToList();
             }
@@ -278,7 +279,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     MilestoneId = ms.MilestoneId,
                     MilestoneName = ms.Milestone != null ? ms.Milestone.Name : "N/A",
                     SequenceOrder = ms.SequenceOrder,
-                    Status = ms.Status
+                    Status = ms.Status,
+                    IsArchived = ms.IsArchived
                 })
                 .ToList();
 
@@ -1197,12 +1199,119 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 return Forbid();
             }
 
+            // If the milestone being removed is active (not archived), adjust
+            // the sequence order of later active milestones so ordering remains contiguous.
+            if (!pmst.IsArchived)
+            {
+                var originalOrder = pmst.SequenceOrder;
+                var laterActive = await _context.ProjectMilestones
+                    .Where(x => x.ProjectId == pmst.ProjectId && !x.IsArchived && x.SequenceOrder > originalOrder)
+                    .ToListAsync();
+
+                foreach (var m in laterActive)
+                {
+                    m.SequenceOrder -= 1;
+                    _context.ProjectMilestones.Update(m);
+                }
+            }
+
             _context.ProjectMilestones.Remove(pmst);
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(User, "Delete", "Project Milestones", $"Removed milestone (ID: {projectMilestoneId}) from project {pmst.Project!.Id}", "ProjectMilestone", projectMilestoneId.ToString());
 
             TempData["SuccessMessage"] = "Milestone removed from project.";
+            return RedirectToAction(nameof(Details), new { id = pmst.Project!.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveProjectMilestone(int projectMilestoneId)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var pmst = await _context.ProjectMilestones.Include(p => p.Project).FirstOrDefaultAsync(p => p.Id == projectMilestoneId);
+            if (pmst == null) return NotFound();
+
+            if (pmst.Project == null || pmst.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            // If already archived, nothing to do
+            if (pmst.IsArchived)
+            {
+                TempData["ErrorMessage"] = "Milestone is already archived.";
+                return RedirectToAction(nameof(Details), new { id = pmst.Project!.Id });
+            }
+
+            // When archiving a milestone, remove it from the active sequence by
+            // decrementing the SequenceOrder of any later active milestones so
+            // the remaining active milestones keep contiguous ordering.
+            var originalOrder = pmst.SequenceOrder;
+
+            var laterActive = await _context.ProjectMilestones
+                .Where(x => x.ProjectId == pmst.ProjectId && !x.IsArchived && x.SequenceOrder > originalOrder)
+                .ToListAsync();
+
+            foreach (var m in laterActive)
+            {
+                m.SequenceOrder -= 1;
+                _context.ProjectMilestones.Update(m);
+            }
+
+            // Mark the milestone archived and remove it from ordering (set to 0)
+            pmst.IsArchived = true;
+            pmst.SequenceOrder = 0;
+            _context.ProjectMilestones.Update(pmst);
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Archive", "Project Milestones", $"Archived milestone (ID: {projectMilestoneId}) in project {pmst.Project!.Id}", "ProjectMilestone", projectMilestoneId.ToString());
+
+            TempData["SuccessMessage"] = "Milestone archived.";
+            return RedirectToAction(nameof(Details), new { id = pmst.Project!.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchiveProjectMilestone(int projectMilestoneId)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var pmst = await _context.ProjectMilestones.Include(p => p.Project).FirstOrDefaultAsync(p => p.Id == projectMilestoneId);
+            if (pmst == null) return NotFound();
+
+            if (pmst.Project == null || pmst.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            // If not archived, nothing to do
+            if (!pmst.IsArchived)
+            {
+                TempData["ErrorMessage"] = "Milestone is not archived.";
+                return RedirectToAction(nameof(Details), new { id = pmst.Project!.Id });
+            }
+
+            // When unarchiving, place the milestone at the end of active sequence
+            // so existing sequence ordering is preserved.
+            var maxOrder = await _context.ProjectMilestones
+                .Where(x => x.ProjectId == pmst.ProjectId && !x.IsArchived)
+                .Select(x => x.SequenceOrder)
+                .DefaultIfEmpty(0)
+                .MaxAsync();
+
+            pmst.IsArchived = false;
+            pmst.SequenceOrder = maxOrder + 1;
+            _context.ProjectMilestones.Update(pmst);
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Unarchive", "Project Milestones", $"Unarchived milestone (ID: {projectMilestoneId}) in project {pmst.Project!.Id}", "ProjectMilestone", projectMilestoneId.ToString());
+
+            TempData["SuccessMessage"] = "Milestone unarchived.";
             return RedirectToAction(nameof(Details), new { id = pmst.Project!.Id });
         }
 

@@ -2,10 +2,11 @@
 @{
     ViewData["Title"] = Model.Project.Name;
     var duration    = (Model.Project.EndDate - Model.Project.StartDate).Days;
-    var totalMs     = Model.Project.Milestones.Count;
-    var finishedMs  = Model.Project.Milestones.Count(m => m.Status == "Finished");
+    // Exclude archived milestones from counts and progress calculation
+    var totalMs     = Model.Project.Milestones.Count(m => !m.IsArchived);
+    var finishedMs  = Model.Project.Milestones.Count(m => !m.IsArchived && m.Status == "Finished");
     var pct         = totalMs > 0 ? (int)Math.Round((double)finishedMs / totalMs * 100) : 0;
-    var nextOrder   = Model.Project.Milestones.Any() ? Model.Project.Milestones.Max(m => m.SequenceOrder) + 1 : 1;
+    var nextOrder   = Model.Project.Milestones.Any(m => !m.IsArchived) ? Model.Project.Milestones.Where(m => !m.IsArchived).Max(m => m.SequenceOrder) + 1 : 1;
 }
 
 <style>
@@ -36,6 +37,30 @@
             </h1>
             <p class="emp-page-subtitle">Proposal: @Model.Project.ProposalTitle</p>
         </div>
+
+<!-- Archive confirmation modal for milestones -->
+<div class="emp-modal-backdrop" id="archiveConfirmModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;" onclick="if(event.target === this) closeArchiveModal()">
+    <div class="emp-modal" role="document">
+        <h4 id="archiveConfirmTitle"><i class="fas fa-archive"></i> Confirm Archive</h4>
+        <p id="archiveConfirmMessage">Archive this milestone?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="archiveCancelBtn" onclick="closeArchiveModal()">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm emp-btn-danger" id="archiveConfirmBtn" onclick="confirmArchive()">Archive</button>
+        </div>
+    </div>
+</div>
+
+<!-- Unarchive confirmation modal for milestones -->
+<div class="emp-modal-backdrop" id="unarchiveConfirmModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;" onclick="if(event.target === this) closeUnarchiveModal()">
+    <div class="emp-modal" role="document">
+        <h4 id="unarchiveConfirmTitle"><i class="fas fa-box-open"></i> Confirm Unarchive</h4>
+        <p id="unarchiveConfirmMessage">Unarchive this milestone?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="unarchiveCancelBtn" onclick="closeUnarchiveModal()">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm emp-btn-primary" id="unarchiveConfirmBtn" onclick="confirmUnarchive()">Unarchive</button>
+        </div>
+    </div>
+</div>
         <div class="emp-page-hero-right" style="display:flex;gap:.6rem;flex-wrap:wrap;">
             <button type="button" class="emp-btn emp-btn-outline" onclick="openModal('membersModal')">
                 <i class="fas fa-user-plus"></i>
@@ -108,23 +133,36 @@
                 <h3 class="emp-table-title"><i class="fas fa-flag-checkered"></i> Project Milestones</h3>
                 <span class="emp-count-chip">@totalMs</span>
             </div>
-            <button type="button" class="emp-btn emp-btn-primary" style="padding:.45rem .9rem;font-size:.78rem;" onclick="openModal('milestonesModal')">
-                <i class="fas fa-plus"></i> Add
-            </button>
+            <div style="display:flex;align-items:center;gap:.6rem;">
+                <div style="display:flex;align-items:center;gap:.4rem;">
+                    <select id="milestoneArchiveFilter" class="emp-select">
+                        <option value="active" selected>Active</option>
+                        <option value="archived">Archived</option>
+                        <option value="all">All</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         @if (Model.Project.Milestones.Any())
         {
-            <div class="emp-task-list">
-                @foreach (var ms in Model.Project.Milestones.OrderBy(m => m.SequenceOrder))
+            <div class="emp-task-list" id="milestonesList">
+                @foreach (var ms in Model.Project.Milestones.OrderBy(m => m.IsArchived).ThenBy(m => m.SequenceOrder))
                 {
-                    <div class="emp-task-row">
+                    <div class="emp-task-row emp-milestone-row" data-archived="@(ms.IsArchived ? "true" : "false")">
                         <div class="emp-task-row-left">
                             <span class="emp-task-status-dot @MsDotClass(ms.Status)"></span>
                             <div class="emp-task-info">
                                 <span class="emp-task-name">@ms.MilestoneName</span>
                                 <span class="emp-task-dates">
-                                    <span class="pm-step-chip">STEP @ms.SequenceOrder</span>
+                                    @if (ms.SequenceOrder > 0)
+                                    {
+                                        <span class="pm-step-chip">STEP @ms.SequenceOrder</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="pm-step-chip" style="opacity:.7;background:rgba(120,120,120,.06);">ARCHIVED</span>
+                                    }
                                 </span>
                             </div>
                         </div>
@@ -138,20 +176,36 @@
                             <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone"
                                asp-route-projectMilestoneId="@ms.Id"
                                class="emp-action-btn emp-action-view" title="View Milestone">
-                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
                             </a>
                             <button type="button" class="emp-action-btn emp-action-edit" title="Edit"
                                     onclick="editMilestone(@ms.Id, '@ms.MilestoneId', '@ms.SequenceOrder', 'milestonesModal')">
-                                <i class="fas fa-pencil"></i>
+                                <i class="fas fa-pen-to-square"></i>
                             </button>
-                            <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveProjectMilestone" method="post" style="margin:0;display:inline;">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
-                                <button type="submit" class="emp-action-btn emp-action-delete" title="Remove"
-                                        onclick="return confirm('Remove @ms.MilestoneName from this project?')">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </form>
+                            @if (!ms.IsArchived)
+                            {
+                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="ArchiveProjectMilestone" method="post" style="margin:0;display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
+                                    <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
+                                            data-ms-name="@ms.MilestoneName"
+                                            onclick="openArchiveModal(this.form, this.getAttribute('data-ms-name'))">
+                                        <i class="fas fa-archive"></i>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="UnarchiveProjectMilestone" method="post" style="margin:0;display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="projectMilestoneId" value="@ms.Id" />
+                                    <button type="button" class="emp-action-btn emp-action-unarchive" title="Unarchive"
+                                            data-ms-name="@ms.MilestoneName"
+                                            onclick="openUnarchiveModal(this.form, this.getAttribute('data-ms-name'))">
+                                        <i class="fas fa-box-open"></i>
+                                    </button>
+                                </form>
+                            }
                         </div>
                     </div>
                 }
@@ -227,12 +281,12 @@
         </div>
 
         <!-- Milestone Summary -->
-        @if (Model.Project.Milestones.Any())
+        @if (Model.Project.Milestones.Any(m => !m.IsArchived))
         {
             <div class="emp-side-card">
                 <div class="emp-side-card-title"><i class="fas fa-flag"></i> Milestone Summary</div>
                 <div class="emp-milestone-timeline">
-                    @foreach (var ms in Model.Project.Milestones.OrderBy(x => x.SequenceOrder))
+                    @foreach (var ms in Model.Project.Milestones.Where(x => !x.IsArchived).OrderBy(x => x.SequenceOrder))
                     {
                         <div class="emp-milestone">
                             <div class="emp-milestone-dot @MsSideDotClass(ms.Status)"></div>
@@ -445,5 +499,65 @@ document.addEventListener('keydown', function(e) {
         resetModals();
     }
 });
+</script>
+
+<script>
+    let __archiveFormToSubmit = null;
+    function openArchiveModal(form, name) {
+        __archiveFormToSubmit = form;
+        const msg = document.getElementById('archiveConfirmMessage');
+        if (msg) msg.textContent = `Archive milestone "${name}"?`;
+        const modal = document.getElementById('archiveConfirmModal');
+        if (modal) { modal.classList.add('open'); modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
+    }
+    function closeArchiveModal() {
+        __archiveFormToSubmit = null;
+        const modal = document.getElementById('archiveConfirmModal');
+        if (modal) { modal.classList.remove('open'); modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+    }
+    function confirmArchive() {
+        if (!__archiveFormToSubmit) return closeArchiveModal();
+        __archiveFormToSubmit.submit();
+    }
+</script>
+
+<script>
+    let __unarchiveFormToSubmit = null;
+    function openUnarchiveModal(form, name) {
+        __unarchiveFormToSubmit = form;
+        const msg = document.getElementById('unarchiveConfirmMessage');
+        if (msg) msg.textContent = `Unarchive milestone "${name}"?`;
+        const modal = document.getElementById('unarchiveConfirmModal');
+        if (modal) { modal.classList.add('open'); modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
+    }
+    function closeUnarchiveModal() {
+        __unarchiveFormToSubmit = null;
+        const modal = document.getElementById('unarchiveConfirmModal');
+        if (modal) { modal.classList.remove('open'); modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+    }
+    function confirmUnarchive() {
+        if (!__unarchiveFormToSubmit) return closeUnarchiveModal();
+        __unarchiveFormToSubmit.submit();
+    }
+</script>
+<script>
+(function(){
+    const milestoneFilter = document.getElementById('milestoneArchiveFilter');
+    if (!milestoneFilter) return;
+    const rows = Array.from(document.querySelectorAll('.emp-milestone-row'));
+    function applyMilestoneFilter(){
+        const v = (milestoneFilter.value || 'active').toLowerCase();
+        rows.forEach(r => {
+            const isArchived = (r.dataset.archived || 'false') === 'true';
+            let show = true;
+            if (v === 'active') show = !isArchived;
+            else if (v === 'archived') show = isArchived;
+            r.style.display = show ? '' : 'none';
+        });
+    }
+    milestoneFilter.addEventListener('change', applyMilestoneFilter);
+    // initialize
+    applyMilestoneFilter();
+})();
 </script>
 }

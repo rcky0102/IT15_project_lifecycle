@@ -29,5 +29,8 @@ namespace project_lifecycle.Models
 
         [Required]
         public DateTime DateCreated { get; set; } = DateTime.Now;
+
+        // Soft-archive flag for milestones
+        public bool IsArchived { get; set; } = false;
     }
 }

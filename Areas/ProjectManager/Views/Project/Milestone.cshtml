@@ -266,43 +266,7 @@
     <!-- ===== Side Panel ===== -->
     <div class="emp-show-side">
 
-        <!-- Milestone Info -->
-        <div class="emp-side-card">
-            <div class="emp-side-card-title"><i class="fas fa-flag-checkered"></i> Milestone Info</div>
-            <div class="ms-info-row">
-                <span class="ms-info-label">Name</span>
-                <span class="ms-info-value">@Model.MilestoneName</span>
-            </div>
-            <div class="ms-info-row">
-                <span class="ms-info-label">Order</span>
-                <span class="ms-info-value">#@Model.SequenceOrder</span>
-            </div>
-            <div class="ms-info-row">
-                <span class="ms-info-label">Status</span>
-                <span>
-                    <form asp-area="ProjectManager" asp-controller="Project" asp-action="UpdateMilestoneStatus" method="post" style="display:inline;">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="projectMilestoneId" value="@Model.ProjectMilestoneId" />
-                        <input type="hidden" name="newStatus" value="@(string.Equals(Model.Status, "Finished", StringComparison.OrdinalIgnoreCase) ? "Unfinished" : "Finished")" />
-                        <button type="submit" class="emp-ms-status-badge @PmMilestoneStatusClass(Model.Status)" style="border:none; background:transparent; cursor:pointer; padding:.25rem .6rem;">
-                            <span class="emp-status-dot"></span>@Model.Status
-                        </button>
-                    </form>
-                </span>
-            </div>
-            <div class="ms-info-row">
-                <span class="ms-info-label">Total Tasks</span>
-                <span class="ms-info-value">@totalTasks</span>
-            </div>
-            <div class="ms-info-row">
-                <span class="ms-info-label">Completed</span>
-                <span class="ms-info-value" style="color:#16a34a;">@doneTasks</span>
-            </div>
-            <div class="ms-info-row">
-                <span class="ms-info-label">Pending</span>
-                <span class="ms-info-value" style="color:#d97706;">@(totalTasks - doneTasks)</span>
-            </div>
-        </div>
+        
 
         <!-- Project Link -->
         <div class="emp-side-card" style="text-align:center;">

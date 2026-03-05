@@ -40,5 +40,6 @@ namespace project_lifecycle.ViewModels.ProjectManager
         public string MilestoneName { get; set; } = string.Empty;
         public int SequenceOrder { get; set; }
         public string Status { get; set; } = string.Empty;
+        public bool IsArchived { get; set; } = false;
     }
 }
