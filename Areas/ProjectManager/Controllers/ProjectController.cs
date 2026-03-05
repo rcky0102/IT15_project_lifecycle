@@ -91,6 +91,12 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 }
             }
 
+            // Sync parent project status
+            if (pmstToUpdate?.Project != null)
+                await SyncProjectStatusAsync(pmstToUpdate.ProjectId);
+            else if (task.ProjectMilestone?.ProjectId is int archiveProjId)
+                await SyncProjectStatusAsync(archiveProjId);
+
             await _audit.LogAsync(User, "Archive", "Tasks", $"Archived task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
 
             TempData["SuccessMessage"] = "Task archived.";
@@ -154,6 +160,12 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 }
             }
 
+            // Sync parent project status
+            if (pmstToUpdate?.Project != null)
+                await SyncProjectStatusAsync(pmstToUpdate.ProjectId);
+            else if (task.ProjectMilestone?.ProjectId is int unarchiveProjId)
+                await SyncProjectStatusAsync(unarchiveProjId);
+
             await _audit.LogAsync(User, "Unarchive", "Tasks", $"Unarchived task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
 
             TempData["SuccessMessage"] = "Task unarchived.";
@@ -185,6 +197,9 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             pmst.Status = string.Equals(newStatus, "Finished", StringComparison.OrdinalIgnoreCase) ? "Finished" : "Unfinished";
             await _context.SaveChangesAsync();
 
+            // Sync parent project status
+            await SyncProjectStatusAsync(pmst.ProjectId);
+
             TempData["SuccessMessage"] = "Milestone status updated.";
             await _audit.LogAsync(User, "Update", "Project Milestones", $"Updated milestone status (ID: {pmst.Id}) to {pmst.Status}", "ProjectMilestone", pmst.Id.ToString());
 
@@ -196,6 +211,30 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return null;
             return await _context.ProjectManagers.FirstOrDefaultAsync(pm => pm.UserId == userId);
+        }
+
+        /// <summary>
+        /// Syncs the project's Status to "Finished" when every non-archived milestone
+        /// is "Finished", and back to "Unfinished" otherwise.
+        /// </summary>
+        private async System.Threading.Tasks.Task SyncProjectStatusAsync(int projectId)
+        {
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+            if (project == null) return;
+
+            var milestones = await _context.ProjectMilestones
+                .Where(m => m.ProjectId == projectId && !m.IsArchived)
+                .ToListAsync();
+
+            var allFinished = milestones.Count > 0 &&
+                              milestones.All(m => string.Equals(m.Status, "Finished", StringComparison.OrdinalIgnoreCase));
+
+            var newStatus = allFinished ? "Finished" : "Unfinished";
+            if (!string.Equals(project.Status, newStatus, StringComparison.OrdinalIgnoreCase))
+            {
+                project.Status = newStatus;
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<IActionResult> Index()
@@ -680,6 +719,10 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     }
                 }
             }
+
+            // Sync parent project status based on all milestones
+            if (task.ProjectMilestone?.ProjectId is int taskProjId)
+                await SyncProjectStatusAsync(taskProjId);
 
             TempData["SuccessMessage"] = "Task updated.";
             await _audit.LogAsync(User, "Update", "Tasks", $"Updated task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
