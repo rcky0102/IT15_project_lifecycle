@@ -157,9 +157,11 @@
                             </div>
                         </div>
                         <div class="emp-task-row-right">
-                            <span class="emp-status-badge @PmTaskBadgeClass(t.Status)">
-                                <span class="emp-status-dot"></span>
-                                @t.Status
+                            <span class="emp-badge-white" title="Status">
+                                <span class="emp-status-inline @PmTaskBadgeClass(t.Status)">
+                                    <span class="emp-status-dot"></span>
+                                    <span class="emp-status-text">@t.Status</span>
+                                </span>
                             </span>
                             
                             <a asp-area="ProjectManager" asp-controller="Project" asp-action="Task"
@@ -167,7 +169,7 @@
                                 <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
                             </a>
                             <a asp-area="ProjectManager" asp-controller="Project" asp-action="Edit"
-                               asp-route-id="@t.Id" class="emp-action-btn emp-action-edit" title="Edit Task" style="margin-left:.35rem;">
+                               asp-route-id="@t.Id" class="emp-action-btn emp-action-edit" title="Edit Task">
                                 <i class="fas fa-pen-to-square"></i>
                             </a>
                         </div>
@@ -247,6 +249,7 @@
 @functions {
     private string PmTaskBadgeClass(string s) => s switch {
         "Completed"        => "emp-status-approved",
+        "Checked"          => "emp-status-approved",
         "In Progress"      => "emp-status-revision",
         "Require Revision" => "emp-status-pending",
         "Pending"          => "emp-status-pending",
@@ -254,6 +257,7 @@
     };
     private string PmTaskDotClass(string s) => s switch {
         "Completed"        => "emp-dot-green",
+        "Checked"          => "emp-dot-green",
         "In Progress"      => "emp-dot-purple",
         "Require Revision" => "emp-dot-orange",
         _                  => "emp-dot-gray"
