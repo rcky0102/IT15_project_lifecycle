@@ -132,22 +132,75 @@ else
     </div>
 </div>
 
+<!-- Confirm update modal -->
+<div class="dh-modal-backdrop" id="confirmUpdateModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="dh-modal" role="document">
+        <h4 id="confirmUpdateTitle"><i class="fas fa-exclamation-triangle"></i> Confirm Update</h4>
+        <p id="confirmUpdateMessage">Confirm this action?</p>
+        <div class="dh-modal-actions">
+            <button type="button" class="dh-btn dh-btn-cancel" id="confirmUpdateCancel">Cancel</button>
+            <button type="button" class="dh-btn dh-btn-confirm" id="confirmUpdateConfirm">Confirm</button>
+        </div>
+    </div>
+</div>
+
 <script>
 function confirmUpdateStatus() {
-    const sel = document.getElementById('statusSelect');
-    if (!sel) return;
-    const v = sel.value;
-    // For actions that need confirmation, ask first then submit
-    if (v === 'Approve') {
-        if (confirm('Approve this proposal?')) document.getElementById('reviewForm').submit();
+    const actionInput = document.getElementById('actionTypeHidden');
+    if (!actionInput) return;
+    const action = actionInput.value;
+    if (!action) return;
+
+    // Submit immediately for require revision
+    if (action === 'ReturnForRevision' || action === 'RequireRevision') {
+        document.getElementById('reviewForm').submit();
         return;
     }
-    if (v === 'Reject') {
-        if (confirm('Reject this proposal?')) document.getElementById('reviewForm').submit();
+
+    const modal = document.getElementById('confirmUpdateModal');
+    const titleEl = document.getElementById('confirmUpdateTitle');
+    const messageEl = document.getElementById('confirmUpdateMessage');
+    const cancelBtn = document.getElementById('confirmUpdateCancel');
+    const confirmBtn = document.getElementById('confirmUpdateConfirm');
+    if (!modal) {
+        document.getElementById('reviewForm').submit();
         return;
     }
-    // Require Revision — submit without extra confirmation
-    document.getElementById('reviewForm').submit();
+
+    const isApprove = action === 'Approve';
+    const msg = isApprove ? 'Approve this proposal?' : 'Reject this proposal?';
+    const confirmText = isApprove ? 'Approve' : 'Reject';
+
+    if (titleEl) titleEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Confirm Update';
+    if (messageEl) messageEl.textContent = msg;
+    if (confirmBtn) confirmBtn.textContent = confirmText;
+
+    function hide() {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        cleanup();
+    }
+    function onOverlayClick(e) { if (e.target === modal) hide(); }
+    function onConfirm() {
+        hide();
+        const form = document.getElementById('reviewForm');
+        if (form) {
+            if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            else form.submit();
+        }
+    }
+    function cleanup() {
+        cancelBtn?.removeEventListener('click', hide);
+        modal?.removeEventListener('click', onOverlayClick);
+        confirmBtn?.removeEventListener('click', onConfirm);
+    }
+
+    cancelBtn?.addEventListener('click', hide);
+    modal?.addEventListener('click', onOverlayClick);
+    confirmBtn?.addEventListener('click', onConfirm);
+
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
 }
 </script>
 
