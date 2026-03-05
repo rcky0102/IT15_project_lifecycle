@@ -78,14 +78,15 @@
                         </tr>
                     </thead>
                     <tbody id="projectsBody">
-                        @foreach (var project in Model.Projects)
+                        @foreach (var project in Model.Projects.OrderBy(p => p.IsArchived))
                         {
                             var duration  = (project.EndDate - project.StartDate).Days;
-                            var totalPMs  = project.Milestones?.Count ?? 0;
-                            var donePMs   = project.Milestones?.Count(m => {
-                                var s = (m.Status ?? "").ToLowerInvariant();
-                                return s == "completed" || s == "checked" || s == "finished";
-                            }) ?? 0;
+                            // Exclude archived milestones from counts/progress
+                            var totalPMs  = project.Milestones?.Count(m => !m.IsArchived) ?? 0;
+                            var donePMs   = project.Milestones?.Count(m => !m.IsArchived && (
+                                (m.Status ?? "").ToLowerInvariant() == "completed" ||
+                                (m.Status ?? "").ToLowerInvariant() == "checked" ||
+                                (m.Status ?? "").ToLowerInvariant() == "finished")) ?? 0;
                             var percent   = totalPMs > 0 ? (int)Math.Round((double)donePMs * 100 / totalPMs) : 0;
                             <tr class="emp-row" data-name="@project.Name.ToLower()" data-archived="@(project.IsArchived ? "true" : "false")">
                                 <td>
@@ -94,7 +95,12 @@
                                             <i class="fas fa-diagram-project"></i>
                                         </div>
                                         <div>
-                                            <div class="project-name-text">@project.Name</div>
+                                            <div class="project-name-text">@project.Name
+                                                @if (project.IsArchived)
+                                                {
+                                                    <span style="display:inline-block;margin-left:.5rem;font-size:.72rem;color:#94a3b8;font-weight:700;">ARCHIVED</span>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
                                 </td>

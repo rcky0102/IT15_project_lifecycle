@@ -182,8 +182,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                         MilestoneId = ms.MilestoneId,
                         MilestoneName = ms.Milestone != null ? ms.Milestone.Name : "N/A",
                         SequenceOrder = ms.SequenceOrder,
-                    Status = ms.Status,
-                    IsArchived = (ms as project_lifecycle.Models.ProjectMilestone) != null && false
+                        Status = ms.Status,
+                        IsArchived = ms.IsArchived
                     })
                     .ToList();
             }
