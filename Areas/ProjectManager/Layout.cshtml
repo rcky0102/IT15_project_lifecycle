@@ -313,15 +313,16 @@
                 mgNav.classList.toggle('expanded', exp);
                 mgToggle.setAttribute('aria-expanded', exp ? 'true' : 'false');
                 mgSub.setAttribute('aria-hidden', exp ? 'false' : 'true');
-                localStorage.setItem(storageKey, exp ? 'true' : 'false');
+                // persist user's choice for future sessions, but do not auto-apply on load
+                try { localStorage.setItem(storageKey, exp ? 'true' : 'false'); } catch { }
             }
-            // restore from localStorage unless server rendered expanded
-            const serverExpanded = mgNav && mgNav.classList.contains('expanded');
-            const stored = localStorage.getItem(storageKey);
-            if (!serverExpanded) {
-                if (stored === 'true') setExpanded(true);
-            }
-            mgToggle?.addEventListener('click', function () { setExpanded(!mgNav.classList.contains('expanded')); });
+
+            // Do not auto-restore expanded state from localStorage on page load.
+            // Keep the server-rendered state (server may set expanded when on Management pages).
+
+            mgToggle?.addEventListener('click', function () {
+                setExpanded(!mgNav.classList.contains('expanded'));
+            });
         })();
 
         /* --- Sticky header shadow on scroll --- */

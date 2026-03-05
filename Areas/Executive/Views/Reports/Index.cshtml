@@ -135,8 +135,9 @@
 </div>
 
 @section Scripts {
-    <!-- html2pdf.js for PDF export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- jsPDF + autoTable for text-based PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <script>
         (function () {
@@ -746,73 +747,328 @@
                 renderRows(currentReport.rows, columns, this.value);
             });
 
-            // ── PDF Export ──
+            // ══════════════════════════════════════════════════════
+            // ── PDF Export (text-based using jsPDF + autoTable) ──
+            // ══════════════════════════════════════════════════════
+
+            function stripHtml(html) {
+                const tmp = document.createElement('span');
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || '';
+            }
+
+            function pdfAddHeader(doc, title, dateRange) {
+                const pageW = doc.internal.pageSize.getWidth();
+                const primaryColor = [0, 105, 148];
+
+                // Title
+                doc.setFontSize(20);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...primaryColor);
+                doc.text(title, pageW / 2, 20, { align: 'center' });
+
+                // Date range
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Report Period: ${dateRange}`, pageW / 2, 27, { align: 'center' });
+
+                // Generated date
+                doc.setFontSize(8);
+                doc.text(`Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, pageW / 2, 32, { align: 'center' });
+
+                // Horizontal rule
+                doc.setDrawColor(...primaryColor);
+                doc.setLineWidth(0.5);
+                doc.line(14, 35, pageW - 14, 35);
+
+                return 42;
+            }
+
+            function pdfAddFooter(doc) {
+                const pageCount = doc.internal.getNumberOfPages();
+                const pageW = doc.internal.pageSize.getWidth();
+                const pageH = doc.internal.pageSize.getHeight();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Page ${i} of ${pageCount}`, pageW / 2, pageH - 8, { align: 'center' });
+                    doc.text('Confidential — For Internal Use Only', 14, pageH - 8);
+                }
+            }
+
+            function pdfAddSectionTitle(doc, y, title) {
+                const pageH = doc.internal.pageSize.getHeight();
+                if (y + 14 > pageH - 20) {
+                    doc.addPage();
+                    y = 16;
+                }
+                doc.setFontSize(13);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0, 105, 148);
+                doc.text(title, 14, y);
+                doc.setDrawColor(0, 105, 148);
+                doc.setLineWidth(0.3);
+                doc.line(14, y + 2, doc.internal.pageSize.getWidth() - 14, y + 2);
+                return y + 8;
+            }
+
+            function pdfAddKeyValueTable(doc, y, items) {
+                const pageW = doc.internal.pageSize.getWidth();
+                const pageH = doc.internal.pageSize.getHeight();
+                const colWidth = (pageW - 28) / 2;
+
+                doc.setFontSize(10);
+                for (let i = 0; i < items.length; i += 2) {
+                    if (y + 8 > pageH - 20) {
+                        doc.addPage();
+                        y = 16;
+                    }
+
+                    // Left column
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(items[i].label + ':', 18, y);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(30, 41, 59);
+                    doc.text(String(items[i].value), 18 + 55, y);
+
+                    // Right column (if exists)
+                    if (items[i + 1]) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(100, 116, 139);
+                        doc.text(items[i + 1].label + ':', 14 + colWidth + 4, y);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(30, 41, 59);
+                        doc.text(String(items[i + 1].value), 14 + colWidth + 4 + 55, y);
+                    }
+
+                    y += 7;
+                }
+                return y + 2;
+            }
+
+            function pdfAddParagraph(doc, y, text, maxWidth) {
+                const pageH = doc.internal.pageSize.getHeight();
+                doc.setFontSize(9.5);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(51, 65, 85);
+                const lines = doc.splitTextToSize(text, maxWidth || (doc.internal.pageSize.getWidth() - 32));
+                for (const line of lines) {
+                    if (y + 5 > pageH - 20) {
+                        doc.addPage();
+                        y = 16;
+                    }
+                    doc.text(line, 18, y);
+                    y += 5;
+                }
+                return y + 2;
+            }
+
+            function pdfAddBulletList(doc, y, items) {
+                const pageW = doc.internal.pageSize.getWidth();
+                const pageH = doc.internal.pageSize.getHeight();
+                const maxW = pageW - 38;
+                doc.setFontSize(9.5);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(51, 65, 85);
+
+                for (const item of items) {
+                    const plainText = stripHtml(item);
+                    const lines = doc.splitTextToSize(plainText, maxW);
+                    for (let j = 0; j < lines.length; j++) {
+                        if (y + 5 > pageH - 20) {
+                            doc.addPage();
+                            y = 16;
+                        }
+                        if (j === 0) {
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('\u2022', 18, y);
+                            doc.setFont('helvetica', 'normal');
+                        }
+                        doc.text(lines[j], 24, y);
+                        y += 5;
+                    }
+                    y += 1;
+                }
+                return y + 2;
+            }
+
+            function pdfBuildSummary(doc, report) {
+                const d = report.data;
+                let y = pdfAddHeader(doc, 'Executive Summary', `${report.from} — ${report.to}`);
+
+                // Projects Section
+                y = pdfAddSectionTitle(doc, y, 'Projects Overview');
+                y = pdfAddKeyValueTable(doc, y, [
+                    { label: 'Projects Created', value: d.projectsCreated },
+                    { label: 'Active Projects', value: d.activeProjects },
+                    { label: 'Archived Projects', value: d.archivedProjects },
+                ]);
+
+                // Tasks Section
+                y = pdfAddSectionTitle(doc, y + 2, 'Tasks Overview');
+                y = pdfAddKeyValueTable(doc, y, [
+                    { label: 'Total Tasks', value: d.totalTasks },
+                    { label: 'Completed', value: d.completedTasks },
+                    { label: 'Pending', value: d.pendingTasks },
+                    { label: 'Require Revision', value: d.revisionTasks },
+                    { label: 'Completion Rate', value: d.taskCompletionRate + '%' },
+                ]);
+
+                // Proposals Section
+                y = pdfAddSectionTitle(doc, y + 2, 'Proposals Overview');
+                y = pdfAddKeyValueTable(doc, y, [
+                    { label: 'Total Proposals', value: d.totalProposals },
+                    { label: 'Approved', value: d.approvedProposals },
+                    { label: 'Pending', value: d.pendingProposals },
+                    { label: 'Rejected', value: d.rejectedProposals },
+                    { label: 'Approval Rate', value: d.proposalApprovalRate + '%' },
+                ]);
+
+                // People & Milestones Section
+                y = pdfAddSectionTitle(doc, y + 2, 'People & Milestones');
+                y = pdfAddKeyValueTable(doc, y, [
+                    { label: 'New Employees', value: d.newEmployees },
+                    { label: 'Total Employees', value: d.totalEmployees },
+                    { label: 'Departments', value: d.totalDepartments },
+                    { label: 'Milestones Done', value: d.milestonesFinished },
+                    { label: 'Total Milestones', value: d.totalMilestones },
+                    { label: 'Milestone Rate', value: d.milestoneCompletionRate + '%' },
+                ]);
+
+                return y;
+            }
+
+            function pdfBuildTable(doc, report) {
+                const titles = {
+                    projects: 'Projects Report',
+                    tasks: 'Tasks Report',
+                    proposals: 'Proposals Report',
+                    employees: 'Employees Report'
+                };
+                let y = pdfAddHeader(doc, titles[report.type] || 'Report', `${report.from} — ${report.to}`);
+
+                // Overview stats
+                y = pdfAddSectionTitle(doc, y, 'Overview');
+                const overviewItems = [{ label: 'Total Records', value: report.totalCount }];
+
+                if (report.type === 'tasks') {
+                    overviewItems.push({ label: 'Completed', value: report.completed || 0 });
+                    overviewItems.push({ label: 'Pending', value: report.pending || 0 });
+                    overviewItems.push({ label: 'Require Revision', value: report.revision || 0 });
+                } else if (report.type === 'proposals') {
+                    overviewItems.push({ label: 'Approved', value: report.approved || 0 });
+                    overviewItems.push({ label: 'Pending', value: report.pending || 0 });
+                    overviewItems.push({ label: 'Rejected', value: report.rejected || 0 });
+                } else if (report.type === 'employees' && report.deptDistribution && report.deptDistribution.length > 0) {
+                    overviewItems.push({ label: 'Top Department', value: `${report.deptDistribution[0].department} (${report.deptDistribution[0].count})` });
+                }
+                y = pdfAddKeyValueTable(doc, y, overviewItems);
+
+                // Data table
+                y = pdfAddSectionTitle(doc, y + 2, 'Detailed Records');
+                const columns = getColumns(report.type);
+                const head = [columns.map(c => c.label)];
+                const body = (report.rows || []).map(r =>
+                    columns.map(c => String(r[c.key] ?? '\u2014'))
+                );
+
+                doc.autoTable({
+                    startY: y,
+                    head: head,
+                    body: body,
+                    margin: { left: 14, right: 14 },
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3,
+                        textColor: [51, 65, 85],
+                        lineColor: [226, 232, 240],
+                        lineWidth: 0.2,
+                    },
+                    headStyles: {
+                        fillColor: [0, 105, 148],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 8.5,
+                    },
+                    alternateRowStyles: {
+                        fillColor: [248, 250, 252],
+                    },
+                    didDrawPage: function () {
+                        // footer will be added at end
+                    }
+                });
+
+                return doc.lastAutoTable.finalY + 4;
+            }
+
+            function pdfAddInsights(doc, y, report) {
+                const insights = [];
+                switch (report.type) {
+                    case 'summary': insights.push(...interpretSummary(report.data)); break;
+                    case 'projects': insights.push(...interpretProjects(report)); break;
+                    case 'tasks': insights.push(...interpretTasks(report)); break;
+                    case 'proposals': insights.push(...interpretProposals(report)); break;
+                    case 'employees': insights.push(...interpretEmployees(report)); break;
+                }
+
+                if (insights.length === 0) return y;
+
+                y = pdfAddSectionTitle(doc, y + 2, 'Key Insights & Interpretation');
+
+                const bulletItems = insights.map(i => stripHtml(i.text));
+                y = pdfAddBulletList(doc, y, bulletItems);
+
+                // Footer note
+                const pageH = doc.internal.pageSize.getHeight();
+                if (y + 8 > pageH - 20) {
+                    doc.addPage();
+                    y = 16;
+                }
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(150);
+                doc.text(`Auto-generated insights based on data for the selected period (${report.from} — ${report.to}).`, 18, y);
+                return y + 6;
+            }
+
             btnExport.addEventListener('click', function () {
                 if (!currentReport) return;
 
-                const element = document.getElementById('reportOutput');
-                const title = reportMainTitle.textContent;
-                const dateStr = new Date().toISOString().split('T')[0];
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
 
-                // Temporarily adjust styling for PDF
-                element.style.display = 'block';
+                let finalY;
 
-                // ── Pre-process: prepare content for clean page breaks ──
-                element.classList.add('pdf-exporting');
-
-                // Hide search bar for PDF
-                const searchWrap = element.querySelector('.table-search-wrap');
-                if (searchWrap) searchWrap.style.display = 'none';
-
-                // For long tables, chunk rows with break-after hints every ~18 rows
-                const tableBodyEl = document.getElementById('reportTableBody');
-                const allRows = tableBodyEl ? Array.from(tableBodyEl.querySelectorAll('tr')) : [];
-                const ROWS_PER_PAGE = 18;
-                const insertedBreaks = [];
-
-                if (allRows.length > ROWS_PER_PAGE) {
-                    for (let i = ROWS_PER_PAGE; i < allRows.length; i += ROWS_PER_PAGE) {
-                        const breakRow = document.createElement('tr');
-                        breakRow.className = 'pdf-page-break-row';
-                        const colCount = allRows[0] ? allRows[0].children.length : 1;
-                        breakRow.innerHTML = `<td colspan="${colCount}" style="padding:0;border:none;height:0;line-height:0;font-size:0;"></td>`;
-                        allRows[i].parentNode.insertBefore(breakRow, allRows[i]);
-                        insertedBreaks.push(breakRow);
-                    }
+                if (currentReport.type === 'summary') {
+                    finalY = pdfBuildSummary(doc, currentReport);
+                } else {
+                    finalY = pdfBuildTable(doc, currentReport);
                 }
 
-                // Add PDF header watermark temporarily
-                const watermark = document.createElement('div');
-                watermark.id = 'pdfWatermark';
-                watermark.className = 'pdf-no-break';
-                watermark.style.cssText = 'text-align:center;padding:0.5rem 0 1rem;border-bottom:2px solid #006994;margin-bottom:1rem;';
-                watermark.innerHTML = `
-                    <div style="font-size:1.3rem;font-weight:800;color:#006994;">${title}</div>
-                    <div style="font-size:.85rem;color:#64748b;margin-top:.25rem;">${reportDateRange.textContent} &mdash; Generated on ${new Date().toLocaleDateString()}</div>
-                `;
-                element.prepend(watermark);
+                // Add insights section
+                pdfAddInsights(doc, finalY, currentReport);
 
-                const opt = {
-                    margin: [0.4, 0.4, 0.6, 0.4],
-                    filename: `${title.replace(/\s+/g, '_')}_${dateStr}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-                    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
-                    pagebreak: {
-                        mode: ['css'],
-                        before: '.pdf-page-break-before',
-                        after: '.pdf-page-break-row',
-                        avoid: '.pdf-no-break'
-                    }
+                // Add page footers
+                pdfAddFooter(doc);
+
+                // Save
+                const titles = {
+                    summary: 'Executive_Summary',
+                    projects: 'Projects_Report',
+                    tasks: 'Tasks_Report',
+                    proposals: 'Proposals_Report',
+                    employees: 'Employees_Report'
                 };
-
-                html2pdf().set(opt).from(element).save().then(() => {
-                    // ── Cleanup ──
-                    watermark.remove();
-                    insertedBreaks.forEach(br => br.remove());
-                    element.classList.remove('pdf-exporting');
-                    if (searchWrap) searchWrap.style.display = '';
-                });
+                const dateStr = new Date().toISOString().split('T')[0];
+                doc.save(`${titles[currentReport.type] || 'Report'}_${dateStr}.pdf`);
             });
         })();
     </script>
