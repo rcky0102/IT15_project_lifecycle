@@ -55,6 +55,42 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             task.IsArchived = true;
             await _context.SaveChangesAsync();
 
+            // After archiving, recompute milestone status based only on active (non-archived) tasks
+            var pmstToUpdate = await _context.ProjectMilestones.FirstOrDefaultAsync(p => p.Id == task.ProjectMilestoneId);
+            if (pmstToUpdate != null)
+            {
+                var activeTasks = await _context.ProjectTasks
+                    .Where(t => t.ProjectMilestoneId == pmstToUpdate.Id && !t.IsArchived)
+                    .ToListAsync();
+
+                if (activeTasks.Count > 0)
+                {
+                    var allChecked = activeTasks.All(t => string.Equals(t.Status, "Checked", StringComparison.OrdinalIgnoreCase));
+                    if (allChecked && !string.Equals(pmstToUpdate.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pmstToUpdate.Status = "Finished";
+                        _context.ProjectMilestones.Update(pmstToUpdate);
+                        await _context.SaveChangesAsync();
+                    }
+                    else if (!allChecked && string.Equals(pmstToUpdate.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pmstToUpdate.Status = "Unfinished";
+                        _context.ProjectMilestones.Update(pmstToUpdate);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else
+                {
+                    // No active tasks -> milestone should be Unfinished
+                    if (string.Equals(pmstToUpdate.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pmstToUpdate.Status = "Unfinished";
+                        _context.ProjectMilestones.Update(pmstToUpdate);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             await _audit.LogAsync(User, "Archive", "Tasks", $"Archived task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
 
             TempData["SuccessMessage"] = "Task archived.";
@@ -81,6 +117,42 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             task.IsArchived = false;
             await _context.SaveChangesAsync();
+
+            // After unarchiving, recompute milestone status based only on active (non-archived) tasks
+            var pmstToUpdate = await _context.ProjectMilestones.FirstOrDefaultAsync(p => p.Id == task.ProjectMilestoneId);
+            if (pmstToUpdate != null)
+            {
+                var activeTasks = await _context.ProjectTasks
+                    .Where(t => t.ProjectMilestoneId == pmstToUpdate.Id && !t.IsArchived)
+                    .ToListAsync();
+
+                if (activeTasks.Count > 0)
+                {
+                    var allChecked = activeTasks.All(t => string.Equals(t.Status, "Checked", StringComparison.OrdinalIgnoreCase));
+                    if (allChecked && !string.Equals(pmstToUpdate.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pmstToUpdate.Status = "Finished";
+                        _context.ProjectMilestones.Update(pmstToUpdate);
+                        await _context.SaveChangesAsync();
+                    }
+                    else if (!allChecked && string.Equals(pmstToUpdate.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pmstToUpdate.Status = "Unfinished";
+                        _context.ProjectMilestones.Update(pmstToUpdate);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else
+                {
+                    // No active tasks -> milestone should be Unfinished
+                    if (string.Equals(pmstToUpdate.Status, "Finished", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pmstToUpdate.Status = "Unfinished";
+                        _context.ProjectMilestones.Update(pmstToUpdate);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
 
             await _audit.LogAsync(User, "Unarchive", "Tasks", $"Unarchived task '{task.Name}' (ID: {task.Id})", "ProjectTask", task.Id.ToString());
 
@@ -586,7 +658,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             // After updating a task status, if all tasks under the milestone are Checked, mark the milestone Finished.
             var pmstId = task.ProjectMilestoneId;
             var tasksForMilestone = await _context.ProjectTasks
-                .Where(t => t.ProjectMilestoneId == pmstId)
+                .Where(t => t.ProjectMilestoneId == pmstId && !t.IsArchived)
                 .ToListAsync();
 
             if (tasksForMilestone.Count > 0)
