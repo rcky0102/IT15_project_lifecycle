@@ -238,7 +238,7 @@
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'Tasks Completed',
+                    label: 'Finished Projects',
                     data: [],
                     borderColor: '#006994',
                     backgroundColor: 'rgba(0,105,148,0.08)',
@@ -257,7 +257,7 @@
                         beginAtZero: true,
                         grid: { color: 'rgba(0,0,0,0.05)' },
                         ticks: { precision: 0 },
-                        title: { display: true, text: 'Tasks completed', color: '#64748b', font: { weight: '600', size: 12 } }
+                        title: { display: true, text: 'Projects finished', color: '#64748b', font: { weight: '600', size: 12 } }
                     },
                     x: {
                         grid: { display: false },
@@ -270,10 +270,10 @@
 
         const trendRangeSelect = document.getElementById('trendRangeSelect');
 
-        function fetchTaskTrend(days = 7) {
-            const url = '@Url.Action("TaskCompletionTrend", "Dashboard", new { area = "DepartmentHead" })';
+        function fetchFinishedProjectsTrend(days = 7) {
+            const url = '@Url.Action("FinishedProjectsTrend", "Dashboard", new { area = "DepartmentHead" })';
             const titleEl = document.getElementById('trendChartTitle');
-            if (titleEl) titleEl.textContent = `Tasks Completed — Last ${days} days`;
+            if (titleEl) titleEl.textContent = `Finished Projects — Last ${days} days`;
             fetch(url + '?days=' + encodeURIComponent(days))
                 .then(r => r.json())
                 .then(payload => {
@@ -284,12 +284,12 @@
                     taskTrendChart.data.datasets[0].data = Array.from(payload.data);
                     taskTrendChart.update();
                 })
-                .catch(err => console.error('Failed to load task trend', err));
+                .catch(err => console.error('Failed to load finished projects trend', err));
         }
 
-        fetchTaskTrend(parseInt(trendRangeSelect?.value || '7', 10));
+        fetchFinishedProjectsTrend(parseInt(trendRangeSelect?.value || '7', 10));
         trendRangeSelect?.addEventListener('change', function () {
-            fetchTaskTrend(parseInt(this.value || '7', 10));
+            fetchFinishedProjectsTrend(parseInt(this.value || '7', 10));
         });
 
         // ── Proposal Status Doughnut ──────────────────────────────────────

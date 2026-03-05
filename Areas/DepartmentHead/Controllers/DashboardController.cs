@@ -167,6 +167,40 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             return Json(new { labels = labels.Select(d => d.ToString("yyyy-MM-dd")), data });
         }
+
+        // Finished projects trend for line chart (grouped by EndDate)
+        [HttpGet]
+        public async Task<IActionResult> FinishedProjectsTrend(int days = 7)
+        {
+            var userId = _userManager.GetUserId(User);
+            int departmentId = 0;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == userId);
+                if (dh != null) departmentId = dh.DepartmentId;
+            }
+
+            var deptEmpIds = _context.Employees
+                .Where(e => e.DepartmentId == departmentId)
+                .Select(e => e.Id);
+
+            var startDate = DateTime.UtcNow.Date.AddDays(-(days - 1));
+
+            var counts = await _context.Projects
+                .Where(p => p.Status == "Finished"
+                    && p.EndDate.Date >= startDate
+                    && p.EndDate.Date <= DateTime.UtcNow.Date
+                    && _context.Members.Any(m => m.ProjectId == p.Id && deptEmpIds.Contains(m.EmployeeId)))
+                .GroupBy(p => new { Year = p.EndDate.Year, Month = p.EndDate.Month, Day = p.EndDate.Day })
+                .Select(g => new { Date = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day), Count = g.Count() })
+                .ToListAsync();
+
+            var labels = Enumerable.Range(0, days).Select(i => startDate.AddDays(i)).ToList();
+            var data = labels.Select(d => counts.FirstOrDefault(c => c.Date == d)?.Count ?? 0).ToList();
+
+            return Json(new { labels = labels.Select(d => d.ToString("yyyy-MM-dd")), data });
+        }
     }
 }
 
