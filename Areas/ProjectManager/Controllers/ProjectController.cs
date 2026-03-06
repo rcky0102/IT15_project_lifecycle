@@ -24,13 +24,15 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         private readonly Microsoft.Extensions.Logging.ILogger<ProjectController> _logger;
         private readonly IAuditLogService _audit;
         private readonly INotificationService _notif;
+        private readonly INagerHolidayService _holidayService;
 
-        public ProjectController(ApplicationDbContext context, Microsoft.Extensions.Logging.ILogger<ProjectController> logger, IAuditLogService audit, INotificationService notif)
+        public ProjectController(ApplicationDbContext context, Microsoft.Extensions.Logging.ILogger<ProjectController> logger, IAuditLogService audit, INotificationService notif, INagerHolidayService holidayService)
         {
             _context = context;
             _logger = logger;
             _audit = audit;
             _notif = notif;
+            _holidayService = holidayService;
         }
 
         [HttpPost]
@@ -1524,6 +1526,33 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 _logger.LogError(ex, "Error in UploadRichText");
                 return StatusCode(500, new { error = new { message = "Upload failed." } });
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetHolidays(DateTime startDate, DateTime endDate)
+        {
+            if (endDate < startDate)
+            {
+                return Json(new List<object>());
+            }
+
+            // Limit range to 2 years max to avoid excessive API calls
+            if ((endDate - startDate).TotalDays > 730)
+            {
+                endDate = startDate.AddDays(730);
+            }
+
+            var holidays = await _holidayService.GetHolidaysAsync(startDate, endDate);
+
+            var result = holidays.Select(h => new
+            {
+                date = h.Date.ToString("yyyy-MM-dd"),
+                localName = h.LocalName,
+                name = h.Name,
+                type = h.Type
+            });
+
+            return Json(result);
         }
     }
 }
