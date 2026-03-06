@@ -107,6 +107,18 @@
                     text-overflow: ellipsis;
                     vertical-align: middle;
                 }
+                /* Compact single-line cells for Owner / Last Modified columns */
+                .project-table-card .project-cell-truncate {
+                    display: inline-block;
+                    max-width: 11.5rem;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    vertical-align: middle;
+                    margin-left: .35rem;
+                    font-size: .9rem;
+                    color: var(--emp-muted);
+                }
             </style>
 
             <div class="project-table-responsive">
@@ -143,9 +155,8 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="project-badge-white" title="Owner">
-                                        <i class="fas fa-user"></i>
-                                        <span style="margin-left:.35rem;">
+                                    <span title="Owner">
+                                        <span class="project-cell-truncate">
                                             @if (isOwner)
                                             {
                                                 <text>You</text>
@@ -158,9 +169,8 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="project-badge-white" title="Last modified">
-                                        <i class="fas fa-calendar-day"></i>
-                                        @((doc.LastModified ?? doc.DateCreated).ToString("MMM dd, yyyy h:mm tt"))
+                                    <span title="Last modified">
+                                        <span class="project-cell-truncate">@((doc.LastModified ?? doc.DateCreated).ToString("MMM dd, yyyy h:mm tt"))</span>
                                     </span>
                                 </td>
                                 <td>
