@@ -175,10 +175,6 @@
                                 </td>
                                 <td>
                                     <div style="display:inline-flex;align-items:center;gap:.35rem;">
-                                        <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id"
-                                           class="emp-action-btn emp-action-view" title="Open">
-                                            <i class="fas fa-magnifying-glass"></i>
-                                        </a>
                                         @if (isOwner)
                                         {
                                             <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id"
