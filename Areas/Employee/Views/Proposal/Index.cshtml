@@ -105,11 +105,24 @@
     <div class="project-table-card">
         @if (Model.Any())
         {
+            <style>
+                /* Scoped tweaks for DeptHead-style proposal badges: keep on one line and truncate if too long */
+                .project-table-card .project-badge-white { white-space: nowrap; }
+                .project-table-card .project-badge-white > span:not(.emp-status-inline) {
+                    display: inline-block;
+                    max-width: 10.5rem;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    vertical-align: middle;
+                }
+            </style>
+
             <div class="project-table-responsive">
                 <table class="project-table" id="proposalsTable">
                     <thead>
                         <tr>
                             <th>Title</th>
+                            <th>Submitted By</th>
                             <th>Submitted</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -132,19 +145,31 @@
                                         </div>
                                     </div>
                                 </td>
+                                <td>
+                                    <span class="project-badge-white" title="Submitted by">
+                                        <i class="fas fa-user"></i>
+                                        <span style="margin-left:.35rem;">@(proposal.Employee != null ? $"{proposal.Employee.FirstName} {proposal.Employee.LastName}" : "—")</span>
+                                    </span>
+                                </td>
                                 <td class="project-date">
-                                    <span title="Submitted" class="project-date-text">@proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")</span>
+                                    <span class="project-badge-white" title="Submitted">
+                                        <i class="fas fa-calendar-day"></i>
+                                        @proposal.DateCreated.ToString("MMM dd, yyyy h:mm tt")
+                                    </span>
                                 </td>
                                 <td>
-                                    <span class="emp-badge-white" title="Status">
+                                    <span class="project-badge-white" title="Status">
                                         <span class="emp-status-inline @GetStatusClass(proposal.Status)">
-                                            <span class="emp-status-dot"></span>
+                                              <span class="emp-status-dot" aria-hidden="true"
+                                                  style="width:7px;height:7px;border-radius:50%;display:inline-block;vertical-align:middle;background:@GetStatusColor(proposal.Status);transition:transform .18s cubic-bezier(.2,.9,.3,1),box-shadow .18s ease;animation:emp-dot-breath 3s ease-in-out infinite;"
+                                                  onmouseenter="this.style.transform='scale(1.35)';this.style.boxShadow='0 6px 18px rgba(0,0,0,.06), 0 0 18px '+this.style.backgroundColor;"
+                                                  onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='none';"></span>
                                             <span class="emp-status-text">@proposal.Status</span>
                                         </span>
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="emp-action-group">
+                                    <div style="display:inline-flex;align-items:center;gap:.35rem;">
                                         <a asp-area="Employee" asp-controller="Proposal" asp-action="Details" asp-route-id="@proposal.Id"
                                            class="emp-action-btn emp-action-view" title="View details">
                                             <i class="fas fa-magnifying-glass"></i>
@@ -155,7 +180,9 @@
                                         </a>
                                         @if (!proposal.IsArchived)
                                         {
-                                            <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
+                                            <button type="button"
+                                                    class="emp-action-btn emp-action-archive"
+                                                    title="Archive"
                                                     data-action="@Url.Action("Archive", "Proposal", new { area = "Employee" })"
                                                     data-id="@proposal.Id"
                                                     data-message="Archive this proposal?">
@@ -164,7 +191,9 @@
                                         }
                                         else
                                         {
-                                            <button type="button" class="emp-action-btn emp-action-restore" title="Unarchive"
+                                            <button type="button"
+                                                    class="emp-action-btn emp-action-unarchive"
+                                                    title="Unarchive"
                                                     data-action="@Url.Action("Unarchive", "Proposal", new { area = "Employee" })"
                                                     data-id="@proposal.Id"
                                                     data-message="Unarchive this proposal?">
@@ -185,7 +214,7 @@
                 <div class="project-empty-text">Try adjusting your search or filters.</div>
             </div>
 
-            <div class="emp-pagination" id="paginationContainer">
+            <div class="emp-pagination" id="paginationContainer" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding:.75rem 1.25rem;box-sizing:border-box;">
                 <div class="emp-pagination-info" id="paginationInfo"></div>
                 <div class="emp-pagination-controls" id="paginationControls"></div>
             </div>
@@ -362,5 +391,14 @@ document.addEventListener('DOMContentLoaded', function () {
         "Rejected"          => "emp-status-rejected",
         "Requires Revision" => "emp-status-revision",
         _                   => "emp-status-default"
+    };
+
+    private string GetStatusColor(string status) => status switch
+    {
+        "Pending" => "#f59e0b",
+        "Approved" => "#10b981",
+        "Rejected" => "#ef4444",
+        "Requires Revision" => "#f97316",
+        _ => "#94a3b8"
     };
 }

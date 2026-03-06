@@ -99,6 +99,12 @@
         {
             <div class="project-table-responsive">
                 <table class="project-table" id="documentsTable">
+                    <colgroup>
+                        <col style="width:60%;" />
+                        <col style="width:15%;" />
+                        <col style="width:15%;" />
+                        <col style="width:10%;" />
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>Title</th>
@@ -127,15 +133,15 @@
                                 <td>
                                     @if (isOwner)
                                     {
-                                        <span class="emp-badge emp-badge-primary">You</span>
+                                        <span>You</span>
                                     }
                                     else
                                     {
-                                        <span>@doc.OwnerEmployee?.FirstName @doc.OwnerEmployee?.LastName</span>
+                                        @doc.OwnerEmployee?.FirstName @doc.OwnerEmployee?.LastName
                                     }
                                 </td>
                                 <td>
-                                    <span class="emp-badge-white" title="Last modified">
+                                    <span title="Last modified">
                                         <i class="fas fa-calendar-day"></i>
                                         @((doc.LastModified ?? doc.DateCreated).ToString("MMM dd, yyyy h:mm tt"))
                                     </span>
