@@ -66,9 +66,8 @@
                     </div>
                     <div>
                         <label asp-for="CreateProject.ProjectProposalId" class="emp-form-label"></label>
-                        <select asp-for="CreateProject.ProjectProposalId" class="emp-form-control" asp-items="Model.AvailableProposals">
-                            <option value="">-- Select Proposal --</option>
-                        </select>
+                        <input asp-for="CreateProject.ProjectProposalId" type="hidden" />
+                        <input type="text" id="proposalPickerDisplay" class="emp-form-control" placeholder="Click to select a proposal…" readonly style="cursor:pointer;" />
                         <span asp-validation-for="CreateProject.ProjectProposalId" class="text-danger"></span>
                     </div>
                 </div>
@@ -87,9 +86,8 @@
 
             <div class="emp-form-row">
                 <label asp-for="CreateProject.ProjectManagerId" class="emp-form-label"></label>
-                <select asp-for="CreateProject.ProjectManagerId" class="emp-form-control" asp-items="Model.AvailableProjectManagers">
-                    <option value="">-- Select Project Manager --</option>
-                </select>
+                <input asp-for="CreateProject.ProjectManagerId" type="hidden" />
+                <input type="text" id="pmPickerDisplay" class="emp-form-control" placeholder="Click to select a project manager…" readonly style="cursor:pointer;" />
                 <span asp-validation-for="CreateProject.ProjectManagerId" class="text-danger"></span>
             </div>
 
@@ -372,6 +370,176 @@
         if (startDateInput && endDateInput && startDateInput.value && endDateInput.value) {
             fetchHolidays();
         }
+    })();
+    </script>
+    <script>
+    (function () {
+        var availableProposals = [
+            @foreach (var p in Model.AvailableProposals) {
+                @Html.Raw("{id:" + p.Value + ",title:'" + p.Text.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
+            }
+        ];
+        var availablePMs = [
+            @foreach (var pm in Model.AvailableProjectManagers) {
+                @Html.Raw("{id:" + pm.Value + ",name:'" + pm.Text.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
+            }
+        ];
+
+        var proposalHidden  = document.getElementById('CreateProject_ProjectProposalId');
+        var proposalDisplay = document.getElementById('proposalPickerDisplay');
+        var pmHidden        = document.getElementById('CreateProject_ProjectManagerId');
+        var pmDisplay       = document.getElementById('pmPickerDisplay');
+
+        function escHtml(str) {
+            var d = document.createElement('div');
+            d.appendChild(document.createTextNode(str || ''));
+            return d.innerHTML;
+        }
+
+        // Pre-fill display text on validation-error re-render
+        function prefill(hidden, display, data, key) {
+            if (!hidden || !display || !hidden.value || hidden.value === '0') return;
+            var id = parseInt(hidden.value);
+            var item = null;
+            for (var i = 0; i < data.length; i++) { if (data[i].id === id) { item = data[i]; break; } }
+            if (item) display.value = item[key];
+        }
+        prefill(proposalHidden, proposalDisplay, availableProposals, 'title');
+        prefill(pmHidden, pmDisplay, availablePMs, 'name');
+
+        function createPicker(cfg) {
+            var hiddenEl  = cfg.hiddenEl;
+            var displayEl = cfg.displayEl;
+            var data      = cfg.data;
+            var key       = cfg.key;
+            var mid       = cfg.modalId;
+            if (!hiddenEl || !displayEl) return;
+
+            document.body.insertAdjacentHTML('beforeend',
+                '<div class="modal fade" id="' + mid + '" tabindex="-1" aria-hidden="true">' +
+                '<div class="modal-dialog modal-dialog-centered modal-lg">' +
+                '<div class="modal-content em-picker-modal">' +
+                '<div class="em-picker-header">' +
+                '<div><h5 class="em-picker-title"><i class="fas fa-table-list"></i> ' + cfg.title + '</h5>' +
+                '<p class="em-picker-subtitle">' + cfg.subtitle + '</p></div>' +
+                '<button type="button" class="btn-close btn-close-white" id="' + mid + 'CloseBtn" aria-label="Close"></button>' +
+                '</div>' +
+                '<div class="em-picker-filters"><div class="em-picker-filters-row">' +
+                '<div class="em-picker-search-group">' +
+                '<i class="fas fa-magnifying-glass em-picker-search-icon"></i>' +
+                '<input type="text" id="' + mid + 'Filter" class="em-picker-search-input" placeholder="Search\u2026" autocomplete="off" />' +
+                '</div></div></div>' +
+                '<div class="modal-body em-picker-body"><div class="em-picker-table-card">' +
+                '<div class="em-picker-table-responsive">' +
+                '<table class="em-picker-table" id="' + mid + 'Table">' +
+                '<thead><tr><th>' + cfg.colHeader + '</th><th style="width:100px;text-align:center;">Action</th></tr></thead>' +
+                '<tbody></tbody></table></div>' +
+                '<div id="' + mid + 'Empty" class="em-picker-empty" style="display:none;">' +
+                '<div class="em-picker-empty-icon"><i class="fas fa-magnifying-glass"></i></div>' +
+                '<div class="em-picker-empty-title">No matches</div></div>' +
+                '<div class="em-picker-pagination"><div class="em-picker-pagination-info" id="' + mid + 'Info"></div></div>' +
+                '</div></div>' +
+                '<div class="em-picker-footer">' +
+                '<button type="button" class="em-picker-btn-cancel" id="' + mid + 'CancelBtn">Cancel</button>' +
+                '</div></div></div></div>'
+            );
+
+            var modalEl   = document.getElementById(mid);
+            var tableEl   = document.getElementById(mid + 'Table');
+            var emptyEl   = document.getElementById(mid + 'Empty');
+            var filterEl  = document.getElementById(mid + 'Filter');
+            var infoEl    = document.getElementById(mid + 'Info');
+            var closeBtn  = document.getElementById(mid + 'CloseBtn');
+            var cancelBtn = document.getElementById(mid + 'CancelBtn');
+
+            function showModal() {
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    new bootstrap.Modal(modalEl).show();
+                } else {
+                    modalEl.style.cssText = 'display:block;position:fixed;left:0;top:0;width:100%;height:100%;z-index:2060;';
+                    modalEl.classList.add('show');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            function hideModal() {
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    var inst = bootstrap.Modal.getInstance(modalEl);
+                    if (inst) inst.hide();
+                } else {
+                    modalEl.style.display = 'none';
+                    modalEl.classList.remove('show');
+                    modalEl.style.zIndex = '';
+                    document.body.style.overflow = '';
+                }
+            }
+
+            function renderRows(q) {
+                var tbody = tableEl.querySelector('tbody');
+                tbody.innerHTML = '';
+                q = (q || '').toLowerCase().trim();
+                var currentId = hiddenEl.value && hiddenEl.value !== '0' ? parseInt(hiddenEl.value) : null;
+                var visible = 0;
+                data.forEach(function (item) {
+                    var text = item[key] || '';
+                    if (q && text.toLowerCase().indexOf(q) === -1) return;
+                    visible++;
+                    var isSelected = currentId !== null && currentId === item.id;
+                    var tr = document.createElement('tr');
+                    tr.className = 'em-picker-row' + (isSelected ? ' table-active' : '');
+                    tr.innerHTML =
+                        '<td><div class="em-picker-name-text" style="font-size:.9rem;color:#1e293b;">' +
+                        escHtml(text) +
+                        (isSelected ? ' <span class="badge bg-primary ms-1" style="font-size:.65rem;">Selected</span>' : '') +
+                        '</div></td>' +
+                        '<td style="text-align:center;"><button type="button" class="em-picker-select-btn picker-row-select" data-id="' + item.id + '" data-text="' + escHtml(text) + '" title="Select"><i class="fas fa-' + (isSelected ? 'check' : 'plus') + '"></i></button></td>';
+                    tbody.appendChild(tr);
+                });
+                emptyEl.style.display = visible === 0 ? '' : 'none';
+                if (infoEl) infoEl.textContent = visible === 0 ? 'No matches' : 'Showing ' + visible + ' item' + (visible !== 1 ? 's' : '');
+
+                tbody.querySelectorAll('.picker-row-select').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        hiddenEl.value  = this.dataset.id;
+                        displayEl.value = this.dataset.text;
+                        hideModal();
+                    });
+                });
+            }
+
+            displayEl.addEventListener('click', function () {
+                if (filterEl) filterEl.value = '';
+                renderRows('');
+                showModal();
+            });
+
+            if (closeBtn)  closeBtn.addEventListener('click',  hideModal);
+            if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
+            if (modalEl)   modalEl.addEventListener('click', function (e) { if (e.target === modalEl) hideModal(); });
+            if (filterEl)  filterEl.addEventListener('input', function () { renderRows(this.value); });
+        }
+
+        createPicker({
+            hiddenEl:  proposalHidden,
+            displayEl: proposalDisplay,
+            data:      availableProposals,
+            key:       'title',
+            modalId:   'proposalPickerModal',
+            title:     'Select Project Proposal',
+            subtitle:  'Choose an approved proposal for this project',
+            colHeader: 'Proposal Title'
+        });
+
+        createPicker({
+            hiddenEl:  pmHidden,
+            displayEl: pmDisplay,
+            data:      availablePMs,
+            key:       'name',
+            modalId:   'pmPickerModal',
+            title:     'Select Project Manager',
+            subtitle:  'Choose a project manager for your department',
+            colHeader: 'Project Manager'
+        });
     })();
     </script>
 }
