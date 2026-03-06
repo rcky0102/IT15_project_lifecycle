@@ -1,4 +1,4 @@
-w/* =============================================
+/* =============================================
    Employee Proposal Index – Modern Design
    Matches employee-layout.css design system
    ============================================= */
@@ -20,16 +20,6 @@ w/* =============================================
     border-radius: 16px;
     padding: 2rem 2.25rem;
     margin-bottom: 1.5rem;
-/* Prefer fixed layout so column widths align between header and body.
-   Switch to auto layout on small screens for better wrapping. */
-.emp-table {
-    table-layout: fixed;
-}
-
-.emp-table thead th:nth-child(1), .emp-table tbody td:nth-child(1) { width: 55%; }
-.emp-table thead th:nth-child(2), .emp-table tbody td:nth-child(2) { width: 20%; }
-.emp-table thead th:nth-child(3), .emp-table tbody td:nth-child(3) { width: 15%; }
-.emp-table thead th:nth-child(4), .emp-table tbody td:nth-child(4) { width: 10%; }
     position: relative;
     overflow: hidden;
     animation: emp-fadeSlide .45s cubic-bezier(.4,0,.2,1);

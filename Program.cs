@@ -48,6 +48,11 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var dbContext = services.GetRequiredService<ApplicationDbContext>();
+
+        // TEMP FIX: remove stale empty migration so MigrateAsync re-applies it with correct columns
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "DELETE FROM [__EFMigrationsHistory] WHERE [MigrationId] = '20260306135628_AddIsArchivedToMilestoneAndProjectRole'");
+
         await dbContext.Database.MigrateAsync();
         await DbSeeder.SeedRolesAndAdminAsync(services);
     }

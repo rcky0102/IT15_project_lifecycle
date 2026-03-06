@@ -5,6 +5,7 @@
 @{
     ViewData["Title"] = "Milestone Management";
     Layout = "~/Areas/ProjectManager/Layout.cshtml";
+    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active";
 }
 
 <!-- ===== Page Hero ===== -->
@@ -55,6 +56,13 @@
                 <option value="50">50</option>
             </select>
         </div>
+        <div class="emp-select-group">
+            <select id="milestoneArchiveFilter" class="emp-select">
+                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
+        </div>
     </div>
 </div>
 
@@ -76,7 +84,7 @@
                                 <tbody id="milestonesBody">
                                     @foreach (var item in Model)
                                     {
-                                        <tr class="emp-row" data-name="@item.Name.ToLower()">
+                                        <tr class="emp-row @(item.IsArchived ? "emp-row-archived" : "")" data-name="@item.Name.ToLower()" data-archived="@(item.IsArchived.ToString().ToLower())">
                                             <td>
                                                 <div class="project-name-cell">
                                                     <div class="project-name-icon">
@@ -103,9 +111,28 @@
                                                     <button type="button" class="emp-action-btn emp-action-edit" onclick="editMilestone(@item.Id)" title="Edit">
                                                         <i class="fas fa-pen-to-square"></i>
                                                     </button>
-                                                    <button type="button" class="emp-action-btn emp-action-delete" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+                                                    @if (!item.IsArchived)
+                                                    {
+                                                        <button type="button"
+                                                                class="emp-action-btn emp-action-archive"
+                                                                title="Archive"
+                                                                data-action="@Url.Action("ArchiveMilestone", "Management", new { area = "ProjectManager" })"
+                                                                data-id="@item.Id"
+                                                                data-message="Archive this milestone?">
+                                                            <i class="fas fa-box-archive"></i>
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button type="button"
+                                                                class="emp-action-btn emp-action-restore"
+                                                                title="Unarchive"
+                                                                data-action="@Url.Action("UnarchiveMilestone", "Management", new { area = "ProjectManager" })"
+                                                                data-id="@item.Id"
+                                                                data-message="Unarchive this milestone?">
+                                                            <i class="fas fa-arrow-up-from-bracket"></i>
+                                                        </button>
+                                                    }
                                                 </div>
                                             </td>
                                         </tr>
@@ -215,23 +242,18 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="emp-modal-backdrop" id="deleteMilestoneModal" style="display:none;">
-    <div class="emp-modal">
-        <div class="emp-modal-icon emp-modal-icon-danger">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <h5 class="emp-modal-title">Confirm Deletion</h5>
-        <p class="emp-modal-message">Are you sure you want to delete <strong><span id="deleteMilestoneName"></span></strong>? This action cannot be undone.</p>
-        <form id="deleteMilestoneForm">
-            @Html.AntiForgeryToken()
-            <input type="hidden" id="deleteMilestoneId" />
-        </form>
+<!-- Archive / Unarchive Confirmation Modal -->
+<div class="emp-modal-backdrop" id="confirmActionModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmActionMessage">Are you sure?</p>
         <div class="emp-modal-actions">
-            <button type="button" class="emp-btn-cancel" id="cancelDeleteMilestoneBtn">Cancel</button>
-            <button type="button" class="emp-btn-confirm emp-btn-danger" id="confirmDeleteBtn">
-                <i class="fas fa-trash"></i> Delete Milestone
-            </button>
+            <button type="button" class="emp-btn-cancel" id="confirmActionCancel">Cancel</button>
+            <form id="confirmActionForm" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="confirmActionId" value="" />
+                <button type="submit" class="emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
+            </form>
         </div>
     </div>
 </div>
@@ -454,38 +476,33 @@
                 });
             });
 
-            // Confirm delete
-            function hideDeleteMilestoneModal() {
-                document.getElementById('deleteMilestoneModal').style.display = 'none';
-                $('#deleteMilestoneForm')[0].reset();
+            // Confirm archive / unarchive
+            var confirmModal = document.getElementById('confirmActionModal');
+            var confirmForm  = document.getElementById('confirmActionForm');
+            var confirmId    = document.getElementById('confirmActionId');
+            var confirmMsg   = document.getElementById('confirmActionMessage');
+
+            function showConfirmModal(actionUrl, id, message) {
+                confirmForm.action  = actionUrl;
+                confirmId.value     = id;
+                confirmMsg.textContent = message;
+                confirmModal.style.display = 'flex';
+                confirmModal.setAttribute('aria-hidden', 'false');
             }
+            function hideConfirmModal() {
+                confirmModal.style.display = 'none';
+                confirmModal.setAttribute('aria-hidden', 'true');
+            }
+            document.getElementById('confirmActionCancel').addEventListener('click', hideConfirmModal);
+            confirmModal.addEventListener('click', function(e) { if (e.target === confirmModal) hideConfirmModal(); });
 
-            window.confirmDelete = function(id, name) {
-                $('#deleteMilestoneId').val(id);
-                $('#deleteMilestoneName').text(name);
-                document.getElementById('deleteMilestoneModal').style.display = 'flex';
-            };
-
-            $('#cancelDeleteMilestoneBtn').click(hideDeleteMilestoneModal);
-            $('#deleteMilestoneModal').click(function(e) {
-                if (e.target === this) hideDeleteMilestoneModal();
-            });
-
-            $('#confirmDeleteBtn').click(function() {
-                var form = $('#deleteMilestoneForm');
-                var token = form.find('input[name="__RequestVerificationToken"]').val();
-                var id = $('#deleteMilestoneId').val();
-
-                $.ajax({
-                    url: '@Url.Action("DeleteMilestone", "Management", new { area = "ProjectManager" })',
-                    method: 'POST',
-                    headers: { 'RequestVerificationToken': token },
-                    data: { id: id },
-                    success: function(res) {
-                        hideDeleteMilestoneModal();
-                        if (res.success) location.reload();
-                        else alert(res.message || 'Unable to delete');
-                    }
+            document.querySelectorAll('.emp-action-archive, .emp-action-restore').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var action  = btn.getAttribute('data-action');
+                    var id      = btn.getAttribute('data-id');
+                    var message = btn.getAttribute('data-message') || 'Are you sure?';
+                    if (!action || !id) return;
+                    showConfirmModal(action, id, message);
                 });
             });
         });
@@ -569,6 +586,14 @@
             render();
         });
     }
+
+    const archiveSelect = document.getElementById('milestoneArchiveFilter');
+    if (archiveSelect) archiveSelect.addEventListener('change', () => {
+        const url = new URL(window.location.href);
+        if (archiveSelect.value === 'active') url.searchParams.delete('archiveFilter');
+        else url.searchParams.set('archiveFilter', archiveSelect.value);
+        window.location.href = url.toString();
+    });
 
     filteredRows = allRows.slice();
     render();

@@ -316,11 +316,13 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 .ToList();
 
             var roles = await _context.ProjectRoles
+                .Where(r => !r.IsArchived)
                 .OrderBy(r => r.Name)
                 .Select(r => new SelectListItem { Value = r.Id.ToString(), Text = r.Name })
                 .ToListAsync();
 
             var milestoneTemplates = await _context.Milestones
+                .Where(m => !m.IsArchived)
                 .OrderBy(m => m.Name)
                 .Select(m => new SelectListItem { Value = m.Id.ToString(), Text = m.Name })
                 .ToListAsync();
@@ -422,11 +424,13 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 .ToList();
 
             var roles = await _context.ProjectRoles
+                .Where(r => !r.IsArchived)
                 .OrderBy(r => r.Name)
                 .Select(r => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = r.Id.ToString(), Text = r.Name })
                 .ToListAsync();
 
             var milestoneTemplates = await _context.Milestones
+                .Where(m => !m.IsArchived)
                 .OrderBy(m => m.Name)
                 .Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = m.Id.ToString(), Text = m.Name })
                 .ToListAsync();
@@ -514,10 +518,12 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     })
                     .ToList(),
                 AvailableProjectRoles = await _context.ProjectRoles
+                    .Where(r => !r.IsArchived)
                     .OrderBy(r => r.Name)
                     .Select(r => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = r.Id.ToString(), Text = r.Name })
                     .ToListAsync(),
                 AvailableMilestones = await _context.Milestones
+                    .Where(m => !m.IsArchived)
                     .OrderBy(m => m.Name)
                     .Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = m.Id.ToString(), Text = m.Name })
                     .ToListAsync()
