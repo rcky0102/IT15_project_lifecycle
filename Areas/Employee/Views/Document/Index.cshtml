@@ -141,27 +141,32 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div style="display:inline-flex;align-items:center;gap:.35rem;">
-                                        <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id" class="emp-btn emp-btn-xs emp-btn-outline" title="Open" style="color:#2563eb;border-color:#2563eb;">
-                                            <i class="fas fa-pen-to-square"></i>
+                                    <div class="emp-action-group">
+                                        <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id"
+                                           class="emp-action-btn emp-action-view" title="Open">
+                                            <i class="fas fa-magnifying-glass"></i>
                                         </a>
                                         @if (isOwner)
                                         {
+                                            <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id"
+                                               class="emp-action-btn emp-action-edit" title="Edit">
+                                                <i class="fas fa-pen-to-square"></i>
+                                            </a>
                                             if (!doc.IsArchived)
                                             {
-                                                <button type="button" class="emp-btn emp-btn-xs emp-btn-outline emp-action-archive" title="Archive"
+                                                <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
                                                         data-action="@Url.Action("Archive", "Document", new { area = "Employee" })"
                                                         data-id="@doc.Id"
-                                                        data-message="Archive this document?" style="color:#f59e0b;border-color:#f59e0b;position:relative;z-index:2;">
+                                                        data-message="Archive this document?">
                                                     <i class="fas fa-box-archive"></i>
                                                 </button>
                                             }
                                             else
                                             {
-                                                <button type="button" class="emp-btn emp-btn-xs emp-btn-outline emp-action-unarchive" title="Unarchive"
+                                                <button type="button" class="emp-action-btn emp-action-restore" title="Unarchive"
                                                         data-action="@Url.Action("Unarchive", "Document", new { area = "Employee" })"
                                                         data-id="@doc.Id"
-                                                        data-message="Unarchive this document?" style="color:#10b981;border-color:#10b981;">
+                                                        data-message="Unarchive this document?">
                                                     <i class="fas fa-box-open"></i>
                                                 </button>
                                             }
