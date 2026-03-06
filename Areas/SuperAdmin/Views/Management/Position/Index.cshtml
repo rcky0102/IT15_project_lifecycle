@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Position Management";
     Layout = "~/Areas/SuperAdmin/Layout.cshtml";
+    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active";
 }
 
 <!-- ===== Page Title Hero ===== -->
@@ -49,6 +50,14 @@
                 <option value="50">50</option>
             </select>
         </div>
+        <div class="sa-select-group">
+            <label for="posArchiveFilter" style="font-size:.82rem;color:var(--sa-muted);margin-right:.4rem;">Status</label>
+            <select id="posArchiveFilter" class="sa-select" style="width:130px;">
+                <option value="active" selected="@(archiveFilter == "active" ? "selected" : null)">Active</option>
+                <option value="archived" selected="@(archiveFilter == "archived" ? "selected" : null)">Archived</option>
+                <option value="all" selected="@(archiveFilter == "all" ? "selected" : null)">All</option>
+            </select>
+        </div>
     </div>
 </div>
 
@@ -70,9 +79,10 @@
                     <tbody id="posBody">
                         @foreach (var item in Model)
                         {
-                            <tr class="sa-row"
+                            <tr class="sa-row @(item.IsArchived ? "sa-row-archived" : "")"
                                 data-name="@item.Name.ToLower()"
-                                data-desc="@(item.Description?.ToLower() ?? "")">
+                                data-desc="@(item.Description?.ToLower() ?? "")"
+                                data-archived="@item.IsArchived.ToString().ToLower()">
                                 <td>
                                     <div class="sa-name-cell">
                                         <div class="sa-name-icon">
@@ -80,6 +90,10 @@
                                         </div>
                                         <div>
                                             <div class="sa-name-text">@item.Name</div>
+                                            @if (item.IsArchived)
+                                            {
+                                                <span style="font-size:.72rem;color:#d97706;font-weight:600;">Archived</span>
+                                            }
                                         </div>
                                     </div>
                                 </td>
@@ -96,14 +110,28 @@
                                 <td class="sa-date">@item.DateCreated.ToString("MMM dd, yyyy")</td>
                                 <td>
                                     <div class="sa-action-group">
-                                        <button type="button" class="sa-action-btn sa-action-edit" title="Edit position"
-                                                onclick="editPosition(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')">
-                                            <i class="fas fa-pen-to-square"></i>
-                                        </button>
-                                        <button type="button" class="sa-action-btn sa-action-delete" title="Delete position"
-                                                onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        @if (!item.IsArchived)
+                                        {
+                                            <button type="button" class="sa-action-btn sa-action-edit" title="Edit position"
+                                                    onclick="editPosition(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')">
+                                                <i class="fas fa-pen-to-square"></i>
+                                            </button>
+                                            <button type="button" class="sa-action-btn sa-action-archive sa-btn-archive" title="Archive position"
+                                                    data-id="@item.Id"
+                                                    data-action="@Url.Action("ArchivePosition", "Position", new { area = "SuperAdmin" })"
+                                                    data-message="Are you sure you want to archive &lt;strong&gt;@Html.Raw(item.Name.Replace("'", "&#39;"))&lt;/strong&gt;? It will no longer appear in selection lists.">
+                                                <i class="fas fa-box-archive"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="sa-action-btn sa-action-restore sa-btn-archive" title="Restore position"
+                                                    data-id="@item.Id"
+                                                    data-action="@Url.Action("UnarchivePosition", "Position", new { area = "SuperAdmin" })"
+                                                    data-message="Are you sure you want to restore &lt;strong&gt;@Html.Raw(item.Name.Replace("'", "&#39;"))&lt;/strong&gt;? It will become available in selection lists again.">
+                                                <i class="fas fa-rotate-left"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -230,22 +258,22 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="emp-modal-backdrop" id="deletePositionModal" style="display:none;">
+<!-- Archive / Restore Confirmation Modal -->
+<div class="emp-modal-backdrop" id="confirmPosActionModal" style="display:none;" aria-hidden="true">
     <div class="emp-modal">
-        <div class="emp-modal-icon emp-modal-icon-danger">
-            <i class="fas fa-exclamation-triangle"></i>
+        <div class="emp-modal-icon">
+            <i class="fas fa-box-archive"></i>
         </div>
-        <h5 class="emp-modal-title">Confirm Deletion</h5>
-        <p class="emp-modal-message">Are you sure you want to delete <strong><span id="deletePositionName"></span></strong>? This action is permanent and cannot be reversed.</p>
-        <form id="deletePositionForm">
+        <h5 class="emp-modal-title">Confirm Action</h5>
+        <p class="emp-modal-message" id="confirmPosActionMessage"></p>
+        <form id="confirmPosActionForm" method="post">
             @Html.AntiForgeryToken()
-            <input type="hidden" id="deletePositionId" />
+            <input type="hidden" name="id" id="confirmPosActionId" />
         </form>
         <div class="emp-modal-actions">
-            <button type="button" class="emp-btn-cancel" id="cancelDeleteBtn">Cancel</button>
-            <button type="button" class="emp-btn-confirm emp-btn-danger" id="confirmDeleteBtn">
-                <i class="fas fa-trash"></i> Delete Position
+            <button type="button" class="emp-btn-cancel" id="confirmPosActionCancel">Cancel</button>
+            <button type="submit" form="confirmPosActionForm" class="emp-btn-confirm">
+                <i class="fas fa-check"></i> Confirm
             </button>
         </div>
     </div>
@@ -322,6 +350,47 @@
             searchInput.addEventListener('input', applyFilters);
             pageSizeSel.addEventListener('change', applyFilters);
             applyFilters();
+        })();
+    </script>
+
+    <script>
+        // Archive filter redirect
+        (function () {
+            var archiveSel = document.getElementById('posArchiveFilter');
+            if (archiveSel) archiveSel.addEventListener('change', function () {
+                var url = new URL(window.location.href);
+                if (archiveSel.value === 'active') url.searchParams.delete('archiveFilter');
+                else url.searchParams.set('archiveFilter', archiveSel.value);
+                window.location.href = url.toString();
+            });
+
+            // Archive / Unarchive confirm modal
+            var modal     = document.getElementById('confirmPosActionModal');
+            var form      = document.getElementById('confirmPosActionForm');
+            var msgEl     = document.getElementById('confirmPosActionMessage');
+            var idEl      = document.getElementById('confirmPosActionId');
+            var cancelBtn = document.getElementById('confirmPosActionCancel');
+
+            function showModal(actionUrl, id, message) {
+                form.action  = actionUrl;
+                idEl.value   = id;
+                msgEl.innerHTML = message;
+                modal.style.display = 'flex';
+                modal.removeAttribute('aria-hidden');
+            }
+            function hideModal() {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            cancelBtn.addEventListener('click', hideModal);
+            modal.addEventListener('click', function (e) { if (e.target === modal) hideModal(); });
+
+            document.querySelectorAll('.sa-btn-archive').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    showModal(btn.dataset.action, btn.dataset.id, btn.dataset.message);
+                });
+            });
         })();
     </script>
 
@@ -470,60 +539,6 @@
                 $('#editPositionModal .text-danger').text('');
             });
 
-            // Confirm delete
-            function hideDeleteModal() {
-                document.getElementById('deletePositionModal').style.display = 'none';
-                $('#deletePositionForm')[0].reset();
-            }
-
-            window.confirmDelete = function(id, name) {
-                $('#deletePositionId').val(id);
-                $('#deletePositionName').text(name);
-                document.getElementById('deletePositionModal').style.display = 'flex';
-            };
-
-            $('#cancelDeleteBtn').click(hideDeleteModal);
-            $('#deletePositionModal').click(function(e) {
-                if (e.target === this) hideDeleteModal();
-            });
-
-            // Delete position
-            $('#confirmDeleteBtn').click(function() {
-                var form = $('#deletePositionForm');
-                var formData = {
-                    __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
-                    id: $('#deletePositionId').val()
-                };
-
-                $('#confirmDeleteBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
-
-                $.ajax({
-                    url: '@Url.Action("Delete", "Position")',
-                    type: 'POST',
-                    data: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    success: function(response) {
-                        if (response.success) {
-                            hideDeleteModal();
-                            var alertHtml = '<div class="sa-alert sa-alert-success"><div class="sa-alert-icon"><i class="fas fa-check-circle"></i></div><span>' + response.message + '</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
-                            $('.sa-page-hero').after(alertHtml);
-                            setTimeout(function() { location.reload(); }, 1500);
-                        } else {
-                            var alertHtml = '<div class="sa-alert sa-alert-error"><div class="sa-alert-icon"><i class="fas fa-exclamation-circle"></i></div><span>' + (response.message || 'An error occurred while deleting the position.') + '</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
-                            $('.sa-page-hero').after(alertHtml);
-                            hideDeleteModal();
-                        }
-                    },
-                    error: function() {
-                        var alertHtml = '<div class="sa-alert sa-alert-error"><div class="sa-alert-icon"><i class="fas fa-exclamation-circle"></i></div><span>An error occurred while deleting the position. Please try again.</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
-                        $('.sa-page-hero').after(alertHtml);
-                        hideDeleteModal();
-                    },
-                    complete: function() {
-                        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fas fa-trash"></i> Delete Position');
-                    }
-                });
-            });
         });
     </script>
 }

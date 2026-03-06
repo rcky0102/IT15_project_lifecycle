@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Department Management";
     Layout = "~/Areas/SuperAdmin/Layout.cshtml";
+    var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active";
 }
 
 <!-- ===== Page Title Hero ===== -->
@@ -49,6 +50,13 @@
                 <option value="50">50</option>
             </select>
         </div>
+        <div class="sa-select-group">
+            <select id="deptArchiveFilter" class="sa-select">
+                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
+        </div>
     </div>
 </div>
 
@@ -70,9 +78,10 @@
                     <tbody id="deptBody">
                         @foreach (var item in Model)
                         {
-                            <tr class="sa-row"
+                            <tr class="sa-row @(item.IsArchived ? "sa-row-archived" : "")"
                                 data-name="@item.Name.ToLower()"
-                                data-desc="@(item.Description?.ToLower() ?? "")">
+                                data-desc="@(item.Description?.ToLower() ?? "")"
+                                data-archived="@(item.IsArchived.ToString().ToLower())">
                                 <td>
                                     <div class="sa-name-cell">
                                         <div class="sa-name-icon">
@@ -100,10 +109,26 @@
                                                 onclick="editDepartment(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))', '@Html.Raw(item.Description?.Replace("'", "\\'") ?? "")')">
                                             <i class="fas fa-pen-to-square"></i>
                                         </button>
-                                        <button type="button" class="sa-action-btn sa-action-delete" title="Delete department"
-                                                onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        @if (!item.IsArchived)
+                                        {
+                                            <button type="button" class="sa-action-btn sa-action-archive sa-btn-archive"
+                                                    title="Archive department"
+                                                    data-id="@item.Id"
+                                                    data-action="@Url.Action("ArchiveDepartment", "Department", new { area = "SuperAdmin" })"
+                                                    data-message="Archive department &lt;strong&gt;@Html.Raw(item.Name.Replace("'", "\\'"))&lt;/strong&gt;?">
+                                                <i class="fas fa-box-archive"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="sa-action-btn sa-action-restore sa-btn-archive"
+                                                    title="Restore department"
+                                                    data-id="@item.Id"
+                                                    data-action="@Url.Action("UnarchiveDepartment", "Department", new { area = "SuperAdmin" })"
+                                                    data-message="Restore department &lt;strong&gt;@Html.Raw(item.Name.Replace("'", "\\'"))&lt;/strong&gt;?">
+                                                <i class="fas fa-arrow-up-from-bracket"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -230,23 +255,18 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="emp-modal-backdrop" id="deleteDepartmentModal" style="display:none;">
-    <div class="emp-modal">
-        <div class="emp-modal-icon emp-modal-icon-danger">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <h5 class="emp-modal-title">Confirm Deletion</h5>
-        <p class="emp-modal-message">Are you sure you want to delete <strong><span id="deleteDepartmentName"></span></strong>? This action is permanent and cannot be reversed.</p>
-        <form id="deleteDepartmentForm">
-            @Html.AntiForgeryToken()
-            <input type="hidden" id="deleteDepartmentId" />
-        </form>
+<!-- Archive / Unarchive Confirmation Modal -->
+<div class="emp-modal-backdrop" id="confirmDeptActionModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmDeptActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmDeptActionMessage">Are you sure?</p>
         <div class="emp-modal-actions">
-            <button type="button" class="emp-btn-cancel" id="cancelDeleteBtn">Cancel</button>
-            <button type="button" class="emp-btn-confirm emp-btn-danger" id="confirmDeleteBtn">
-                <i class="fas fa-trash"></i> Delete Department
-            </button>
+            <button type="button" class="emp-btn-cancel" id="confirmDeptActionCancel">Cancel</button>
+            <form id="confirmDeptActionForm" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="confirmDeptActionId" />
+                <button type="submit" class="emp-btn-confirm" id="confirmDeptActionSubmit">Confirm</button>
+            </form>
         </div>
     </div>
 </div>
@@ -322,6 +342,47 @@
             searchInput.addEventListener('input', applyFilters);
             pageSizeSel.addEventListener('change', applyFilters);
             applyFilters();
+        })();
+    </script>
+
+    <script>
+        // Archive filter redirect
+        (function () {
+            var archiveSel = document.getElementById('deptArchiveFilter');
+            if (archiveSel) archiveSel.addEventListener('change', function () {
+                var url = new URL(window.location.href);
+                if (archiveSel.value === 'active') url.searchParams.delete('archiveFilter');
+                else url.searchParams.set('archiveFilter', archiveSel.value);
+                window.location.href = url.toString();
+            });
+
+            // Archive / Unarchive confirm modal
+            var modal   = document.getElementById('confirmDeptActionModal');
+            var form    = document.getElementById('confirmDeptActionForm');
+            var msgEl   = document.getElementById('confirmDeptActionMessage');
+            var idEl    = document.getElementById('confirmDeptActionId');
+            var cancelBtn = document.getElementById('confirmDeptActionCancel');
+
+            function showModal(actionUrl, id, message) {
+                form.action = actionUrl;
+                idEl.value  = id;
+                msgEl.innerHTML = message;
+                modal.style.display = 'flex';
+                modal.removeAttribute('aria-hidden');
+            }
+            function hideModal() {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            cancelBtn.addEventListener('click', hideModal);
+            modal.addEventListener('click', function (e) { if (e.target === modal) hideModal(); });
+
+            document.querySelectorAll('.sa-btn-archive').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    showModal(btn.dataset.action, btn.dataset.id, btn.dataset.message);
+                });
+            });
         })();
     </script>
 
@@ -470,60 +531,6 @@
                 $('#editDepartmentModal .text-danger').text('');
             });
 
-            // Confirm delete
-            function hideDeleteModal() {
-                document.getElementById('deleteDepartmentModal').style.display = 'none';
-                $('#deleteDepartmentForm')[0].reset();
-            }
-
-            window.confirmDelete = function(id, name) {
-                $('#deleteDepartmentId').val(id);
-                $('#deleteDepartmentName').text(name);
-                document.getElementById('deleteDepartmentModal').style.display = 'flex';
-            };
-
-            $('#cancelDeleteBtn').click(hideDeleteModal);
-            $('#deleteDepartmentModal').click(function(e) {
-                if (e.target === this) hideDeleteModal();
-            });
-
-            // Delete department
-            $('#confirmDeleteBtn').click(function() {
-                var form = $('#deleteDepartmentForm');
-                var formData = {
-                    __RequestVerificationToken: form.find('input[name="__RequestVerificationToken"]').val(),
-                    id: $('#deleteDepartmentId').val()
-                };
-
-                $('#confirmDeleteBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
-
-                $.ajax({
-                    url: '@Url.Action("Delete", "Department")',
-                    type: 'POST',
-                    data: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    success: function(response) {
-                        if (response.success) {
-                            hideDeleteModal();
-                            var alertHtml = '<div class="sa-alert sa-alert-success"><div class="sa-alert-icon"><i class="fas fa-check-circle"></i></div><span>' + response.message + '</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
-                            $('.sa-page-hero').after(alertHtml);
-                            setTimeout(function() { location.reload(); }, 1500);
-                        } else {
-                            var alertHtml = '<div class="sa-alert sa-alert-error"><div class="sa-alert-icon"><i class="fas fa-exclamation-circle"></i></div><span>' + (response.message || 'An error occurred while deleting the department.') + '</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
-                            $('.sa-page-hero').after(alertHtml);
-                            hideDeleteModal();
-                        }
-                    },
-                    error: function() {
-                        var alertHtml = '<div class="sa-alert sa-alert-error"><div class="sa-alert-icon"><i class="fas fa-exclamation-circle"></i></div><span>An error occurred while deleting the department. Please try again.</span><button class="sa-alert-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button></div>';
-                        $('.sa-page-hero').after(alertHtml);
-                        hideDeleteModal();
-                    },
-                    complete: function() {
-                        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fas fa-trash"></i> Delete Department');
-                    }
-                });
-            });
         });
     </script>
 }

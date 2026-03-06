@@ -166,8 +166,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             viewModel.Users = userDetails;
             
             // Prepare create user form
-            var departments = await _context.Departments.ToListAsync();
-            var positions = await _context.Positions.ToListAsync();
+            var departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+            var positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
             
             // Debug: Log counts
             Console.WriteLine($"Departments count: {departments.Count}");
@@ -192,8 +192,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 if (!ModelState.IsValid)
                 {
                     // Reload dropdown data
-                    model.Departments = await _context.Departments.ToListAsync();
-                    model.Positions = await _context.Positions.ToListAsync();
+                    model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                    model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
                     
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -218,8 +218,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 if (existingUser != null)
                 {
                     ModelState.AddModelError("Email", "Email already exists");
-                    model.Departments = await _context.Departments.ToListAsync();
-                    model.Positions = await _context.Positions.ToListAsync();
+                    model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                    model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
                     
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -256,8 +256,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
                     
-                    model.Departments = await _context.Departments.ToListAsync();
-                    model.Positions = await _context.Positions.ToListAsync();
+                    model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                    model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
                     
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -487,8 +487,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                 // For non-AJAX requests, add error to ModelState and return the view
                 ModelState.AddModelError("", $"An error occurred: {errorMessage}");
-                model.Departments = await _context.Departments.ToListAsync();
-                model.Positions = await _context.Positions.ToListAsync();
+                model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
                 
                 var viewModel = new UserListViewModel
                 {
@@ -1089,8 +1089,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         }
 
                         // For non-AJAX, reload dropdowns and return to Index with model errors
-                        model.Departments = await _context.Departments.ToListAsync();
-                        model.Positions = await _context.Positions.ToListAsync();
+                        model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                        model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
                         var viewModel = new UserListViewModel
                         {
                             CreateUserViewModel = model,

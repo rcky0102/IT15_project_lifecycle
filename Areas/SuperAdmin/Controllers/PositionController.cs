@@ -21,12 +21,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         }
 
         // GET: /SuperAdmin/Position/Index
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string archiveFilter = "active")
         {
-            var positions = await _context.Positions
-                .OrderBy(p => p.Name)
-                .ToListAsync();
-            
+            IQueryable<Position> query = _context.Positions;
+            if (archiveFilter == "active")
+                query = query.Where(p => !p.IsArchived);
+            else if (archiveFilter == "inactive")
+                query = query.Where(p => p.IsArchived);
+            var positions = await query.OrderBy(p => p.Name).ToListAsync();
+            ViewData["ArchiveFilter"] = archiveFilter;
             return View("~/Areas/SuperAdmin/Views/Management/Position/Index.cshtml", positions);
         }
 
@@ -200,6 +203,36 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         private bool PositionExists(int id)
         {
             return _context.Positions.Any(e => e.Id == id);
+        }
+
+        [HttpPost, ActionName("ArchivePosition")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchivePositionConfirmed(int id)
+        {
+            var position = await _context.Positions.FindAsync(id);
+            if (position == null) { TempData["Error"] = "Position not found."; return RedirectToAction(nameof(Index)); }
+            position.IsArchived = true;
+            await _context.SaveChangesAsync();
+            await _audit.LogAsync(User, "Archive", "Position Management", $"Archived position '{position.Name}' (ID: {position.Id})", "Position", position.Id.ToString());
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, message = "Position archived." });
+            TempData["Success"] = "Position archived.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ActionName("UnarchivePosition")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchivePositionConfirmed(int id)
+        {
+            var position = await _context.Positions.FindAsync(id);
+            if (position == null) { TempData["Error"] = "Position not found."; return RedirectToAction(nameof(Index)); }
+            position.IsArchived = false;
+            await _context.SaveChangesAsync();
+            await _audit.LogAsync(User, "Unarchive", "Position Management", $"Restored position '{position.Name}' (ID: {position.Id})", "Position", position.Id.ToString());
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, message = "Position restored." });
+            TempData["Success"] = "Position restored.";
+            return RedirectToAction(nameof(Index));
         }
     }
 }

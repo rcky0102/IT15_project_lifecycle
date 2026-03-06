@@ -13,5 +13,7 @@ namespace project_lifecycle.Models
         public string? Description { get; set; }
 
         public DateTime DateCreated { get; set; } = DateTime.Now;
+
+        public bool IsArchived { get; set; } = false;
     }
 }
