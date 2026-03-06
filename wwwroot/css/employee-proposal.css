@@ -1,4 +1,4 @@
-/* =============================================
+w/* =============================================
    Employee Proposal Index – Modern Design
    Matches employee-layout.css design system
    ============================================= */
@@ -685,6 +685,18 @@
     color: #fff;
     border-color: transparent;
     box-shadow: 0 4px 14px rgba(16,185,129,.2);
+}
+
+/* Delete */
+.emp-action-delete {
+    color: #ef4444;
+    border-color: rgba(239,68,68,.15);
+}
+.emp-action-delete:hover {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(220,38,38,.25);
 }
 
 /* ===========================================

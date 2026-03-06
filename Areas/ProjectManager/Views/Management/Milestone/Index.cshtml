@@ -18,7 +18,7 @@
             <p class="emp-page-subtitle">Manage project milestones globally</p>
         </div>
         <div class="emp-page-hero-right">
-            <button type="button" class="emp-btn emp-btn-primary" data-bs-toggle="modal" data-bs-target="#createMilestoneModal">
+            <button type="button" class="emp-btn emp-btn-outline" data-bs-toggle="modal" data-bs-target="#createMilestoneModal">
                 <i class="fas fa-plus"></i>
                 <span>Add Milestone</span>
             </button>
@@ -37,18 +37,7 @@
     </div>
 }
 
-<!-- ===== Stats Bar ===== -->
-<div class="project-stats-bar">
-    <div class="project-stat-card">
-        <div class="project-stat-icon blue">
-            <i class="fas fa-flag"></i>
-        </div>
-        <div class="project-stat-info">
-            <span class="project-stat-value">@Model.Count()</span>
-            <span class="project-stat-label">Total Milestones</span>
-        </div>
-    </div>
-</div>
+<!-- Stats bar removed -->
 
 <!-- ===== Filters ===== -->
 <div class="emp-filters-card">
@@ -56,6 +45,15 @@
         <div class="emp-search-group">
             <i class="fas fa-magnifying-glass emp-search-icon"></i>
             <input id="milestonesSearch" type="text" class="emp-search-input" placeholder="Search milestones…" autocomplete="off" />
+        </div>
+        <div class="emp-select-group">
+            <label for="milestonesPageSizeSelect" style="font-size:.82rem;color:var(--emp-muted);margin-right:.4rem;">Show</label>
+            <select id="milestonesPageSizeSelect" class="emp-select" style="width:92px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
         </div>
     </div>
 </div>
@@ -101,12 +99,12 @@
                                             </td>
                                             <td>@item.DateCreated.ToString("MMM dd, yyyy")</td>
                                             <td>
-                                                <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-                                                    <button type="button" class="emp-btn emp-btn-xs emp-btn-outline" onclick="editMilestone(@item.Id)" title="Edit">
-                                                        <i class="fas fa-edit"></i> Edit
+                                                <div style="display:inline-flex;align-items:center;gap:.35rem;">
+                                                    <button type="button" class="emp-action-btn emp-action-edit" onclick="editMilestone(@item.Id)" title="Edit">
+                                                        <i class="fas fa-pen-to-square"></i>
                                                     </button>
-                                                    <button type="button" class="emp-btn emp-btn-xs emp-btn-danger" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')" title="Delete">
-                                                        <i class="fas fa-trash"></i> Delete
+                                                    <button type="button" class="emp-action-btn emp-action-delete" onclick="confirmDelete(@item.Id, '@Html.Raw(item.Name.Replace("'", "\\'"))')" title="Delete">
+                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
                                             </td>
@@ -120,6 +118,11 @@
                             <div class="project-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
                             <div class="project-empty-title">No matching milestones</div>
                             <div class="project-empty-text">Try adjusting your search.</div>
+                        </div>
+
+                        <div class="emp-pagination" id="milestonesPaginationContainer" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding:.75rem 1.25rem;box-sizing:border-box;">
+                            <div class="emp-pagination-info" id="milestonesPaginationInfo"></div>
+                            <div class="emp-pagination-controls" id="milestonesPaginationControls"></div>
                         </div>
                     }
                     else
@@ -365,49 +368,6 @@
             color: #006994;
         }
 
-        /* Button Styling */
-        .emp-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 1rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-        }
-
-        .emp-btn-primary {
-            background: linear-gradient(135deg, #006994, #4CA3DD);
-            color: #fff;
-        }
-
-        .emp-btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 105, 148, 0.3);
-        }
-
-        .emp-btn-secondary {
-            background-color: #e2e8f0;
-            color: #475569;
-        }
-
-        .emp-btn-secondary:hover {
-            background-color: #cbd5e1;
-        }
-
-        .emp-btn-danger {
-            background: linear-gradient(135deg, #dc2626, #ef4444);
-            color: #fff;
-        }
-
-        .emp-btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(220, 38, 38, 0.3);
-        }
     </style>
     <script>
         $(document).ready(function() {
@@ -532,30 +492,85 @@
     </script>
 }
     <script>
-        // Search functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('milestonesSearch');
-            const table = document.getElementById('milestonesTable');
-            const noResults = document.getElementById('noFilterResults');
-            const tbody = document.getElementById('milestonesBody');
+(function () {
+    let PAGE_SIZE = 10;
+    let currentPage = 1;
+    let filteredRows = [];
 
-            if (searchInput && table) {
-                searchInput.addEventListener('keyup', function () {
-                    const filter = this.value.toLowerCase();
-                    let visibleCount = 0;
+    const searchInput    = document.getElementById('milestonesSearch');
+    const allRows        = Array.from(document.querySelectorAll('.emp-row'));
+    const noResults      = document.getElementById('noFilterResults');
+    const pageInfo       = document.getElementById('milestonesPaginationInfo');
+    const pageControls   = document.getElementById('milestonesPaginationControls');
+    const pageSizeSelect = document.getElementById('milestonesPageSizeSelect');
 
-                    Array.from(tbody.getElementsByTagName('tr')).forEach(row => {
-                        const name = row.getAttribute('data-name') || '';
-                        if (name.includes(filter)) {
-                            row.style.display = '';
-                            visibleCount++;
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
-
-                    noResults.style.display = visibleCount === 0 && filter ? '' : 'none';
-                });
-            }
+    function applyFilters() {
+        const query = (searchInput?.value ?? '').toLowerCase().trim();
+        filteredRows = allRows.filter(row => {
+            const name = (row.dataset.name || '');
+            return !query || name.includes(query);
         });
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        const total      = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        currentPage      = Math.min(currentPage, totalPages);
+        const start      = (currentPage - 1) * PAGE_SIZE;
+        const end        = start + PAGE_SIZE;
+
+        allRows.forEach(r => r.style.display = 'none');
+        filteredRows.forEach((r, i) => {
+            r.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        if (noResults) noResults.style.display = total === 0 ? '' : 'none';
+
+        if (pageInfo) {
+            pageInfo.textContent = total === 0 ? '' : `Showing ${start + 1}\u2013${Math.min(end, total)} of ${total}`;
+        }
+
+        if (pageControls) {
+            pageControls.innerHTML = '';
+            const makeBtn = (label, page, disabled, active) => {
+                const btn = document.createElement('button');
+                btn.className = 'emp-page-btn' + (active ? ' active' : '');
+                btn.innerHTML = label;
+                btn.disabled  = disabled;
+                btn.addEventListener('click', () => { currentPage = page; render(); });
+                return btn;
+            };
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
+            const w = 2;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
+                    pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                    const el = document.createElement('span');
+                    el.className = 'emp-page-ellipsis';
+                    el.textContent = '\u2026';
+                    pageControls.appendChild(el);
+                }
+            }
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
+        }
+    }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+
+    if (pageSizeSelect) {
+        pageSizeSelect.value = String(PAGE_SIZE);
+        pageSizeSelect.addEventListener('change', function () {
+            const val = parseInt(pageSizeSelect.value, 10) || 10;
+            PAGE_SIZE = Math.max(5, val);
+            currentPage = 1;
+            render();
+        });
+    }
+
+    filteredRows = allRows.slice();
+    render();
+})();
     </script>
