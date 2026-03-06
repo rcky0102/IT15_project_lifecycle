@@ -548,3 +548,13 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\ru
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\AngleSharp.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\DocumentFormat.OpenXml.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\DocumentFormat.OpenXml.Framework.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\HtmlToOpenXml.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\System.IO.Packaging.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\AngleSharp.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\DocumentFormat.OpenXml.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\DocumentFormat.OpenXml.Framework.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\HtmlToOpenXml.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\BuildCheck\System.IO.Packaging.dll

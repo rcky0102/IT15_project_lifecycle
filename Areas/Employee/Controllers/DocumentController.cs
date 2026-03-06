@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using HtmlToOpenXml;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
 using project_lifecycle.Services;
@@ -749,6 +752,72 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 .ToListAsync();
 
             return Json(results);
+        }
+
+        // ─── Export as DOCX (GET) ──────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> ExportDocx(int id)
+        {
+            var employee = await GetCurrentEmployeeAsync();
+            if (employee == null) return RedirectToAction("Index");
+
+            var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id);
+            if (doc == null)
+            {
+                TempData["ErrorMessage"] = "Document not found.";
+                return RedirectToAction("Index");
+            }
+
+            if (!await HasAccessAsync(id, employee.Id))
+            {
+                TempData["ErrorMessage"] = "You do not have access to this document.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                using var ms = new MemoryStream();
+                using (var wordDoc = WordprocessingDocument.Create(ms, WordprocessingDocumentType.Document))
+                {
+                    var mainPart = wordDoc.AddMainDocumentPart();
+                    mainPart.Document = new DocumentFormat.OpenXml.Wordprocessing.Document(new DocumentFormat.OpenXml.Wordprocessing.Body());
+
+                    var converter = new HtmlConverter(mainPart);
+                    var html = doc.Content ?? string.Empty;
+                    converter.ParseHtml(html);
+
+                    mainPart.Document.Save();
+                }
+
+                var safeTitle = string.Join("_", (doc.Title ?? "document").Split(Path.GetInvalidFileNameChars()));
+                return File(ms.ToArray(),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    $"{safeTitle}.docx");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting document {DocumentId} as DOCX", id);
+                TempData["ErrorMessage"] = "An error occurred while exporting.";
+                return RedirectToAction("Edit", new { id });
+            }
+        }
+
+        // ─── Export as PDF – returns HTML for client-side rendering ─
+        [HttpGet]
+        public async Task<IActionResult> ExportPdfContent(int id)
+        {
+            var employee = await GetCurrentEmployeeAsync();
+            if (employee == null)
+                return Json(new { success = false, message = "Employee profile not found." });
+
+            var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id);
+            if (doc == null)
+                return Json(new { success = false, message = "Document not found." });
+
+            if (!await HasAccessAsync(id, employee.Id))
+                return Json(new { success = false, message = "No access." });
+
+            return Json(new { success = true, title = doc.Title, content = doc.Content });
         }
     }
 }

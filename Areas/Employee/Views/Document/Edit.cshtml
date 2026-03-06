@@ -62,6 +62,23 @@
                     <span>Collaborators <span class="collab-count-badge" id="collabCount">@collaborators.Count</span></span>
                 </button>
             }
+            <div class="emp-export-dropdown" style="position:relative; display:inline-block;">
+                <button type="button" id="exportDropdownBtn" class="emp-btn emp-btn-outline">
+                    <i class="fas fa-download"></i>
+                    <span>Export</span>
+                    <i class="fas fa-chevron-down" style="font-size:10px; margin-left:4px;"></i>
+                </button>
+                <div id="exportDropdownMenu" style="display:none; position:absolute; right:0; top:100%; margin-top:4px; min-width:180px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:100; overflow:hidden;">
+                    <button type="button" id="exportPdfBtn" style="display:flex; align-items:center; gap:10px; width:100%; padding:10px 16px; border:none; background:none; cursor:pointer; font-size:14px; color:#1e293b; text-align:left;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
+                        <i class="fas fa-file-pdf" style="color:#ef4444; font-size:16px; width:20px; text-align:center;"></i>
+                        Export as PDF
+                    </button>
+                    <a href="@Url.Action("ExportDocx", "Document", new { area = "Employee", id = Model.Id })" style="display:flex; align-items:center; gap:10px; width:100%; padding:10px 16px; border:none; background:none; cursor:pointer; font-size:14px; color:#1e293b; text-decoration:none; text-align:left;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
+                        <i class="fas fa-file-word" style="color:#2563eb; font-size:16px; width:20px; text-align:center;"></i>
+                        Export as DOCX
+                    </a>
+                </div>
+            </div>
             <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('versionsModal')">
                 <i class="fas fa-clock-rotate-left"></i>
                 <span>Versions <span class="collab-count-badge" id="versionCount">@versions.Count</span></span>
@@ -256,6 +273,7 @@
         const documentId = @Model.Id;
         const canEdit = @(canEdit ? "true" : "false");
         const isOwner = @(isOwner ? "true" : "false");
+        const exportPdfContentEndpoint = '@Url.Action("ExportPdfContent", "Document", new { area = "Employee" })';
         const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value
             || '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
 
@@ -929,6 +947,78 @@
             tokenHolder.innerHTML = '@Html.AntiForgeryToken()';
             document.body.appendChild(tokenHolder);
         }
+
+        // ═══════ Export Dropdown ═══════════════════════════════════
+        (function () {
+            const dropdownBtn = document.getElementById('exportDropdownBtn');
+            const dropdownMenu = document.getElementById('exportDropdownMenu');
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
+            if (!dropdownBtn || !dropdownMenu) return;
+
+            dropdownBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const open = dropdownMenu.style.display !== 'none';
+                dropdownMenu.style.display = open ? 'none' : 'block';
+            });
+            document.addEventListener('click', function () {
+                dropdownMenu.style.display = 'none';
+            });
+            dropdownMenu.addEventListener('click', function (e) { e.stopPropagation(); });
+
+            // PDF export using html2pdf.js (loaded on demand)
+            if (exportPdfBtn) {
+                exportPdfBtn.addEventListener('click', function () {
+                    dropdownMenu.style.display = 'none';
+                    exportPdfBtn.disabled = true;
+                    exportPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF…';
+
+                    function doExport() {
+                        // Build a temporary container with the editor content
+                        var content = editorInstance ? editorInstance.getData() : (document.getElementById('docContent')?.value || '');
+                        var wrapper = document.createElement('div');
+                        wrapper.style.padding = '24px';
+                        wrapper.style.fontFamily = 'Arial, sans-serif';
+                        wrapper.style.fontSize = '13px';
+                        wrapper.style.lineHeight = '1.6';
+                        wrapper.style.color = '#1e293b';
+                        wrapper.innerHTML = '<h1 style="margin:0 0 16px;font-size:22px;">' + (currentTitle || 'Document') + '</h1>' + content;
+                        document.body.appendChild(wrapper);
+
+                        var safeTitle = (currentTitle || 'document').replace(/[^a-zA-Z0-9_\- ]/g, '_');
+                        html2pdf().set({
+                            margin: [12, 12, 12, 12],
+                            filename: safeTitle + '.pdf',
+                            image: { type: 'jpeg', quality: 0.95 },
+                            html2canvas: { scale: 2, useCORS: true },
+                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                        }).from(wrapper).save().then(function () {
+                            wrapper.remove();
+                            exportPdfBtn.disabled = false;
+                            exportPdfBtn.innerHTML = '<i class="fas fa-file-pdf" style="color:#ef4444;font-size:16px;width:20px;text-align:center;"></i> Export as PDF';
+                        }).catch(function () {
+                            wrapper.remove();
+                            exportPdfBtn.disabled = false;
+                            exportPdfBtn.innerHTML = '<i class="fas fa-file-pdf" style="color:#ef4444;font-size:16px;width:20px;text-align:center;"></i> Export as PDF';
+                            alert('PDF export failed.');
+                        });
+                    }
+
+                    if (typeof html2pdf === 'undefined') {
+                        var s = document.createElement('script');
+                        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
+                        s.onload = doExport;
+                        s.onerror = function () {
+                            exportPdfBtn.disabled = false;
+                            exportPdfBtn.innerHTML = '<i class="fas fa-file-pdf" style="color:#ef4444;font-size:16px;width:20px;text-align:center;"></i> Export as PDF';
+                            alert('Could not load PDF library. Please check your internet connection.');
+                        };
+                        document.head.appendChild(s);
+                    } else {
+                        doExport();
+                    }
+                });
+            }
+        })();
 
         // ═══════ Restore Version Confirm ═══════════════════════════
         (function () {
