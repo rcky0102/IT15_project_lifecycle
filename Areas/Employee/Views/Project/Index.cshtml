@@ -55,6 +55,7 @@
             <select id="archiveFilter" class="emp-select">
                 <option value="active" selected>Active</option>
                 <option value="inactive">Archived</option>
+                <option value="removed">Removed</option>
                 <option value="all">All</option>
             </select>
         </div>
@@ -99,7 +100,7 @@
                                 return s == "completed" || s == "checked" || s == "finished";
                             }) ?? 0;
                             var percent   = totalPMs > 0 ? (int)Math.Round((double)donePMs * 100 / totalPMs) : 0;
-                            <tr class="emp-row" data-name="@project.Name.ToLower()" data-archived="@(project.IsArchived ? "true" : "false")">
+                            <tr class="emp-row" data-name="@project.Name.ToLower()" data-archived="@(project.IsArchived ? "true" : "false")" data-removed="@(project.IsMemberRemoved ? "true" : "false")">
                                 <td>
                                     <div class="project-name-cell">
                                         <div class="project-name-icon">
@@ -107,7 +108,11 @@
                                         </div>
                                         <div>
                                             <div class="project-name-text">@project.Name
-                                                @if (project.IsArchived)
+                                                @if (project.IsMemberRemoved)
+                                                {
+                                                    <span style="display:inline-block;margin-left:.5rem;font-size:.72rem;color:#d97706;font-weight:700;">REMOVED</span>
+                                                }
+                                                else if (project.IsArchived)
                                                 {
                                                     <span style="display:inline-block;margin-left:.5rem;font-size:.72rem;color:#94a3b8;font-weight:700;">ARCHIVED</span>
                                                 }
@@ -157,7 +162,13 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if (project.IsArchived)
+                                    @if (project.IsMemberRemoved)
+                                    {
+                                        <span class="emp-action-btn" title="Removed from project" style="opacity:.4;cursor:not-allowed;">
+                                            <i class="fas fa-box-archive"></i>
+                                        </span>
+                                    }
+                                    else if (project.IsArchived)
                                     {
                                         <span class="emp-action-btn" title="Archived — read only" style="opacity:.4;cursor:not-allowed;">
                                             <i class="fas fa-lock"></i>
@@ -220,8 +231,17 @@
         filteredRows = allRows.filter(row => {
             const nameMatch    = !query || (row.dataset.name || '').includes(query);
             const isArchived   = row.dataset.archived === 'true';
-            const archiveMatch = archiveFilter === 'all' ? true
-                : archiveFilter === 'inactive' ? isArchived : !isArchived;
+            const isRemoved    = row.dataset.removed === 'true';
+            let archiveMatch;
+            if (archiveFilter === 'all') {
+                archiveMatch = true;
+            } else if (archiveFilter === 'inactive') {
+                archiveMatch = isArchived && !isRemoved;
+            } else if (archiveFilter === 'removed') {
+                archiveMatch = isRemoved;
+            } else {
+                archiveMatch = !isArchived && !isRemoved;
+            }
             return nameMatch && archiveMatch;
         });
         currentPage = 1;

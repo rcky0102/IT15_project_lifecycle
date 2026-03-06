@@ -19,6 +19,7 @@ namespace project_lifecycle.ViewModels.ProjectManager
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsArchived { get; set; } = false;
+        public bool IsMemberRemoved { get; set; } = false;
         public List<MemberViewModel> Members { get; set; } = new List<MemberViewModel>();
         public List<ProjectMilestoneViewModel> Milestones { get; set; } = new List<ProjectMilestoneViewModel>();
     }
@@ -31,6 +32,7 @@ namespace project_lifecycle.ViewModels.ProjectManager
         public string? ProfileImage { get; set; }
         public int ProjectRoleId { get; set; }
         public string ProjectRoleName { get; set; } = string.Empty;
+        public bool IsArchived { get; set; } = false;
     }
 
     public class ProjectMilestoneViewModel

@@ -379,7 +379,8 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     EmployeeName = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A",
                     ProfileImage = m.Employee != null ? m.Employee.ProfileImage : null,
                     ProjectRoleId = m.ProjectRoleId,
-                    ProjectRoleName = m.ProjectRole != null ? m.ProjectRole.Name : "N/A"
+                    ProjectRoleName = m.ProjectRole != null ? m.ProjectRole.Name : "N/A",
+                    IsArchived = m.IsArchived
                 })
                 .ToList();
 
@@ -1366,7 +1367,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveMember(int memberId)
+        public async Task<IActionResult> ArchiveMember(int memberId)
         {
             var pm = await GetCurrentProjectManagerAsync();
             if (pm == null) return Challenge();
@@ -1379,12 +1380,40 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 return Forbid();
             }
 
-            _context.Members.Remove(member);
+            member.IsArchived = true;
+            member.ArchivedAt = DateTime.Now;
+            _context.Members.Update(member);
             await _context.SaveChangesAsync();
 
-            await _audit.LogAsync(User, "Delete", "Project Members", $"Removed member (ID: {memberId}) from project {member.Project!.Id}", "Member", memberId.ToString());
+            await _audit.LogAsync(User, "Archive", "Project Members", $"Archived member (ID: {memberId}) from project {member.Project!.Id}", "Member", memberId.ToString());
 
-            TempData["SuccessMessage"] = "Member removed from project.";
+            TempData["SuccessMessage"] = "Member archived from project.";
+            return RedirectToAction(nameof(Details), new { id = member.Project!.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchiveMember(int memberId)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var member = await _context.Members.Include(m => m.Project).FirstOrDefaultAsync(m => m.Id == memberId);
+            if (member == null) return NotFound();
+
+            if (member.Project == null || member.Project.ProjectManagerId != pm.Id)
+            {
+                return Forbid();
+            }
+
+            member.IsArchived = false;
+            member.ArchivedAt = null;
+            _context.Members.Update(member);
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Unarchive", "Project Members", $"Unarchived member (ID: {memberId}) in project {member.Project!.Id}", "Member", memberId.ToString());
+
+            TempData["SuccessMessage"] = "Member restored to project.";
             return RedirectToAction(nameof(Details), new { id = member.Project!.Id });
         }
 

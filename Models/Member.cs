@@ -26,5 +26,8 @@ namespace project_lifecycle.Models
 
         [Required]
         public DateTime DateCreated { get; set; } = DateTime.Now;
+
+        public bool IsArchived { get; set; } = false;
+        public DateTime? ArchivedAt { get; set; }
     }
 }

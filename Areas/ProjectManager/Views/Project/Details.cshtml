@@ -23,28 +23,14 @@
     .pm-modal-footer { padding:.75rem 1.5rem 1.25rem; display:flex; gap:.6rem; justify-content:flex-end; }
     .emp-action-delete { color:#ef4444; border-color:rgba(239,68,68,.15); }
     .emp-action-delete:hover { background:linear-gradient(135deg,#ef4444,#f87171); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(239,68,68,.25); }
+    .emp-action-archive { color:#d97706; border-color:rgba(217,119,6,.15); }
+    .emp-action-archive:hover { background:linear-gradient(135deg,#d97706,#f59e0b); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(217,119,6,.25); }
+    .emp-action-unarchive { color:#16a34a; border-color:rgba(22,163,74,.15); }
+    .emp-action-unarchive:hover { background:linear-gradient(135deg,#16a34a,#4ade80); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(22,163,74,.25); }
     .pm-step-chip { font-size:.65rem; font-weight:800; color:var(--emp-ocean); background:rgba(0,105,148,.06); padding:.2rem .5rem; border-radius:5px; letter-spacing:.4px; white-space:nowrap; }
     .pm-member-actions { display:flex; gap:.25rem; flex-shrink:0; margin-left:auto; }
-    /* Use milestone card action button design for team member actions */
-    .emp-member-stack .pm-member-actions .emp-action-btn {
-        width:36px;
-        height:36px;
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        border-radius:10px;
-        border:1px solid rgba(14,165,233,0.08);
-        background:#fff;
-        box-shadow:none;
-        padding:0;
-        transition:all .15s ease;
-        color:inherit;
-        margin-left:.4rem;
-    }
-    .emp-member-stack .pm-member-actions .emp-action-btn i { font-size:0.95rem; }
-    .emp-member-stack .pm-member-actions .emp-action-btn:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(3,102,214,0.06); }
-    .emp-member-stack .pm-member-actions .emp-action-edit i { color:#2563eb; }
-    .emp-member-stack .pm-member-actions .emp-action-delete i { color:#ef4444; }
+    /* Use global `.emp-action-btn` (milestone button styles) for team member actions */
+    /* Rely on shared stylesheet `employee-proposal.css` for `.emp-action-btn` and variants */
     /* Compact member row adjustments */
     .emp-member-stack { padding: .25rem 0; }
     .emp-member-row { display:flex; align-items:center; gap:.6rem; padding:.45rem .6rem; border-radius:10px; }
@@ -56,8 +42,6 @@
     .emp-member-name { display:block; font-size:.88rem; font-weight:500; line-height:1.05; color:#0f172a; }
     .emp-member-role { display:block; font-size:.76rem; color:#64748b; margin-top:2px; }
     .pm-member-actions { gap:.25rem; }
-    .emp-member-stack .pm-member-actions .emp-action-btn { width:32px; height:32px; border-radius:8px; }
-    .emp-member-stack .pm-member-actions .emp-action-btn i{ font-size:0.85rem; }
     /* ── Batch add members modal ────────────────────────────────── */
     .pm-batch-modal { background:#fff; border-radius:16px; width:100%; max-width:1120px; height:82vh; display:flex; flex-direction:column; box-shadow:0 25px 60px rgba(0,105,148,.22); overflow:hidden; animation:pmModalIn .25s ease; }
     .pm-batch-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; background:linear-gradient(135deg,#006994,#0092c8); border-bottom:1px solid rgba(0,105,148,.18); flex-shrink:0; }
@@ -109,14 +93,14 @@
             <p class="emp-page-subtitle">Proposal: @Model.Project.ProposalTitle</p>
         </div>
 
-<!-- Confirmation modal for remove member -->
+<!-- Confirmation modal for archive member -->
 <div class="emp-modal-backdrop" id="confirmRemoveModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
     <div class="emp-modal" role="document">
-        <h4 id="confirmRemoveTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <h4 id="confirmRemoveTitle"><i class="fas fa-box-archive"></i> Confirm Archive</h4>
         <p id="confirmRemoveMessage">Are you sure?</p>
         <div class="emp-modal-actions">
             <button type="button" class="emp-btn emp-btn-cancel" id="confirmRemoveCancel">Cancel</button>
-            <button type="button" class="emp-btn emp-btn-confirm" id="confirmRemoveConfirm">Remove</button>
+            <button type="button" class="emp-btn emp-btn-confirm" id="confirmRemoveConfirm">Archive</button>
         </div>
     </div>
 </div>
@@ -311,17 +295,22 @@
         <div class="emp-side-card">
             <div class="emp-side-card-title">
                 <i class="fas fa-users"></i> Team Members
-                <span class="emp-count-chip" style="margin-left:auto;">@Model.Project.Members.Count</span>
+                <span class="emp-count-chip" style="margin-left:auto;" id="memberCountChip">@Model.Project.Members.Count(m => !m.IsArchived)</span>
             </div>
-            <div style="margin-top:.6rem;">
-                <input id="memberSearch" type="text" class="emp-search-input" placeholder="Search members…" style="width:100%;padding:.45rem .6rem;font-size:.88rem;" />
+            <div style="margin-top:.6rem; display:flex; gap:.5rem; align-items:center;">
+                <input id="memberSearch" type="text" class="emp-search-input" placeholder="Search members…" style="flex:1;padding:.45rem .6rem;font-size:.88rem;" />
+                <select id="memberArchiveFilter" class="emp-select" style="width:90px; min-width:70px;">
+                    <option value="active" selected>Active</option>
+                    <option value="archived">Archived</option>
+                    <option value="all">All</option>
+                </select>
             </div>
             @if (Model.Project.Members.Any())
             {
                 <div class="emp-member-stack">
-                    @foreach (var m in Model.Project.Members)
+                    @foreach (var m in Model.Project.Members.OrderBy(m => m.IsArchived))
                     {
-                        <div class="emp-member-row" data-name="@((m.EmployeeName ?? "").ToLower())">
+                        <div class="emp-member-row" data-name="@((m.EmployeeName ?? "").ToLower())" data-archived="@(m.IsArchived ? "true" : "false")">
                             <div class="emp-member-avatar">
                                 @if (!string.IsNullOrWhiteSpace(m.ProfileImage))
                                 {
@@ -333,24 +322,46 @@
                                 }
                             </div>
                             <div class="emp-member-info">
-                                <span class="emp-member-name">@m.EmployeeName</span>
+                                <span class="emp-member-name">@m.EmployeeName
+                                    @if (m.IsArchived)
+                                    {
+                                        <span style="display:inline-block;margin-left:.35rem;font-size:.65rem;color:#d97706;font-weight:800;letter-spacing:.3px;">ARCHIVED</span>
+                                    }
+                                </span>
                                 <span class="emp-member-role">@m.ProjectRoleName</span>
                             </div>
                             <div class="pm-member-actions">
-                                <button type="button" class="emp-action-btn emp-action-edit" title="Edit" onclick="editMember(@m.Id, '@m.EmployeeId', '@m.ProjectRoleId')">  
-                                    <i class="fas fa-pen-to-square"></i>
-                                </button>
-                                <form asp-area="ProjectManager" asp-controller="Project" asp-action="RemoveMember" method="post" style="margin:0;" class="remove-member-form">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="memberId" value="@m.Id" />
-                                    <button type="button" class="emp-action-btn emp-action-delete remove-member-btn" title="Remove"
-                                            data-member-name="@m.EmployeeName">
-                                        <i class="fas fa-xmark" aria-hidden="true"></i>
+                                @if (!m.IsArchived)
+                                {
+                                    <button type="button" class="emp-action-btn emp-action-edit" title="Edit" onclick="editMember(@m.Id, '@m.EmployeeId', '@m.ProjectRoleId')">
+                                        <i class="fas fa-pen-to-square"></i>
                                     </button>
-                                </form>
+                                    <form asp-area="ProjectManager" asp-controller="Project" asp-action="ArchiveMember" method="post" style="margin:0;" class="archive-member-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="memberId" value="@m.Id" />
+                                        <button type="button" class="emp-action-btn emp-action-archive archive-member-btn" title="Archive"
+                                                data-member-name="@m.EmployeeName">
+                                            <i class="fas fa-box-archive" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-area="ProjectManager" asp-controller="Project" asp-action="UnarchiveMember" method="post" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="memberId" value="@m.Id" />
+                                        <button type="submit" class="emp-action-btn emp-action-unarchive" title="Restore member">
+                                            <i class="fas fa-box-open" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                }
                             </div>
                         </div>
                     }
+                </div>
+                <div id="memberNoResults" class="emp-empty-state" style="display:none;padding:1.2rem;">
+                    <div class="emp-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                    <p class="emp-empty-text">No members match the current filter.</p>
                 </div>
             }
             else
@@ -974,19 +985,36 @@ document.addEventListener('keydown', function(e) {
     };
 })();
 
-// Member search filtering
+// Member search + archive filter
 (function(){
-    const input = document.getElementById('memberSearch');
-    if (!input) return;
+    const input   = document.getElementById('memberSearch');
+    const filter  = document.getElementById('memberArchiveFilter');
+    const badge   = document.getElementById('memberCountChip');
+    const noRes   = document.getElementById('memberNoResults');
+    if (!input && !filter) return;
     const rows = Array.from(document.querySelectorAll('.emp-member-stack .emp-member-row'));
     function apply(){
-        const q = (input.value || '').toLowerCase().trim();
+        const q = (input ? input.value : '').toLowerCase().trim();
+        const f = filter ? filter.value : 'active';
+        let visible = 0;
         rows.forEach(r => {
-            const name = (r.dataset.name || '').toLowerCase();
-            r.style.display = (!q || name.includes(q)) ? '' : 'none';
+            const name       = (r.dataset.name || '').toLowerCase();
+            const isArchived = r.dataset.archived === 'true';
+            const nameMatch  = !q || name.includes(q);
+            let filterMatch;
+            if (f === 'all')      filterMatch = true;
+            else if (f === 'archived') filterMatch = isArchived;
+            else                  filterMatch = !isArchived;
+            const show = nameMatch && filterMatch;
+            r.style.display = show ? '' : 'none';
+            if (show) visible++;
         });
+        if (badge) badge.textContent = visible;
+        if (noRes) noRes.style.display = visible === 0 ? '' : 'none';
     }
-    input.addEventListener('input', apply);
+    if (input)  input.addEventListener('input', apply);
+    if (filter) filter.addEventListener('change', apply);
+    apply();
 })();
 </script>
 
@@ -1060,7 +1088,7 @@ document.addEventListener('keydown', function(e) {
     function showModal(form, name) {
         if (!modal) { form.submit(); return; }
         formToSubmit = form;
-        if (modalMsg) modalMsg.textContent = 'Remove ' + name + ' from this project?';
+        if (modalMsg) modalMsg.textContent = 'Archive ' + name + ' from this project? They will no longer see this project.';
         modal.style.display = 'flex';
         modal.setAttribute('aria-hidden', 'false');
     }
@@ -1072,9 +1100,9 @@ document.addEventListener('keydown', function(e) {
         modal.setAttribute('aria-hidden', 'true');
     }
 
-    document.querySelectorAll('.remove-member-btn').forEach(function(btn) {
+    document.querySelectorAll('.archive-member-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            const form = btn.closest('.remove-member-form');
+            const form = btn.closest('.archive-member-form');
             const name = btn.getAttribute('data-member-name') || '';
             if (form) showModal(form, name);
         });

@@ -52,6 +52,19 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 })
                 .ToListAsync();
 
+            // Mark removed (archived membership) projects
+            var membershipStatus = await _context.Members
+                .Where(m => m.EmployeeId == employee.Id)
+                .Select(m => new { m.ProjectId, m.IsArchived })
+                .ToListAsync();
+
+            foreach (var project in projects)
+            {
+                var membership = membershipStatus.FirstOrDefault(m => m.ProjectId == project.Id);
+                if (membership != null && membership.IsArchived)
+                    project.IsMemberRemoved = true;
+            }
+
             var projectIds = projects.Select(p => p.Id).ToList();
 
             var members = await _context.Members
