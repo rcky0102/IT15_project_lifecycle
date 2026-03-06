@@ -45,6 +45,15 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+            var model = await BuildIndexViewModelAsync(dh);
+            return View(model);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind(Prefix = "CreateProject")] CreateDepartmentHeadProjectViewModel createModel)
@@ -137,9 +146,8 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             if (!ModelState.IsValid)
             {
-                ViewData["OpenCreateModal"] = true;
                 var invalidModel = await BuildIndexViewModelAsync(dh, createModel);
-                return View("Index", invalidModel);
+                return View(invalidModel);
             }
 
             var project = new Project
