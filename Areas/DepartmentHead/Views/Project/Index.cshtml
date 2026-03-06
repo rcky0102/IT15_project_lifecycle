@@ -43,12 +43,35 @@
 }
 <!-- Stats bar removed -->
 
+<!-- Confirmation modal for archive / unarchive -->
+<div class="emp-modal-backdrop" id="confirmActionModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmActionMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmActionCancel">Cancel</button>
+            <form id="confirmActionForm" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="confirmActionId" value="" />
+                <button type="submit" class="emp-btn emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- ===== Filters ===== -->
 <div class="emp-filters-card">
     <div class="emp-filters-row">
         <div class="emp-search-group">
             <i class="fas fa-magnifying-glass emp-search-icon"></i>
             <input id="projectSearch" type="text" class="emp-search-input" placeholder="Search projects…" autocomplete="off" />
+        </div>
+        <div class="emp-select-group">
+            <select id="archiveFilter" class="emp-select">
+                <option value="active" selected>Active</option>
+                <option value="inactive">Archived</option>
+                <option value="all">All</option>
+            </select>
         </div>
         <div class="emp-select-group">
             <label for="pageSizeSelect" style="font-size:.82rem;color:#64748b;margin-right:.4rem;">Show</label>
@@ -81,7 +104,7 @@
                         </tr>
                     </thead>
                     <tbody id="projectsBody">
-                        @foreach (var project in Model.Projects)
+                        @foreach (var project in Model.Projects.OrderBy(p => p.IsArchived))
                         {
                             var duration  = (project.EndDate - project.StartDate).Days;
                             var totalPMs  = project.Milestones?.Count ?? 0;
@@ -90,14 +113,19 @@
                                 return s == "completed" || s == "checked" || s == "finished";
                             }) ?? 0;
                             var percent   = totalPMs > 0 ? (int)Math.Round((double)donePMs * 100 / totalPMs) : 0;
-                            <tr class="emp-row" data-name="@project.Name.ToLower()">
+                            <tr class="emp-row" data-name="@project.Name.ToLower()" data-archived="@(project.IsArchived ? "true" : "false")">
                                 <td>
                                     <div class="project-name-cell">
                                         <div class="project-name-icon">
                                             <i class="fas fa-folder"></i>
                                         </div>
                                         <div>
-                                            <div class="project-name-text">@project.Name</div>
+                                            <div class="project-name-text">@project.Name
+                                                @if (project.IsArchived)
+                                                {
+                                                    <span style="display:inline-block;margin-left:.5rem;font-size:.72rem;color:#94a3b8;font-weight:700;">ARCHIVED</span>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -151,10 +179,30 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Show" asp-route-id="@project.Id"
-                                       class="emp-action-btn emp-action-view" title="View project">
-                                        <i class="fas fa-magnifying-glass"></i>
-                                    </a>
+                                    <div style="display:inline-flex;align-items:center;gap:.35rem;">
+                                        <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Show" asp-route-id="@project.Id"
+                                           class="emp-action-btn emp-action-view" title="View project">
+                                            <i class="fas fa-magnifying-glass"></i>
+                                        </a>
+                                        @if (!project.IsArchived)
+                                        {
+                                            <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
+                                                    data-action="@Url.Action("ArchiveProject", "Project", new { area = "DepartmentHead" })"
+                                                    data-id="@project.Id"
+                                                    data-message="Archive this project? It will be hidden from the Project Manager and employees.">
+                                                <i class="fas fa-box-archive"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="emp-action-btn emp-action-unarchive" title="Unarchive"
+                                                    data-action="@Url.Action("UnarchiveProject", "Project", new { area = "DepartmentHead" })"
+                                                    data-id="@project.Id"
+                                                    data-message="Unarchive this project? It will become visible again to the Project Manager and employees.">
+                                                <i class="fas fa-box-open"></i>
+                                            </button>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -455,11 +503,17 @@
     const pageInfo       = document.getElementById('paginationInfo');
     const pageControls   = document.getElementById('paginationControls');
     const pageSizeSelect = document.getElementById('pageSizeSelect');
+    const archiveSelect  = document.getElementById('archiveFilter');
 
     function applyFilters() {
         const query = (searchInput?.value ?? '').toLowerCase().trim();
+        const archiveFilter = archiveSelect?.value ?? 'active';
         filteredRows = allRows.filter(row => {
-            return !query || (row.dataset.name || '').includes(query);
+            const nameMatch    = !query || (row.dataset.name || '').includes(query);
+            const isArchived   = row.dataset.archived === 'true';
+            const archiveMatch = archiveFilter === 'all' ? true
+                : archiveFilter === 'inactive' ? isArchived : !isArchived;
+            return nameMatch && archiveMatch;
         });
         currentPage = 1;
         render();
@@ -507,6 +561,7 @@
     }
 
     if (searchInput)  searchInput.addEventListener('input', applyFilters);
+    if (archiveSelect) archiveSelect.addEventListener('change', applyFilters);
     if (pageSizeSelect) {
         pageSizeSelect.value = String(PAGE_SIZE);
         pageSizeSelect.addEventListener('change', function () {
@@ -517,7 +572,7 @@
     }
 
     filteredRows = allRows.slice();
-    render();
+    applyFilters();
 })();
     </script>
     <script>
@@ -750,6 +805,43 @@
                 fetchHolidays();
             }
         })();
+    </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal      = document.getElementById('confirmActionModal');
+    const modalMsg   = document.getElementById('confirmActionMessage');
+    const modalForm  = document.getElementById('confirmActionForm');
+    const modalId    = document.getElementById('confirmActionId');
+    const cancelBtn  = document.getElementById('confirmActionCancel');
+
+    function showModal(actionUrl, id, message) {
+        if (!modal || !modalForm || !modalId) return;
+        modalForm.action     = actionUrl;
+        modalId.value        = id;
+        modalMsg.textContent = message || 'Are you sure?';
+        modal.style.display  = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.querySelectorAll('.emp-action-archive, .emp-action-unarchive').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const action  = btn.getAttribute('data-action');
+            const id      = btn.getAttribute('data-id');
+            const message = btn.getAttribute('data-message') || 'Are you sure?';
+            if (!action || !id) return;
+            showModal(action, id, message);
+        });
+    });
+
+    cancelBtn?.addEventListener('click', hideModal);
+    modal?.addEventListener('click', function (e) { if (e.target === modal) hideModal(); });
+});
     </script>
 }
 

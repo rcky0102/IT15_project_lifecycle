@@ -208,6 +208,274 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveProject(int id)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var project = await _context.Projects
+                .Where(p => p.Id == id && _context.ProjectProposals.Any(pp =>
+                    pp.Id == p.ProjectProposalId && pp.Employee != null && pp.Employee.DepartmentId == dh.DepartmentId))
+                .FirstOrDefaultAsync();
+            if (project == null) return NotFound();
+
+            project.IsArchived = true;
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Archive", "Projects", $"Archived project '{project.Name}' (ID: {project.Id})", "Project", project.Id.ToString());
+            TempData["SuccessMessage"] = "Project archived successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchiveProject(int id)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var project = await _context.Projects
+                .Where(p => p.Id == id && _context.ProjectProposals.Any(pp =>
+                    pp.Id == p.ProjectProposalId && pp.Employee != null && pp.Employee.DepartmentId == dh.DepartmentId))
+                .FirstOrDefaultAsync();
+            if (project == null) return NotFound();
+
+            project.IsArchived = false;
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Unarchive", "Projects", $"Unarchived project '{project.Name}' (ID: {project.Id})", "Project", project.Id.ToString());
+            TempData["SuccessMessage"] = "Project unarchived successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Show(int id)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var project = await _context.Projects
+                .Where(p => p.Id == id && _context.ProjectProposals.Any(pp =>
+                    pp.Id == p.ProjectProposalId && pp.Employee != null && pp.Employee.DepartmentId == dh.DepartmentId))
+                .Select(p => new project_lifecycle.ViewModels.ProjectManager.ProjectDetailViewModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    ProposalTitle = p.ProjectProposal != null ? p.ProjectProposal.Title : string.Empty,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    IsArchived = p.IsArchived
+                })
+                .FirstOrDefaultAsync();
+
+            if (project == null) return NotFound();
+
+            var members = await _context.Members
+                .Where(m => m.ProjectId == project.Id)
+                .Include(m => m.Employee)
+                .Include(m => m.ProjectRole)
+                .ToListAsync();
+
+            var milestones = await _context.ProjectMilestones
+                .Where(pmst => pmst.ProjectId == project.Id)
+                .Include(pmst => pmst.Milestone)
+                .OrderBy(pmst => pmst.SequenceOrder)
+                .ToListAsync();
+
+            project.Members = members
+                .Select(m => new project_lifecycle.ViewModels.ProjectManager.MemberViewModel
+                {
+                    Id = m.Id,
+                    EmployeeId = m.EmployeeId,
+                    EmployeeName = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A",
+                    ProfileImage = m.Employee?.ProfileImage,
+                    ProjectRoleId = m.ProjectRoleId,
+                    ProjectRoleName = m.ProjectRole?.Name ?? "N/A"
+                })
+                .ToList();
+
+            project.Milestones = milestones
+                .Select(ms => new project_lifecycle.ViewModels.ProjectManager.ProjectMilestoneViewModel
+                {
+                    Id = ms.Id,
+                    MilestoneId = ms.MilestoneId,
+                    MilestoneName = ms.Milestone?.Name ?? "N/A",
+                    SequenceOrder = ms.SequenceOrder,
+                    Status = ms.Status,
+                    IsArchived = ms.IsArchived
+                })
+                .ToList();
+
+            var vm = new project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
+            {
+                Project = project
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Milestone(int projectMilestoneId)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var pmst = await _context.ProjectMilestones
+                .Include(p => p.Project).ThenInclude(p => p!.ProjectProposal).ThenInclude(p => p!.Employee)
+                .Include(p => p.Milestone)
+                .FirstOrDefaultAsync(p => p.Id == projectMilestoneId);
+
+            if (pmst == null || pmst.Project?.ProjectProposal?.Employee?.DepartmentId != dh.DepartmentId)
+                return NotFound();
+
+            var tasks = await _context.ProjectTasks
+                .Where(t => t.ProjectMilestoneId == pmst.Id)
+                .ToListAsync();
+
+            var taskIds = tasks.Select(t => t.Id).ToList();
+            var taskMembers = await _context.TaskMembers
+                .Where(tm => taskIds.Contains(tm.ProjectTaskId))
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .ToListAsync();
+
+            var vm = new project_lifecycle.ViewModels.ProjectManager.MilestoneViewModel
+            {
+                ProjectId = pmst.ProjectId,
+                ProjectName = pmst.Project?.Name ?? string.Empty,
+                ProjectMilestoneId = pmst.Id,
+                MilestoneId = pmst.MilestoneId,
+                MilestoneName = pmst.Milestone?.Name ?? string.Empty,
+                SequenceOrder = pmst.SequenceOrder,
+                Status = pmst.Status
+            };
+
+            vm.Tasks = tasks.Select(t =>
+            {
+                var firstMember = taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id);
+                var emp = firstMember?.Member?.Employee;
+                var name = emp != null
+                    ? string.Join(" ", new[] { emp.FirstName, emp.MiddleName, emp.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    : null;
+                return new project_lifecycle.ViewModels.ProjectManager.ProjectTaskItemViewModel
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Status = t.Status,
+                    StartDate = t.StartDate,
+                    EndDate = t.EndDate,
+                    AssignedMemberName = name,
+                    IsArchived = t.IsArchived
+                };
+            }).ToList();
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Task(int id)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone)
+                    .ThenInclude(pmst => pmst!.Project)
+                        .ThenInclude(p => p!.ProjectProposal)
+                            .ThenInclude(pp => pp!.Employee)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null) return NotFound();
+
+            if (task.ProjectMilestone?.Project?.ProjectProposal?.Employee?.DepartmentId != dh.DepartmentId)
+                return Forbid();
+
+            var taskMember = await _context.TaskMembers
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .FirstOrDefaultAsync(tm => tm.ProjectTaskId == id);
+
+            var assignedName = taskMember?.Member?.Employee != null
+                ? string.Join(" ", new[] {
+                    taskMember.Member.Employee.FirstName,
+                    taskMember.Member.Employee.MiddleName,
+                    taskMember.Member.Employee.LastName
+                  }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                : null;
+
+            var inputVersions = await _context.ProjectTaskVersions
+                .Where(v => v.ProjectTaskId == id)
+                .OrderByDescending(v => v.VersionNumber)
+                .ToListAsync();
+
+            var noteVersions = await _context.TaskNoteVersions
+                .Where(n => n.ProjectTaskId == id)
+                .OrderByDescending(n => n.VersionNumber)
+                .ToListAsync();
+
+            ViewBag.ProjectTaskVersions = inputVersions;
+            ViewBag.TaskNoteVersions = noteVersions;
+
+            var vm = new project_lifecycle.ViewModels.ProjectManager.ProjectTaskReviewViewModel
+            {
+                Id = task.Id,
+                ProjectId = task.ProjectMilestone!.ProjectId,
+                ProjectMilestoneId = task.ProjectMilestoneId,
+                Name = task.Name,
+                Instructions = task.Instructions ?? string.Empty,
+                EmployeeInput = task.Input,
+                AssignedMemberName = assignedName,
+                Status = task.Status,
+                Notes = task.Notes
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TaskVersion(int id)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var version = await _context.ProjectTaskVersions
+                .Include(v => v.ProjectTask)
+                    .ThenInclude(t => t!.ProjectMilestone)
+                        .ThenInclude(ms => ms!.Project)
+                            .ThenInclude(p => p!.ProjectProposal)
+                                .ThenInclude(pp => pp!.Employee)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (version == null) return NotFound();
+
+            if (version.ProjectTask?.ProjectMilestone?.Project?.ProjectProposal?.Employee?.DepartmentId != dh.DepartmentId)
+                return Forbid();
+
+            return View(version);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TaskNote(int id)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var note = await _context.TaskNoteVersions
+                .Include(n => n.ProjectTask)
+                    .ThenInclude(t => t!.ProjectMilestone)
+                        .ThenInclude(ms => ms!.Project)
+                            .ThenInclude(p => p!.ProjectProposal)
+                                .ThenInclude(pp => pp!.Employee)
+                .FirstOrDefaultAsync(n => n.Id == id);
+
+            if (note == null) return NotFound();
+
+            if (note.ProjectTask?.ProjectMilestone?.Project?.ProjectProposal?.Employee?.DepartmentId != dh.DepartmentId)
+                return Forbid();
+
+            return View(note);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetHolidays(DateTime startDate, DateTime endDate)
         {
@@ -263,7 +531,8 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                     ProjectManagerLastName = p.ProjectManager != null ? p.ProjectManager.LastName : null,
                     StartDate = p.StartDate,
                     EndDate = p.EndDate,
-                    DateCreated = p.DateCreated
+                    DateCreated = p.DateCreated,
+                    IsArchived = p.IsArchived
                 })
                 .ToListAsync();
 
@@ -341,7 +610,8 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 MemberCount = memberCountByProjectId.TryGetValue(p.Id, out var count) ? count : 0,
                 Members = membersByProjectId.TryGetValue(p.Id, out var mems) ? mems : new List<ViewModels.DepartmentHead.MemberViewModel>(),
                 Milestones = milestonesByProjectId.TryGetValue(p.Id, out var ms) ? ms : new List<ViewModels.DepartmentHead.ProjectMilestoneViewModel>(),
-                Status = (p.EndDate.Date < DateTime.Today) ? "Finished" : "Unfinished"
+                Status = (p.EndDate.Date < DateTime.Today) ? "Finished" : "Unfinished",
+                IsArchived = p.IsArchived
             }).ToList();
 
             var usedProposalIds = await _context.Projects.Select(p => p.ProjectProposalId).ToListAsync();

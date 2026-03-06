@@ -1,0 +1,348 @@
+@model project_lifecycle.ViewModels.ProjectManager.MilestoneViewModel
+@{
+    ViewData["Title"] = Model.MilestoneName;
+    var totalTasks = Model.Tasks.Count(t => !t.IsArchived);
+    var doneTasks  = Model.Tasks.Count(t => !t.IsArchived && string.Equals(t.Status, "Checked", StringComparison.OrdinalIgnoreCase));
+    var pct        = totalTasks > 0 ? (int)Math.Round(doneTasks * 100.0 / totalTasks) : 0;
+}
+
+<style>
+    .emp-show-grid { display:grid; grid-template-columns:1fr 300px; gap:1.5rem; align-items:start; }
+    @@media (max-width:900px) { .emp-show-grid { grid-template-columns:1fr; } }
+    .emp-show-tasks-card { background:#fff; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden; }
+    .emp-task-list { padding:.25rem 1.25rem; }
+    .emp-task-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.85rem 0; border-bottom:1px solid #f8fafc; }
+    .emp-task-row:last-child { border-bottom:none; }
+    .emp-task-row-left { display:flex; align-items:center; gap:.75rem; min-width:0; flex:1; }
+    .emp-task-row-right { display:flex; align-items:center; gap:.6rem; flex-shrink:0; }
+    .emp-task-status-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+    .emp-dot-green  { background:#22c55e; }
+    .emp-dot-orange { background:#f59e0b; }
+    .emp-dot-purple { background:#6366f1; }
+    .emp-dot-gray   { background:#94a3b8; }
+    .emp-task-info { min-width:0; }
+    .emp-task-name  { font-weight:600; font-size:.88rem; color:#1e293b; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .emp-task-dates { font-size:.75rem; color:#64748b; display:block; margin-top:.1rem; }
+    .emp-task-meta-assignee { font-size:.75rem; color:#94a3b8; display:block; }
+    .emp-info-strip { display:flex; flex-wrap:wrap; gap:.6rem 1.5rem; padding:.85rem 1.25rem; background:#fff; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:1.5rem; align-items:center; }
+    .emp-info-item  { display:flex; align-items:center; gap:.45rem; font-size:.82rem; color:#475569; }
+    .emp-info-item i { color:#6366f1; }
+    .emp-info-progress { display:flex; align-items:center; gap:.6rem; }
+    .emp-info-progress-bar { width:90px; height:6px; background:#f1f5f9; border-radius:99px; overflow:hidden; }
+    .emp-info-progress-fill { height:100%; background:linear-gradient(90deg,#6366f1,#8b5cf6); border-radius:99px; transition:width .3s; }
+    .emp-info-progress-label { font-size:.78rem; font-weight:700; color:#6366f1; }
+    .emp-show-side { display:flex; flex-direction:column; gap:1.5rem; }
+    .emp-side-card { background:#fff; border-radius:14px; border:1px solid #e2e8f0; padding:1.1rem 1.25rem; }
+    .emp-side-card-title { font-weight:700; font-size:.9rem; color:#1e293b; display:flex; align-items:center; gap:.5rem; margin-bottom:.9rem; }
+    .emp-ms-status-badge { display:inline-flex; align-items:center; gap:.35rem; font-size:.73rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:.25rem .65rem; border-radius:20px; }
+    .emp-ms-status-badge.finished    { background:#dcfce7; color:#16a34a; }
+    .emp-ms-status-badge.in-progress { background:#ede9fe; color:#7c3aed; }
+    .emp-ms-status-badge.pending     { background:#fef3c7; color:#d97706; }
+    .emp-ms-status-badge.default     { background:#f1f5f9; color:#64748b; }
+    .ms-info-row { display:flex; justify-content:space-between; align-items:center; padding:.45rem 0; border-bottom:1px solid #f8fafc; font-size:.84rem; }
+    .ms-info-row:last-child { border-bottom:none; }
+    .ms-info-label { color:#64748b; }
+    .ms-info-value { font-weight:600; color:#1e293b; }
+</style>
+
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-flag-checkered"></i></span>
+                @Model.MilestoneName
+            </h1>
+            <p class="emp-page-subtitle">Project: @Model.ProjectName</p>
+        </div>
+        <div class="emp-page-hero-right" style="display:flex;gap:.6rem;flex-wrap:wrap;">
+            <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Show"
+               asp-route-id="@Model.ProjectId" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Project</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <i class="fas fa-check-circle emp-alert-icon"></i>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <i class="fas fa-exclamation-circle emp-alert-icon"></i>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+
+<!-- ===== Info Strip ===== -->
+<div class="emp-info-strip">
+    <div class="emp-info-item">
+        <i class="fas fa-hashtag"></i>
+        <span>Milestone #@Model.SequenceOrder</span>
+    </div>
+    <div class="emp-info-item">
+        <i class="fas fa-circle-half-stroke"></i>
+        <span class="emp-ms-status-badge @PmMilestoneStatusClass(Model.Status)">
+            <span class="emp-status-dot"></span>
+            @Model.Status
+        </span>
+    </div>
+    <div class="emp-info-item">
+        <i class="fas fa-list-check"></i>
+        <span>@doneTasks / @totalTasks tasks completed</span>
+    </div>
+    @if (totalTasks > 0)
+    {
+        <div class="emp-info-progress">
+            <div class="emp-info-progress-bar">
+                <div class="emp-info-progress-fill" style="width:@pct%"></div>
+            </div>
+            <span class="emp-info-progress-label">@pct%</span>
+        </div>
+    }
+</div>
+
+<div class="emp-show-grid">
+
+    <!-- ===== Tasks Card ===== -->
+    <div class="emp-show-tasks-card">
+        <div class="emp-table-toolbar">
+            <div class="emp-table-toolbar-left">
+                <h3 class="emp-table-title"><i class="fas fa-list-check"></i> Tasks</h3>
+                <span class="emp-count-chip">@totalTasks</span>
+            </div>
+            <div class="emp-table-toolbar-right">
+                <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:.4rem;position:relative;">
+                        <i class="fas fa-magnifying-glass emp-search-icon" style="color:#64748b;font-size:0.95rem;opacity:1;"> </i>
+                        <input id="taskSearch" type="text" class="emp-search-input" placeholder="Search tasks…" autocomplete="off" style="padding-left:2.6rem;" />
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.4rem;">
+                        <select id="taskStatusFilter" class="emp-select">
+                            <option value="all" selected>All</option>
+                            <option value="pending">Pending</option>
+                            <option value="checked">Checked</option>
+                            <option value="require revision">Require Revision</option>
+                            <option value="in progress">In Progress</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.4rem;">
+                        <select id="taskArchiveFilter" class="emp-select">
+                            <option value="active" selected>Active</option>
+                            <option value="archived">Archived</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.4rem;">
+                        <label for="taskPageSizeSelect" style="font-size:.82rem;color:#64748b;margin-right:.4rem;">Show</label>
+                        <select id="taskPageSizeSelect" class="emp-select" style="width:92px;">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Tasks.Any())
+        {
+            <div class="emp-task-list" id="tasksList">
+                @foreach (var t in Model.Tasks.OrderBy(x => x.IsArchived).ThenBy(x => x.StartDate))
+                {
+                    <div class="emp-task-row emp-task-row-item" data-name="@t.Name.ToLower()" data-status="@(t.Status?.ToLowerInvariant() ?? "")" data-archived="@(t.IsArchived ? "true" : "false")">
+                        <div class="emp-task-row-left">
+                            <span class="emp-task-status-dot @PmTaskDotClass(t.Status)"></span>
+                            <div class="emp-task-info">
+                                <span class="emp-task-name">@t.Name</span>
+                                <span class="emp-task-dates">
+                                    @if (t.IsArchived)
+                                    {
+                                        <span style="font-size:.75rem;color:#94a3b8;">ARCHIVED</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="far fa-calendar"></i>
+                                        @t.StartDate.ToString("MMM dd") <text>&ndash;</text> @t.EndDate.ToString("MMM dd, yyyy")
+                                    }
+                                </span>
+                                <span class="emp-task-meta-assignee">
+                                    <i class="fas fa-user" style="font-size:.65rem;"></i>
+                                    @(t.AssignedMemberName ?? "Unassigned")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="emp-task-row-right">
+                            <span class="emp-badge-white" title="Status">
+                                <span class="emp-status-inline @PmTaskBadgeClass(t.Status)">
+                                    <span class="emp-status-dot"></span>
+                                    <span class="emp-status-text">@t.Status</span>
+                                </span>
+                            </span>
+                            <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Task"
+                               asp-route-id="@t.Id" class="emp-action-btn emp-action-view" title="View Task">
+                                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div id="noTaskResults" class="emp-empty-state" style="display:none;margin-top:1rem;">
+                <div class="emp-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <h4 class="emp-empty-title">No matching tasks</h4>
+                <p class="emp-empty-text">Try adjusting your search or filters.</p>
+            </div>
+
+            <div class="emp-pagination" id="taskPaginationContainer" style="margin-top:1rem;">
+                <div class="emp-pagination-info" id="taskPaginationInfo"></div>
+                <div class="emp-pagination-controls" id="taskPaginationControls"></div>
+            </div>
+        }
+        else
+        {
+            <div class="emp-empty-state">
+                <div class="emp-empty-icon"><i class="fas fa-list-check"></i></div>
+                <h4 class="emp-empty-title">No tasks yet</h4>
+                <p class="emp-empty-text">No tasks have been created for this milestone.</p>
+            </div>
+        }
+    </div>
+
+    <!-- ===== Side Panel ===== -->
+    <div class="emp-show-side">
+        <!-- Project Link -->
+        <div class="emp-side-card" style="text-align:center;">
+            <div class="emp-side-card-title" style="justify-content:center;"><i class="fas fa-diagram-project"></i> Project</div>
+            <p style="font-size:.84rem;color:#475569;margin:.1rem 0 1rem;">@Model.ProjectName</p>
+            <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Show"
+               asp-route-id="@Model.ProjectId" class="emp-btn emp-btn-primary" style="width:100%;justify-content:center;">
+                <i class="fas fa-arrow-up-right-from-square me-1"></i>Open Project Details
+            </a>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    let PAGE_SIZE = 10;
+    let currentPage = 1;
+    let filteredRows = [];
+
+    const searchInput    = document.getElementById('taskSearch');
+    const allRows        = Array.from(document.querySelectorAll('.emp-task-row-item'));
+    const noResults      = document.getElementById('noTaskResults');
+    const pageInfo       = document.getElementById('taskPaginationInfo');
+    const pageControls   = document.getElementById('taskPaginationControls');
+    const pageSizeSelect = document.getElementById('taskPageSizeSelect');
+    const statusSelect   = document.getElementById('taskStatusFilter');
+    const archiveSelect  = document.getElementById('taskArchiveFilter');
+
+    function applyFilters() {
+        const query = (searchInput?.value ?? '').toLowerCase().trim();
+        const statusFilter = (statusSelect?.value ?? 'all').toLowerCase();
+        const archiveFilter = (archiveSelect?.value ?? 'active').toLowerCase();
+        filteredRows = allRows.filter(row => {
+            const nameMatch = !query || (row.dataset.name || '').includes(query);
+            const status = (row.dataset.status || '').toLowerCase();
+            const isArchived = (row.dataset.archived || 'false') === 'true';
+            const statusMatch = statusFilter === 'all' || status === statusFilter;
+            let archiveMatch = true;
+            if (archiveFilter === 'active') archiveMatch = !isArchived;
+            else if (archiveFilter === 'archived') archiveMatch = isArchived;
+            return nameMatch && statusMatch && archiveMatch;
+        });
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        const total      = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        currentPage      = Math.min(currentPage, totalPages);
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end   = start + PAGE_SIZE;
+
+        allRows.forEach(r => r.style.display = 'none');
+        filteredRows.forEach((r, i) => { r.style.display = (i >= start && i < end) ? '' : 'none'; });
+
+        if (noResults)  noResults.style.display  = total === 0 ? '' : 'none';
+        if (pageInfo)   pageInfo.textContent      = total === 0 ? '' : `Showing ${start + 1}–${Math.min(end, total)} of ${total}`;
+
+        if (pageControls) {
+            pageControls.innerHTML = '';
+            const makeBtn = (label, page, disabled, active) => {
+                const btn = document.createElement('button');
+                btn.className = 'emp-page-btn' + (active ? ' active' : '');
+                btn.innerHTML = label;
+                btn.disabled  = disabled;
+                btn.addEventListener('click', () => { currentPage = page; render(); });
+                return btn;
+            };
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
+            const w = 2;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
+                    pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                    const el = document.createElement('span');
+                    el.className = 'emp-page-ellipsis';
+                    el.textContent = '\u2026';
+                    pageControls.appendChild(el);
+                }
+            }
+            pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
+        }
+    }
+
+    if (searchInput)    searchInput.addEventListener('input', applyFilters);
+    if (statusSelect)   statusSelect.addEventListener('change', applyFilters);
+    if (archiveSelect)  archiveSelect.addEventListener('change', applyFilters);
+    if (pageSizeSelect) {
+        pageSizeSelect.value = String(PAGE_SIZE);
+        pageSizeSelect.addEventListener('change', function () {
+            PAGE_SIZE = Math.max(5, parseInt(this.value, 10) || 10);
+            currentPage = 1;
+            render();
+        });
+    }
+
+    filteredRows = allRows.slice();
+    applyFilters();
+})();
+</script>
+}
+
+@functions {
+    private string PmTaskBadgeClass(string s) => s switch {
+        "Completed"        => "emp-status-approved",
+        "Checked"          => "emp-status-approved",
+        "In Progress"      => "emp-status-revision",
+        "Require Revision" => "emp-status-pending",
+        "Pending"          => "emp-status-pending",
+        _                  => "emp-status-default"
+    };
+    private string PmTaskDotClass(string s) => s switch {
+        "Completed"        => "emp-dot-green",
+        "Checked"          => "emp-dot-green",
+        "In Progress"      => "emp-dot-purple",
+        "Require Revision" => "emp-dot-orange",
+        _                  => "emp-dot-gray"
+    };
+    private string PmMilestoneStatusClass(string s) => s?.ToLower() switch {
+        "finished"    => "finished",
+        "in progress" => "in-progress",
+        "pending"     => "pending",
+        _             => "default"
+    };
+}

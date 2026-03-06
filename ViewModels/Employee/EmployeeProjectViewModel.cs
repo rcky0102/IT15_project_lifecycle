@@ -16,6 +16,7 @@ namespace project_lifecycle.ViewModels.Employee
             public DateTime StartDate { get; set; }
             public DateTime EndDate { get; set; }
             public string MilestoneName { get; set; } = string.Empty;
+            public bool IsArchived { get; set; } = false;
         }
     }
 }

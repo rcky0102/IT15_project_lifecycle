@@ -47,7 +47,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     Name = p.Name,
                     ProposalTitle = p.ProjectProposal != null ? p.ProjectProposal.Title : string.Empty,
                     StartDate = p.StartDate,
-                    EndDate = p.EndDate
+                    EndDate = p.EndDate,
+                    IsArchived = p.IsArchived
                 })
                 .ToListAsync();
 
@@ -123,7 +124,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     Name = p.Name,
                     ProposalTitle = p.ProjectProposal != null ? p.ProjectProposal.Title : string.Empty,
                     StartDate = p.StartDate,
-                    EndDate = p.EndDate
+                    EndDate = p.EndDate,
+                    IsArchived = p.IsArchived
                 })
                 .FirstOrDefaultAsync();
 
@@ -176,6 +178,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     tm.ProjectTask.Status,
                     tm.ProjectTask.StartDate,
                     tm.ProjectTask.EndDate,
+                    tm.ProjectTask.IsArchived,
                     MilestoneName = tm.ProjectTask.ProjectMilestone != null && tm.ProjectTask.ProjectMilestone.Milestone != null
                         ? tm.ProjectTask.ProjectMilestone.Milestone.Name
                         : string.Empty
@@ -192,7 +195,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     Status = t.Status,
                     StartDate = t.StartDate,
                     EndDate = t.EndDate,
-                    MilestoneName = t.MilestoneName ?? string.Empty
+                    MilestoneName = t.MilestoneName ?? string.Empty,
+                    IsArchived = t.IsArchived
                 }).ToList()
             };
 
@@ -215,9 +219,12 @@ namespace project_lifecycle.EmployeeArea.Controllers
             if (taskMember == null) return Forbid();
 
             var task = await _context.ProjectTasks
-                .Include(t => t.ProjectMilestone)
+                .Include(t => t.ProjectMilestone).ThenInclude(pm => pm.Project)
                 .FirstOrDefaultAsync(t => t.Id == id);
             if (task == null) return NotFound();
+
+            // If the parent project is archived, treat the task as archived too
+            var taskIsArchived = task.IsArchived || (task.ProjectMilestone?.Project?.IsArchived ?? false);
 
             var versions = await _context.ProjectTaskVersions
                 .Where(v => v.ProjectTaskId == id)
@@ -239,6 +246,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
             ViewData["ExistingInput"] = task.Input ?? string.Empty;
             ViewData["TaskStatus"] = task.Status;
             ViewData["TaskNotes"] = task.Notes ?? string.Empty;
+            ViewData["IsArchived"] = taskIsArchived;
             return View();
         }
 
@@ -256,8 +264,16 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
             if (taskMember == null) return Forbid();
 
-            var task = await _context.ProjectTasks.FirstOrDefaultAsync(t => t.Id == id);
+            var task = await _context.ProjectTasks
+                .Include(t => t.ProjectMilestone).ThenInclude(pm => pm.Project)
+                .FirstOrDefaultAsync(t => t.Id == id);
             if (task == null) return NotFound();
+
+            if (task.IsArchived || (task.ProjectMilestone?.Project?.IsArchived ?? false))
+            {
+                TempData["ErrorMessage"] = "This task has been archived and can no longer be edited.";
+                return RedirectToAction(nameof(Task), new { id });
+            }
 
             // Save current input as a version before overwriting
             if (!string.IsNullOrWhiteSpace(task.Input))

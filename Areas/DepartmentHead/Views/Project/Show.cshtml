@@ -1,0 +1,273 @@
+@model project_lifecycle.ViewModels.ProjectManager.ProjectManageViewModel
+@{
+    ViewData["Title"] = Model.Project.Name;
+    var duration    = (Model.Project.EndDate - Model.Project.StartDate).Days;
+    var totalMs     = Model.Project.Milestones.Count(m => !m.IsArchived);
+    var finishedMs  = Model.Project.Milestones.Count(m => !m.IsArchived && m.Status == "Finished");
+    var pct         = totalMs > 0 ? (int)Math.Round((double)finishedMs / totalMs * 100) : 0;
+}
+
+<style>
+    .pm-step-chip { font-size:.65rem; font-weight:800; color:var(--emp-ocean); background:rgba(0,105,148,.06); padding:.2rem .5rem; border-radius:5px; letter-spacing:.4px; white-space:nowrap; }
+    .emp-member-stack { padding: .25rem 0; }
+    .emp-member-row { display:flex; align-items:center; gap:.6rem; padding:.45rem .6rem; border-radius:10px; }
+    .emp-member-row + .emp-member-row { margin-top:.35rem; }
+    .emp-member-avatar { width:40px; height:40px; flex:0 0 40px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#006994,#4CA3DD); color:#fff; font-weight:700; font-size:1rem; }
+    .emp-member-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+    .emp-member-info { min-width:0; }
+    .emp-member-name { display:block; font-size:.88rem; font-weight:500; line-height:1.05; color:#0f172a; }
+    .emp-member-role { display:block; font-size:.76rem; color:#64748b; margin-top:2px; }
+</style>
+
+<!-- ===== Page Hero ===== -->
+<div class="emp-page-hero">
+    <div class="emp-page-hero-content">
+        <div class="emp-page-hero-left">
+            <h1 class="emp-page-title">
+                <span class="emp-page-title-icon"><i class="fas fa-diagram-project"></i></span>
+                @Model.Project.Name
+            </h1>
+            <p class="emp-page-subtitle">Proposal: @Model.Project.ProposalTitle</p>
+        </div>
+        <div class="emp-page-hero-right">
+            <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Index" class="emp-btn emp-btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Projects</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="emp-alert emp-alert-success">
+        <i class="fas fa-check-circle emp-alert-icon"></i>
+        <span>@TempData["SuccessMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="emp-alert emp-alert-error">
+        <i class="fas fa-exclamation-circle emp-alert-icon"></i>
+        <span>@TempData["ErrorMessage"]</span>
+        <button class="emp-alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+
+<!-- ===== Info strip ===== -->
+<div class="emp-info-strip">
+    <div class="emp-info-item">
+        <i class="fas fa-calendar-days"></i>
+        <span>@Model.Project.StartDate.ToString("MMM dd, yyyy") &ndash; @Model.Project.EndDate.ToString("MMM dd, yyyy")</span>
+    </div>
+    <div class="emp-info-item">
+        <i class="fas fa-clock"></i>
+        <span>@duration days</span>
+    </div>
+    <div class="emp-info-item">
+        <i class="fas fa-users"></i>
+        <span>@Model.Project.Members.Count member@(Model.Project.Members.Count == 1 ? "" : "s")</span>
+    </div>
+    <div class="emp-info-item">
+        <i class="fas fa-flag-checkered"></i>
+        <span>@finishedMs / @totalMs milestones completed</span>
+    </div>
+    @if (totalMs > 0)
+    {
+        <div class="emp-info-progress">
+            <div class="emp-info-progress-bar">
+                <div class="emp-info-progress-fill" style="width:@pct%"></div>
+            </div>
+            <span class="emp-info-progress-label">@pct%</span>
+        </div>
+    }
+</div>
+
+<div class="emp-show-grid">
+
+    <!-- ===== Milestones card ===== -->
+    <div class="emp-show-tasks-card">
+        <div class="emp-table-toolbar">
+            <div class="emp-table-toolbar-left">
+                <h3 class="emp-table-title"><i class="fas fa-flag-checkered"></i> Project Milestones</h3>
+                <span class="emp-count-chip">@totalMs</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:.6rem;">
+                <select id="milestoneArchiveFilter" class="emp-select">
+                    <option value="active" selected>Active</option>
+                    <option value="archived">Archived</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
+        </div>
+
+        @if (Model.Project.Milestones.Any())
+        {
+            <div class="emp-task-list" id="milestonesList">
+                @foreach (var ms in Model.Project.Milestones.OrderBy(m => m.IsArchived).ThenBy(m => m.SequenceOrder))
+                {
+                    <div class="emp-task-row emp-milestone-row" data-archived="@(ms.IsArchived ? "true" : "false")">
+                        <div class="emp-task-row-left">
+                            <span class="emp-task-status-dot @MsDotClass(ms.Status)"></span>
+                            <div class="emp-task-info">
+                                <span class="emp-task-name">@ms.MilestoneName</span>
+                                <span class="emp-task-dates">
+                                    @if (ms.SequenceOrder > 0)
+                                    {
+                                        <span class="pm-step-chip">STEP @ms.SequenceOrder</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="pm-step-chip" style="opacity:.7;background:rgba(120,120,120,.06);">ARCHIVED</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                        <div class="emp-task-row-right">
+                            <span class="emp-badge-white" title="Status">
+                                <span class="emp-status-inline @MsBadgeClass(ms.Status)">
+                                    <span class="emp-status-dot"></span>
+                                    <span class="emp-status-text">@ms.Status</span>
+                                </span>
+                            </span>
+                            <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Milestone"
+                               asp-route-projectMilestoneId="@ms.Id"
+                               class="emp-action-btn emp-action-view" title="View Milestone">
+                                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="emp-empty-state">
+                <div class="emp-empty-icon"><i class="fas fa-flag-checkered"></i></div>
+                <h4 class="emp-empty-title">No milestones yet</h4>
+                <p class="emp-empty-text">No milestones have been added to this project.</p>
+            </div>
+        }
+    </div>
+
+    <!-- ===== Side panel ===== -->
+    <div class="emp-show-side">
+
+        <!-- Team Members -->
+        <div class="emp-side-card">
+            <div class="emp-side-card-title">
+                <i class="fas fa-users"></i> Team Members
+                <span class="emp-count-chip" style="margin-left:auto;">@Model.Project.Members.Count</span>
+            </div>
+            <div style="margin-top:.6rem;">
+                <input id="memberSearch" type="text" class="emp-search-input" placeholder="Search members…" style="width:100%;padding:.45rem .6rem;font-size:.88rem;" />
+            </div>
+            @if (Model.Project.Members.Any())
+            {
+                <div class="emp-member-stack">
+                    @foreach (var m in Model.Project.Members)
+                    {
+                        <div class="emp-member-row" data-name="@((m.EmployeeName ?? "").ToLower())">
+                            <div class="emp-member-avatar">
+                                @if (!string.IsNullOrWhiteSpace(m.ProfileImage))
+                                {
+                                    <img src="@Url.Content(m.ProfileImage)" alt="@m.EmployeeName" style="width:100%;height:100%;border-radius:8px;object-fit:cover;display:block;" />
+                                }
+                                else
+                                {
+                                    @m.EmployeeName.Substring(0, 1).ToUpper()
+                                }
+                            </div>
+                            <div class="emp-member-info">
+                                <span class="emp-member-name">@m.EmployeeName</span>
+                                <span class="emp-member-role">@m.ProjectRoleName</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="emp-empty-state" style="padding:1.5rem;">
+                    <div class="emp-empty-icon"><i class="fas fa-users"></i></div>
+                    <h4 class="emp-empty-title">No team members</h4>
+                    <p class="emp-empty-text">No members have been added yet.</p>
+                </div>
+            }
+        </div>
+
+    </div>
+
+</div>
+
+@functions {
+    private string MsBadgeClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-status-default";
+        return s.Trim().ToLowerInvariant() switch
+        {
+            "completed"         => "emp-status-approved",
+            "checked"           => "emp-status-approved",
+            "finished"          => "emp-status-approved",
+            "in progress"       => "emp-status-revision",
+            "requires revision" => "emp-status-revision",
+            "require revision"  => "emp-status-revision",
+            "pending"           => "emp-status-pending",
+            _                   => "emp-status-default"
+        };
+    }
+
+    private string MsDotClass(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "emp-dot-gray";
+        return s.Trim().ToLowerInvariant() switch
+        {
+            "completed"         => "emp-dot-green",
+            "checked"           => "emp-dot-green",
+            "finished"          => "emp-dot-green",
+            "in progress"       => "emp-dot-orange",
+            "requires revision" => "emp-dot-orange",
+            "require revision"  => "emp-dot-orange",
+            _                   => "emp-dot-gray"
+        };
+    }
+}
+
+@section Scripts {
+<script>
+// Member search filtering
+(function(){
+    const input = document.getElementById('memberSearch');
+    if (!input) return;
+    const rows = Array.from(document.querySelectorAll('.emp-member-stack .emp-member-row'));
+    function apply(){
+        const q = (input.value || '').toLowerCase().trim();
+        rows.forEach(r => {
+            const name = (r.dataset.name || '').toLowerCase();
+            r.style.display = (!q || name.includes(q)) ? '' : 'none';
+        });
+    }
+    input.addEventListener('input', apply);
+})();
+</script>
+<script>
+(function(){
+    const milestoneFilter = document.getElementById('milestoneArchiveFilter');
+    if (!milestoneFilter) return;
+    const rows = Array.from(document.querySelectorAll('.emp-milestone-row'));
+    function applyMilestoneFilter(){
+        const v = (milestoneFilter.value || 'active').toLowerCase();
+        rows.forEach(r => {
+            const isArchived = (r.dataset.archived || 'false') === 'true';
+            let show = true;
+            if (v === 'active') show = !isArchived;
+            else if (v === 'archived') show = isArchived;
+            r.style.display = show ? '' : 'none';
+        });
+    }
+    milestoneFilter.addEventListener('change', applyMilestoneFilter);
+    applyMilestoneFilter();
+})();
+</script>
+}

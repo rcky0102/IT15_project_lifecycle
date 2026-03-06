@@ -5,6 +5,7 @@
     var projectId = ViewData["ProjectId"];
     var taskStatus = ViewData["TaskStatus"]?.ToString() ?? "Pending";
     var taskNotes  = ViewData["TaskNotes"]?.ToString() ?? string.Empty;
+    var isArchived = ViewData["IsArchived"] is bool b && b;
     var versions   = ViewBag.ProjectTaskVersions as List<project_lifecycle.Models.ProjectTaskVersion>   ?? new List<project_lifecycle.Models.ProjectTaskVersion>();
     var noteVersions = ViewBag.TaskNoteVersions  as List<project_lifecycle.Models.TaskNoteVersion>     ?? new List<project_lifecycle.Models.TaskNoteVersion>();
     var orderedNotes = noteVersions.OrderByDescending(n => n.VersionNumber).ToList();
@@ -45,6 +46,15 @@
         </div>
     </div>
 </div>
+
+<!-- ===== Archived Banner ===== -->
+@if (isArchived)
+{
+    <div class="emp-alert emp-alert-error" style="pointer-events:none;">
+        <div class="emp-alert-icon"><i class="fas fa-archive"></i></div>
+        <span>This task has been <strong>archived</strong> by the Project Manager and is now read-only.</span>
+    </div>
+}
 
 <!-- ===== Alerts ===== -->
 @if (TempData["SuccessMessage"] != null)
@@ -97,18 +107,21 @@
 
             <div class="emp-form-row">
                 <label for="Input" class="emp-form-label">Your Input</label>
-                <textarea id="Input" name="Input" rows="8" class="emp-form-control">@Html.Raw(ViewData["ExistingInput"] ?? string.Empty)</textarea>
-                <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-                    <button type="button" id="insertRichFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
-                        <i class="fas fa-paperclip"></i> Add file/image
-                    </button>
-                    <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
-                </div>
-                <input type="file" id="richFileInput" style="display:none;" />
+                <textarea id="Input" name="Input" rows="8" class="emp-form-control" @(isArchived ? "disabled readonly" : "")>@Html.Raw(ViewData["ExistingInput"] ?? string.Empty)</textarea>
+                @if (!isArchived)
+                {
+                    <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+                        <button type="button" id="insertRichFileBtn" class="emp-btn emp-btn-outline" style="padding:6px 12px;">
+                            <i class="fas fa-paperclip"></i> Add file/image
+                        </button>
+                        <span style="font-size:12px; opacity:.8;">Max 10 MB (images, PDF, DOCX, XLSX, etc.)</span>
+                    </div>
+                    <input type="file" id="richFileInput" style="display:none;" />
+                }
             </div>
 
             <div class="emp-form-actions" style="justify-content:flex-end;">
-                <button type="submit" id="submitProposalBtn" class="emp-btn emp-btn-primary" style="margin-right:.5rem;"><i class="fas fa-paper-plane"></i> Submit Input</button>
+                <button type="submit" id="submitProposalBtn" class="emp-btn emp-btn-primary" style="margin-right:.5rem;" @(isArchived ? "disabled" : "")><i class="fas fa-paper-plane"></i> Submit Input</button>
             </div>
         </form>
     </div>

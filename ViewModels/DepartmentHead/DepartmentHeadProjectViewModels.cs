@@ -29,6 +29,7 @@ namespace project_lifecycle.ViewModels.DepartmentHead
         public List<MemberViewModel> Members { get; set; } = new();
         public List<ProjectMilestoneViewModel> Milestones { get; set; } = new();
         public string Status { get; set; } = "Unfinished";
+        public bool IsArchived { get; set; } = false;
     }
 
     public class MemberViewModel
