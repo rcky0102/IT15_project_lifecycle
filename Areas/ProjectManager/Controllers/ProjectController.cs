@@ -1132,6 +1132,85 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             return RedirectToAction(nameof(Details), new { id = resolvedProjectId });
         }
 
+        public class BatchMemberDto
+        {
+            public int ProjectId { get; set; }
+            public int EmployeeId { get; set; }
+            public int ProjectRoleId { get; set; }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> AddMembersBatch([FromBody] List<BatchMemberDto> members)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Json(new { success = false, error = "Not authorized." });
+
+            if (members == null || members.Count == 0)
+                return Json(new { success = false, error = "No members provided." });
+
+            var projectId = members[0].ProjectId;
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId && p.ProjectManagerId == pm.Id);
+            if (project == null) return Json(new { success = false, error = "Project not found." });
+
+            int addedCount = 0;
+            var errors = new System.Collections.Generic.List<string>();
+
+            foreach (var dto in members)
+            {
+                if (dto.EmployeeId <= 0 || dto.ProjectRoleId <= 0)
+                {
+                    errors.Add($"Invalid employee or role in one entry.");
+                    continue;
+                }
+
+                var alreadyMember = await _context.Members.AnyAsync(m => m.ProjectId == projectId && m.EmployeeId == dto.EmployeeId);
+                if (alreadyMember)
+                {
+                    var empName = (await _context.Employees.FindAsync(dto.EmployeeId))?.FirstName ?? $"ID {dto.EmployeeId}";
+                    errors.Add($"{empName} is already a member.");
+                    continue;
+                }
+
+                var employee = await _context.Employees.FindAsync(dto.EmployeeId);
+                if (employee == null) { errors.Add($"Employee ID {dto.EmployeeId} not found."); continue; }
+
+                var role = await _context.ProjectRoles.FindAsync(dto.ProjectRoleId);
+                if (role == null) { errors.Add($"Role ID {dto.ProjectRoleId} not found."); continue; }
+
+                var member = new Member
+                {
+                    ProjectId = projectId,
+                    EmployeeId = dto.EmployeeId,
+                    ProjectRoleId = dto.ProjectRoleId,
+                    DateCreated = DateTime.Now
+                };
+                _context.Members.Add(member);
+                addedCount++;
+
+                if (!string.IsNullOrEmpty(employee.UserId))
+                {
+                    await _notif.CreateAsync(employee.UserId,
+                        "Added to Project",
+                        $"You have been added to project '{project.Name}'.",
+                        "Info", "fas fa-user-plus",
+                        $"/Employee/Project/Details/{project.Id}",
+                        "Project");
+                }
+            }
+
+            if (addedCount > 0)
+            {
+                await _context.SaveChangesAsync();
+                await _audit.LogAsync(User, "Create", "Project Members", $"Batch-added {addedCount} member(s) to project {projectId}", "Project", projectId.ToString());
+            }
+
+            if (errors.Count > 0 && addedCount == 0)
+                return Json(new { success = false, error = string.Join(" | ", errors) });
+
+            return Json(new { success = true, addedCount, errors });
+        }
+
         private string BuildExceptionDetails(Exception ex)
         {
             var sb = new StringBuilder();
