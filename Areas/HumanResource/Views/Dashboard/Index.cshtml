@@ -1,9 +1,28 @@
+@using System.Text.Json
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Areas/HumanResource/Layout.cshtml";
+
+    var totalEmployees   = (int)(ViewData["TotalEmployees"]      ?? 0);
+    var newHiresMonth    = (int)(ViewData["NewHiresThisMonth"]   ?? 0);
+    var newHiresQuarter  = (int)(ViewData["NewHiresThisQuarter"] ?? 0);
+    var totalDepartments = (int)(ViewData["TotalDepartments"]    ?? 0);
+    var totalPositions   = (int)(ViewData["TotalPositions"]      ?? 0);
+
+    var deptNames  = ViewData["DeptNames"]  as List<string> ?? new List<string>();
+    var deptCounts = ViewData["DeptCounts"] as List<int>    ?? new List<int>();
+
+    var recentActivity = ViewBag.RecentActivity as System.Collections.IEnumerable;
 }
 
 <div class="dashboard-container">
+    <style>
+        .stat-card-link { display: block; color: inherit; text-decoration: none; }
+        .stat-card-link:hover { text-decoration: none; }
+        .stat-card-link .stat-card { transition: transform .12s ease, box-shadow .12s ease; }
+        .stat-card-link:hover .stat-card { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(20,40,60,0.06); }
+    </style>
+
     <!-- Dashboard Header -->
     <div class="dashboard-header">
         <div class="header-content">
@@ -11,77 +30,85 @@
             <p class="dashboard-subtitle">Manage employee records and HR operations</p>
         </div>
         <div class="header-actions">
-            <button class="btn btn-hr">
-                <i class="fas fa-user-plus"></i>
-                New Employee
-            </button>
-            <button class="btn btn-outline-hr">
+            <a href="@Url.Action("Index", "User", new { area = "HumanResource" })" class="btn btn-hr">
+                <i class="fas fa-users"></i>
+                Manage Employees
+            </a>
+            <a href="@Url.Action("Index", "Dashboard", new { area = "HumanResource" })" class="btn btn-outline-hr">
                 <i class="fas fa-sync"></i>
                 Refresh
-            </button>
+            </a>
         </div>
     </div>
 
     <!-- Stats Cards -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon primary">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">42</div>
-                <div class="stat-label">Total Employees</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> 3 this month
+        <a href='@Url.Action("Index", "User", new { area = "HumanResource" })' class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@totalEmployees</div>
+                    <div class="stat-label">Total Employees</div>
+                    <div class="stat-change @(newHiresMonth > 0 ? "positive" : "neutral")">
+                        <i class="fas fa-arrow-up"></i> @newHiresMonth hired this month
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon success">
-                <i class="fas fa-id-card"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">12</div>
-                <div class="stat-label">New Hires</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +4 this quarter
+        <a href='@Url.Action("Index", "User", new { area = "HumanResource" })' class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-id-card"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@newHiresMonth</div>
+                    <div class="stat-label">New Hires (This Month)</div>
+                    <div class="stat-change @(newHiresQuarter > 0 ? "positive" : "neutral")">
+                        <i class="fas fa-arrow-up"></i> @newHiresQuarter this quarter
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon warning">
-                <i class="fas fa-file-signature"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">7</div>
-                <div class="stat-label">Contracts Pending</div>
-                <div class="stat-change negative">
-                    <i class="fas fa-arrow-up"></i> Needs attention
+        <a href='@Url.Action("Index", "Department", new { area = "HumanResource" })' class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@totalDepartments</div>
+                    <div class="stat-label">Active Departments</div>
+                    <div class="stat-change neutral">
+                        <i class="fas fa-sitemap"></i> Organization units
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon danger">
-                <i class="fas fa-calendar-xmark"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">3</div>
-                <div class="stat-label">Leave Requests</div>
-                <div class="stat-change neutral">
-                    <i class="fas fa-minus"></i> Pending approval
+        <a href='@Url.Action("Index", "Position", new { area = "HumanResource" })' class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon danger">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@totalPositions</div>
+                    <div class="stat-label">Active Positions</div>
+                    <div class="stat-change neutral">
+                        <i class="fas fa-clipboard-list"></i> Job positions
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Charts Section -->
     <div class="charts-row">
         <div class="chart-container">
             <div class="chart-header">
-                <h3>Headcount Trend</h3>
+                <h3 id="headcountChartTitle">Headcount Trend</h3>
                 <div class="chart-actions">
                     <select id="headcountRangeSelect" class="form-select form-select-sm">
                         <option value="6" selected>Last 6 months</option>
@@ -98,7 +125,7 @@
             <div class="chart-header">
                 <h3>Department Distribution</h3>
                 <div class="chart-actions">
-                    <button class="btn btn-sm btn-outline-hr">View All</button>
+                    <a href='@Url.Action("Index", "Department", new { area = "HumanResource" })' class="btn btn-sm btn-outline-hr">View All</a>
                 </div>
             </div>
             <div class="chart-body">
@@ -111,42 +138,59 @@
     <div class="content-row">
         <div class="activity-panel">
             <div class="panel-header">
-                <h3>Recent Activity</h3>
-                <button class="btn btn-sm btn-link">View All</button>
+                <h3>Recent HR Activity</h3>
+                <a href='@Url.Action("Index", "AuditLog", new { area = "HumanResource" })' class="btn btn-sm btn-link">View All</a>
             </div>
             <div class="activity-list">
-                <div class="activity-item">
-                    <div class="activity-icon user">
-                        <i class="fas fa-user-plus"></i>
+                @if (recentActivity == null || !recentActivity.Cast<object>().Any())
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon system">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">No recent activity</div>
+                            <div class="activity-description">Your actions will appear here as you manage employees and records.</div>
+                            <div class="activity-time">—</div>
+                        </div>
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">New employee onboarded</div>
-                        <div class="activity-description">Maria Santos joined the Engineering department</div>
-                        <div class="activity-time">30 minutes ago</div>
-                    </div>
-                </div>
+                }
+                else
+                {
+                    foreach (dynamic item in recentActivity)
+                    {
+                        string action      = item.Action;
+                        string module      = item.Module;
+                        string description = item.Description;
+                        DateTime timestamp = item.Timestamp;
 
-                <div class="activity-item">
-                    <div class="activity-icon project">
-                        <i class="fas fa-file-contract"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Contract renewed</div>
-                        <div class="activity-description">Juan Dela Cruz's contract extended to 2027</div>
-                        <div class="activity-time">2 hours ago</div>
-                    </div>
-                </div>
+                        string iconClass = "system";
+                        string iconName  = "fas fa-circle-info";
+                        if (action.Contains("Create", StringComparison.OrdinalIgnoreCase))      { iconClass = "user";     iconName = "fas fa-plus-circle"; }
+                        else if (action.Contains("Update", StringComparison.OrdinalIgnoreCase)) { iconClass = "project";  iconName = "fas fa-pen"; }
+                        else if (action.Contains("Delete", StringComparison.OrdinalIgnoreCase)
+                              || action.Contains("Remove", StringComparison.OrdinalIgnoreCase)) { iconClass = "security"; iconName = "fas fa-trash-alt"; }
+                        else if (action.Contains("Archive", StringComparison.OrdinalIgnoreCase)){ iconClass = "system";   iconName = "fas fa-box-archive"; }
 
-                <div class="activity-item">
-                    <div class="activity-icon system">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Leave approved</div>
-                        <div class="activity-description">Ana Reyes — Vacation leave (Mar 5-7)</div>
-                        <div class="activity-time">4 hours ago</div>
-                    </div>
-                </div>
+                        var diff = DateTime.UtcNow - timestamp;
+                        string timeAgo = diff.TotalMinutes < 1   ? "Just now"
+                                       : diff.TotalMinutes < 60  ? $"{(int)diff.TotalMinutes}m ago"
+                                       : diff.TotalHours   < 24  ? $"{(int)diff.TotalHours}h ago"
+                                       : diff.TotalDays    < 7   ? $"{(int)diff.TotalDays}d ago"
+                                       : timestamp.ToString("MMM dd");
+
+                        <div class="activity-item">
+                            <div class="activity-icon @iconClass">
+                                <i class="@iconName"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">@action — @module</div>
+                                <div class="activity-description">@description</div>
+                                <div class="activity-time">@timeAgo</div>
+                            </div>
+                        </div>
+                    }
+                }
             </div>
         </div>
 
@@ -155,22 +199,22 @@
                 <h3>Quick Actions</h3>
             </div>
             <div class="quick-actions-grid">
-                <button class="quick-action-btn">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Add Employee</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-calendar-day"></i>
-                    <span>Leave Requests</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Generate Report</span>
-                </button>
-                <button class="quick-action-btn">
-                    <i class="fas fa-bullhorn"></i>
-                    <span>Announcements</span>
-                </button>
+                <a href='@Url.Action("Index", "User", new { area = "HumanResource" })' class="quick-action-btn">
+                    <i class="fas fa-users"></i>
+                    <span>Employees</span>
+                </a>
+                <a href='@Url.Action("Index", "Department", new { area = "HumanResource" })' class="quick-action-btn">
+                    <i class="fas fa-building"></i>
+                    <span>Departments</span>
+                </a>
+                <a href='@Url.Action("Index", "Position", new { area = "HumanResource" })' class="quick-action-btn">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Positions</span>
+                </a>
+                <a href='@Url.Action("Index", "AuditLog", new { area = "HumanResource" })' class="quick-action-btn">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Audit Logs</span>
+                </a>
             </div>
         </div>
     </div>
@@ -181,37 +225,48 @@
             <h3>Workforce Overview</h3>
             <div class="status-indicator online">
                 <span class="status-dot"></span>
-                Healthy
+                Active
             </div>
         </div>
         <div class="status-grid">
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Attendance</div>
-                    <div class="status-value">92% Present Today</div>
+                    <div class="status-name">Total Employees</div>
+                    <div class="status-value">@totalEmployees employees on record</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 92%"></div>
+                    <div class="status-progress" style="width: 100%"></div>
                 </div>
             </div>
 
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Onboarding</div>
-                    <div class="status-value">4 In Progress</div>
+                    <div class="status-name">Departments</div>
+                    <div class="status-value">@totalDepartments active departments</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 65%"></div>
+                    <div class="status-progress" style="width: @(Math.Min(totalDepartments * 10, 100))%"></div>
                 </div>
             </div>
 
             <div class="status-item">
                 <div class="status-info">
-                    <div class="status-name">Compliance Training</div>
-                    <div class="status-value">85% Completed</div>
+                    <div class="status-name">Positions</div>
+                    <div class="status-value">@totalPositions active positions</div>
                 </div>
                 <div class="status-bar">
-                    <div class="status-progress" style="width: 85%"></div>
+                    <div class="status-progress" style="width: @(Math.Min(totalPositions * 5, 100))%"></div>
+                </div>
+            </div>
+
+            <div class="status-item">
+                <div class="status-info">
+                    <div class="status-name">New Hires This Quarter</div>
+                    <div class="status-value">@newHiresQuarter hired this quarter</div>
+                </div>
+                <div class="status-bar">
+                    @{ var hirePct = totalEmployees > 0 ? Math.Min((int)Math.Round((double)newHiresQuarter / totalEmployees * 100), 100) : 0; }
+                    <div class="status-progress" style="width: @hirePct%"></div>
                 </div>
             </div>
         </div>
@@ -221,15 +276,15 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Headcount Trend Chart
+        // ── Headcount Trend (AJAX line chart) ──
         const headcountCtx = document.getElementById('headcountChart').getContext('2d');
-        new Chart(headcountCtx, {
+        let headcountChart = new Chart(headcountCtx, {
             type: 'line',
             data: {
-                labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+                labels: [],
                 datasets: [{
                     label: 'Headcount',
-                    data: [36, 37, 38, 39, 40, 42],
+                    data: [],
                     borderColor: '#4CA3DD',
                     backgroundColor: 'rgba(76,163,221,0.08)',
                     tension: 0.35,
@@ -258,22 +313,57 @@
             }
         });
 
-        // Department Distribution Chart
+        const headcountRangeSelect = document.getElementById('headcountRangeSelect');
+        const headcountTitleEl     = document.getElementById('headcountChartTitle');
+
+        function fetchHeadcountTrend(months) {
+            if (headcountTitleEl) headcountTitleEl.textContent = `Headcount Trend — Last ${months} months`;
+            fetch('@Url.Action("HeadcountTrend", "Dashboard", new { area = "HumanResource" })?months=' + months)
+                .then(r => r.json())
+                .then(payload => {
+                    headcountChart.data.labels              = payload.labels;
+                    headcountChart.data.datasets[0].data    = payload.data;
+                    headcountChart.update();
+                })
+                .catch(err => console.error('Failed to load headcount trend', err));
+        }
+
+        fetchHeadcountTrend(parseInt(headcountRangeSelect?.value || '6', 10));
+        headcountRangeSelect?.addEventListener('change', function () {
+            fetchHeadcountTrend(parseInt(this.value || '6', 10));
+        });
+
+        // ── Department Distribution (doughnut – server-side data) ──
+        const deptNames  = @Html.Raw(JsonSerializer.Serialize(deptNames));
+        const deptCounts = @Html.Raw(JsonSerializer.Serialize(deptCounts));
+        const palette    = ['#006994','#4CA3DD','#94D3FF','#B8E4FF','#7ec8e3','#5aa7c9','#3a86a8','#E8F4F8'];
+
         const deptCtx = document.getElementById('departmentChart').getContext('2d');
         new Chart(deptCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Engineering', 'Marketing', 'Operations', 'Finance', 'HR'],
+                labels: deptNames.length > 0 ? deptNames : ['No data'],
                 datasets: [{
-                    data: [15, 8, 10, 5, 4],
-                    backgroundColor: ['#006994', '#4CA3DD', '#94D3FF', '#B8E4FF', '#E8F4F8'],
+                    data: deptCounts.length > 0 ? deptCounts : [1],
+                    backgroundColor: deptNames.length > 0 ? palette.slice(0, deptNames.length) : ['#e2e8f0'],
                     borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct   = total > 0 ? Math.round(ctx.raw / total * 100) : 0;
+                                return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
             }
         });
     </script>

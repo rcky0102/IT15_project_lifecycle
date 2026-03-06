@@ -42,59 +42,73 @@
     </div>
 
     <!-- Stats Cards -->
+    <style>
+        .stat-card-link { display: block; color: inherit; text-decoration: none; }
+        .stat-card-link:hover { text-decoration: none; }
+        .stat-card-link .stat-card { transition: transform .12s ease, box-shadow .12s ease; }
+        .stat-card-link:hover .stat-card { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(20,40,60,0.06); }
+    </style>
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon primary">
-                <i class="fas fa-lightbulb"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@approvedProposals</div>
-                <div class="stat-label">Approved Proposals</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-check-circle"></i> View all
+        <a href="@Url.Action("Index","Proposal", new { area = "Employee" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@approvedProposals</div>
+                    <div class="stat-label">Approved Proposals</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-check-circle"></i> View all
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon success">
-                <i class="fas fa-folder-open"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@activeProjects</div>
-                <div class="stat-label">Active Projects</div>
-                <div class="stat-change neutral">
-                    <i class="fas fa-project-diagram"></i> Assigned to you
+        <a href="@Url.Action("Index","Project", new { area = "Employee" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@activeProjects</div>
+                    <div class="stat-label">Active Projects</div>
+                    <div class="stat-change neutral">
+                        <i class="fas fa-project-diagram"></i> Assigned to you
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon warning">
-                <i class="fas fa-check-double"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@completedTasks</div>
-                <div class="stat-label">Completed Tasks</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-check-circle"></i> Checked off
+        <a href="@Url.Action("Index","Project", new { area = "Employee" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-check-double"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@completedTasks</div>
+                    <div class="stat-label">Completed Tasks</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-check-circle"></i> Checked off
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon danger">
-                <i class="fas fa-pen-to-square"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@needsRevision</div>
-                <div class="stat-label">Needs Revision</div>
-                <div class="stat-change @(Convert.ToInt32(needsRevision) > 0 ? "negative" : "neutral")">
-                    <i class="fas fa-@(Convert.ToInt32(needsRevision) > 0 ? "exclamation-circle" : "check")"></i>
-                    @(Convert.ToInt32(needsRevision) > 0 ? "Requires attention" : "All clear")
+        <a href="@Url.Action("Index","Proposal", new { area = "Employee" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon danger">
+                    <i class="fas fa-pen-to-square"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@needsRevision</div>
+                    <div class="stat-label">Needs Revision</div>
+                    <div class="stat-change @(Convert.ToInt32(needsRevision) > 0 ? "negative" : "neutral")">
+                        <i class="fas fa-@(Convert.ToInt32(needsRevision) > 0 ? "exclamation-circle" : "check")"></i>
+                        @(Convert.ToInt32(needsRevision) > 0 ? "Requires attention" : "All clear")
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Charts Section -->

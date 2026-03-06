@@ -42,10 +42,7 @@
                     <div class="hr-brand-icon">
                         <img src="~/css/Images/LOGO (final).png" asp-append-version="true" alt="Project Lifecycle Logo" class="brand-logo hr-brand-logo" />
                     </div>
-                    <span class="hr-brand-text">
-                        Project <br />
-                        Lifecycle
-                    </span>
+                    <span class="hr-brand-text">Project Lifecycle</span>
                 </a>
                 <button class="hr-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
                     <i class="fas fa-bars fa-sm"></i>
@@ -72,30 +69,31 @@
                             <span class="hr-nav-text">User Management</span>
                         </a>
                     </li>
-                </ul>
 
-                <span class="hr-nav-section-title">Management</span>
-                <ul class="hr-nav-list">
                     <li class="hr-nav-item">
-                        <a href="@Url.Action("Index", "Department", new { area = "HumanResource" })"
-                           class="hr-nav-link @(currentController == "Department" ? "active" : "")"
-                           data-tooltip="Department">
-                            <i class="fas fa-building"></i>
-                            <span class="hr-nav-text">Department</span>
+                        <a href="#" class="hr-nav-link hr-collapsible-toggle @(currentController == "Department" || currentController == "Position" ? "expanded" : "")"
+                           data-target="managementSubmenuHR"
+                           data-tooltip="Management">
+                            <i class="fas fa-tasks"></i>
+                            <span class="hr-nav-text">Management</span>
+                            <i class="fas fa-chevron-down hr-nav-arrow"></i>
                         </a>
+                        <ul class="hr-nav-submenu @(currentController == "Department" || currentController == "Position" ? "expanded" : "")" id="managementSubmenuHR">
+                            <li class="hr-nav-subitem">
+                                <a href="@Url.Action("Index", "Department", new { area = "HumanResource" })"
+                                   class="hr-nav-sublink @(currentController == "Department" ? "active" : "")">
+                                    <i class="fas fa-building"></i> Departments
+                                </a>
+                            </li>
+                            <li class="hr-nav-subitem">
+                                <a href="@Url.Action("Index", "Position", new { area = "HumanResource" })"
+                                   class="hr-nav-sublink @(currentController == "Position" ? "active" : "")">
+                                    <i class="fas fa-briefcase"></i> Positions
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li class="hr-nav-item">
-                        <a href="@Url.Action("Index", "Position", new { area = "HumanResource" })"
-                           class="hr-nav-link @(currentController == "Position" ? "active" : "")"
-                           data-tooltip="Position">
-                            <i class="fas fa-briefcase"></i>
-                            <span class="hr-nav-text">Position</span>
-                        </a>
-                    </li>
-                </ul>
 
-                <span class="hr-nav-section-title">Communication</span>
-                <ul class="hr-nav-list">
                     <li class="hr-nav-item">
                         <a href="@Url.Action("Index", "Messages", new { area = "HumanResource" })"
                            class="hr-nav-link @(currentController == "Messages" ? "active" : "")"
@@ -105,10 +103,7 @@
                             <span class="msg-nav-badge" style="display:none"></span>
                         </a>
                     </li>
-                </ul>
 
-                <span class="hr-nav-section-title">Activity</span>
-                <ul class="hr-nav-list">
                     <li class="hr-nav-item">
                         <a href="@Url.Action("Index", "AuditLog", new { area = "HumanResource" })"
                            class="hr-nav-link @(currentController == "AuditLog" ? "active" : "")"
@@ -300,6 +295,38 @@
 
         /* --- Notifications --- */
         if (typeof initNotifications === 'function') initNotifications();
+
+        /* --- Collapsible submenu handling --- */
+        document.querySelectorAll('.hr-collapsible-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('data-target');
+                const submenu = document.getElementById(targetId);
+                const isExpanded = this.classList.contains('expanded');
+
+                if (submenu) {
+                    if (isExpanded) {
+                        this.classList.remove('expanded');
+                        submenu.classList.remove('expanded');
+                    } else {
+                        this.classList.add('expanded');
+                        submenu.classList.add('expanded');
+                    }
+                }
+
+                // Close other submenus
+                document.querySelectorAll('.hr-collapsible-toggle').forEach(function (other) {
+                    if (other !== btn) {
+                        const otherId = other.getAttribute('data-target');
+                        const otherSub = document.getElementById(otherId);
+                        if (otherSub) {
+                            other.classList.remove('expanded');
+                            otherSub.classList.remove('expanded');
+                        }
+                    }
+                });
+            });
+        });
 
         /* --- User dropdown --- */
         const userDropdownToggle = document.getElementById('userDropdownToggle');

@@ -23,59 +23,73 @@
     </div>
 
     <!-- Stats Cards -->
+    <style>
+        .stat-card-link { display: block; color: inherit; text-decoration: none; }
+        .stat-card-link:hover { text-decoration: none; }
+        .stat-card-link .stat-card { transition: transform .12s ease, box-shadow .12s ease; }
+        .stat-card-link:hover .stat-card { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(20,40,60,0.06); }
+    </style>
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon primary">
-                <i class="fas fa-file-lines"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@ViewData["TotalProposals"]</div>
-                <div class="stat-label">Total Proposals</div>
-                <div class="stat-change neutral">
-                    <i class="fas fa-building"></i> @ViewData["DepartmentName"]
+        <a href="@Url.Action("Index", "Proposal", new { area = "DepartmentHead" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="fas fa-file-lines"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@ViewData["TotalProposals"]</div>
+                    <div class="stat-label">Total Proposals</div>
+                    <div class="stat-change neutral">
+                        <i class="fas fa-building"></i> @ViewData["DepartmentName"]
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon warning">
-                <i class="fas fa-file-circle-exclamation"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@ViewData["PendingProposals"]</div>
-                <div class="stat-label">Pending Proposals</div>
-                <div class="stat-change @(((int)ViewData["PendingProposals"]!) > 0 ? "negative" : "positive")">
-                    <i class="fas fa-@(((int)ViewData["PendingProposals"]!) > 0 ? "circle-exclamation" : "check")"></i>
-                    @(((int)ViewData["PendingProposals"]!) > 0 ? "Needs review" : "All reviewed")
+        <a href="@Url.Action("Index", "Proposal", new { area = "DepartmentHead", status = "Pending" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-file-circle-exclamation"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@ViewData["PendingProposals"]</div>
+                    <div class="stat-label">Pending Proposals</div>
+                    <div class="stat-change @(((int)ViewData["PendingProposals"]!) > 0 ? "negative" : "positive")">
+                        <i class="fas fa-@(((int)ViewData["PendingProposals"]!) > 0 ? "circle-exclamation" : "check")"></i>
+                        @(((int)ViewData["PendingProposals"]!) > 0 ? "Needs review" : "All reviewed")
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon success">
-                <i class="fas fa-diagram-project"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@ViewData["ActiveProjects"]</div>
-                <div class="stat-label">Active Projects</div>
-                <div class="stat-change neutral">
-                    <i class="fas fa-spinner"></i> Unfinished
+        <a href="@Url.Action("Index", "Project", new { area = "DepartmentHead" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-diagram-project"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@ViewData["ActiveProjects"]</div>
+                    <div class="stat-label">Active Projects</div>
+                    <div class="stat-change neutral">
+                        <i class="fas fa-spinner"></i> Unfinished
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-card">
-            <div class="stat-icon danger">
-                <i class="fas fa-flag-checkered"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@ViewData["FinishedProjects"]</div>
-                <div class="stat-label">Finished Projects</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-check-circle"></i> Completed
+        <a href="@Url.Action("Index", "Project", new { area = "DepartmentHead" })" class="stat-card-link">
+            <div class="stat-card">
+                <div class="stat-icon danger">
+                    <i class="fas fa-flag-checkered"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">@ViewData["FinishedProjects"]</div>
+                    <div class="stat-label">Finished Projects</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-check-circle"></i> Completed
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Charts Section -->

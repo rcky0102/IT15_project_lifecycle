@@ -160,8 +160,8 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                 }
             }
 
-            var departments = await _context.Departments.ToListAsync();
-            var positions = await _context.Positions.ToListAsync();
+            var departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+            var positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
 
             var model = new UserListViewModel
             {
@@ -187,8 +187,8 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
 
                 if (!ModelState.IsValid)
                 {
-                    model.Departments = await _context.Departments.ToListAsync();
-                    model.Positions = await _context.Positions.ToListAsync();
+                    model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                    model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
 
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -212,8 +212,8 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                 if (existingUser != null)
                 {
                     ModelState.AddModelError("Email", "Email already exists");
-                    model.Departments = await _context.Departments.ToListAsync();
-                    model.Positions = await _context.Positions.ToListAsync();
+                    model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                    model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
 
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -249,8 +249,8 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
 
-                    model.Departments = await _context.Departments.ToListAsync();
-                    model.Positions = await _context.Positions.ToListAsync();
+                    model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                    model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
 
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
@@ -464,8 +464,8 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                 }
 
                 ModelState.AddModelError("", $"An error occurred: {errorMessage}");
-                model.Departments = await _context.Departments.ToListAsync();
-                model.Positions = await _context.Positions.ToListAsync();
+                model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
 
                 var vm = new UserListViewModel
                 {
@@ -996,8 +996,8 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                             return Json(new { success = false, errors = errors });
                         }
 
-                        model.Departments = await _context.Departments.ToListAsync();
-                        model.Positions = await _context.Positions.ToListAsync();
+                        model.Departments = await _context.Departments.Where(d => !d.IsArchived).ToListAsync();
+                        model.Positions = await _context.Positions.Where(p => !p.IsArchived).ToListAsync();
                         var viewModel = new UserListViewModel
                         {
                             CreateUserViewModel = model,

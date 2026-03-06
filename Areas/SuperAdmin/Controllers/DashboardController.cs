@@ -26,7 +26,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             var totalUsers = await _userManager.Users.CountAsync();
             var totalEmployees = await _db.Employees.CountAsync();
             var totalProjects = await _db.Projects.CountAsync();
-            var totalDepts = await _db.Departments.CountAsync();
+            var totalDepts = await _db.Departments.CountAsync(d => !d.IsArchived);
 
             ViewData["TotalUsers"] = totalUsers;
             ViewData["TotalEmployees"] = totalEmployees;
@@ -37,7 +37,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             var totalTasks = await _db.ProjectTasks.CountAsync();
             var completedTasks = await _db.ProjectTasks.CountAsync(t => t.Status == "Checked");
             var pendingProposals = await _db.ProjectProposals.CountAsync(p => p.Status == "Pending");
-            var totalPositions = await _db.Positions.CountAsync();
+            var totalPositions = await _db.Positions.CountAsync(p => !p.IsArchived);
 
             ViewData["TotalTasks"] = totalTasks;
             ViewData["CompletedTasks"] = completedTasks;
@@ -55,8 +55,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             ViewData["ProposalRejected"] = await _db.ProjectProposals.CountAsync(p => p.Status == "Rejected");
             ViewData["ProposalRevision"] = await _db.ProjectProposals.CountAsync(p => p.Status == "Requires Revision");
 
-            // ── Department headcount ──
+            // ── Department headcount (active departments only) ──
             var deptData = await _db.Departments
+                .Where(d => !d.IsArchived)
                 .Select(d => new
                 {
                     d.Name,
@@ -122,9 +123,10 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         {
             var from = DateTime.Today.AddDays(-days);
 
-            var grouped = await _db.Employees
-                .Where(e => e.DateHired >= from)
-                .GroupBy(e => e.DateHired.Date)
+            var grouped = await _db.AuditLogs
+                .Where(a => a.Action == "Create" && a.EntityType == "User"
+                         && a.Timestamp >= from)
+                .GroupBy(a => a.Timestamp.Date)
                 .Select(g => new { Date = g.Key, Count = g.Count() })
                 .OrderBy(g => g.Date)
                 .ToListAsync();

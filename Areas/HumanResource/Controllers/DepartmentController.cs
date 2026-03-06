@@ -20,12 +20,15 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
             _audit = audit;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string archiveFilter = "active")
         {
-            var departments = await _context.Departments
-                .OrderBy(d => d.Name)
-                .ToListAsync();
-
+            IQueryable<Department> query = _context.Departments;
+            if (archiveFilter == "active")
+                query = query.Where(d => !d.IsArchived);
+            else if (archiveFilter == "inactive")
+                query = query.Where(d => d.IsArchived);
+            var departments = await query.OrderBy(d => d.Name).ToListAsync();
+            ViewData["ArchiveFilter"] = archiveFilter;
             return View("~/Areas/HumanResource/Views/Management/Department/Index.cshtml", departments);
         }
 
@@ -198,6 +201,36 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                 return NotFound();
             }
 
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ActionName("ArchiveDepartment")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveDepartmentConfirmed(int id)
+        {
+            var department = await _context.Departments.FindAsync(id);
+            if (department == null) { TempData["Error"] = "Department not found."; return RedirectToAction(nameof(Index)); }
+            department.IsArchived = true;
+            await _context.SaveChangesAsync();
+            await _audit.LogAsync(User, "Archive", "Department Management", $"Archived department '{department.Name}' (ID: {department.Id})", "Department", department.Id.ToString());
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, message = "Department archived." });
+            TempData["Success"] = "Department archived.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ActionName("UnarchiveDepartment")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchiveDepartmentConfirmed(int id)
+        {
+            var department = await _context.Departments.FindAsync(id);
+            if (department == null) { TempData["Error"] = "Department not found."; return RedirectToAction(nameof(Index)); }
+            department.IsArchived = false;
+            await _context.SaveChangesAsync();
+            await _audit.LogAsync(User, "Unarchive", "Department Management", $"Restored department '{department.Name}' (ID: {department.Id})", "Department", department.Id.ToString());
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, message = "Department restored." });
+            TempData["Success"] = "Department restored.";
             return RedirectToAction(nameof(Index));
         }
 
