@@ -1,0 +1,247 @@
+@using project_lifecycle.ViewModels
+@model UserListViewModel
+@{
+    ViewData["Title"] = "User Directory";
+    Layout = "~/Areas/Executive/Layout.cshtml";
+}
+
+<!-- ===== Page Title Hero ===== -->
+<div class="sa-page-hero">
+    <div class="sa-page-hero-content">
+        <div class="sa-page-hero-left">
+            <h1 class="sa-page-title">
+                <span class="sa-page-title-icon"><i class="fas fa-users"></i></span>
+                User Directory
+            </h1>
+            <p class="sa-page-subtitle">View all system users and their roles</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Filters ===== -->
+<div class="sa-filters-card">
+    <div class="sa-filters-row">
+        <div class="sa-search-group">
+            <i class="fas fa-magnifying-glass sa-search-icon"></i>
+            <input id="userSearch" type="text" class="sa-search-input" placeholder="Search users…" autocomplete="off" />
+        </div>
+        <div class="sa-select-group">
+            <select id="roleFilter" class="sa-select">
+                <option value="">All Roles</option>
+                <option value="HumanResource">Human Resource</option>
+                <option value="DepartmentHead">Department Head</option>
+                <option value="Executive">Executive</option>
+                <option value="ProjectManager">Project Manager</option>
+                <option value="Employee">Employee</option>
+            </select>
+        </div>
+        <div class="sa-select-group">
+            <label for="pageSizeSelect" style="font-size:.82rem;color:var(--sa-muted);margin-right:.4rem;">Show</label>
+            <select id="pageSizeSelect" class="sa-select" style="width:92px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Table ===== -->
+<div class="sa-table-section">
+    <div class="sa-table-card">
+        @if (Model.Users.Any())
+        {
+            <div class="sa-table-responsive">
+                <table class="sa-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Employee #</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Date Hired</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody">
+                        @foreach (var user in Model.Users)
+                        {
+                            var fullName = !string.IsNullOrEmpty(user.FirstName)
+                                ? $"{user.FirstName} {user.MiddleName} {user.LastName}".Replace("  ", " ").Trim()
+                                : "";
+                            <tr class="sa-row"
+                                data-email="@user.Email.ToLower()"
+                                data-name="@fullName.ToLower()"
+                                data-role="@user.Role"
+                                data-dept="@(user.DepartmentName?.ToLower() ?? "")"
+                                data-empno="@(user.EmployeeNumber?.ToLower() ?? "")">
+                                <td>
+                                    <div class="sa-name-cell">
+                                        @if (!string.IsNullOrEmpty(user.ProfileImage))
+                                        {
+                                            <img src="@user.ProfileImage" alt="Profile" class="sa-profile-img" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="sa-name-icon">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <div class="sa-name-text">@user.Email</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="sa-role-badge sa-role-@user.Role.ToLower()">
+                                        <span class="sa-role-dot"></span>
+                                        <span>@user.Role</span>
+                                    </span>
+                                </td>
+                                <td class="sa-date">@(user.EmployeeNumber ?? "—")</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(user.FirstName))
+                                    {
+                                        @fullName
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#94a3b8;">N/A</span>
+                                    }
+                                </td>
+                                <td>@(user.DepartmentName ?? "—")</td>
+                                <td>@(user.PositionName ?? "—")</td>
+                                <td class="sa-date">
+                                    @if (user.DateHired.HasValue)
+                                    {
+                                        @user.DateHired.Value.ToString("MMM dd, yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#94a3b8;">N/A</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="noFilterResults" class="sa-empty-state" style="display:none;">
+                <div class="sa-empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <div class="sa-empty-title">No matching users</div>
+                <div class="sa-empty-text">Try adjusting your search or filters.</div>
+            </div>
+
+            <div class="sa-pagination" id="paginationContainer">
+                <div class="sa-pagination-info" id="paginationInfo"></div>
+                <div class="sa-pagination-controls" id="paginationControls"></div>
+            </div>
+        }
+        else
+        {
+            <div class="sa-empty-state">
+                <div class="sa-empty-icon"><i class="fas fa-users"></i></div>
+                <div class="sa-empty-title">No users found</div>
+                <div class="sa-empty-text">No users have been registered yet.</div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/superadmin-management.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+    (function () {
+        let PAGE_SIZE = 10;
+        let currentPage = 1;
+        let filteredRows = [];
+
+        const searchInput  = document.getElementById('userSearch');
+        const roleSelect   = document.getElementById('roleFilter');
+        const allRows      = Array.from(document.querySelectorAll('.sa-row'));
+        const noResults    = document.getElementById('noFilterResults');
+        const pageInfo     = document.getElementById('paginationInfo');
+        const pageControls = document.getElementById('paginationControls');
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+        function applyFilters() {
+            const query = (searchInput?.value ?? '').toLowerCase().trim();
+            const role  = roleSelect?.value ?? '';
+            filteredRows = allRows.filter(row => {
+                const email   = row.dataset.email || '';
+                const name    = row.dataset.name || '';
+                const dept    = row.dataset.dept || '';
+                const empno   = row.dataset.empno || '';
+                const textMatch = !query || email.includes(query) || name.includes(query) || dept.includes(query) || empno.includes(query);
+                const roleMatch = !role || row.dataset.role === role;
+                return textMatch && roleMatch;
+            });
+            currentPage = 1;
+            render();
+        }
+
+        function render() {
+            const total = filteredRows.length;
+            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            currentPage = Math.min(currentPage, totalPages);
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end   = start + PAGE_SIZE;
+
+            allRows.forEach(r => r.style.display = 'none');
+            filteredRows.forEach((r, i) => {
+                r.style.display = (i >= start && i < end) ? '' : 'none';
+            });
+
+            if (noResults) noResults.style.display = total === 0 ? '' : 'none';
+            if (pageInfo) {
+                pageInfo.textContent = total === 0 ? '' : 'Showing ' + (start + 1) + '\u2013' + Math.min(end, total) + ' of ' + total;
+            }
+
+            if (pageControls) {
+                pageControls.innerHTML = '';
+                const makeBtn = (label, page, disabled, active) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'sa-page-btn' + (active ? ' active' : '');
+                    btn.innerHTML = label;
+                    btn.disabled  = disabled;
+                    btn.addEventListener('click', () => { currentPage = page; render(); });
+                    return btn;
+                };
+                pageControls.appendChild(makeBtn('<i class="fas fa-chevron-left"></i>', currentPage - 1, currentPage === 1, false));
+                const w = 2;
+                for (let p = 1; p <= totalPages; p++) {
+                    if (p === 1 || p === totalPages || (p >= currentPage - w && p <= currentPage + w)) {
+                        pageControls.appendChild(makeBtn(p, p, false, p === currentPage));
+                    } else if (p === currentPage - w - 1 || p === currentPage + w + 1) {
+                        const el = document.createElement('span');
+                        el.className = 'sa-page-ellipsis';
+                        el.textContent = '\u2026';
+                        pageControls.appendChild(el);
+                    }
+                }
+                pageControls.appendChild(makeBtn('<i class="fas fa-chevron-right"></i>', currentPage + 1, currentPage === totalPages, false));
+            }
+        }
+
+        if (searchInput)  searchInput.addEventListener('input', applyFilters);
+        if (roleSelect)   roleSelect.addEventListener('change', applyFilters);
+        if (pageSizeSelect) {
+            pageSizeSelect.value = String(PAGE_SIZE);
+            pageSizeSelect.addEventListener('change', function () {
+                PAGE_SIZE = Math.max(5, parseInt(pageSizeSelect.value, 10) || 10);
+                currentPage = 1;
+                render();
+            });
+        }
+
+        filteredRows = allRows.slice();
+        render();
+    })();
+    </script>
+}

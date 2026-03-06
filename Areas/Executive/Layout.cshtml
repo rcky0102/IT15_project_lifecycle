@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="~/css/employee-project.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/messenger.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
+    @RenderSection("Styles", required: false)
 </head>
 <body class="executive-body">
 
@@ -71,6 +72,14 @@
                         </a>
                     </li>
                     <li class="exec-nav-item">
+                        <a href="@Url.Action("Index", "User", new { area = "Executive" })"
+                           class="exec-nav-link @(currentController == "User" ? "active" : "")"
+                           data-tooltip="Users">
+                            <i class="fas fa-users"></i>
+                            <span class="exec-nav-text">Users</span>
+                        </a>
+                    </li>
+                    <li class="exec-nav-item">
                         <a href="@Url.Action("Index", "Proposal", new { area = "Executive" })"
                            class="exec-nav-link @(currentController == "Proposal" ? "active" : "")"
                            data-tooltip="Proposals">
@@ -95,20 +104,20 @@
                         </a>
                     </li>
                     <li class="exec-nav-item">
+                        <a href="@Url.Action("Index", "News", new { area = "Executive" })"
+                           class="exec-nav-link @(currentController == "News" ? "active" : "")"
+                           data-tooltip="News">
+                            <i class="fas fa-newspaper"></i>
+                            <span class="exec-nav-text">News</span>
+                        </a>
+                    </li>
+                    <li class="exec-nav-item">
                         <a href="@Url.Action("Index", "Messages", new { area = "Executive" })"
                            class="exec-nav-link @(currentController == "Messages" ? "active" : "")"
                            data-tooltip="Messages">
                             <i class="fas fa-comment-dots"></i>
                             <span class="exec-nav-text">Messages</span>
                             <span class="msg-nav-badge" style="display:none"></span>
-                        </a>
-                    </li>
-                    <li class="exec-nav-item">
-                        <a href="@Url.Action("Index", "News", new { area = "Executive" })"
-                           class="exec-nav-link @(currentController == "News" ? "active" : "")"
-                           data-tooltip="News">
-                            <i class="fas fa-newspaper"></i>
-                            <span class="exec-nav-text">News</span>
                         </a>
                     </li>
                 </ul>
