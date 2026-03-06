@@ -431,11 +431,12 @@
                 '<button type="button" class="btn-close btn-close-white" id="' + mid + 'CloseBtn" aria-label="Close"></button>' +
                 '</div>' +
                 '<div class="em-picker-filters"><div class="em-picker-filters-row">' +
-                (cfg.depts && cfg.depts.length ? '<div class="em-picker-search-group" style="max-width:200px;"><select id="' + mid + 'DeptFilter" class="em-picker-search-input" style="cursor:pointer;padding-left:.6rem;"></select></div>' : '') +
                 '<div class="em-picker-search-group">' +
                 '<i class="fas fa-magnifying-glass em-picker-search-icon"></i>' +
                 '<input type="text" id="' + mid + 'Filter" class="em-picker-search-input" placeholder="Search\u2026" autocomplete="off" />' +
-                '</div></div></div>' +
+                '</div>' +
+                (cfg.depts && cfg.depts.length ? '<div class="em-picker-search-group" style="max-width:220px;margin-left:auto;"><select id="' + mid + 'DeptFilter" class="em-picker-search-input" style="cursor:pointer;padding-left:.6rem;"></select></div>' : '') +
+                '</div></div>' +
                 '<div class="modal-body em-picker-body"><div class="em-picker-table-card">' +
                 '<div class="em-picker-table-responsive">' +
                 '<table class="em-picker-table" id="' + mid + 'Table">' +

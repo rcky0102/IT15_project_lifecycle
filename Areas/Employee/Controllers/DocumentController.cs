@@ -744,7 +744,9 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 {
                     id = e.Id,
                     name = e.FirstName + " " + e.LastName,
-                    employeeNumber = e.EmployeeNumber
+                    employeeNumber = e.EmployeeNumber,
+                    deptId = e.DepartmentId,
+                    deptName = e.Department != null ? e.Department.Name : ""
                 })
                 .ToListAsync();
 

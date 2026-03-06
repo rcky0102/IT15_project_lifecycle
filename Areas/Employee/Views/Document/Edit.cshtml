@@ -547,7 +547,7 @@
             <div class="em-picker-header">
                 <div>
                     <h5 class="em-picker-title" id="collabEmployeeModalLabel"><i class="fas fa-user-plus"></i> Add Collaborator</h5>
-                    <p class="em-picker-subtitle">Select employees from your department</p>
+                    <p class="em-picker-subtitle">Select employees to invite as collaborators</p>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -558,6 +558,11 @@
                     <div class="em-picker-search-group">
                         <i class="fas fa-magnifying-glass em-picker-search-icon"></i>
                         <input type="text" id="empModalFilter" class="em-picker-search-input" placeholder="Search employees\u2026" autocomplete="off" />
+                    </div>
+                    <div class="em-picker-search-group" style="max-width:220px;margin-left:auto;">
+                        <select id="empModalDeptFilter" class="em-picker-search-input" style="cursor:pointer;padding-left:.6rem;">
+                            <option value="">All Departments</option>
+                        </select>
                     </div>
                     <div class="em-picker-select-group">
                         <label class="em-picker-select-label">Role</label>
@@ -631,12 +636,33 @@
             const empModalTable = document.getElementById('empModalTable');
             const empModalEmpty = document.getElementById('empModalEmpty');
             const empModalFilter = document.getElementById('empModalFilter');
+            const empModalDeptFilter = document.getElementById('empModalDeptFilter');
+            let _empModalAllRows = [];
+
+            function applyEmpModalFilter() {
+                const q = (empModalFilter?.value || '').trim().toLowerCase();
+                const deptId = empModalDeptFilter?.value || '';
+                let visible = 0;
+                _empModalAllRows.forEach(tr => {
+                    const name = (tr.querySelector('.em-picker-name-text')?.textContent || '').toLowerCase();
+                    const num = (tr.querySelector('.em-picker-empno')?.textContent || '').toLowerCase();
+                    const rowDept = tr.dataset.deptId || '';
+                    const show = (!q || name.includes(q) || num.includes(q)) && (!deptId || rowDept === deptId);
+                    tr.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+                const pInfo = document.getElementById('empModalPaginationInfo');
+                if (pInfo) pInfo.textContent = visible === 0 ? 'No matches' : 'Showing ' + visible + ' employee' + (visible !== 1 ? 's' : '');
+                empModalEmpty.style.display = visible === 0 && _empModalAllRows.length > 0 ? '' : 'none';
+            }
 
             function openEmployeeModal() {
                 // clear previous
                 empModalTable.querySelector('tbody').innerHTML = '';
+                _empModalAllRows = [];
                 empModalEmpty.style.display = 'none';
                 empModalFilter.value = '';
+                if (empModalDeptFilter) empModalDeptFilter.value = '';
                 // show modal (use Bootstrap if available)
                 if (window.jQuery && typeof $().modal === 'function') {
                     $('#collabEmployeeModal').modal('show');
@@ -665,16 +691,28 @@
                             empModalEmpty.style.display = 'block';
                             return;
                         }
+                        // populate department filter
+                        const deptSeen = {};
+                        results.forEach(e => { if (e.deptId && !deptSeen[e.deptId]) { deptSeen[e.deptId] = e.deptName || ''; } });
+                        if (empModalDeptFilter) {
+                            while (empModalDeptFilter.options.length > 1) empModalDeptFilter.remove(1);
+                            Object.keys(deptSeen).sort((a,b) => deptSeen[a].localeCompare(deptSeen[b])).forEach(id => {
+                                const o = document.createElement('option'); o.value = String(id); o.textContent = deptSeen[id]; empModalDeptFilter.appendChild(o);
+                            });
+                        }
+
                         results.forEach(e => {
                             const initials = (e.name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
                             const tr = document.createElement('tr');
                             tr.className = 'em-picker-row';
+                            tr.dataset.deptId = String(e.deptId || '');
                             tr.innerHTML = '<td style="text-align:center;"><input type="checkbox" class="emp-select-checkbox em-picker-checkbox" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '" /></td>' +
                                 '<td><div class="em-picker-name-cell"><div class="em-picker-avatar">' + initials + '</div><div class="em-picker-name-text">' + (e.name || '') + '</div></div></td>' +
                                 '<td><span class="em-picker-empno">' + (e.employeeNumber || '') + '</span></td>' +
                                 '<td style="text-align:center;"><button type="button" class="em-picker-select-btn emp-select-now" data-id="' + e.id + '" data-name="' + (e.name || '') + '" data-num="' + (e.employeeNumber || '') + '" title="Quick add"><i class="fas fa-plus"></i></button></td>';
                             tbody.appendChild(tr);
                         });
+                        _empModalAllRows = Array.from(tbody.querySelectorAll('tr.em-picker-row'));
                         // wire checkbox change handlers
                         function updateSelectionState() {
                             const any = empModalTable.querySelectorAll('.emp-select-checkbox:checked').length > 0;
@@ -830,19 +868,8 @@
             empModalCloseBtn?.addEventListener('click', closeEmployeeModal);
             empModalEl.addEventListener('click', function (e) { if (e.target === empModalEl) closeEmployeeModal(); });
             // client-side filter inside modal
-            empModalFilter?.addEventListener('input', function () {
-                const q = this.value.trim().toLowerCase();
-                let visible = 0;
-                empModalTable.querySelectorAll('tbody tr').forEach(tr => {
-                    const name = (tr.querySelector('.em-picker-name-text')?.textContent || tr.cells[1]?.textContent || '').toLowerCase();
-                    const num = (tr.querySelector('.em-picker-empno')?.textContent || tr.cells[2]?.textContent || '').toLowerCase();
-                    const show = !q || name.includes(q) || num.includes(q);
-                    tr.style.display = show ? '' : 'none';
-                    if (show) visible++;
-                });
-                const pInfo = document.getElementById('empModalPaginationInfo');
-                if (pInfo) pInfo.textContent = visible === 0 ? 'No matches' : 'Showing ' + visible + ' employee' + (visible !== 1 ? 's' : '');
-            });
+            empModalFilter?.addEventListener('input', applyEmpModalFilter);
+            empModalDeptFilter?.addEventListener('change', applyEmpModalFilter);
 
             // Close suggestions on outside click
             document.addEventListener('click', function (e) {
