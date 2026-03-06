@@ -534,10 +534,16 @@ document.addEventListener('keydown', function(e) {
 // ── Table-picker modals for Members & Milestone forms ──────────────────
 (function () {
     window._pmEmployees = [
-        @foreach (var e in Model.AvailableEmployees) {
-            @Html.Raw("{id:" + e.Value + ",name:'" + e.Text.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
+        @foreach (var e in Model.AvailableEmployeePicker) {
+            @Html.Raw("{id:" + e.Id + ",name:'" + e.Name.Replace("\\", "\\\\").Replace("'", "\\'") + "',deptId:" + e.DeptId + ",deptName:'" + e.DeptName.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
         }
     ];
+    window._pmEmployeeDepts = (function(){
+        var seen = {}, list = [];
+        window._pmEmployees.forEach(function(e){ if (e.deptId && !seen[e.deptId]) { seen[e.deptId] = true; list.push({id: e.deptId, name: e.deptName}); } });
+        list.sort(function(a,b){ return a.name.localeCompare(b.name); });
+        return list;
+    })();
     window._pmRoles = [
         @foreach (var r in Model.AvailableProjectRoles) {
             @Html.Raw("{id:" + r.Value + ",name:'" + r.Text.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
@@ -567,6 +573,7 @@ document.addEventListener('keydown', function(e) {
             + '<button type="button" class="btn-close btn-close-white" id="' + cfg.modalId + 'Close" aria-label="Close"></button>'
             + '</div>'
             + '<div class="em-picker-filters"><div class="em-picker-filters-row">'
+            + (cfg.depts && cfg.depts.length ? '<div class="em-picker-search-group" style="max-width:200px;"><select id="' + cfg.modalId + 'DeptFilter" class="em-picker-search-input" style="cursor:pointer;padding-left:.6rem;"></select></div>' : '')
             + '<div class="em-picker-search-group"><i class="fas fa-magnifying-glass em-picker-search-icon"></i>'
             + '<input type="text" id="' + cfg.modalId + 'Filter" class="em-picker-search-input" placeholder="Search\u2026" autocomplete="off" />'
             + '</div></div></div>'
@@ -593,6 +600,11 @@ document.addEventListener('keydown', function(e) {
         var infoEl    = document.getElementById(cfg.modalId + 'Info');
         var closeBtn  = document.getElementById(cfg.modalId + 'Close');
         var cancelBtn = document.getElementById(cfg.modalId + 'Cancel');
+        var deptFilterEl = (cfg.depts && cfg.depts.length) ? document.getElementById(cfg.modalId + 'DeptFilter') : null;
+        if (deptFilterEl) {
+            var allOpt = document.createElement('option'); allOpt.value = ''; allOpt.textContent = 'All Departments'; deptFilterEl.appendChild(allOpt);
+            cfg.depts.forEach(function(d) { var o = document.createElement('option'); o.value = String(d.id); o.textContent = d.name; deptFilterEl.appendChild(o); });
+        }
 
         function showPicker() {
             // Use Bootstrap if available, else manual approach
@@ -617,16 +629,18 @@ document.addEventListener('keydown', function(e) {
             }
         }
 
-        function renderRows(q) {
+        function renderRows(q, deptId) {
             var tbody = tableEl.querySelector('tbody');
             tbody.innerHTML = '';
             q = (q || '').toLowerCase().trim();
+            deptId = deptId ? String(deptId) : '';
             var hidEl = document.getElementById(cfg.hiddenId);
             var currentId = hidEl && hidEl.value && hidEl.value !== '0' ? parseInt(hidEl.value) : null;
             var visible = 0;
             cfg.data.forEach(function (item) {
                 var text = item[cfg.key] || '';
                 if (q && text.toLowerCase().indexOf(q) === -1) return;
+                if (deptId && String(item.deptId) !== deptId) return;
                 visible++;
                 var isSelected = currentId !== null && currentId === item.id;
                 var tr = document.createElement('tr');
@@ -656,20 +670,23 @@ document.addEventListener('keydown', function(e) {
         var dispEl = document.getElementById(cfg.displayId);
         if (dispEl) dispEl.addEventListener('click', function () {
             if (filterEl) filterEl.value = '';
-            renderRows('');
+            if (deptFilterEl) deptFilterEl.value = '';
+            renderRows('', '');
             showPicker();
         });
 
         if (closeBtn)  closeBtn.addEventListener('click',  hidePicker);
         if (cancelBtn) cancelBtn.addEventListener('click', hidePicker);
         if (modalEl)   modalEl.addEventListener('click', function (e) { if (e.target === modalEl) hidePicker(); });
-        if (filterEl)  filterEl.addEventListener('input',  function ()  { renderRows(this.value); });
+        if (filterEl)  filterEl.addEventListener('input',  function ()  { renderRows(this.value, deptFilterEl ? deptFilterEl.value : ''); });
+        if (deptFilterEl) deptFilterEl.addEventListener('change', function() { renderRows(filterEl ? filterEl.value : '', this.value); });
     }
 
     buildPickerModal({
         modalId: 'empPickerModal', title: 'Select Employee', subtitle: 'Choose a project member to add',
         colHeader: 'Employee', data: window._pmEmployees, key: 'name',
-        hiddenId: 'memberEmployeeSelect', displayId: 'memberEmployeeDisplay'
+        hiddenId: 'memberEmployeeSelect', displayId: 'memberEmployeeDisplay',
+        depts: window._pmEmployeeDepts
     });
     buildPickerModal({
         modalId: 'rolePickerModal', title: 'Select Project Role', subtitle: 'Choose a role for this member',

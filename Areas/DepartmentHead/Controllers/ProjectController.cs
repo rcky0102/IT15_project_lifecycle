@@ -84,7 +84,6 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             }
 
             var availableProjectManagerIds = await _context.ProjectManagers
-                .Where(pm => pm.DepartmentId == dh.DepartmentId)
                 .Select(pm => pm.Id)
                 .ToListAsync();
 
@@ -94,7 +93,6 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             }
 
             var availableEmployeeIds = await _context.Employees
-                .Where(e => e.DepartmentId == dh.DepartmentId)
                 .Select(e => e.Id)
                 .ToListAsync();
 
@@ -639,7 +637,6 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 .ToListAsync();
 
             var projectManagerRows = await _context.ProjectManagers
-                .Where(pm => pm.DepartmentId == dh.DepartmentId)
                 .OrderBy(pm => pm.LastName)
                 .ThenBy(pm => pm.FirstName)
                 .Select(pm => new
@@ -647,7 +644,9 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                     pm.Id,
                     pm.FirstName,
                     pm.MiddleName,
-                    pm.LastName
+                    pm.LastName,
+                    pm.DepartmentId,
+                    DeptName = pm.Department != null ? pm.Department.Name : ""
                 })
                 .ToListAsync();
 
@@ -659,8 +658,17 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 })
                 .ToList();
 
+            var availableProjectManagersPicker = projectManagerRows
+                .Select(pm => new PmPickerItem
+                {
+                    Id = pm.Id,
+                    Name = BuildFullName(pm.FirstName, pm.MiddleName, pm.LastName),
+                    DeptId = pm.DepartmentId,
+                    DeptName = pm.DeptName
+                })
+                .ToList();
+
             var employeeRows = await _context.Employees
-                .Where(e => e.DepartmentId == dh.DepartmentId)
                 .OrderBy(e => e.LastName)
                 .ThenBy(e => e.FirstName)
                 .Select(e => new
@@ -695,6 +703,7 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 CreateProject = createModel ?? new CreateDepartmentHeadProjectViewModel(),
                 AvailableProposals = proposals,
                 AvailableProjectManagers = projectManagers,
+                AvailableProjectManagersPicker = availableProjectManagersPicker,
                 AvailableEmployees = employees,
                 AvailableProjectRoles = roles
             };

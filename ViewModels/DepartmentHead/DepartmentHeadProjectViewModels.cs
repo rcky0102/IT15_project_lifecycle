@@ -5,6 +5,14 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace project_lifecycle.ViewModels.DepartmentHead
 {
+    public class PmPickerItem
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int DeptId { get; set; }
+        public string DeptName { get; set; } = string.Empty;
+    }
+
     public class DepartmentHeadProjectIndexViewModel
     {
         public List<DepartmentHeadProjectListItemViewModel> Projects { get; set; } = new();
@@ -12,6 +20,7 @@ namespace project_lifecycle.ViewModels.DepartmentHead
 
         public List<SelectListItem> AvailableProposals { get; set; } = new();
         public List<SelectListItem> AvailableProjectManagers { get; set; } = new();
+        public List<PmPickerItem> AvailableProjectManagersPicker { get; set; } = new();
         public List<SelectListItem> AvailableEmployees { get; set; } = new();
         public List<SelectListItem> AvailableProjectRoles { get; set; } = new();
     }

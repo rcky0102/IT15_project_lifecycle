@@ -302,7 +302,6 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             }
 
             var employeeRows = await _context.Employees
-                .Where(e => e.DepartmentId == pm.DepartmentId)
                 .OrderBy(e => e.LastName)
                 .ThenBy(e => e.FirstName)
                 .Select(e => new { e.Id, e.FirstName, e.MiddleName, e.LastName })
@@ -398,10 +397,9 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 .ToList();
 
             var employeeRows = await _context.Employees
-                .Where(e => e.DepartmentId == pm.DepartmentId)
                 .OrderBy(e => e.LastName)
                 .ThenBy(e => e.FirstName)
-                .Select(e => new { e.Id, e.FirstName, e.MiddleName, e.LastName })
+                .Select(e => new { e.Id, e.FirstName, e.MiddleName, e.LastName, e.DepartmentId, DeptName = e.Department != null ? e.Department.Name : "" })
                 .ToListAsync();
 
             var availableEmployees = employeeRows
@@ -409,6 +407,16 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 {
                     Value = e.Id.ToString(),
                     Text = string.Join(" ", new[] { e.FirstName, e.MiddleName, e.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                })
+                .ToList();
+
+            var availableEmployeePicker = employeeRows
+                .Select(e => new project_lifecycle.ViewModels.ProjectManager.EmployeePickerItem
+                {
+                    Id = e.Id,
+                    Name = string.Join(" ", new[] { e.FirstName, e.MiddleName, e.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))),
+                    DeptId = e.DepartmentId,
+                    DeptName = e.DeptName
                 })
                 .ToList();
 
@@ -426,6 +434,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             {
                 Project = project,
                 AvailableEmployees = availableEmployees,
+                AvailableEmployeePicker = availableEmployeePicker,
                 AvailableProjectRoles = roles,
                 AvailableMilestones = milestoneTemplates
             };
@@ -489,7 +498,6 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 .ToList();
 
             var employeeRows = await _context.Employees
-                .Where(e => e.DepartmentId == pm.DepartmentId)
                 .OrderBy(e => e.LastName).ThenBy(e => e.FirstName)
                 .Select(e => new { e.Id, e.FirstName, e.MiddleName, e.LastName })
                 .ToListAsync();
@@ -1020,7 +1028,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == resolvedProjectId && p.ProjectManagerId == pm.Id);
             if (project == null) return Forbid();
 
-            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == resolvedEmployeeId && e.DepartmentId == pm.DepartmentId);
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == resolvedEmployeeId);
             if (employee == null)
             {
                 TempData["ErrorMessage"] = "Selected employee is not valid.";

@@ -737,11 +737,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
             existingIds.Add(employee.Id); // exclude self
 
-            if (employee.DepartmentId == null)
-                return Json(new List<object>());
-
             var results = await _context.Employees
-                .Where(e => e.DepartmentId == employee.DepartmentId && !existingIds.Contains(e.Id))
+                .Where(e => !existingIds.Contains(e.Id))
                 .OrderBy(e => e.FirstName).ThenBy(e => e.LastName)
                 .Select(e => new
                 {

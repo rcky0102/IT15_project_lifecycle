@@ -380,10 +380,16 @@
             }
         ];
         var availablePMs = [
-            @foreach (var pm in Model.AvailableProjectManagers) {
-                @Html.Raw("{id:" + pm.Value + ",name:'" + pm.Text.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
+            @foreach (var pm in Model.AvailableProjectManagersPicker) {
+                @Html.Raw("{id:" + pm.Id + ",name:'" + pm.Name.Replace("\\", "\\\\").Replace("'", "\\'") + "',deptId:" + pm.DeptId + ",deptName:'" + pm.DeptName.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
             }
         ];
+        var _pmDepts = (function(){
+            var seen = {}, list = [];
+            availablePMs.forEach(function(p){ if (p.deptId && !seen[p.deptId]) { seen[p.deptId] = true; list.push({id: p.deptId, name: p.deptName}); } });
+            list.sort(function(a,b){ return a.name.localeCompare(b.name); });
+            return list;
+        })();
 
         var proposalHidden  = document.getElementById('CreateProject_ProjectProposalId');
         var proposalDisplay = document.getElementById('proposalPickerDisplay');
@@ -425,6 +431,7 @@
                 '<button type="button" class="btn-close btn-close-white" id="' + mid + 'CloseBtn" aria-label="Close"></button>' +
                 '</div>' +
                 '<div class="em-picker-filters"><div class="em-picker-filters-row">' +
+                (cfg.depts && cfg.depts.length ? '<div class="em-picker-search-group" style="max-width:200px;"><select id="' + mid + 'DeptFilter" class="em-picker-search-input" style="cursor:pointer;padding-left:.6rem;"></select></div>' : '') +
                 '<div class="em-picker-search-group">' +
                 '<i class="fas fa-magnifying-glass em-picker-search-icon"></i>' +
                 '<input type="text" id="' + mid + 'Filter" class="em-picker-search-input" placeholder="Search\u2026" autocomplete="off" />' +
@@ -451,6 +458,11 @@
             var infoEl    = document.getElementById(mid + 'Info');
             var closeBtn  = document.getElementById(mid + 'CloseBtn');
             var cancelBtn = document.getElementById(mid + 'CancelBtn');
+            var deptFilterEl = (cfg.depts && cfg.depts.length) ? document.getElementById(mid + 'DeptFilter') : null;
+            if (deptFilterEl) {
+                var allOpt = document.createElement('option'); allOpt.value = ''; allOpt.textContent = 'All Departments'; deptFilterEl.appendChild(allOpt);
+                cfg.depts.forEach(function(d) { var o = document.createElement('option'); o.value = String(d.id); o.textContent = d.name; deptFilterEl.appendChild(o); });
+            }
 
             function showModal() {
                 if (window.bootstrap && window.bootstrap.Modal) {
@@ -474,15 +486,17 @@
                 }
             }
 
-            function renderRows(q) {
+            function renderRows(q, deptId) {
                 var tbody = tableEl.querySelector('tbody');
                 tbody.innerHTML = '';
                 q = (q || '').toLowerCase().trim();
+                deptId = deptId ? String(deptId) : '';
                 var currentId = hiddenEl.value && hiddenEl.value !== '0' ? parseInt(hiddenEl.value) : null;
                 var visible = 0;
                 data.forEach(function (item) {
                     var text = item[key] || '';
                     if (q && text.toLowerCase().indexOf(q) === -1) return;
+                    if (deptId && String(item.deptId) !== deptId) return;
                     visible++;
                     var isSelected = currentId !== null && currentId === item.id;
                     var tr = document.createElement('tr');
@@ -509,14 +523,16 @@
 
             displayEl.addEventListener('click', function () {
                 if (filterEl) filterEl.value = '';
-                renderRows('');
+                if (deptFilterEl) deptFilterEl.value = '';
+                renderRows('', '');
                 showModal();
             });
 
             if (closeBtn)  closeBtn.addEventListener('click',  hideModal);
             if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
             if (modalEl)   modalEl.addEventListener('click', function (e) { if (e.target === modalEl) hideModal(); });
-            if (filterEl)  filterEl.addEventListener('input', function () { renderRows(this.value); });
+            if (filterEl)  filterEl.addEventListener('input', function () { renderRows(this.value, deptFilterEl ? deptFilterEl.value : ''); });
+            if (deptFilterEl) deptFilterEl.addEventListener('change', function() { renderRows(filterEl ? filterEl.value : '', this.value); });
         }
 
         createPicker({
@@ -538,7 +554,8 @@
             modalId:   'pmPickerModal',
             title:     'Select Project Manager',
             subtitle:  'Choose a project manager for your department',
-            colHeader: 'Project Manager'
+            colHeader: 'Project Manager',
+            depts:     _pmDepts
         });
     })();
     </script>
