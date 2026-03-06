@@ -344,23 +344,13 @@
             <div class="pm-modal-body">
                 <div class="emp-form-row">
                     <label class="emp-form-label">Employee</label>
-                    <select id="memberEmployeeSelect" name="EmployeeId" class="emp-form-control" required>
-                        <option value="">-- Select Employee --</option>
-                        @foreach (var e in Model.AvailableEmployees)
-                        {
-                            <option value="@e.Value">@e.Text</option>
-                        }
-                    </select>
+                    <input type="hidden" id="memberEmployeeSelect" name="EmployeeId" value="" />
+                    <input type="text" id="memberEmployeeDisplay" class="emp-form-control" placeholder="Click to select an employee\u2026" readonly style="cursor:pointer;" />
                 </div>
                 <div class="emp-form-row">
                     <label class="emp-form-label">Project Role</label>
-                    <select id="memberRoleSelect" name="ProjectRoleId" class="emp-form-control" required>
-                        <option value="">-- Select Role --</option>
-                        @foreach (var r in Model.AvailableProjectRoles)
-                        {
-                            <option value="@r.Value">@r.Text</option>
-                        }
-                    </select>
+                    <input type="hidden" id="memberRoleSelect" name="ProjectRoleId" value="" />
+                    <input type="text" id="memberRoleDisplay" class="emp-form-control" placeholder="Click to select a role\u2026" readonly style="cursor:pointer;" />
                 </div>
             </div>
             <div class="pm-modal-footer">
@@ -385,13 +375,8 @@
             <div class="pm-modal-body">
                 <div class="emp-form-row">
                     <label class="emp-form-label">Milestone Template</label>
-                    <select id="milestoneSelect" name="MilestoneId" class="emp-form-control" required>
-                        <option value="">-- Select Milestone --</option>
-                        @foreach (var t in Model.AvailableMilestones)
-                        {
-                            <option value="@t.Value">@t.Text</option>
-                        }
-                    </select>
+                    <input type="hidden" id="milestoneSelect" name="MilestoneId" value="" />
+                    <input type="text" id="milestoneDisplay" class="emp-form-control" placeholder="Click to select a milestone template\u2026" readonly style="cursor:pointer;" />
                 </div>
                 <div class="emp-form-row">
                     <label class="emp-form-label">Sequence Order</label>
@@ -479,13 +464,16 @@ function closeOnBackdrop(e, id) {
 function resetModals() {
     document.getElementById('editMemberId').value = '';
     document.getElementById('memberEmployeeSelect').value = '';
+    var empDisp = document.getElementById('memberEmployeeDisplay'); if (empDisp) empDisp.value = '';
     document.getElementById('memberRoleSelect').value = '';
+    var roleDisp = document.getElementById('memberRoleDisplay'); if (roleDisp) roleDisp.value = '';
     document.getElementById('memberSubmitText').textContent = 'Add Member';
     document.getElementById('memberModalTitle').textContent = 'Add Team Member';
     document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> <span id="memberSubmitText">Add Member</span>';
 
     document.getElementById('editProjectMilestoneId').value = '';
     document.getElementById('milestoneSelect').value = '';
+    var msDisp = document.getElementById('milestoneDisplay'); if (msDisp) msDisp.value = '';
     document.getElementById('sequenceOrderInput').value = '@nextOrder';
     document.getElementById('milestoneSubmitText').textContent = 'Add Milestone';
     document.getElementById('milestoneModalTitle').textContent = 'Add Milestone';
@@ -494,8 +482,21 @@ function resetModals() {
 
 function editMember(memberId, employeeId, projectRoleId, modalId) {
     document.getElementById('editMemberId').value = memberId;
-    document.getElementById('memberEmployeeSelect').value = employeeId;
-    document.getElementById('memberRoleSelect').value = projectRoleId;
+    // set hidden values and update display text from pre-built data arrays
+    var empHid = document.getElementById('memberEmployeeSelect');
+    var empDisp = document.getElementById('memberEmployeeDisplay');
+    if (empHid) empHid.value = employeeId;
+    if (empDisp && window._pmEmployees) {
+        var found = window._pmEmployees.find(function(e){ return String(e.id) === String(employeeId); });
+        empDisp.value = found ? found.name : '';
+    }
+    var roleHid = document.getElementById('memberRoleSelect');
+    var roleDisp = document.getElementById('memberRoleDisplay');
+    if (roleHid) roleHid.value = projectRoleId;
+    if (roleDisp && window._pmRoles) {
+        var found2 = window._pmRoles.find(function(r){ return String(r.id) === String(projectRoleId); });
+        roleDisp.value = found2 ? found2.name : '';
+    }
     document.getElementById('memberSubmitText').textContent = 'Update Member';
     document.getElementById('memberModalTitle').textContent = 'Edit Team Member';
     document.getElementById('memberSubmitBtn').innerHTML = '<i class="fas fa-check"></i> <span id="memberSubmitText">Update Member</span>';
@@ -504,7 +505,13 @@ function editMember(memberId, employeeId, projectRoleId, modalId) {
 
 function editMilestone(projectMilestoneId, milestoneId, sequenceOrder, modalId) {
     document.getElementById('editProjectMilestoneId').value = projectMilestoneId;
-    document.getElementById('milestoneSelect').value = milestoneId;
+    var msHid = document.getElementById('milestoneSelect');
+    var msDisp = document.getElementById('milestoneDisplay');
+    if (msHid) msHid.value = milestoneId;
+    if (msDisp && window._pmMilestones) {
+        var found = window._pmMilestones.find(function(m){ return String(m.id) === String(milestoneId); });
+        msDisp.value = found ? found.name : '';
+    }
     document.getElementById('sequenceOrderInput').value = sequenceOrder;
     document.getElementById('milestoneSubmitText').textContent = 'Update Milestone';
     document.getElementById('milestoneModalTitle').textContent = 'Edit Milestone';
@@ -524,6 +531,158 @@ document.addEventListener('keydown', function(e) {
 </script>
 
 <script>
+// ── Table-picker modals for Members & Milestone forms ──────────────────
+(function () {
+    window._pmEmployees = [
+        @foreach (var e in Model.AvailableEmployees) {
+            @Html.Raw("{id:" + e.Value + ",name:'" + e.Text.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
+        }
+    ];
+    window._pmRoles = [
+        @foreach (var r in Model.AvailableProjectRoles) {
+            @Html.Raw("{id:" + r.Value + ",name:'" + r.Text.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
+        }
+    ];
+    window._pmMilestones = [
+        @foreach (var t in Model.AvailableMilestones) {
+            @Html.Raw("{id:" + t.Value + ",name:'" + t.Text.Replace("\\", "\\\\").Replace("'", "\\'") + "'},")
+        }
+    ];
+
+    function escH(str) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str || ''));
+        return d.innerHTML;
+    }
+
+    function buildPickerModal(cfg) {
+        // cfg: { modalId, title, subtitle, colHeader, data, key, hiddenId, displayId }
+        document.body.insertAdjacentHTML('beforeend',
+            '<div class="modal fade" id="' + cfg.modalId + '" tabindex="-1" aria-hidden="true" style="z-index:1060;">'
+            + '<div class="modal-dialog modal-dialog-centered modal-lg">'
+            + '<div class="modal-content em-picker-modal">'
+            + '<div class="em-picker-header">'
+            + '<div><h5 class="em-picker-title"><i class="fas fa-table-list"></i> ' + cfg.title + '</h5>'
+            + '<p class="em-picker-subtitle">' + cfg.subtitle + '</p></div>'
+            + '<button type="button" class="btn-close btn-close-white" id="' + cfg.modalId + 'Close" aria-label="Close"></button>'
+            + '</div>'
+            + '<div class="em-picker-filters"><div class="em-picker-filters-row">'
+            + '<div class="em-picker-search-group"><i class="fas fa-magnifying-glass em-picker-search-icon"></i>'
+            + '<input type="text" id="' + cfg.modalId + 'Filter" class="em-picker-search-input" placeholder="Search\u2026" autocomplete="off" />'
+            + '</div></div></div>'
+            + '<div class="modal-body em-picker-body"><div class="em-picker-table-card">'
+            + '<div class="em-picker-table-responsive">'
+            + '<table class="em-picker-table" id="' + cfg.modalId + 'Table">'
+            + '<thead><tr><th>' + cfg.colHeader + '</th><th style="width:100px;text-align:center;">Action</th></tr></thead>'
+            + '<tbody></tbody></table></div>'
+            + '<div id="' + cfg.modalId + 'Empty" class="em-picker-empty" style="display:none;">'
+            + '<div class="em-picker-empty-icon"><i class="fas fa-magnifying-glass"></i></div>'
+            + '<div class="em-picker-empty-title">No matches</div></div>'
+            + '<div class="em-picker-pagination"><div class="em-picker-pagination-info" id="' + cfg.modalId + 'Info"></div></div>'
+            + '</div></div>'
+            + '<div class="em-picker-footer">'
+            + '<button type="button" class="em-picker-btn-cancel" id="' + cfg.modalId + 'Cancel">Cancel</button>'
+            + '</div>'
+            + '</div></div></div>'
+        );
+
+        var modalEl   = document.getElementById(cfg.modalId);
+        var tableEl   = document.getElementById(cfg.modalId + 'Table');
+        var emptyEl   = document.getElementById(cfg.modalId + 'Empty');
+        var filterEl  = document.getElementById(cfg.modalId + 'Filter');
+        var infoEl    = document.getElementById(cfg.modalId + 'Info');
+        var closeBtn  = document.getElementById(cfg.modalId + 'Close');
+        var cancelBtn = document.getElementById(cfg.modalId + 'Cancel');
+
+        function showPicker() {
+            // Use Bootstrap if available, else manual approach
+            if (window.bootstrap && window.bootstrap.Modal) {
+                new window.bootstrap.Modal(modalEl).show();
+            } else {
+                modalEl.style.cssText = 'display:block;position:fixed;left:0;top:0;width:100%;height:100%;z-index:1060;';
+                modalEl.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function hidePicker() {
+            if (window.bootstrap && window.bootstrap.Modal) {
+                var inst = window.bootstrap.Modal.getInstance(modalEl);
+                if (inst) inst.hide(); else { modalEl.style.display = 'none'; modalEl.classList.remove('show'); }
+            } else {
+                modalEl.style.display = 'none';
+                modalEl.classList.remove('show');
+                modalEl.style.zIndex = '';
+                document.body.style.overflow = '';
+            }
+        }
+
+        function renderRows(q) {
+            var tbody = tableEl.querySelector('tbody');
+            tbody.innerHTML = '';
+            q = (q || '').toLowerCase().trim();
+            var hidEl = document.getElementById(cfg.hiddenId);
+            var currentId = hidEl && hidEl.value && hidEl.value !== '0' ? parseInt(hidEl.value) : null;
+            var visible = 0;
+            cfg.data.forEach(function (item) {
+                var text = item[cfg.key] || '';
+                if (q && text.toLowerCase().indexOf(q) === -1) return;
+                visible++;
+                var isSelected = currentId !== null && currentId === item.id;
+                var tr = document.createElement('tr');
+                tr.className = 'em-picker-row' + (isSelected ? ' table-active' : '');
+                tr.innerHTML =
+                    '<td><div class="em-picker-name-text" style="font-size:.9rem;color:#1e293b;">'
+                    + escH(text)
+                    + (isSelected ? ' <span class="badge bg-primary ms-1" style="font-size:.65rem;">Selected</span>' : '')
+                    + '</div></td>'
+                    + '<td style="text-align:center;"><button type="button" class="em-picker-select-btn picker-row-btn" data-id="' + item.id + '" data-text="' + escH(text) + '"><i class="fas fa-' + (isSelected ? 'check' : 'plus') + '"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+            emptyEl.style.display = visible === 0 ? '' : 'none';
+            if (infoEl) infoEl.textContent = visible === 0 ? 'No matches' : 'Showing ' + visible + ' item' + (visible !== 1 ? 's' : '');
+            tbody.querySelectorAll('.picker-row-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var hidElInner = document.getElementById(cfg.hiddenId);
+                    var dispEl = document.getElementById(cfg.displayId);
+                    if (hidElInner) hidElInner.value = this.dataset.id;
+                    if (dispEl) dispEl.value = this.dataset.text;
+                    hidePicker();
+                });
+            });
+        }
+
+        // Wire display input to open picker
+        var dispEl = document.getElementById(cfg.displayId);
+        if (dispEl) dispEl.addEventListener('click', function () {
+            if (filterEl) filterEl.value = '';
+            renderRows('');
+            showPicker();
+        });
+
+        if (closeBtn)  closeBtn.addEventListener('click',  hidePicker);
+        if (cancelBtn) cancelBtn.addEventListener('click', hidePicker);
+        if (modalEl)   modalEl.addEventListener('click', function (e) { if (e.target === modalEl) hidePicker(); });
+        if (filterEl)  filterEl.addEventListener('input',  function ()  { renderRows(this.value); });
+    }
+
+    buildPickerModal({
+        modalId: 'empPickerModal', title: 'Select Employee', subtitle: 'Choose a project member to add',
+        colHeader: 'Employee', data: window._pmEmployees, key: 'name',
+        hiddenId: 'memberEmployeeSelect', displayId: 'memberEmployeeDisplay'
+    });
+    buildPickerModal({
+        modalId: 'rolePickerModal', title: 'Select Project Role', subtitle: 'Choose a role for this member',
+        colHeader: 'Role', data: window._pmRoles, key: 'name',
+        hiddenId: 'memberRoleSelect', displayId: 'memberRoleDisplay'
+    });
+    buildPickerModal({
+        modalId: 'msPickerModal', title: 'Select Milestone Template', subtitle: 'Choose a milestone template',
+        colHeader: 'Milestone', data: window._pmMilestones, key: 'name',
+        hiddenId: 'milestoneSelect', displayId: 'milestoneDisplay'
+    });
+})();
+
 // Member search filtering
 (function(){
     const input = document.getElementById('memberSearch');
