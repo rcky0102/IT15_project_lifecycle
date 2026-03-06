@@ -12,8 +12,8 @@
     var currentEmployeeId = (int)(ViewData["CurrentEmployeeId"] ?? 0);
 }
 
-<div class="emp-page-hero">
-    <div class="emp-page-hero-content">
+<div class="emp-page-hero" style="overflow:visible;">
+    <div class="emp-page-hero-content" style="overflow:visible;">
         <div class="emp-page-hero-left">
             <h1 class="emp-page-title" style="align-items:center;">
                 <span class="emp-page-title-icon"><i class="fas fa-file-alt"></i></span>
@@ -47,19 +47,12 @@
                 </span>
             </p>
         </div>
-        <div class="emp-page-hero-right" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <div class="emp-page-hero-right" style="display:flex; gap:8px; flex-wrap:wrap; overflow:visible;">
             @if (canEdit)
             {
                 <button type="button" id="saveDocBtn" class="emp-btn emp-btn-outline">
                     <i class="fas fa-floppy-disk"></i>
                     <span>Save</span>
-                </button>
-            }
-            @if (isOwner)
-            {
-                <button type="button" id="toggleCollabPanel" class="emp-btn emp-btn-outline">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Collaborators <span class="collab-count-badge" id="collabCount">@collaborators.Count</span></span>
                 </button>
             }
             <div class="emp-export-dropdown" style="position:relative; display:inline-block;">
@@ -68,7 +61,7 @@
                     <span>Export</span>
                     <i class="fas fa-chevron-down" style="font-size:10px; margin-left:4px;"></i>
                 </button>
-                <div id="exportDropdownMenu" style="display:none; position:absolute; right:0; top:100%; margin-top:4px; min-width:180px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:100; overflow:hidden;">
+                <div id="exportDropdownMenu" style="display:none; position:absolute; right:0; top:calc(100% + 6px); min-width:190px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.15); z-index:9999; overflow:hidden;">
                     <button type="button" id="exportPdfBtn" style="display:flex; align-items:center; gap:10px; width:100%; padding:10px 16px; border:none; background:none; cursor:pointer; font-size:14px; color:#1e293b; text-align:left;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
                         <i class="fas fa-file-pdf" style="color:#ef4444; font-size:16px; width:20px; text-align:center;"></i>
                         Export as PDF
@@ -79,6 +72,13 @@
                     </a>
                 </div>
             </div>
+            @if (isOwner)
+            {
+                <button type="button" id="toggleCollabPanel" class="emp-btn emp-btn-outline">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Collaborators <span class="collab-count-badge" id="collabCount">@collaborators.Count</span></span>
+                </button>
+            }
             <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('versionsModal')">
                 <i class="fas fa-clock-rotate-left"></i>
                 <span>Versions <span class="collab-count-badge" id="versionCount">@versions.Count</span></span>
