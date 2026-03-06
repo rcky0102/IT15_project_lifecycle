@@ -97,6 +97,18 @@
     <div class="project-table-card">
         @if (Model.Any())
         {
+            <style>
+                /* Scoped tweaks for DeptHead-style badges: keep on one line and truncate if too long */ 
+                .project-table-card .project-badge-white { white-space: nowrap; }
+                .project-table-card .project-badge-white > span:not(.emp-status-inline) {
+                    display: inline-block;
+                    max-width: 10.5rem;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    vertical-align: middle;
+                }
+            </style>
+
             <div class="project-table-responsive">
                 <table class="project-table" id="documentsTable">
                     <colgroup>
@@ -131,23 +143,28 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if (isOwner)
-                                    {
-                                        <span>You</span>
-                                    }
-                                    else
-                                    {
-                                        @doc.OwnerEmployee?.FirstName @doc.OwnerEmployee?.LastName
-                                    }
+                                    <span class="project-badge-white" title="Owner">
+                                        <i class="fas fa-user"></i>
+                                        <span style="margin-left:.35rem;">
+                                            @if (isOwner)
+                                            {
+                                                <text>You</text>
+                                            }
+                                            else
+                                            {
+                                                @doc.OwnerEmployee?.FirstName @doc.OwnerEmployee?.LastName
+                                            }
+                                        </span>
+                                    </span>
                                 </td>
                                 <td>
-                                    <span title="Last modified">
+                                    <span class="project-badge-white" title="Last modified">
                                         <i class="fas fa-calendar-day"></i>
                                         @((doc.LastModified ?? doc.DateCreated).ToString("MMM dd, yyyy h:mm tt"))
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="emp-action-group">
+                                    <div style="display:inline-flex;align-items:center;gap:.35rem;">
                                         <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id"
                                            class="emp-action-btn emp-action-view" title="Open">
                                             <i class="fas fa-magnifying-glass"></i>
@@ -161,7 +178,7 @@
                                             if (!doc.IsArchived)
                                             {
                                                 <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
-                                                        data-action="@Url.Action("Archive", "Document", new { area = "Employee" })"
+                                                        data-action='@Url.Action("Archive", "Document", new { area = "Employee" })'
                                                         data-id="@doc.Id"
                                                         data-message="Archive this document?">
                                                     <i class="fas fa-box-archive"></i>
@@ -169,8 +186,8 @@
                                             }
                                             else
                                             {
-                                                <button type="button" class="emp-action-btn emp-action-restore" title="Unarchive"
-                                                        data-action="@Url.Action("Unarchive", "Document", new { area = "Employee" })"
+                                                <button type="button" class="emp-action-btn emp-action-unarchive" title="Unarchive"
+                                                        data-action='@Url.Action("Unarchive", "Document", new { area = "Employee" })'
                                                         data-id="@doc.Id"
                                                         data-message="Unarchive this document?">
                                                     <i class="fas fa-box-open"></i>
