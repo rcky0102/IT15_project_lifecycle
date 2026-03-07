@@ -44,18 +44,18 @@
     </div>
 }
 
-<!-- ===== Confirmation Modal (uses DepartmentHead modal styles) ===== -->
-<div class="dh-modal-backdrop" id="confirmActionModal" style="display:none;">
-    <div class="dh-modal">
-        <div class="dh-modal-icon">
-            <i class="fas fa-question-circle"></i>
-        </div>
-        <h5 class="dh-modal-title">Confirm Action</h5>
-        <p class="dh-modal-message" id="confirmMessage"></p>
-        @Html.AntiForgeryToken()
-        <div class="dh-modal-actions">
-            <button type="button" class="dh-btn dh-btn-cancel" id="confirmCancelBtn">Cancel</button>
-            <button type="button" class="dh-btn dh-btn-confirm" id="confirmOkBtn">Confirm</button>
+<!-- Confirmation modal for archive / unarchive actions -->
+<div class="emp-modal-backdrop" id="confirmActionModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document">
+        <h4 id="confirmActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
+        <p id="confirmActionMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmActionCancel">Cancel</button>
+            <form id="confirmActionForm" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="confirmActionId" value="" />
+                <button type="submit" class="emp-btn emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
+            </form>
         </div>
     </div>
 </div>
@@ -236,53 +236,39 @@
     <script>
 (function () {
     // ===== Confirmation modal logic =====
-    var backdrop   = document.getElementById('confirmActionModal');
-    var msgEl      = document.getElementById('confirmMessage');
-    var cancelBtn  = document.getElementById('confirmCancelBtn');
-    var okBtn      = document.getElementById('confirmOkBtn');
-    var pendingAction = null;
-    var pendingId     = null;
+    const modal      = document.getElementById('confirmActionModal');
+    const modalMsg   = document.getElementById('confirmActionMessage');
+    const modalForm  = document.getElementById('confirmActionForm');
+    const modalId    = document.getElementById('confirmActionId');
+    const cancelBtn  = document.getElementById('confirmActionCancel');
+
+    function showModal(actionUrl, id, message) {
+        if (!modal || !modalForm || !modalId) return;
+        modalForm.action     = actionUrl;
+        modalId.value        = id;
+        modalMsg.textContent = message || 'Are you sure?';
+        modal.style.display  = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideModal() {
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
 
     document.querySelectorAll('.dh-action-confirm').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            pendingAction = this.getAttribute('data-action');
-            pendingId     = this.getAttribute('data-id');
-            msgEl.textContent = this.getAttribute('data-message') || 'Are you sure?';
-            backdrop.style.display = 'flex';
+            const action  = btn.getAttribute('data-action');
+            const id      = btn.getAttribute('data-id');
+            const message = btn.getAttribute('data-message') || 'Are you sure?';
+            if (!action || !id) return;
+            showModal(action, id, message);
         });
     });
 
-    function hideModal() {
-        backdrop.style.display = 'none';
-        pendingAction = null;
-        pendingId = null;
-    }
-
-    cancelBtn.addEventListener('click', hideModal);
-    backdrop.addEventListener('click', function (e) {
-        if (e.target === backdrop) hideModal();
-    });
-
-    okBtn.addEventListener('click', function () {
-        if (!pendingAction) return;
-        var form = document.createElement('form');
-        form.method = 'post';
-        form.action = pendingAction;
-        form.style.display = 'none';
-
-        var token = document.querySelector('input[name="__RequestVerificationToken"]');
-        if (token) {
-            var t = document.createElement('input');
-            t.type = 'hidden'; t.name = '__RequestVerificationToken'; t.value = token.value;
-            form.appendChild(t);
-        }
-        var idInput = document.createElement('input');
-        idInput.type = 'hidden'; idInput.name = 'id'; idInput.value = pendingId;
-        form.appendChild(idInput);
-
-        document.body.appendChild(form);
-        form.submit();
-    });
+    cancelBtn?.addEventListener('click', hideModal);
+    modal?.addEventListener('click', function (e) { if (e.target === modal) hideModal(); });
     let PAGE_SIZE = 10;
     let currentPage = 1;
     let filteredRows = [];
