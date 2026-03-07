@@ -102,7 +102,7 @@ else
                     onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">@Model.Note</textarea>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:.625rem;flex-wrap:wrap;">
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:.625rem;flex-wrap:wrap;">
                 <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:nowrap;">
                     <label for="statusSelect" style="font-weight:600;color:#374151;margin-right:.25rem;white-space:nowrap;">Set status</label>
                     <select id="statusSelect" class="emp-select" style="min-width:160px;padding:.45rem .65rem;border-radius:10px;border:1.5px solid #e2e8f0;font-size:. ninerem;">
@@ -118,7 +118,7 @@ else
 
                 <div style="display:flex;align-items:center;">
                     <button type="button"
-                        class="emp-btn" style="background:linear-gradient(135deg,#006994,#4CA3DD);color:#fff;"
+                        class="emp-btn" style="background:linear-gradient(135deg,#006994,#4CA3DD);color:#fff;padding:.5rem .8rem;"
                         onclick="document.getElementById('actionTypeHidden').value='SendFeedback'; document.getElementById('reviewForm').submit();">
                         <i class="fas fa-paper-plane"></i> Send Feedback
                     </button>
