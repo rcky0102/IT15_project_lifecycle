@@ -46,6 +46,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     Id = p.Id,
                     Name = p.Name,
                     ProposalTitle = p.ProjectProposal != null ? p.ProjectProposal.Title : string.Empty,
+                    ProjectManagerName = p.ProjectManager != null ? (p.ProjectManager.FirstName + " " + p.ProjectManager.LastName) : string.Empty,
                     StartDate = p.StartDate,
                     EndDate = p.EndDate,
                     IsArchived = p.IsArchived

@@ -6,11 +6,7 @@
     var notes    = ViewBag.ProposalNoteVersions    as List<project_lifecycle.Models.ProposalNoteVersion>    ?? new List<project_lifecycle.Models.ProposalNoteVersion>();
     var orderedNotes = notes.OrderByDescending(n => n.VersionNumber).ToList();
     var submitterName = Model?.Employee != null
-        ? (
-            Model.Employee.FirstName
-            + (string.IsNullOrWhiteSpace(Model.Employee.MiddleName) ? "" : " " + Model.Employee.MiddleName.Trim().Substring(0, 1) + ".")
-            + " " + Model.Employee.LastName
-          )
+        ? (Model.Employee.FirstName + " " + Model.Employee.LastName)
         : "Unknown";
 }
 

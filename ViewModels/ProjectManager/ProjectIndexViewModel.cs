@@ -16,6 +16,7 @@ namespace project_lifecycle.ViewModels.ProjectManager
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string ProposalTitle { get; set; } = string.Empty;
+        public string ProjectManagerName { get; set; } = string.Empty;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsArchived { get; set; } = false;

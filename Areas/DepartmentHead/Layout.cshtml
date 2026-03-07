@@ -204,6 +204,15 @@
     .dh-modal .dh-btn { border-radius: 8px; padding: .45rem .65rem; font-weight:600; font-size:.92rem; }
     .dh-modal .dh-btn-cancel { background: transparent; border:1px solid #e6eef6; color:#475569; }
     .dh-modal .dh-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color:#fff; border:none; }
+    /* emp-modal styles (shared with Employee area — used by Project index confirmation dialog) */
+    .emp-modal-backdrop { position: fixed; inset: 0; background: rgba(3,7,18,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .emp-modal { background: #fff; border-radius: 12px; width: 94%; max-width: 420px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(2,6,23,0.35); }
+    .emp-modal h4 { margin: 0 0 .5rem; font-size: 1.05rem; color: #0f172a; }
+    .emp-modal p { margin: 0 0 1rem; color: #64748b; font-size: .92rem; }
+    .emp-modal .emp-modal-actions { display: flex; gap: .5rem; justify-content: flex-end; }
+    .emp-modal .emp-btn { border-radius: 8px; padding: .5rem .85rem; font-weight: 600; }
+    .emp-modal .emp-btn-cancel { background: transparent; border: 1px solid #e6eef6; color: #475569; }
+    .emp-modal .emp-btn-confirm { background: linear-gradient(90deg,#006994,#4CA3DD); color: #fff; border: none; }
     </style>
 
     <div class="dh-modal-backdrop" id="logoutModal" role="dialog" aria-modal="true" aria-hidden="true">

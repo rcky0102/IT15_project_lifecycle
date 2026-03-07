@@ -86,7 +86,7 @@
                         @foreach (var user in Model.Users)
                         {
                             var fullName = !string.IsNullOrEmpty(user.FirstName)
-                                ? $"{user.FirstName} {user.MiddleName} {user.LastName}".Replace("  ", " ").Trim()
+                                ? $"{user.FirstName} {user.LastName}".Trim()
                                 : "";
                             <tr class="sa-row"
                                 data-email="@user.Email.ToLower()"

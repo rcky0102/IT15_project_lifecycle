@@ -44,18 +44,18 @@
     </div>
 }
 
-<!-- ===== Confirmation Modal ===== -->
-<div class="emp-modal-backdrop" id="confirmActionModal" style="display:none;">
-    <div class="emp-modal">
-        <div class="emp-modal-icon">
+<!-- ===== Confirmation Modal (uses DepartmentHead modal styles) ===== -->
+<div class="dh-modal-backdrop" id="confirmActionModal" style="display:none;">
+    <div class="dh-modal">
+        <div class="dh-modal-icon">
             <i class="fas fa-question-circle"></i>
         </div>
-        <h5 class="emp-modal-title">Confirm Action</h5>
-        <p class="emp-modal-message" id="confirmMessage"></p>
+        <h5 class="dh-modal-title">Confirm Action</h5>
+        <p class="dh-modal-message" id="confirmMessage"></p>
         @Html.AntiForgeryToken()
-        <div class="emp-modal-actions">
-            <button type="button" class="emp-btn-cancel" id="confirmCancelBtn">Cancel</button>
-            <button type="button" class="emp-btn-confirm" id="confirmOkBtn">Confirm</button>
+        <div class="dh-modal-actions">
+            <button type="button" class="dh-btn dh-btn-cancel" id="confirmCancelBtn">Cancel</button>
+            <button type="button" class="dh-btn dh-btn-confirm" id="confirmOkBtn">Confirm</button>
         </div>
     </div>
 </div>

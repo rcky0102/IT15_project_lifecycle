@@ -82,6 +82,7 @@
                         <tr>
                             <th>Project</th>
                             <th>Proposal</th>
+                            <th>Manager</th>
                             <th>Timeline</th>
                             <th>Members</th>
                             <th>Progress</th>
@@ -120,7 +121,19 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="project-date">@project.ProposalTitle</td>
+                                    <td class="project-date">
+                                        <div class="project-cell-truncate" style="font-weight:normal;">@project.ProposalTitle</div>
+                                    </td>
+                                    <td class="project-manager">
+                                        @if (!string.IsNullOrWhiteSpace(project.ProjectManagerName))
+                                        {
+                                            <div style="font-size:.9rem;color:#64748b;">@project.ProjectManagerName</div>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#94a3b8;">—</span>
+                                        }
+                                    </td>
                                 <td>
                                     <div class="project-timeline">
                                         <span class="project-timeline-dates">

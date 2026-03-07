@@ -94,7 +94,7 @@
                         <tr>
                             <th>Project</th>
                             <th>Proposal</th>
-                            <th>Project Manager</th>
+                            <th>Manager</th>
                             <th>Timeline</th>
                             <th>Members</th>
                             <th>Progress</th>
@@ -127,20 +127,24 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="project-proposal">@project.ProposalTitle</td>
-                                <td>
-                                    <span class="project-badge-white">
-                                        <i class="fas fa-user-tie"></i>
-                                        <span style="margin-left:.5rem;">@project.ProjectManagerName</span>
-                                    </span>
+                                <td class="project-date">
+                                    <div class="project-cell-truncate" style="font-weight:normal;">@project.ProposalTitle</div>
+                                </td>
+                                <td class="project-manager">
+                                    @if (!string.IsNullOrWhiteSpace(project.ProjectManagerName))
+                                    {
+                                        <div style="font-size:.9rem;color:#64748b;">@StripMiddleName(project.ProjectManagerName)</div>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#94a3b8;">—</span>
+                                    }
                                 </td>
                                 <td>
                                     <div class="project-timeline">
-                                        <div class="project-timeline-dates">
-                                            <span>@project.StartDate.ToString("MMM dd, yyyy")</span>
-                                            <i class="fas fa-arrow-right project-timeline-arrow"></i>
-                                            <span>@project.EndDate.ToString("MMM dd, yyyy")</span>
-                                        </div>
+                                        <span class="project-timeline-dates">
+                                            @project.StartDate.ToString("MMM dd, yyyy") &rarr; @project.EndDate.ToString("MMM dd, yyyy")
+                                        </span>
                                         <span class="project-timeline-duration">@duration days</span>
                                     </div>
                                 </td>
@@ -363,6 +367,15 @@ document.addEventListener('DOMContentLoaded', function () {
         "Finished"   => "emp-status-approved",
         _             => "emp-status-default"
     };
+
+    private string StripMiddleName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return fullName;
+        var parts = fullName.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length <= 2) return fullName;
+        return parts[0] + " " + parts[parts.Length - 1];
+    }
+
     private string GetInitials(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "?";
