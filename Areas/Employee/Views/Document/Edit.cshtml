@@ -288,6 +288,29 @@
         let isSaving = false;
         let currentTitle = document.getElementById('docTitle')?.textContent?.trim() || '';
         let titleDirty = false;
+        const draftStorageKey = 'employee-doc-edit-draft-' + documentId;
+
+        function saveDraft() {
+            try {
+                const payload = {
+                    title: currentTitle,
+                    contentHtml: editorInstance ? editorInstance.getData() : ''
+                };
+                sessionStorage.setItem(draftStorageKey, JSON.stringify(payload));
+            } catch {}
+        }
+
+        function restoreDraft() {
+            try {
+                const raw = sessionStorage.getItem(draftStorageKey);
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch { return null; }
+        }
+
+        function clearDraft() {
+            try { sessionStorage.removeItem(draftStorageKey); } catch {}
+        }
 
         // ── CKEditor CDN loading ────────────────────────────────
         const scriptCdnCandidates = [
@@ -377,6 +400,7 @@
 
                 if (data.success) {
                     titleDirty = false;
+                    clearDraft();
                     updateSaveStatus('Last saved: ' + data.lastModified, 'fas fa-cloud-check');
                     // Sync title in page
                     if (data.title) {
@@ -454,6 +478,24 @@
                     }
 
                     if (canEdit) {
+                            // Restore any unsaved draft from a previous session
+                            const draft = restoreDraft();
+                            if (draft) {
+                                if (typeof draft.contentHtml === 'string' && draft.contentHtml.length > 0) {
+                                    editor.setData(draft.contentHtml);
+                                    updateSaveStatus('Draft restored — click Save to keep changes', 'fas fa-circle-dot');
+                                }
+                                if (typeof draft.title === 'string' && draft.title.length > 0) {
+                                    currentTitle = draft.title;
+                                    const titleEl = document.getElementById('docTitle');
+                                    if (titleEl) titleEl.textContent = draft.title;
+                                    titleDirty = true;
+                                }
+                            }
+
+                            // Save draft on every content change
+                            editor.model.document.on('change:data', function () { saveDraft(); });
+
                             wireFileInsertButton();
                             wireTitleEdit();
 
@@ -502,6 +544,7 @@
                 if (newTitle !== currentTitle) {
                     currentTitle = newTitle;
                     titleDirty = true;
+                    saveDraft();
                     updateSaveStatus('Unsaved changes…', 'fas fa-circle-dot');
                 }
             }

@@ -104,6 +104,29 @@
         let editorInstance = null;
         let pendingUploads = 0;
         let isSubmitting = false;
+        const draftStorageKey = 'employee-doc-create-draft';
+
+        function saveDraft() {
+            if (isSubmitting) return;
+            const inputEl = document.querySelector(editorSelector);
+            const payload = {
+                title: titleInput ? titleInput.value : '',
+                contentHtml: editorInstance ? editorInstance.getData() : (inputEl ? inputEl.value : '')
+            };
+            try { sessionStorage.setItem(draftStorageKey, JSON.stringify(payload)); } catch {}
+        }
+
+        function restoreDraft() {
+            try {
+                const raw = sessionStorage.getItem(draftStorageKey);
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch { return null; }
+        }
+
+        function clearDraft() {
+            try { sessionStorage.removeItem(draftStorageKey); } catch {}
+        }
 
         function setUploadingState(isUploading) {
             if (submitButton) submitButton.disabled = isUploading;
@@ -225,6 +248,11 @@
                 })
                 .then(editor => {
                     editorInstance = editor;
+                    const draft = restoreDraft();
+                    if (draft && typeof draft.contentHtml === 'string' && draft.contentHtml.length > 0) {
+                        editor.setData(draft.contentHtml);
+                    }
+                    editor.model.document.on('change:data', function () { saveDraft(); });
                     wireFileInsertButton();
                 })
                 .catch(error => console.error('CKEditor initialization error:', error));
@@ -250,8 +278,25 @@
                 const html = editorInstance ? editorInstance.getData() : (inputEl ? inputEl.value : '');
                 if (inputEl) inputEl.value = html;
                 isSubmitting = true;
+                clearDraft();
             });
+            // Wire reset button to clear draft
+            const resetBtn = formElement.querySelector('button[type="reset"]');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function () { clearDraft(); });
+            }
         }
+
+        // Wire title input to save draft and restore title before editor loads
+        (function () {
+            const draft = restoreDraft();
+            if (draft && titleInput && typeof draft.title === 'string' && titleInput.value.trim() === '') {
+                titleInput.value = draft.title;
+            }
+            if (titleInput) {
+                titleInput.addEventListener('input', function () { saveDraft(); });
+            }
+        })();
 
         function loadScriptSequentially(index) {
             if (window.CKEDITOR && window.CKEDITOR.ClassicEditor) { initEditor(); return; }
