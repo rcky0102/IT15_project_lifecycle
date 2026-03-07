@@ -14,7 +14,11 @@
             </h1>
             <p class="emp-page-subtitle">Create a new collaborative document</p>
         </div>
-        <div class="emp-page-hero-right">
+        <div class="emp-page-hero-right" style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" id="importCloudBtn" class="emp-btn emp-btn-outline">
+                <i class="fas fa-cloud-arrow-down"></i>
+                <span>Cloud Import</span>
+            </button>
             <a asp-area="Employee" asp-controller="Document" asp-action="Index" class="emp-btn emp-btn-outline">
                 <i class="fas fa-arrow-left"></i>
                 <span>Back to Documents</span>
@@ -64,10 +68,36 @@
     </div>
 </div>
 
+<!-- ===== Cloud Import Modal ===== -->
+<div id="cloudImportModal" class="emp-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cloudImportTitle">
+    <div class="emp-modal" style="max-width:620px; width:95%;">
+        <div class="emp-modal-header">
+            <h5 id="cloudImportTitle" class="emp-modal-title"><i class="fas fa-cloud-arrow-down"></i> Import from Cloud</h5>
+            <button class="emp-modal-close" onclick="empModalClose('cloudImportModal')" aria-label="Close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="emp-modal-body">
+            <div id="cloudFileSearch" style="margin-bottom:12px;">
+                <input type="text" id="cloudFileFilter" class="emp-form-control" placeholder="Search files…" style="width:100%;" />
+            </div>
+            <div id="cloudFileLoading" style="text-align:center; padding:24px; display:none;">
+                <i class="fas fa-spinner fa-spin" style="font-size:1.5rem; opacity:.5;"></i>
+                <p style="margin-top:8px; opacity:.6;">Loading cloud files…</p>
+            </div>
+            <div id="cloudFileEmpty" style="text-align:center; padding:24px; display:none;">
+                <i class="fas fa-cloud" style="font-size:2rem; opacity:.3;"></i>
+                <p style="margin-top:8px; opacity:.6;">No files found in the cloud.</p>
+            </div>
+            <div id="cloudFileList" style="max-height:380px; overflow-y:auto;"></div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const editorSelector = '#Content';
         const uploadEndpoint = '@Url.Action("UploadFile", "Document", new { area = "Employee" })';
+        const listCloudEndpoint = '@Url.Action("ListCloudFiles", "Document", new { area = "Employee" })';
+        const getCloudFileEndpoint = '@Url.Action("GetCloudFile", "Document", new { area = "Employee" })';
         const formElement = document.getElementById('createDocForm');
         const submitButton = document.getElementById('submitDocBtn');
         const titleInput = document.getElementById('Title');
@@ -247,5 +277,131 @@
         }
 
         loadStyleSequentially(0);
+
+        // ═══════ Cloud Import Modal ═══════════════════════════════
+        window.empModalOpen = function (id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.add('emp-modal-visible');
+            document.body.style.overflow = 'hidden';
+        };
+        window.empModalClose = function (id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('emp-modal-visible');
+            document.body.style.overflow = '';
+        };
+        document.querySelectorAll('.emp-modal-overlay').forEach(function (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) empModalClose(overlay.id);
+            });
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.emp-modal-overlay.emp-modal-visible').forEach(function (m) {
+                    empModalClose(m.id);
+                });
+            }
+        });
+
+        let _cloudFiles = [];
+        const cloudImportBtn = document.getElementById('importCloudBtn');
+        const cloudFileList = document.getElementById('cloudFileList');
+        const cloudFileLoading = document.getElementById('cloudFileLoading');
+        const cloudFileEmpty = document.getElementById('cloudFileEmpty');
+        const cloudFileFilter = document.getElementById('cloudFileFilter');
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        function renderCloudFiles(filter) {
+            const q = (filter || '').toLowerCase();
+            cloudFileList.innerHTML = '';
+            const filtered = _cloudFiles.filter(f => !q || f.fileName.toLowerCase().includes(q));
+
+            if (filtered.length === 0) {
+                cloudFileEmpty.style.display = _cloudFiles.length === 0 ? '' : 'block';
+                if (_cloudFiles.length > 0) {
+                    cloudFileEmpty.querySelector('p').textContent = 'No files match your search.';
+                }
+                return;
+            }
+            cloudFileEmpty.style.display = 'none';
+
+            filtered.forEach(function (f) {
+                const item = document.createElement('div');
+                item.style.cssText = 'display:flex; align-items:center; gap:12px; padding:10px 14px; border-bottom:1px solid #f1f5f9; cursor:pointer; transition:background .15s;';
+                item.onmouseover = function () { item.style.background = '#f8fafc'; };
+                item.onmouseout = function () { item.style.background = ''; };
+                item.innerHTML =
+                    '<div style="flex-shrink:0; width:36px; height:36px; border-radius:8px; background:linear-gradient(135deg,#f59e0b22,#f59e0b11); display:flex; align-items:center; justify-content:center;">' +
+                    '  <i class="fas fa-file-code" style="color:#f59e0b;"></i>' +
+                    '</div>' +
+                    '<div style="flex:1; min-width:0;">' +
+                    '  <div style="font-weight:600; font-size:13.5px; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + f.fileName + '</div>' +
+                    '  <div style="font-size:12px; color:#94a3b8;">' + f.lastModified + ' · ' + formatFileSize(f.size) + '</div>' +
+                    '</div>' +
+                    '<i class="fas fa-arrow-right" style="color:#cbd5e1; font-size:12px;"></i>';
+                item.addEventListener('click', function () { importCloudFile(f.key); });
+                cloudFileList.appendChild(item);
+            });
+        }
+
+        async function loadCloudFiles() {
+            cloudFileLoading.style.display = '';
+            cloudFileEmpty.style.display = 'none';
+            cloudFileList.innerHTML = '';
+            cloudFileFilter.value = '';
+            try {
+                const resp = await fetch(listCloudEndpoint);
+                const data = await resp.json();
+                if (data.success) {
+                    _cloudFiles = data.files || [];
+                    renderCloudFiles('');
+                } else {
+                    cloudFileEmpty.style.display = '';
+                    cloudFileEmpty.querySelector('p').textContent = data.message || 'Failed to load files.';
+                }
+            } catch {
+                cloudFileEmpty.style.display = '';
+                cloudFileEmpty.querySelector('p').textContent = 'Could not connect to cloud storage.';
+            } finally {
+                cloudFileLoading.style.display = 'none';
+            }
+        }
+
+        async function importCloudFile(key) {
+            empModalClose('cloudImportModal');
+            const titleInput = document.getElementById('Title');
+            try {
+                const resp = await fetch(getCloudFileEndpoint + '?key=' + encodeURIComponent(key));
+                const data = await resp.json();
+                if (data.success) {
+                    if (titleInput && data.title) titleInput.value = data.title;
+                    if (editorInstance) {
+                        editorInstance.setData(data.content || '');
+                    } else {
+                        const ta = document.querySelector(editorSelector);
+                        if (ta) ta.value = data.content || '';
+                    }
+                } else {
+                    alert(data.message || 'Failed to import file.');
+                }
+            } catch {
+                alert('An error occurred while importing the file.');
+            }
+        }
+
+        cloudImportBtn?.addEventListener('click', function () {
+            empModalOpen('cloudImportModal');
+            loadCloudFiles();
+        });
+
+        cloudFileFilter?.addEventListener('input', function () {
+            renderCloudFiles(cloudFileFilter.value);
+        });
     });
 </script>

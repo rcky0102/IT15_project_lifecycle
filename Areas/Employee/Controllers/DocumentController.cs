@@ -821,6 +821,68 @@ namespace project_lifecycle.EmployeeArea.Controllers
             return Json(new { success = true, title = doc.Title, content = doc.Content });
         }
 
+        // ─── List Cloud Files (AJAX) ────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> ListCloudFiles()
+        {
+            try
+            {
+                var employee = await GetCurrentEmployeeAsync();
+                if (employee == null)
+                    return Json(new { success = false, message = "Employee profile not found." });
+
+                var files = await _s3.ListFilesAsync("documents/");
+                var result = files.Select(f => new
+                {
+                    key = f.Key,
+                    fileName = f.FileName,
+                    lastModified = f.LastModified.ToString("MMM dd, yyyy h:mm tt"),
+                    size = f.Size
+                });
+
+                return Json(new { success = true, files = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error listing cloud files");
+                return Json(new { success = false, message = "An error occurred while listing cloud files." });
+            }
+        }
+
+        // ─── Get Cloud File Content (AJAX) ──────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> GetCloudFile(string key)
+        {
+            try
+            {
+                var employee = await GetCurrentEmployeeAsync();
+                if (employee == null)
+                    return Json(new { success = false, message = "Employee profile not found." });
+
+                if (string.IsNullOrWhiteSpace(key))
+                    return Json(new { success = false, message = "File key is required." });
+
+                var content = await _s3.GetFileContentAsync(key);
+
+                // Derive a title from the file name: strip extension and timestamp suffix
+                var fileName = key;
+                var lastSlash = fileName.LastIndexOf('/');
+                if (lastSlash >= 0) fileName = fileName[(lastSlash + 1)..];
+                var title = Path.GetFileNameWithoutExtension(fileName);
+                // Remove trailing _yyyyMMddHHmmss timestamp if present
+                if (title.Length > 15 && title[^15] == '_' && long.TryParse(title[^14..], out _))
+                    title = title[..^15];
+                title = title.Replace('_', ' ');
+
+                return Json(new { success = true, title, content });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting cloud file {Key}", key);
+                return Json(new { success = false, message = "An error occurred while retrieving the file." });
+            }
+        }
+
         // ─── Save to Cloud (AWS S3) ─────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
