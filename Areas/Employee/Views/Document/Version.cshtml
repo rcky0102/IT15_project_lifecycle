@@ -24,7 +24,7 @@
             <form id="restoreVersionForm" asp-area="Employee" asp-controller="Document" asp-action="RestoreVersion" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="versionId" value="@Model?.Id" />
-                <button type="button" class="emp-btn emp-btn-primary" id="restoreVersionBtn">
+                <button type="button" class="emp-btn emp-btn-outline" id="restoreVersionBtn">
                     <i class="fas fa-rotate-left"></i>
                     <span>Restore this Version</span>
                 </button>
