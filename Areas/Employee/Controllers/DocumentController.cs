@@ -19,13 +19,15 @@ namespace project_lifecycle.EmployeeArea.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<DocumentController> _logger;
         private readonly INotificationService _notif;
+        private readonly IS3StorageService _s3;
 
-        public DocumentController(ApplicationDbContext context, UserManager<IdentityUser> userManager, ILogger<DocumentController> logger, INotificationService notif)
+        public DocumentController(ApplicationDbContext context, UserManager<IdentityUser> userManager, ILogger<DocumentController> logger, INotificationService notif, IS3StorageService s3)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
             _notif = notif;
+            _s3 = s3;
         }
 
         // ─── Helpers ────────────────────────────────────────────────
@@ -817,6 +819,38 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 return Json(new { success = false, message = "No access." });
 
             return Json(new { success = true, title = doc.Title, content = doc.Content });
+        }
+
+        // ─── Save to Cloud (AWS S3) ─────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveToCloud(int id)
+        {
+            try
+            {
+                var employee = await GetCurrentEmployeeAsync();
+                if (employee == null)
+                    return Json(new { success = false, message = "Employee profile not found." });
+
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id);
+                if (doc == null)
+                    return Json(new { success = false, message = "Document not found." });
+
+                if (!await HasAccessAsync(id, employee.Id))
+                    return Json(new { success = false, message = "You do not have access to this document." });
+
+                var safeTitle = string.Join("_", (doc.Title ?? "document").Split(Path.GetInvalidFileNameChars()));
+                var key = $"documents/{doc.Id}/{safeTitle}_{DateTime.UtcNow:yyyyMMddHHmmss}.html";
+
+                var url = await _s3.UploadHtmlAsync(key, doc.Content ?? string.Empty);
+
+                return Json(new { success = true, message = "Document saved to cloud successfully.", url });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving document {DocumentId} to S3", id);
+                return Json(new { success = false, message = "An error occurred while saving to cloud." });
+            }
         }
     }
 }

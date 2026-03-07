@@ -27,6 +27,9 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 // Nager.Date holiday API service
 builder.Services.AddHttpClient<INagerHolidayService, NagerHolidayService>();
 
+// AWS S3 storage service
+builder.Services.AddSingleton<IS3StorageService, S3StorageService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

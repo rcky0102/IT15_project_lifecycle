@@ -1,10 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "7FhYlBRN8O8=",
+  "dgSpecHash": "phBf5RF7lm4=",
   "success": true,
   "projectFilePath": "C:\\Users\\Asus\\source\\repos\\project_lifecycle\\project_lifecycle\\project_lifecycle.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Asus\\.nuget\\packages\\anglesharp\\1.1.0\\anglesharp.1.1.0.nupkg.sha512",
+    "C:\\Users\\Asus\\.nuget\\packages\\awssdk.core\\4.0.3.15\\awssdk.core.4.0.3.15.nupkg.sha512",
+    "C:\\Users\\Asus\\.nuget\\packages\\awssdk.s3\\4.0.18.7\\awssdk.s3.4.0.18.7.nupkg.sha512",
     "C:\\Users\\Asus\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\Asus\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
     "C:\\Users\\Asus\\.nuget\\packages\\documentformat.openxml\\3.3.0\\documentformat.openxml.3.3.0.nupkg.sha512",

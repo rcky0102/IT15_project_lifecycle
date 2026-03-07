@@ -70,6 +70,11 @@
                         <i class="fas fa-file-word" style="color:#2563eb; font-size:16px; width:20px; text-align:center;"></i>
                         Export as DOCX
                     </a>
+                    <div style="border-top:1px solid #e2e8f0;"></div>
+                    <button type="button" id="saveToCloudBtn" style="display:flex; align-items:center; gap:10px; width:100%; padding:10px 16px; border:none; background:none; cursor:pointer; font-size:14px; color:#1e293b; text-align:left;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
+                        <i class="fas fa-cloud-arrow-up" style="color:#f59e0b; font-size:16px; width:20px; text-align:center;"></i>
+                        Save to Cloud
+                    </button>
                 </div>
             </div>
             @if (isOwner)
@@ -274,6 +279,7 @@
         const canEdit = @(canEdit ? "true" : "false");
         const isOwner = @(isOwner ? "true" : "false");
         const exportPdfContentEndpoint = '@Url.Action("ExportPdfContent", "Document", new { area = "Employee" })';
+        const saveToCloudEndpoint = '@Url.Action("SaveToCloud", "Document", new { area = "Employee" })';
         const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value
             || '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
 
@@ -1042,6 +1048,35 @@
                         document.head.appendChild(s);
                     } else {
                         doExport();
+                    }
+                });
+            }
+            // Save to Cloud (AWS S3)
+            const saveToCloudBtn = document.getElementById('saveToCloudBtn');
+            if (saveToCloudBtn) {
+                saveToCloudBtn.addEventListener('click', async function () {
+                    dropdownMenu.style.display = 'none';
+                    saveToCloudBtn.disabled = true;
+                    saveToCloudBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:16px;width:20px;text-align:center;"></i> Uploading…';
+
+                    try {
+                        const fd = new FormData();
+                        fd.append('id', documentId);
+                        fd.append('__RequestVerificationToken', antiForgeryToken);
+
+                        const resp = await fetch(saveToCloudEndpoint, { method: 'POST', body: fd });
+                        const data = await resp.json();
+
+                        if (data.success) {
+                            alert('Document saved to cloud successfully.');
+                        } else {
+                            alert(data.message || 'Failed to save to cloud.');
+                        }
+                    } catch (e) {
+                        alert('An error occurred while saving to cloud.');
+                    } finally {
+                        saveToCloudBtn.disabled = false;
+                        saveToCloudBtn.innerHTML = '<i class="fas fa-cloud-arrow-up" style="color:#f59e0b;font-size:16px;width:20px;text-align:center;"></i> Save to Cloud';
                     }
                 });
             }
