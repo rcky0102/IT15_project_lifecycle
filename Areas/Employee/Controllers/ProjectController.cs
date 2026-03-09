@@ -250,20 +250,29 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 .OrderByDescending(n => n.VersionNumber)
                 .ToListAsync();
 
-            // Load all members assigned to this task so the view can display them (useful when multiple users are assigned)
+            // Load all members assigned to this task so the view can display them (include profile images for avatar rendering)
             var assignedTaskMembers = await _context.TaskMembers
                 .Where(tm => tm.ProjectTaskId == id)
                 .Include(tm => tm.Member).ThenInclude(m => m.Employee)
                 .ToListAsync();
 
-            var assignedMemberNames = assignedTaskMembers
-                .Select(tm => tm.Member?.Employee != null
-                    ? string.Join(" ", new[] { tm.Member.Employee.FirstName, tm.Member.Employee.MiddleName, tm.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
-                    : "N/A")
+            var assignedMembers = assignedTaskMembers
+                .Select(tm => new project_lifecycle.ViewModels.ProjectManager.MemberViewModel
+                {
+                    Id = tm.Member != null ? tm.Member.Id : 0,
+                    EmployeeId = tm.Member != null ? tm.Member.EmployeeId : 0,
+                    EmployeeName = tm.Member?.Employee != null
+                        ? string.Join(" ", new[] { tm.Member.Employee.FirstName, tm.Member.Employee.MiddleName, tm.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                        : "N/A",
+                    ProfileImage = tm.Member?.Employee?.ProfileImage,
+                    ProjectRoleId = tm.Member != null ? tm.Member.ProjectRoleId : 0,
+                    ProjectRoleName = tm.Member?.ProjectRole != null ? tm.Member.ProjectRole.Name : string.Empty,
+                    IsArchived = tm.Member != null ? tm.Member.IsArchived : false
+                })
                 .ToList();
 
-            ViewBag.AssignedMemberNames = assignedMemberNames;
-            ViewBag.AssignedMemberCount = assignedMemberNames.Count;
+            ViewBag.AssignedMembers = assignedMembers;
+            ViewBag.AssignedMemberCount = assignedMembers.Count;
 
             ViewBag.ProjectTaskVersions = versions;
             ViewBag.TaskNoteVersions = noteVersions;

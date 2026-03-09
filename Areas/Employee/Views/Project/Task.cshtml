@@ -9,7 +9,7 @@
     var versions   = ViewBag.ProjectTaskVersions as List<project_lifecycle.Models.ProjectTaskVersion>   ?? new List<project_lifecycle.Models.ProjectTaskVersion>();
     var noteVersions = ViewBag.TaskNoteVersions  as List<project_lifecycle.Models.TaskNoteVersion>     ?? new List<project_lifecycle.Models.TaskNoteVersion>();
     var orderedNotes = noteVersions.OrderByDescending(n => n.VersionNumber).ToList();
-    var assignedMemberNames = ViewBag.AssignedMemberNames as List<string> ?? new List<string>();
+    var assignedMembers = ViewBag.AssignedMembers as System.Collections.Generic.List<project_lifecycle.ViewModels.ProjectManager.MemberViewModel> ?? new System.Collections.Generic.List<project_lifecycle.ViewModels.ProjectManager.MemberViewModel>();
 }
 
 <!-- ===== Page Hero ===== -->
@@ -21,15 +21,44 @@
                 @taskName
             </h1>
             <p class="emp-page-subtitle">Submit your work for this task</p>
-            @if (assignedMemberNames != null && assignedMemberNames.Count > 1)
+            @if (assignedMembers != null && assignedMembers.Count > 1)
             {
-                <div style="margin-top:.5rem;">
-                    <div class="emp-form-hint" style="margin-bottom:.25rem;">Assigned</div>
-                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-                        @foreach (var nm in assignedMemberNames)
+                <div class="task-assigned">
+                    <style>
+                        .task-assigned { margin-top:.5rem; display:flex; align-items:center; gap:.6rem; }
+                        .avatar-stack { display:flex; align-items:center; }
+                        .avatar-stack .avatar { width:40px; height:40px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#eef2ff,#f3f7ff); color:#0f172a; font-weight:700; font-size:.9rem; border:2px solid #fff; box-shadow:0 6px 12px rgba(2,6,23,0.06); margin-left:-12px; }
+                        .avatar-stack .avatar:first-child { margin-left:0; }
+                        .avatar-stack .avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+                        .avatar-stack .avatar.more { background:#eef2ff; color:#1e293b; font-size:.85rem; display:flex; align-items:center; justify-content:center; }
+                        .assigned-summary { font-size:.92rem; color:#475569; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                    </style>
+                    <div class="avatar-stack" aria-hidden="true">
+                        @foreach (var m in assignedMembers.Take(4))
                         {
-                            <span class="emp-badge-white" style="padding:.25rem .6rem;border-radius:999px;border:1px solid #e6eefc;background:#f8fafc;color:#1e293b;font-weight:600;font-size:.82rem;">@nm</span>
+                            var name = (m.EmployeeName ?? "").ToString();
+                            var img = (m.ProfileImage ?? "")?.ToString() ?? "";
+                            var initials = string.Concat(name.Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s[0])).ToUpper();
+                            if (initials.Length > 2) { initials = initials.Substring(0, 2); }
+                            <div class="avatar" title="@name">
+                                @if (!string.IsNullOrEmpty(img))
+                                {
+                                    <img src="@img" alt="@name" />
+                                }
+                                else
+                                {
+                                    <span class="initials">@initials</span>
+                                }
+                            </div>
                         }
+                        @if (assignedMembers.Count > 4)
+                        {
+                            <div class="avatar more" title="More">+@(assignedMembers.Count - 4)</div>
+                        }
+                    </div>
+                    <div class="assigned-summary">
+                        <strong>@assignedMembers[0].EmployeeName</strong>
+                        <span style="opacity:.8;"> and @(assignedMembers.Count - 1) others</span>
                     </div>
                 </div>
             }
