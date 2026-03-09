@@ -26,6 +26,10 @@ namespace project_lifecycle.Models
         public string LastName { get; set; } = string.Empty;
 
         [Required]
+        [StringLength(20)]
+        public string Contact { get; set; }
+
+        [Required]
         public int DepartmentId { get; set; }
         [ForeignKey("DepartmentId")]
         public Department? Department { get; set; }

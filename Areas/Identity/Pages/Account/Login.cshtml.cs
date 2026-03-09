@@ -88,10 +88,10 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                         return RedirectToAction("Index", "SuperAdmin", new { area = "SuperAdmin" });
                     }
 
-                    if (await _userManager.IsInRoleAsync(user, "Admin"))
-                    {
-                        return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
-                    }
+                    //if (await _userManager.IsInRoleAsync(user, "Admin"))
+                    //{
+                    //    return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+                    //}
 
                     if (await _userManager.IsInRoleAsync(user, "Employee"))
                     {

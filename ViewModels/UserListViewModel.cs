@@ -19,6 +19,7 @@ namespace project_lifecycle.ViewModels
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         public string? DepartmentName { get; set; }
+        public string? Contact { get; set; }
         public string? PositionName { get; set; }
         public DateTime? DateHired { get; set; }
         public string? ProfileImage { get; set; }

@@ -85,6 +85,7 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                             userDetail.FirstName = employee.FirstName;
                             userDetail.MiddleName = employee.MiddleName;
                             userDetail.LastName = employee.LastName;
+                            userDetail.Contact = employee.Contact;
                             userDetail.DepartmentName = employee.Department?.Name;
                             userDetail.PositionName = employee.Position?.Name;
                             userDetail.DateHired = employee.DateHired;
@@ -286,6 +287,7 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                         FirstName = model.FirstName,
                         MiddleName = model.MiddleName,
                         LastName = model.LastName,
+                        Contact = model.Contact ?? "",
                         DepartmentId = model.DepartmentId ?? 0,
                         PositionId = model.PositionId ?? 0,
                         DateHired = model.DateHired
@@ -511,6 +513,7 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                             userDetail.FirstName = employee.FirstName;
                             userDetail.MiddleName = employee.MiddleName;
                             userDetail.LastName = employee.LastName;
+                            userDetail.Contact = employee.Contact;
                             userDetail.DepartmentName = employee.Department?.Name;
                             userDetail.PositionName = employee.Position?.Name;
                             userDetail.DateHired = employee.DateHired;
@@ -859,6 +862,7 @@ namespace project_lifecycle.Areas.HumanResource.Controllers
                     employee.FirstName = model.FirstName;
                     employee.MiddleName = model.MiddleName;
                     employee.LastName = model.LastName;
+                    employee.Contact = model.Contact ?? string.Empty;
                     employee.DepartmentId = model.DepartmentId ?? 0;
                     employee.PositionId = model.PositionId ?? 0;
                     employee.DateHired = model.DateHired;

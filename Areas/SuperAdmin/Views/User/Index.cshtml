@@ -142,7 +142,7 @@
                                 </td>
                                 <td>
                                     <div class="sa-action-group">
-                                        <button type="button" class="sa-action-btn sa-action-edit" title="Edit user" onclick="editUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))', '@user.Role', '@Html.Raw(user.FirstName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.MiddleName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.LastName?.Replace("'", "\\'") ?? "")', '@user.EmployeeNumber', '@Html.Raw(user.DepartmentName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.PositionName?.Replace("'", "\\'") ?? "")')">
+                                        <button type="button" class="sa-action-btn sa-action-edit" title="Edit user" onclick="editUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))', '@user.Role', '@Html.Raw(user.FirstName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.MiddleName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.LastName?.Replace("'", "\\'") ?? "")', '@user.EmployeeNumber', '@Html.Raw(user.DepartmentName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.PositionName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.Contact?.Replace("'", "\\'") ?? "")')">
                                             <i class="fas fa-pen-to-square"></i>
                                         </button>
                                         <button type="button" class="sa-action-btn sa-action-delete" title="Delete user" onclick="confirmDeleteUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))')">
@@ -1216,7 +1216,7 @@
             };
 
             // Edit user function - populate the create modal for editing
-            window.editUser = function(id, email, role, firstName, middleName, lastName, employeeNumber, departmentName, positionName) {
+            window.editUser = function(id, email, role, firstName, middleName, lastName, employeeNumber, departmentName, positionName, contact) {
                 // Reset form state
                 $('#createUserForm')[0].reset();
                 $('.text-danger').text('');
@@ -1230,6 +1230,7 @@
                 $('#userFirstName').val(firstName);
                 $('#userMiddleName').val(middleName);
                 $('#userLastName').val(lastName);
+                $('#userContact').val(contact || '');
 
                 // Try to select department and position by text if provided
                 if (departmentName) {

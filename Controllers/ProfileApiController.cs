@@ -51,7 +51,7 @@ namespace project_lifecycle.Controllers
                         profile = new
                         {
                             emp.Id, emp.EmployeeNumber, emp.FirstName, emp.MiddleName, emp.LastName,
-                            Contact = (string?)null,
+                            emp.Contact,
                             DepartmentName = emp.Department?.Name,
                             PositionName = emp.Position?.Name,
                             emp.DepartmentId, emp.PositionId,
@@ -246,6 +246,7 @@ namespace project_lifecycle.Controllers
                         if (!string.IsNullOrEmpty(firstName) && firstName != emp.FirstName) empChanges.Add("First Name");
                         if (!string.IsNullOrEmpty(lastName) && lastName != emp.LastName) empChanges.Add("Last Name");
                         if (middleName != (emp.MiddleName ?? "")) empChanges.Add("Middle Name");
+                        if (!string.IsNullOrEmpty(contact) && contact != (emp.Contact ?? "")) empChanges.Add("Contact");
                         if (addressLine != (emp.AddressLine ?? "")) empChanges.Add("Address Line");
                         if (region != (emp.Region ?? "")) empChanges.Add("Region");
                         if (province != (emp.Province ?? "")) empChanges.Add("Province");
@@ -258,6 +259,7 @@ namespace project_lifecycle.Controllers
                         if (!string.IsNullOrEmpty(firstName)) emp.FirstName = firstName;
                         if (!string.IsNullOrEmpty(lastName)) emp.LastName = lastName;
                         emp.MiddleName = string.IsNullOrEmpty(middleName) ? null : middleName;
+                        emp.Contact = string.IsNullOrEmpty(contact) ? emp.Contact : contact;
                         emp.AddressLine = addressLine;
                         emp.Region = region;
                         emp.Province = province;

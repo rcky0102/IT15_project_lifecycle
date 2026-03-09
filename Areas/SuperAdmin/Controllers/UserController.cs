@@ -76,6 +76,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.FirstName = employee.FirstName;
                             userDetail.MiddleName = employee.MiddleName;
                             userDetail.LastName = employee.LastName;
+                            userDetail.Contact = employee.Contact;
                             userDetail.DepartmentName = employee.Department?.Name;
                             userDetail.PositionName = employee.Position?.Name;
                             userDetail.DateHired = employee.DateHired;
@@ -295,6 +296,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         FirstName = model.FirstName,
                         MiddleName = model.MiddleName,
                         LastName = model.LastName,
+                        Contact = model.Contact ?? "",
                         DepartmentId = model.DepartmentId ?? 0,
                         PositionId = model.PositionId ?? 0,
                         DateHired = model.DateHired
@@ -430,12 +432,18 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                 await _audit.LogAsync(User, "Create", "User Management", $"Created user '{model.FirstName} {model.LastName}' ({model.Email}) with role {model.Role}", "User", user.Id);
 
+                var dashboardLink = "/";
+                if (!string.IsNullOrEmpty(model.Role))
+                {
+                    dashboardLink = $"/{model.Role}";
+                }
+
                 await _notif.CreateAsync(
                     recipientId: user.Id,
                     title: "Welcome!",
                     message: $"Your account has been created with the role {model.Role}.",
                     type: "Success",
-                    link: "/",
+                    link: dashboardLink,
                     module: "User Management"
                 );
 
@@ -551,6 +559,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.FirstName = employee.FirstName;
                             userDetail.MiddleName = employee.MiddleName;
                             userDetail.LastName = employee.LastName;
+                            userDetail.Contact = employee.Contact;
                             userDetail.DepartmentName = employee.Department?.Name;
                             userDetail.PositionName = employee.Position?.Name;
                             userDetail.DateHired = employee.DateHired;
@@ -924,6 +933,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     employee.FirstName = model.FirstName;
                     employee.MiddleName = model.MiddleName;
                     employee.LastName = model.LastName;
+                    employee.Contact = model.Contact ?? string.Empty;
                     employee.DepartmentId = model.DepartmentId ?? 0;
                     employee.PositionId = model.PositionId ?? 0;
                     employee.DateHired = model.DateHired;
@@ -1104,12 +1114,18 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                 await _audit.LogAsync(User, "Update", "User Management", $"Updated user '{model.FirstName} {model.LastName}' ({model.Email}) – role: {model.Role}", "User", model.UserId);
 
+                var dashboardLink = "/";
+                if (!string.IsNullOrEmpty(model.Role))
+                {
+                    dashboardLink = $"/{model.Role}";
+                }
+
                 await _notif.CreateAsync(
                     recipientId: model.UserId,
                     title: "Account Updated",
                     message: "Your account details have been updated by an administrator.",
                     type: "Info",
-                    link: "/",
+                    link: dashboardLink,
                     module: "User Management"
                 );
 
