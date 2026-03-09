@@ -1,5 +1,6 @@
- @model project_lifecycle.ViewModels.ProjectManager.ProjectTaskReviewViewModel
+@model project_lifecycle.ViewModels.ProjectManager.ProjectTaskReviewViewModel
 @using project_lifecycle.Models
+@using System.Linq
 @{
     ViewData["Title"] = "Review Task";
     var inputVersions = ViewBag.ProjectTaskVersions as List<ProjectTaskVersion>  ?? new List<ProjectTaskVersion>();
@@ -37,7 +38,51 @@
                 <span class="emp-page-title-icon"><i class="fas fa-clipboard-check"></i></span>
                 @Model.Name
             </h1>
-            <p class="emp-page-subtitle">Assigned to: @(Model.AssignedMemberName ?? "(unassigned)")</p>
+            @if (Model.AssignedMembers != null && Model.AssignedMembers.Count > 1)
+            {
+                <div class="task-assigned">
+                    <style>
+                        .task-assigned { margin-top:.5rem; display:flex; align-items:center; gap:.6rem; }
+                        .avatar-stack { display:flex; align-items:center; }
+                        .avatar-stack .avatar { width:40px; height:40px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#eef2ff,#f3f7ff); color:#0f172a; font-weight:700; font-size:.9rem; border:2px solid #fff; box-shadow:0 6px 12px rgba(2,6,23,0.06); margin-left:-12px; }
+                        .avatar-stack .avatar:first-child { margin-left:0; }
+                        .avatar-stack .avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+                        .avatar-stack .avatar.more { background:#eef2ff; color:#1e293b; font-size:.85rem; display:flex; align-items:center; justify-content:center; }
+                        .assigned-summary { font-size:.92rem; color:#475569; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                    </style>
+                    <div class="avatar-stack" aria-hidden="true">
+                        @foreach (var m in Model.AssignedMembers.Take(4))
+                        {
+                            var name = (m.EmployeeName ?? "").ToString();
+                            var img = (m.ProfileImage ?? "")?.ToString() ?? "";
+                            var initials = string.Concat(name.Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s[0])).ToUpper();
+                            if (initials.Length > 2) { initials = initials.Substring(0, 2); }
+                            <div class="avatar" title="@name">
+                                @if (!string.IsNullOrEmpty(img))
+                                {
+                                    <img src="@img" alt="@name" />
+                                }
+                                else
+                                {
+                                    <span class="initials">@initials</span>
+                                }
+                            </div>
+                        }
+                        @if (Model.AssignedMembers.Count > 4)
+                        {
+                            <div class="avatar more" title="More">+@(Model.AssignedMembers.Count - 4)</div>
+                        }
+                    </div>
+                    <div class="assigned-summary">
+                        <strong>@Model.AssignedMembers[0].EmployeeName</strong>
+                        <span style="opacity:.8;"> and @(Model.AssignedMembers.Count - 1) others</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p class="emp-page-subtitle">Assigned to: @(Model.AssignedMemberName ?? "(unassigned)")</p>
+            }
         </div>
         <div class="emp-page-hero-right" style="display:flex;gap:.5rem;flex-wrap:wrap;">
             <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('versionsModal')">

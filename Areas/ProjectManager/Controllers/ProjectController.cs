@@ -620,6 +620,28 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             var assignedName = taskMember?.Member?.Employee != null ? string.Join(" ", new[] { taskMember.Member.Employee.FirstName, taskMember.Member.Employee.MiddleName, taskMember.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null;
 
+            // Load all assigned members for this task (for multi-member display)
+            var assignedMembers = await _context.TaskMembers
+                .Where(tm => tm.ProjectTaskId == id)
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .Include(tm => tm.Member).ThenInclude(m => m.ProjectRole)
+                .ToListAsync();
+
+            var assignedMemberViewModels = assignedMembers
+                .Select(tm => new MemberViewModel
+                {
+                    Id = tm.Member != null ? tm.Member.Id : 0,
+                    EmployeeId = tm.Member != null ? tm.Member.EmployeeId : 0,
+                    EmployeeName = tm.Member?.Employee != null
+                        ? string.Join(" ", new[] { tm.Member.Employee.FirstName, tm.Member.Employee.MiddleName, tm.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                        : "N/A",
+                    ProfileImage = tm.Member?.Employee?.ProfileImage,
+                    ProjectRoleId = tm.Member != null ? tm.Member.ProjectRoleId : 0,
+                    ProjectRoleName = tm.Member?.ProjectRole != null ? tm.Member.ProjectRole.Name : string.Empty,
+                    IsArchived = tm.Member != null ? tm.Member.IsArchived : false
+                })
+                .ToList();
+
             var inputVersions = await _context.ProjectTaskVersions
                 .Where(v => v.ProjectTaskId == id)
                 .OrderByDescending(v => v.VersionNumber)
@@ -642,6 +664,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 Instructions = task.Instructions ?? string.Empty,
                 EmployeeInput = task.Input,
                 AssignedMemberName = assignedName,
+                AssignedMembers = assignedMemberViewModels,
                 Status = task.Status,
                 Notes = task.Notes
             };
