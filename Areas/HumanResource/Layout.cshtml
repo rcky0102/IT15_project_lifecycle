@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/hr-dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/messenger.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/employee-layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/project_lifecycle.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -42,7 +43,10 @@
                     <div class="hr-brand-icon">
                         <img src="~/css/Images/LOGO (final).png" asp-append-version="true" alt="Project Lifecycle Logo" class="brand-logo hr-brand-logo" />
                     </div>
-                    <span class="hr-brand-text">Project Lifecycle</span>
+                    <span class="emp-brand-text">
+                        Project <br />
+                        Lifecycle
+                    </span>
                 </a>
                 <button class="hr-sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
                     <i class="fas fa-bars fa-sm"></i>

@@ -96,19 +96,19 @@
                         </a>
                     </li>
                     <li class="emp-nav-item">
+                        <a href="@Url.Action("Index", "News", new { area = "Employee" })"
+                               class="emp-nav-link @(currentController == "News" ? "active" : "")"           data-tooltip="News">
+                            <i class="fas fa-newspaper"></i>
+                            <span class="emp-nav-text">News</span>
+                        </a>
+                    </li>
+                    <li class="emp-nav-item">
                         <a href="@Url.Action("Index", "Messages", new { area = "Employee" })"
                                class="emp-nav-link @(currentController == "Messages" ? "active" : "")"
                                data-tooltip="Messages">
                             <i class="fas fa-comment-dots"></i>
                             <span class="emp-nav-text">Messages</span>
                             <span class="msg-nav-badge" style="display:none"></span>
-                        </a>
-                    </li>
-                    <li class="emp-nav-item">
-                        <a href="@Url.Action("Index", "News", new { area = "Employee" })"
-                               class="emp-nav-link @(currentController == "News" ? "active" : "")"           data-tooltip="News">
-                            <i class="fas fa-newspaper"></i>
-                            <span class="emp-nav-text">News</span>
                         </a>
                     </li>
                 </ul>

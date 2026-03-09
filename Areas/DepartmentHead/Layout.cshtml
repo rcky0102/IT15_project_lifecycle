@@ -87,20 +87,20 @@
                         </a>
                     </li>
                     <li class="dh-nav-item">
+                        <a href="@Url.Action("Index", "News", new { area = "DepartmentHead" })"
+                           class="dh-nav-link @(currentController == "News" ? "active" : "")"
+                           data-tooltip="News">
+                            <i class="fas fa-newspaper"></i>
+                            <span class="dh-nav-text">News</span>
+                        </a>
+                    </li>
+                    <li class="dh-nav-item">
                         <a href="@Url.Action("Index", "Messages", new { area = "DepartmentHead" })"
                            class="dh-nav-link @(currentController == "Messages" ? "active" : "")"
                            data-tooltip="Messages">
                             <i class="fas fa-comment-dots"></i>
                             <span class="dh-nav-text">Messages</span>
                             <span class="msg-nav-badge" style="display:none"></span>
-                        </a>
-                    </li>
-                    <li class="dh-nav-item">
-                        <a href="@Url.Action("Index", "News", new { area = "DepartmentHead" })"
-                           class="dh-nav-link @(currentController == "News" ? "active" : "")"
-                           data-tooltip="News">
-                            <i class="fas fa-newspaper"></i>
-                            <span class="dh-nav-text">News</span>
                         </a>
                     </li>
                 </ul>
