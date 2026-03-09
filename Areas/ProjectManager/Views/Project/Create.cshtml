@@ -24,10 +24,10 @@
             <p class="emp-page-subtitle">Project: @Model.Project.Name</p>
         </div>
         <div class="emp-page-hero-right">
-            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Details"
-               asp-route-id="@Model.Project.Id" class="emp-btn emp-btn-outline">
+            <a asp-area="ProjectManager" asp-controller="Project" asp-action="Milestone"
+               asp-route-projectMilestoneId="@(ViewData["PreselectedMilestoneId"] as int? ?? Model.Project.Milestones.FirstOrDefault()?.Id)" class="emp-btn emp-btn-outline">
                 <i class="fas fa-arrow-left"></i>
-                <span>Back to Project</span>
+                <span>Back to Tasks</span>
             </a>
         </div>
     </div>

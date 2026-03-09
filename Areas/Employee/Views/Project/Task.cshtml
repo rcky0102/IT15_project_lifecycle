@@ -9,6 +9,7 @@
     var versions   = ViewBag.ProjectTaskVersions as List<project_lifecycle.Models.ProjectTaskVersion>   ?? new List<project_lifecycle.Models.ProjectTaskVersion>();
     var noteVersions = ViewBag.TaskNoteVersions  as List<project_lifecycle.Models.TaskNoteVersion>     ?? new List<project_lifecycle.Models.TaskNoteVersion>();
     var orderedNotes = noteVersions.OrderByDescending(n => n.VersionNumber).ToList();
+    var assignedMemberNames = ViewBag.AssignedMemberNames as List<string> ?? new List<string>();
 }
 
 <!-- ===== Page Hero ===== -->
@@ -20,6 +21,18 @@
                 @taskName
             </h1>
             <p class="emp-page-subtitle">Submit your work for this task</p>
+            @if (assignedMemberNames != null && assignedMemberNames.Count > 1)
+            {
+                <div style="margin-top:.5rem;">
+                    <div class="emp-form-hint" style="margin-bottom:.25rem;">Assigned</div>
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                        @foreach (var nm in assignedMemberNames)
+                        {
+                            <span class="emp-badge-white" style="padding:.25rem .6rem;border-radius:999px;border:1px solid #e6eefc;background:#f8fafc;color:#1e293b;font-weight:600;font-size:.82rem;">@nm</span>
+                        }
+                    </div>
+                </div>
+            }
         </div>
         <div class="emp-page-hero-right" style="display:flex;gap:.5rem;flex-wrap:wrap;">
             <button type="button" class="emp-btn emp-btn-outline" onclick="empModalOpen('versionsModal')">

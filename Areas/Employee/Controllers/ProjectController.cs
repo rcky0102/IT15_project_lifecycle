@@ -250,6 +250,21 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 .OrderByDescending(n => n.VersionNumber)
                 .ToListAsync();
 
+            // Load all members assigned to this task so the view can display them (useful when multiple users are assigned)
+            var assignedTaskMembers = await _context.TaskMembers
+                .Where(tm => tm.ProjectTaskId == id)
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .ToListAsync();
+
+            var assignedMemberNames = assignedTaskMembers
+                .Select(tm => tm.Member?.Employee != null
+                    ? string.Join(" ", new[] { tm.Member.Employee.FirstName, tm.Member.Employee.MiddleName, tm.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    : "N/A")
+                .ToList();
+
+            ViewBag.AssignedMemberNames = assignedMemberNames;
+            ViewBag.AssignedMemberCount = assignedMemberNames.Count;
+
             ViewBag.ProjectTaskVersions = versions;
             ViewBag.TaskNoteVersions = noteVersions;
 
