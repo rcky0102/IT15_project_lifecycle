@@ -25,7 +25,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             // ── Primary stats ──
             var totalUsers = await _userManager.Users.CountAsync();
             var totalEmployees = await _db.Employees.CountAsync();
-            var totalProjects = await _db.Projects.CountAsync();
+            var totalProjects = await _db.Projects.CountAsync(p => !p.IsArchived);
             var totalDepts = await _db.Departments.CountAsync(d => !d.IsArchived);
 
             ViewData["TotalUsers"] = totalUsers;
@@ -34,9 +34,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             ViewData["TotalDepartments"] = totalDepts;
 
             // ── Secondary stats ──
-            var totalTasks = await _db.ProjectTasks.CountAsync();
-            var completedTasks = await _db.ProjectTasks.CountAsync(t => t.Status == "Checked");
-            var pendingProposals = await _db.ProjectProposals.CountAsync(p => p.Status == "Pending");
+            var totalTasks = await _db.ProjectTasks.CountAsync(t => !t.IsArchived);
+            var completedTasks = await _db.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Checked");
+            var pendingProposals = await _db.ProjectProposals.CountAsync(p => !p.IsArchived && p.Status == "Pending");
             var totalPositions = await _db.Positions.CountAsync(p => !p.IsArchived);
 
             ViewData["TotalTasks"] = totalTasks;
@@ -46,14 +46,14 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
             // ── Task status breakdown ──
             ViewData["TaskChecked"] = completedTasks;
-            ViewData["TaskPending"] = await _db.ProjectTasks.CountAsync(t => t.Status == "Pending");
-            ViewData["TaskRevision"] = await _db.ProjectTasks.CountAsync(t => t.Status == "Require Revision");
+            ViewData["TaskPending"] = await _db.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Pending");
+            ViewData["TaskRevision"] = await _db.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Require Revision");
 
             // ── Proposal status breakdown ──
-            ViewData["ProposalApproved"] = await _db.ProjectProposals.CountAsync(p => p.Status == "Approved");
+            ViewData["ProposalApproved"] = await _db.ProjectProposals.CountAsync(p => !p.IsArchived && p.Status == "Approved");
             ViewData["ProposalPending"] = pendingProposals;
-            ViewData["ProposalRejected"] = await _db.ProjectProposals.CountAsync(p => p.Status == "Rejected");
-            ViewData["ProposalRevision"] = await _db.ProjectProposals.CountAsync(p => p.Status == "Requires Revision");
+            ViewData["ProposalRejected"] = await _db.ProjectProposals.CountAsync(p => !p.IsArchived && p.Status == "Rejected");
+            ViewData["ProposalRevision"] = await _db.ProjectProposals.CountAsync(p => !p.IsArchived && p.Status == "Requires Revision");
 
             // ── Department headcount (active departments only) ──
             var deptData = await _db.Departments
@@ -74,8 +74,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             var completionRate = totalTasks > 0 ? Math.Round((double)completedTasks / totalTasks * 100) : 0;
             ViewData["CompletionRate"] = (int)completionRate;
 
-            var totalProposals = await _db.ProjectProposals.CountAsync();
-            var approvedProposals = await _db.ProjectProposals.CountAsync(p => p.Status == "Approved");
+            var totalProposals = await _db.ProjectProposals.CountAsync(p => !p.IsArchived);
+            var approvedProposals = await _db.ProjectProposals.CountAsync(p => !p.IsArchived && p.Status == "Approved");
             var proposalRate = totalProposals > 0 ? Math.Round((double)approvedProposals / totalProposals * 100) : 0;
             ViewData["ProposalRate"] = (int)proposalRate;
 

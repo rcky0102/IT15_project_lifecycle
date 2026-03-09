@@ -88,7 +88,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
                 // Task counts by status
                 var myTasks = _context.ProjectTasks
-                    .Where(t => taskIds.Contains(t.Id));
+                    .Where(t => !t.IsArchived && taskIds.Contains(t.Id));
 
                 totalAssignedTasks = await myTasks.CountAsync();
                 statusChecked = await myTasks.CountAsync(t => t.Status == "Checked");
@@ -176,7 +176,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
             var (_, employeeId) = await ResolveEmployee();
 
             IQueryable<Models.ProjectTask> query = _context.ProjectTasks
-                .Where(t => t.Status == "Checked" && t.CompletedAt.HasValue && t.CompletedAt.Value.Date >= startDate);
+                .Where(t => !t.IsArchived && t.Status == "Checked" && t.CompletedAt.HasValue && t.CompletedAt.Value.Date >= startDate);
 
             // Scope to employee's tasks when possible
             if (employeeId.HasValue)
@@ -213,7 +213,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
             if (employeeId.HasValue)
             {
                 var taskIds = EmployeeTaskIds(employeeId.Value);
-                var myTasks = _context.ProjectTasks.Where(t => taskIds.Contains(t.Id));
+                var myTasks = _context.ProjectTasks.Where(t => !t.IsArchived && taskIds.Contains(t.Id));
                 checkedCount = await myTasks.CountAsync(t => t.Status == "Checked");
                 pendingCount = await myTasks.CountAsync(t => t.Status == "Pending");
                 revisionCount = await myTasks.CountAsync(t => t.Status == "Require Revision");

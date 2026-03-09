@@ -51,9 +51,9 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             int totalEmployees = await deptEmpIds.CountAsync();
 
-            // Projects where at least one dept employee is a member
+            // Projects where at least one dept employee is a member (non-archived)
             var deptProjects = _context.Projects
-                .Where(p => _context.Members.Any(m => m.ProjectId == p.Id && deptEmpIds.Contains(m.EmployeeId)));
+                .Where(p => !p.IsArchived && _context.Members.Any(m => m.ProjectId == p.Id && deptEmpIds.Contains(m.EmployeeId)));
 
             var deptProjectIds = deptProjects.Select(p => p.Id);
 
@@ -71,14 +71,14 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
 
             // Open tasks (Pending) across department projects
             int openTasks = await _context.ProjectTasks
-                .Where(t => t.Status == "Pending"
+                .Where(t => !t.IsArchived && t.Status == "Pending"
                     && _context.ProjectMilestones.Any(pm => pm.Id == t.ProjectMilestoneId && deptProjectIds.Contains(pm.ProjectId)))
                 .CountAsync();
 
             // Tasks checked/completed this month
             var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             int completedTasksThisMonth = await _context.ProjectTasks
-                .Where(t => t.Status == "Checked"
+                .Where(t => !t.IsArchived && t.Status == "Checked"
                     && t.CompletedAt.HasValue && t.CompletedAt.Value >= monthStart
                     && _context.ProjectMilestones.Any(pm => pm.Id == t.ProjectMilestoneId && deptProjectIds.Contains(pm.ProjectId)))
                 .CountAsync();
@@ -148,13 +148,13 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                 .Select(e => e.Id);
 
             var deptProjectIds = _context.Projects
-                .Where(p => _context.Members.Any(m => m.ProjectId == p.Id && deptEmpIds.Contains(m.EmployeeId)))
+                .Where(p => !p.IsArchived && _context.Members.Any(m => m.ProjectId == p.Id && deptEmpIds.Contains(m.EmployeeId)))
                 .Select(p => p.Id);
 
             var startDate = DateTime.UtcNow.Date.AddDays(-(days - 1));
 
             var counts = await _context.ProjectTasks
-                .Where(t => t.Status == "Checked"
+                .Where(t => !t.IsArchived && t.Status == "Checked"
                     && t.CompletedAt.HasValue
                     && t.CompletedAt.Value.Date >= startDate
                     && _context.ProjectMilestones.Any(pm => pm.Id == t.ProjectMilestoneId && deptProjectIds.Contains(pm.ProjectId)))
@@ -188,7 +188,7 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             var startDate = DateTime.UtcNow.Date.AddDays(-(days - 1));
 
             var counts = await _context.Projects
-                .Where(p => p.Status == "Finished"
+                .Where(p => !p.IsArchived && p.Status == "Finished"
                     && p.EndDate.Date >= startDate
                     && p.EndDate.Date <= DateTime.UtcNow.Date
                     && _context.Members.Any(m => m.ProjectId == p.Id && deptEmpIds.Contains(m.EmployeeId)))

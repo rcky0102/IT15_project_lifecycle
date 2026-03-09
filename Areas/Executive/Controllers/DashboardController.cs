@@ -27,15 +27,15 @@ namespace project_lifecycle.ExecutiveArea.Controllers
             var archivedProjects = await _context.Projects.CountAsync(p => p.IsArchived);
             var totalEmployees = await _context.Employees.CountAsync();
             var totalDepartments = await _context.Departments.CountAsync();
-            var pendingProposals = await _context.ProjectProposals.CountAsync(pp => pp.Status == "Pending");
-            var approvedProposals = await _context.ProjectProposals.CountAsync(pp => pp.Status == "Approved");
-            var rejectedProposals = await _context.ProjectProposals.CountAsync(pp => pp.Status == "Rejected");
-            var totalProposals = await _context.ProjectProposals.CountAsync();
+            var pendingProposals = await _context.ProjectProposals.CountAsync(pp => !pp.IsArchived && pp.Status == "Pending");
+            var approvedProposals = await _context.ProjectProposals.CountAsync(pp => !pp.IsArchived && pp.Status == "Approved");
+            var rejectedProposals = await _context.ProjectProposals.CountAsync(pp => !pp.IsArchived && pp.Status == "Rejected");
+            var totalProposals = await _context.ProjectProposals.CountAsync(pp => !pp.IsArchived);
 
-            var totalTasks = await _context.ProjectTasks.CountAsync();
-            var completedTasks = await _context.ProjectTasks.CountAsync(t => t.Status == "Checked");
-            var pendingTasks = await _context.ProjectTasks.CountAsync(t => t.Status == "Pending");
-            var revisionTasks = await _context.ProjectTasks.CountAsync(t => t.Status == "Require Revision");
+            var totalTasks = await _context.ProjectTasks.CountAsync(t => !t.IsArchived);
+            var completedTasks = await _context.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Checked");
+            var pendingTasks = await _context.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Pending");
+            var revisionTasks = await _context.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Require Revision");
 
             var totalMembers = await _context.Members.CountAsync();
             var totalProjectManagers = await _context.ProjectManagers.CountAsync();
@@ -116,7 +116,7 @@ namespace project_lifecycle.ExecutiveArea.Controllers
             var startDate = DateTime.UtcNow.Date.AddDays(-days + 1);
 
             var counts = await _context.ProjectTasks
-                .Where(t => t.Status == "Checked" && t.CompletedAt.HasValue && t.CompletedAt.Value.Date >= startDate)
+                .Where(t => !t.IsArchived && t.Status == "Checked" && t.CompletedAt.HasValue && t.CompletedAt.Value.Date >= startDate)
                 .GroupBy(t => new { Year = t.CompletedAt!.Value.Year, Month = t.CompletedAt!.Value.Month, Day = t.CompletedAt!.Value.Day })
                 .Select(g => new
                 {

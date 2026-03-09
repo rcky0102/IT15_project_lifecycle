@@ -60,19 +60,19 @@ namespace project_lifecycle.ExecutiveArea.Controllers
 
         private async Task<object> GenerateSummaryReport(DateTime from, DateTime to)
         {
-            var projectsCreated = await _context.Projects.CountAsync(p => p.DateCreated >= from && p.DateCreated <= to);
+            var projectsCreated = await _context.Projects.CountAsync(p => !p.IsArchived && p.DateCreated >= from && p.DateCreated <= to);
             var activeProjects = await _context.Projects.CountAsync(p => !p.IsArchived && p.DateCreated <= to);
             var archivedProjects = await _context.Projects.CountAsync(p => p.IsArchived && p.DateCreated >= from && p.DateCreated <= to);
 
-            var totalTasks = await _context.ProjectTasks.CountAsync(t => t.DateCreated >= from && t.DateCreated <= to);
-            var completedTasks = await _context.ProjectTasks.CountAsync(t => t.Status == "Checked" && t.CompletedAt.HasValue && t.CompletedAt.Value >= from && t.CompletedAt.Value <= to);
-            var pendingTasks = await _context.ProjectTasks.CountAsync(t => t.Status == "Pending" && t.DateCreated >= from && t.DateCreated <= to);
-            var revisionTasks = await _context.ProjectTasks.CountAsync(t => t.Status == "Require Revision" && t.DateCreated >= from && t.DateCreated <= to);
+            var totalTasks = await _context.ProjectTasks.CountAsync(t => !t.IsArchived && t.DateCreated >= from && t.DateCreated <= to);
+            var completedTasks = await _context.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Checked" && t.CompletedAt.HasValue && t.CompletedAt.Value >= from && t.CompletedAt.Value <= to);
+            var pendingTasks = await _context.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Pending" && t.DateCreated >= from && t.DateCreated <= to);
+            var revisionTasks = await _context.ProjectTasks.CountAsync(t => !t.IsArchived && t.Status == "Require Revision" && t.DateCreated >= from && t.DateCreated <= to);
 
-            var totalProposals = await _context.ProjectProposals.CountAsync(pp => pp.DateCreated >= from && pp.DateCreated <= to);
-            var approvedProposals = await _context.ProjectProposals.CountAsync(pp => pp.Status == "Approved" && pp.DateCreated >= from && pp.DateCreated <= to);
-            var pendingProposals = await _context.ProjectProposals.CountAsync(pp => pp.Status == "Pending" && pp.DateCreated >= from && pp.DateCreated <= to);
-            var rejectedProposals = await _context.ProjectProposals.CountAsync(pp => pp.Status == "Rejected" && pp.DateCreated >= from && pp.DateCreated <= to);
+            var totalProposals = await _context.ProjectProposals.CountAsync(pp => !pp.IsArchived && pp.DateCreated >= from && pp.DateCreated <= to);
+            var approvedProposals = await _context.ProjectProposals.CountAsync(pp => !pp.IsArchived && pp.Status == "Approved" && pp.DateCreated >= from && pp.DateCreated <= to);
+            var pendingProposals = await _context.ProjectProposals.CountAsync(pp => !pp.IsArchived && pp.Status == "Pending" && pp.DateCreated >= from && pp.DateCreated <= to);
+            var rejectedProposals = await _context.ProjectProposals.CountAsync(pp => !pp.IsArchived && pp.Status == "Rejected" && pp.DateCreated >= from && pp.DateCreated <= to);
 
             var newEmployees = await _context.Employees.CountAsync(e => e.DateHired >= from && e.DateHired <= to);
             var totalEmployees = await _context.Employees.CountAsync();
@@ -115,7 +115,7 @@ namespace project_lifecycle.ExecutiveArea.Controllers
         {
             var projects = await _context.Projects
                 .Include(p => p.ProjectManager)
-                .Where(p => p.DateCreated >= from && p.DateCreated <= to)
+                .Where(p => !p.IsArchived && p.DateCreated >= from && p.DateCreated <= to)
                 .OrderByDescending(p => p.DateCreated)
                 .Select(p => new
                 {
@@ -126,8 +126,8 @@ namespace project_lifecycle.ExecutiveArea.Controllers
                     DateCreated = p.DateCreated.ToString("MMM dd, yyyy"),
                     Status = p.IsArchived ? "Archived" : "Active",
                     MemberCount = _context.Members.Count(m => m.ProjectId == p.Id),
-                    TaskCount = _context.ProjectTasks.Count(t => t.ProjectMilestone != null && t.ProjectMilestone.ProjectId == p.Id),
-                    CompletedTaskCount = _context.ProjectTasks.Count(t => t.ProjectMilestone != null && t.ProjectMilestone.ProjectId == p.Id && t.Status == "Checked")
+                    TaskCount = _context.ProjectTasks.Count(t => !t.IsArchived && t.ProjectMilestone != null && t.ProjectMilestone.ProjectId == p.Id),
+                    CompletedTaskCount = _context.ProjectTasks.Count(t => !t.IsArchived && t.ProjectMilestone != null && t.ProjectMilestone.ProjectId == p.Id && t.Status == "Checked")
                 })
                 .ToListAsync();
 
@@ -146,7 +146,7 @@ namespace project_lifecycle.ExecutiveArea.Controllers
             var tasks = await _context.ProjectTasks
                 .Include(t => t.ProjectMilestone).ThenInclude(pm => pm!.Project)
                 .Include(t => t.ProjectMilestone).ThenInclude(pm => pm!.Milestone)
-                .Where(t => t.DateCreated >= from && t.DateCreated <= to)
+                .Where(t => !t.IsArchived && t.DateCreated >= from && t.DateCreated <= to)
                 .OrderByDescending(t => t.DateCreated)
                 .Select(t => new
                 {
@@ -183,7 +183,7 @@ namespace project_lifecycle.ExecutiveArea.Controllers
         {
             var proposals = await _context.ProjectProposals
                 .Include(pp => pp.Employee).ThenInclude(e => e!.Department)
-                .Where(pp => pp.DateCreated >= from && pp.DateCreated <= to)
+                .Where(pp => !pp.IsArchived && pp.DateCreated >= from && pp.DateCreated <= to)
                 .OrderByDescending(pp => pp.DateCreated)
                 .Select(pp => new
                 {
