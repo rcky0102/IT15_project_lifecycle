@@ -89,27 +89,23 @@
                                 <div>
                                     @if (tm.IsArchived)
                                     {
-                                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="UnarchiveTaskMember" method="post" style="display:inline;">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="taskMemberId" value="@tm.TaskMemberId" />
-                                            <button type="button" class="emp-action-btn emp-action-unarchive" title="Restore to task"
-                                                    data-member-name="@tm.EmployeeName"
-                                                    onclick="openTmUnarchiveModal(this.form, this.getAttribute('data-member-name'))">
-                                                <i class="fas fa-box-open"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" class="emp-action-btn emp-action-unarchive" title="Restore to task"
+                                                data-member-name="@tm.EmployeeName"
+                                                data-tm-id="@tm.TaskMemberId"
+                                                data-tm-action="@Url.Action("UnarchiveTaskMember", "Project", new { area = "ProjectManager" })"
+                                                onclick="openTmUnarchiveModal(this.dataset.tmId, this.dataset.tmAction, this.dataset.memberName)">
+                                            <i class="fas fa-box-open"></i>
+                                        </button>
                                     }
                                     else
                                     {
-                                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="ArchiveTaskMember" method="post" style="display:inline;">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="taskMemberId" value="@tm.TaskMemberId" />
-                                            <button type="button" class="emp-action-btn emp-action-archive" title="Remove from task"
-                                                    data-member-name="@tm.EmployeeName"
-                                                    onclick="openTmArchiveModal(this.form, this.getAttribute('data-member-name'))">
-                                                <i class="fas fa-archive"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" class="emp-action-btn emp-action-archive" title="Remove from task"
+                                                data-member-name="@tm.EmployeeName"
+                                                data-tm-id="@tm.TaskMemberId"
+                                                data-tm-action="@Url.Action("ArchiveTaskMember", "Project", new { area = "ProjectManager" })"
+                                                onclick="openTmArchiveModal(this.dataset.tmId, this.dataset.tmAction, this.dataset.memberName)">
+                                            <i class="fas fa-archive"></i>
+                                        </button>
                                     }
                                 </div>
                             </div>
@@ -453,36 +449,54 @@ document.addEventListener('DOMContentLoaded', function () {
     renderChips();
 
     // ===== Archive / Unarchive Task Member modal wiring =====
-    // Exposed on window so inline onclick attributes can reach them from global scope
-    let __tmArchiveForm = null;
-    window.openTmArchiveModal = function (form, name) {
-        __tmArchiveForm = form;
+    // Cannot use nested <form> inside the main EditTask form (HTML forbids it),
+    // so we dynamically create + submit a form outside the main form on confirm.
+    const __antiForgeryToken = document.querySelector('form.emp-edit-task-form input[name="__RequestVerificationToken"]')?.value || '';
+
+    function __submitTmAction(actionUrl, taskMemberId) {
+        const f = document.createElement('form');
+        f.method = 'POST';
+        f.action = actionUrl;
+        f.style.display = 'none';
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden'; tokenInput.name = '__RequestVerificationToken'; tokenInput.value = __antiForgeryToken;
+        f.appendChild(tokenInput);
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden'; idInput.name = 'taskMemberId'; idInput.value = taskMemberId;
+        f.appendChild(idInput);
+        document.body.appendChild(f);
+        f.submit();
+    }
+
+    let __tmArchiveId = null, __tmArchiveUrl = null;
+    window.openTmArchiveModal = function (tmId, actionUrl, name) {
+        __tmArchiveId = tmId; __tmArchiveUrl = actionUrl;
         const msg = document.getElementById('tmArchiveMessage');
         if (msg) msg.textContent = `Remove "${name}" from this task?`;
         const modal = document.getElementById('tmArchiveModal');
         if (modal) { modal.classList.add('active'); modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
     };
     window.closeTmArchiveModal = function () {
-        __tmArchiveForm = null;
+        __tmArchiveId = null; __tmArchiveUrl = null;
         const modal = document.getElementById('tmArchiveModal');
         if (modal) { modal.classList.remove('active'); modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
     };
-    window.confirmTmArchive = function () { if (__tmArchiveForm) __tmArchiveForm.submit(); else window.closeTmArchiveModal(); };
+    window.confirmTmArchive = function () { if (__tmArchiveId && __tmArchiveUrl) __submitTmAction(__tmArchiveUrl, __tmArchiveId); else window.closeTmArchiveModal(); };
 
-    let __tmUnarchiveForm = null;
-    window.openTmUnarchiveModal = function (form, name) {
-        __tmUnarchiveForm = form;
+    let __tmUnarchiveId = null, __tmUnarchiveUrl = null;
+    window.openTmUnarchiveModal = function (tmId, actionUrl, name) {
+        __tmUnarchiveId = tmId; __tmUnarchiveUrl = actionUrl;
         const msg = document.getElementById('tmUnarchiveMessage');
         if (msg) msg.textContent = `Restore "${name}" to this task?`;
         const modal = document.getElementById('tmUnarchiveModal');
         if (modal) { modal.classList.add('active'); modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
     };
     window.closeTmUnarchiveModal = function () {
-        __tmUnarchiveForm = null;
+        __tmUnarchiveId = null; __tmUnarchiveUrl = null;
         const modal = document.getElementById('tmUnarchiveModal');
         if (modal) { modal.classList.remove('active'); modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
     };
-    window.confirmTmUnarchive = function () { if (__tmUnarchiveForm) __tmUnarchiveForm.submit(); else window.closeTmUnarchiveModal(); };
+    window.confirmTmUnarchive = function () { if (__tmUnarchiveId && __tmUnarchiveUrl) __submitTmAction(__tmUnarchiveUrl, __tmUnarchiveId); else window.closeTmUnarchiveModal(); };
 
     // Wire backdrop-click close for tm modals
     const tmArchiveModal = document.getElementById('tmArchiveModal');
