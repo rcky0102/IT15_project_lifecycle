@@ -148,6 +148,44 @@
                 </div>
             </div>
 
+            <!-- Holidays -->
+            <div id="holidaysSection" style="display: none;">
+                <div class="emp-form-row" style="padding: 0; overflow: hidden;">
+                    <div style="border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,105,148,.14);">
+                        <div style="background:linear-gradient(135deg,#006994 0%,#4CA3DD 100%);padding:.7rem 1.1rem;display:flex;align-items:center;gap:.65rem;">
+                            <i class="fas fa-calendar-check" style="color:rgba(255,255,255,.9);font-size:1rem;"></i>
+                            <strong style="color:#fff;font-size:.88rem;font-weight:700;letter-spacing:.01em;">Public Holidays &mdash; Philippines</strong>
+                            <span id="holidayCount" style="background:rgba(255,255,255,.2);color:#fff;font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:20px;margin-left:auto;border:1px solid rgba(255,255,255,.3);">0</span>
+                        </div>
+                        <div style="background:#fff;">
+                            <div id="holidaysLoading" class="text-center py-3" style="display: none;">
+                                <div class="spinner-border spinner-border-sm" style="color:#006994;" role="status"></div>
+                                <span class="ms-2" style="color:#64748b;font-size:.85rem;">Loading holidays&hellip;</span>
+                            </div>
+                            <div id="holidaysError" class="text-center py-3" style="display:none;color:#dc2626;font-size:.85rem;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="ms-1">Could not load holidays. Please check your connection.</span>
+                            </div>
+                            <div id="holidaysEmpty" class="text-center py-3" style="display:none;color:#64748b;font-size:.85rem;">
+                                <i class="fas fa-check-circle" style="color:#22c55e;"></i>
+                                <span class="ms-1">No public holidays in this date range.</span>
+                            </div>
+                            <table id="holidaysTable" class="table mb-0" style="display:none;border-collapse:collapse;">
+                                <thead>
+                                    <tr style="background:linear-gradient(135deg,#e0f2fe,#dbeafe);">
+                                        <th style="width:130px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c4a6e;padding:.5rem .85rem;border-bottom:2px solid #bae6fd;border-top:none;">Date</th>
+                                        <th style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c4a6e;padding:.5rem .85rem;border-bottom:2px solid #bae6fd;border-top:none;">Holiday</th>
+                                        <th style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c4a6e;padding:.5rem .85rem;border-bottom:2px solid #bae6fd;border-top:none;">Local Name</th>
+                                        <th style="width:90px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c4a6e;padding:.5rem .85rem;border-bottom:2px solid #bae6fd;border-top:none;">Day</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="holidaysTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="emp-form-row">
                 <label class="emp-form-label">Instructions</label>
                 <textarea id="EditTaskInstructions" name="Instructions" class="emp-form-control">@Model.Instructions</textarea>
@@ -574,6 +612,104 @@ document.addEventListener('DOMContentLoaded', function () {
     async function uploadFile(file, signal){ beginUpload(); try{ const fd=new FormData(); fd.append('upload',file); const resp=await fetch(uploadEndpoint,{method:'POST',body:fd,signal}); const p=await resp.json(); if(!resp.ok) throw new Error(p?.error?.message||'Upload failed'); return p; } finally { endUpload(); } }
     function wireFileInsertButton(){ const btn=document.getElementById('insertEditTaskFileBtn'); if(!btn) return; btn.addEventListener('click', function(){ if(!editorInstance) return; const inp=document.createElement('input'); inp.type='file'; inp.style.display='none'; inp.addEventListener('change', async function(){ if(!inp.files||!inp.files.length){ document.body.removeChild(inp); return; } const file=inp.files[0]; document.body.removeChild(inp); btn.disabled=true; try{ const r=await uploadFile(file); if(file.type.startsWith('image/')){ editorInstance.model.change(w=>{ const img=w.createElement('imageBlock',{src:r.url}); editorInstance.model.insertContent(img, editorInstance.model.document.selection); }); } else { editorInstance.model.change(w=>{ const t=w.createText(r.fileName||file.name, { linkHref: r.url }); editorInstance.model.insertContent(t, editorInstance.model.document.selection); }); } } catch(e){ alert('Upload failed.'); } finally { btn.disabled=false; } }); document.body.appendChild(inp); inp.click(); }); }
     function initEditor(){ if(!window.CKEDITOR||!window.CKEDITOR.ClassicEditor) return; const {ClassicEditor,Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,ImageResize,ImageResizeEditing,ImageResizeHandles,MediaEmbed,Alignment} = window.CKEDITOR; ClassicEditor.create(document.querySelector(editorSelector),{ licenseKey:'GPL', plugins:[Essentials,Paragraph,Heading,Bold,Italic,Link,List,Indent,BlockQuote,Table,TableToolbar,Image,ImageCaption,ImageStyle,ImageToolbar,ImageUpload,ImageResize,ImageResizeEditing,ImageResizeHandles,MediaEmbed,Alignment], extraPlugins:[CTUploadAdapterPlugin], toolbar:{ items:['undo','redo','|','heading','|','bold','italic','link','|','alignment','|','bulletedList','numberedList','|','outdent','indent','|','imageUpload','insertTable','mediaEmbed','blockQuote'], shouldNotGroupWhenFull:true }, image:{ toolbar:['imageTextAlternative','toggleImageCaption','|','imageStyle:inline','imageStyle:block','imageStyle:side','|','resizeImage'], resizeOptions:[{name:'resizeImage:original',value:null,label:'Original'},{name:'resizeImage:50',value:'50',label:'50%'},{name:'resizeImage:75',value:'75',label:'75%'}], resizeUnit:'%' }, alignment:{ options:['left','center','right','justify'] }, table:{ contentToolbar:['tableColumn','tableRow','mergeTableCells'] } }).then(ed=>{ editorInstance=ed; wireFileInsertButton(); }).catch(e=>console.error(e)); }
+    // --- Holiday Fetching Logic ---
+    (function () {
+        var startDateInput = document.getElementById('taskStartDate');
+        var endDateInput = document.getElementById('taskEndDate');
+        var holidaysSection = document.getElementById('holidaysSection');
+        var holidaysLoading = document.getElementById('holidaysLoading');
+        var holidaysError = document.getElementById('holidaysError');
+        var holidaysEmpty = document.getElementById('holidaysEmpty');
+        var holidaysTable = document.getElementById('holidaysTable');
+        var holidaysTableBody = document.getElementById('holidaysTableBody');
+        var holidayCount = document.getElementById('holidayCount');
+        var holidayFetchTimer = null;
+
+        var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        function fetchHolidays() {
+            var startDate = startDateInput ? startDateInput.value : '';
+            var endDate = endDateInput ? endDateInput.value : '';
+
+            if (!startDate || !endDate) {
+                if (holidaysSection) holidaysSection.style.display = 'none';
+                return;
+            }
+
+            if (new Date(endDate) < new Date(startDate)) {
+                if (holidaysSection) holidaysSection.style.display = 'none';
+                return;
+            }
+
+            holidaysSection.style.display = '';
+            holidaysLoading.style.display = '';
+            holidaysError.style.display = 'none';
+            holidaysEmpty.style.display = 'none';
+            holidaysTable.style.display = 'none';
+            holidaysTableBody.innerHTML = '';
+            holidayCount.textContent = '...';
+
+            var url = '@Url.Action("GetHolidays", "Project", new { area = "ProjectManager" })'
+                + '?startDate=' + encodeURIComponent(startDate)
+                + '&endDate=' + encodeURIComponent(endDate);
+
+            fetch(url)
+                .then(function (response) {
+                    if (!response.ok) throw new Error('API error');
+                    return response.json();
+                })
+                .then(function (holidays) {
+                    holidaysLoading.style.display = 'none';
+
+                    if (!holidays || holidays.length === 0) {
+                        holidaysEmpty.style.display = '';
+                        holidayCount.textContent = '0';
+                        return;
+                    }
+
+                    holidayCount.textContent = holidays.length;
+                    var html = '';
+                    for (var i = 0; i < holidays.length; i++) {
+                        var h = holidays[i];
+                        var d = new Date(h.date + 'T00:00:00');
+                        var dayName = dayNames[d.getDay()];
+                        var isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                        html += '<tr style="border-bottom:1px solid #f1f5f9;' + (isWeekend ? 'background:#fff7ed;' : '') + '">'
+                            + '<td style="font-size:.83rem;padding:.5rem .85rem;vertical-align:middle;"><i class="fas fa-circle" style="font-size:.38rem;color:' + (isWeekend ? '#f97316' : '#0ea5e9') + ';vertical-align:middle;margin-right:.45rem;"></i>' + h.date + '</td>'
+                            + '<td style="font-size:.83rem;padding:.5rem .85rem;vertical-align:middle;color:#1e293b;">' + escapeHolidayHtml(h.name) + '</td>'
+                            + '<td style="font-size:.83rem;padding:.5rem .85rem;vertical-align:middle;color:#475569;">' + escapeHolidayHtml(h.localName) + '</td>'
+                            + '<td style="padding:.5rem .85rem;vertical-align:middle;"><span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:700;padding:.18rem .6rem;border-radius:20px;background:' + (isWeekend ? '#fee2e2' : '#e0f2fe') + ';color:' + (isWeekend ? '#b91c1c' : '#0369a1') + ';">' + dayName + '</span></td>'
+                            + '</tr>';
+                    }
+                    holidaysTableBody.innerHTML = html;
+                    holidaysTable.style.display = '';
+                })
+                .catch(function () {
+                    holidaysLoading.style.display = 'none';
+                    holidaysError.style.display = '';
+                    holidayCount.textContent = '!';
+                });
+        }
+
+        function escapeHolidayHtml(str) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        function debouncedFetchHolidays() {
+            if (holidayFetchTimer) clearTimeout(holidayFetchTimer);
+            holidayFetchTimer = setTimeout(fetchHolidays, 400);
+        }
+
+        if (startDateInput) startDateInput.addEventListener('change', debouncedFetchHolidays);
+        if (endDateInput) endDateInput.addEventListener('change', debouncedFetchHolidays);
+
+        if (startDateInput && endDateInput && startDateInput.value && endDateInput.value) {
+            fetchHolidays();
+        }
+    })();
+
     function loadScript(i){ if(window.CKEDITOR&&window.CKEDITOR.ClassicEditor){ initEditor(); return; } if(i>=2){ initEditor(); return; } const s=document.createElement('script'); s.src=['https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js','https://unpkg.com/ckeditor5@47.1.0/dist/browser/ckeditor5.umd.js'][i]; s.async=true; s.onload=initEditor; s.onerror=()=>loadScript(i+1); document.head.appendChild(s); }
     function loadStyle(i){ if(document.querySelector('link[data-ckeditor-style]')){ loadScript(0); return; } if(i>=2){ loadScript(0); return; } const l=document.createElement('link'); l.rel='stylesheet'; l.href=['https://cdn.jsdelivr.net/npm/ckeditor5@47.1.0/dist/ckeditor5.css','https://unpkg.com/ckeditor5@47.1.0/dist/ckeditor5.css'][i]; l.setAttribute('data-ckeditor-style','true'); l.onload=()=>loadScript(0); l.onerror=()=>{ l.remove(); loadStyle(i+1); }; document.head.appendChild(l); }
     loadStyle(0);

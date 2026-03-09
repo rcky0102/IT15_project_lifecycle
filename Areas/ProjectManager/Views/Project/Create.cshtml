@@ -126,32 +126,32 @@
             <!-- Holidays -->
             <div id="holidaysSection" style="display: none;">
                 <div class="emp-form-row" style="padding: 0; overflow: hidden;">
-                    <div class="card" style="border: 1px solid #fde68a; box-shadow: none; border-radius: 10px; overflow: hidden;">
-                        <div class="card-header d-flex align-items-center gap-2 py-2" style="background: #fffbeb;">
-                            <i class="fas fa-calendar-day text-warning"></i>
-                            <strong class="text-warning">Public Holidays (Philippines)</strong>
-                            <span id="holidayCount" class="badge bg-warning text-dark ms-auto">0</span>
+                    <div style="border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,105,148,.14);">
+                        <div style="background:linear-gradient(135deg,#006994 0%,#4CA3DD 100%);padding:.7rem 1.1rem;display:flex;align-items:center;gap:.65rem;">
+                            <i class="fas fa-calendar-check" style="color:rgba(255,255,255,.9);font-size:1rem;"></i>
+                            <strong style="color:#fff;font-size:.88rem;font-weight:700;letter-spacing:.01em;">Public Holidays &mdash; Philippines</strong>
+                            <span id="holidayCount" style="background:rgba(255,255,255,.2);color:#fff;font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:20px;margin-left:auto;border:1px solid rgba(255,255,255,.3);">0</span>
                         </div>
-                        <div class="card-body p-0">
+                        <div style="background:#fff;">
                             <div id="holidaysLoading" class="text-center py-3" style="display: none;">
-                                <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
-                                <span class="ms-2 text-muted">Loading holidays...</span>
+                                <div class="spinner-border spinner-border-sm" style="color:#006994;" role="status"></div>
+                                <span class="ms-2" style="color:#64748b;font-size:.85rem;">Loading holidays&hellip;</span>
                             </div>
-                            <div id="holidaysError" class="text-center py-3 text-danger" style="display: none;">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <span class="ms-1">Could not load holidays. Please check your internet connection.</span>
+                            <div id="holidaysError" class="text-center py-3" style="display:none;color:#dc2626;font-size:.85rem;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="ms-1">Could not load holidays. Please check your connection.</span>
                             </div>
-                            <div id="holidaysEmpty" class="text-center py-3 text-muted" style="display: none;">
-                                <i class="fas fa-check-circle text-success"></i>
+                            <div id="holidaysEmpty" class="text-center py-3" style="display:none;color:#64748b;font-size:.85rem;">
+                                <i class="fas fa-check-circle" style="color:#22c55e;"></i>
                                 <span class="ms-1">No public holidays in this date range.</span>
                             </div>
-                            <table id="holidaysTable" class="table table-sm table-hover mb-0" style="display: none;">
+                            <table id="holidaysTable" class="table mb-0" style="display:none;border-collapse:collapse;">
                                 <thead>
-                                    <tr>
-                                        <th style="width: 130px;">Date</th>
-                                        <th>Holiday</th>
-                                        <th>Local Name</th>
-                                        <th style="width: 80px;">Day</th>
+                                    <tr style="background:linear-gradient(135deg,#e0f2fe,#dbeafe);">
+                                        <th style="width:130px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c4a6e;padding:.5rem .85rem;border-bottom:2px solid #bae6fd;border-top:none;">Date</th>
+                                        <th style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c4a6e;padding:.5rem .85rem;border-bottom:2px solid #bae6fd;border-top:none;">Holiday</th>
+                                        <th style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c4a6e;padding:.5rem .85rem;border-bottom:2px solid #bae6fd;border-top:none;">Local Name</th>
+                                        <th style="width:90px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c4a6e;padding:.5rem .85rem;border-bottom:2px solid #bae6fd;border-top:none;">Day</th>
                                     </tr>
                                 </thead>
                                 <tbody id="holidaysTableBody"></tbody>
@@ -684,12 +684,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         var d = new Date(h.date + 'T00:00:00');
                         var dayName = dayNames[d.getDay()];
                         var isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                        var rowClass = isWeekend ? 'class="table-warning"' : '';
-                        html += '<tr ' + rowClass + '>'
-                            + '<td><i class="fas fa-star text-warning me-1" style="font-size:0.7em;"></i>' + h.date + '</td>'
-                            + '<td>' + escapeHolidayHtml(h.name) + '</td>'
-                            + '<td>' + escapeHolidayHtml(h.localName) + '</td>'
-                            + '<td><span class="badge ' + (isWeekend ? 'bg-secondary' : 'bg-info text-dark') + '">' + dayName + '</span></td>'
+                        html += '<tr style="border-bottom:1px solid #f1f5f9;' + (isWeekend ? 'background:#fff7ed;' : '') + '">'
+                            + '<td style="font-size:.83rem;padding:.5rem .85rem;vertical-align:middle;"><i class="fas fa-circle" style="font-size:.38rem;color:' + (isWeekend ? '#f97316' : '#0ea5e9') + ';vertical-align:middle;margin-right:.45rem;"></i>' + h.date + '</td>'
+                            + '<td style="font-size:.83rem;padding:.5rem .85rem;vertical-align:middle;color:#1e293b;">' + escapeHolidayHtml(h.name) + '</td>'
+                            + '<td style="font-size:.83rem;padding:.5rem .85rem;vertical-align:middle;color:#475569;">' + escapeHolidayHtml(h.localName) + '</td>'
+                            + '<td style="padding:.5rem .85rem;vertical-align:middle;"><span style="display:inline-flex;align-items:center;font-size:.72rem;font-weight:700;padding:.18rem .6rem;border-radius:20px;background:' + (isWeekend ? '#fee2e2' : '#e0f2fe') + ';color:' + (isWeekend ? '#b91c1c' : '#0369a1') + ';">' + dayName + '</span></td>'
                             + '</tr>';
                     }
                     holidaysTableBody.innerHTML = html;
