@@ -222,6 +222,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             var version = await _context.ProjectTaskVersions
                 .Include(v => v.ProjectTask)
                     .ThenInclude(t => t!.ProjectMilestone)
+                .Include(v => v.TaskMember).ThenInclude(tm => tm!.Member).ThenInclude(m => m.Employee)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (version == null) return NotFound();

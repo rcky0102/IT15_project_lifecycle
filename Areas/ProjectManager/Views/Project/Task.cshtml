@@ -44,11 +44,11 @@
                     <style>
                         .task-assigned { margin-top:.5rem; display:flex; align-items:center; gap:.6rem; }
                         .avatar-stack { display:flex; align-items:center; }
-                        .avatar-stack .avatar { width:40px; height:40px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#eef2ff,#f3f7ff); color:#0f172a; font-weight:700; font-size:.9rem; border:2px solid #fff; box-shadow:0 6px 12px rgba(2,6,23,0.06); margin-left:-12px; }
+                        .avatar-stack .avatar { width:32px; height:32px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#eef2ff,#f3f7ff); color:#0f172a; font-weight:700; font-size:.8rem; border:2px solid #fff; box-shadow:0 6px 12px rgba(2,6,23,0.06); margin-left:-10px; }
                         .avatar-stack .avatar:first-child { margin-left:0; }
                         .avatar-stack .avatar img { width:100%; height:100%; object-fit:cover; display:block; }
-                        .avatar-stack .avatar.more { background:#eef2ff; color:#1e293b; font-size:.85rem; display:flex; align-items:center; justify-content:center; }
-                        .assigned-summary { font-size:.92rem; color:#475569; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                        .avatar-stack .avatar.more { background:#eef2ff; color:#1e293b; font-size:.75rem; display:flex; align-items:center; justify-content:center; }
+                        .assigned-summary { font-size:.88rem; color:#abc2de; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                     </style>
                     <div class="avatar-stack" aria-hidden="true">
                         @foreach (var m in Model.AssignedMembers.Take(4))

@@ -1,4 +1,5 @@
 @model project_lifecycle.Models.ProjectTaskVersion
+@using System.Linq
 @{
     ViewData["Title"] = $"Version {Model?.VersionNumber} - {Model?.ProjectTask?.Name}";
 }
@@ -15,6 +16,18 @@
                 @Model?.ProjectTask?.Name
                 <span style="opacity:.75;"> &mdash; Saved @Model?.DateCreated.ToString("MMM dd, yyyy h:mm tt")</span>
             </p>
+            @{
+                var submitter = Model?.TaskMember?.Member?.Employee;
+                string submitterName = null;
+                if (submitter != null)
+                {
+                    submitterName = string.Join(" ", new[] { submitter.FirstName, submitter.MiddleName, submitter.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                }
+            }
+            @if (!string.IsNullOrEmpty(submitterName))
+            {
+                <p style="margin-top:.25rem;color:#abc2de;font-size:.9rem;">Submitted by: <strong>@submitterName</strong></p>
+            }
         </div>
         <div class="emp-page-hero-right">
             <a asp-area="Employee" asp-controller="Project" asp-action="Task"

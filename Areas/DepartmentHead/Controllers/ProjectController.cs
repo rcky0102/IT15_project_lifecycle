@@ -636,6 +636,7 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
                         .ThenInclude(ms => ms!.Project)
                             .ThenInclude(p => p!.ProjectProposal)
                                 .ThenInclude(pp => pp!.Employee)
+                .Include(v => v.TaskMember).ThenInclude(tm => tm!.Member).ThenInclude(m => m.Employee)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (version == null) return NotFound();

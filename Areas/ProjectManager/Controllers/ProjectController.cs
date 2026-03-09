@@ -932,6 +932,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var version = await _context.ProjectTaskVersions
                 .Include(v => v.ProjectTask)
                     .ThenInclude(t => t!.ProjectMilestone).ThenInclude(ms => ms!.Project)
+                .Include(v => v.TaskMember).ThenInclude(tm => tm!.Member).ThenInclude(m => m.Employee)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (version == null) return NotFound();
