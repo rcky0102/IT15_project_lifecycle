@@ -44,79 +44,92 @@
         .stat-card-link:hover { text-decoration: none; }
         .stat-card-link .stat-card { transition: transform .12s ease, box-shadow .12s ease; }
         .stat-card-link:hover .stat-card { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(20,40,60,0.06); }
+        .stat-card { display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; min-height: 120px; padding: 1rem; }
+        .stat-card-top { display: flex; align-items: center; gap: 1rem; }
+        .stat-card .stat-icon { flex: 0 0 auto; }
+        .stat-card .stat-content { flex: 1 1 auto; }
+        .stat-card .stat-number { align-self: flex-end; margin: 0; margin-top: 0.5rem; font-size: 1.75rem; font-weight: 700; line-height: 1; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.06); }
     </style>
     <div class="stats-grid">
         <a href='@Url.Action("Index", "Project", new { area = "ProjectManager" })' class="stat-card-link">
             <div class="stat-card">
-                <div class="stat-icon primary">
-                    <i class="fas fa-list-check"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@pendingTasks</div>
-                    <div class="stat-label">Pending Tasks</div>
-                    <div class="stat-change @(revisionTasks > 0 ? "negative" : "positive")">
-                        @if (revisionTasks > 0)
-                        {
-                            <i class="fas fa-rotate-left"></i> @revisionTasks @(revisionTasks == 1 ? "revision" : "revisions")
-                        }
-                        else
-                        {
-                            <i class="fas fa-check"></i> <text>all clear</text>
-                        }
+                <div class="stat-card-top">
+                    <div class="stat-icon primary">
+                        <i class="fas fa-list-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Pending Tasks</div>
+                        <div class="stat-change @(revisionTasks > 0 ? "negative" : "positive")">
+                            @if (revisionTasks > 0)
+                            {
+                                <i class="fas fa-rotate-left"></i> @revisionTasks @(revisionTasks == 1 ? "revision" : "revisions")
+                            }
+                            else
+                            {
+                                <i class="fas fa-check"></i> <text>all clear</text>
+                            }
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@pendingTasks</div>
             </div>
         </a>
 
         <a href='@Url.Action("Index", "Project", new { area = "ProjectManager" })' class="stat-card-link">
             <div class="stat-card">
-                <div class="stat-icon success">
-                    <i class="fas fa-folder-open"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["ActiveProjects"]</div>
-                    <div class="stat-label">Active Projects</div>
-                    <div class="stat-change neutral">
-                        <i class="fas fa-tasks"></i> @totalTasks total tasks
+                <div class="stat-card-top">
+                    <div class="stat-icon success">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active Projects</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-tasks"></i> @totalTasks total tasks
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@ViewData["ActiveProjects"]</div>
             </div>
         </a>
 
         <a href='@Url.Action("Index", "Project", new { area = "ProjectManager" })' class="stat-card-link">
             <div class="stat-card">
-                <div class="stat-icon warning">
-                    <i class="fas fa-calendar-alt"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["UpcomingDeadlines"]</div>
-                    <div class="stat-label">Due in 30 days</div>
-                    <div class="stat-change @(overdueTasks > 0 ? "negative" : "neutral")">
-                        @if (overdueTasks > 0)
-                        {
-                            <i class="fas fa-exclamation-triangle"></i> @overdueTasks @(overdueTasks == 1 ? "task overdue" : "tasks overdue")
-                        }
-                        else
-                        {
-                            <i class="fas fa-clock"></i> <text>on track</text>
-                        }
+                <div class="stat-card-top">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Due in 30 days</div>
+                        <div class="stat-change @(overdueTasks > 0 ? "negative" : "neutral")">
+                            @if (overdueTasks > 0)
+                            {
+                                <i class="fas fa-exclamation-triangle"></i> @overdueTasks @(overdueTasks == 1 ? "task overdue" : "tasks overdue")
+                            }
+                            else
+                            {
+                                <i class="fas fa-clock"></i> <text>on track</text>
+                            }
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@ViewData["UpcomingDeadlines"]</div>
             </div>
         </a>
 
         <a href='@Url.Action("Index", "Project", new { area = "ProjectManager" })' class="stat-card-link">
             <div class="stat-card">
-                <div class="stat-icon info">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["TeamMembers"]</div>
-                    <div class="stat-label">Team Members</div>
-                    <div class="stat-change neutral">
-                        <i class="fas fa-user-friends"></i> across projects
+                <div class="stat-card-top">
+                    <div class="stat-icon info">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Team Members</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-user-friends"></i> across projects
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@ViewData["TeamMembers"]</div>
             </div>
         </a>
     </div>

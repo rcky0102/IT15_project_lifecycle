@@ -44,6 +44,11 @@
         .stat-card, .stat-card-mini { transition: transform .18s ease, box-shadow .18s ease; }
         .stat-card-link:hover .stat-card,
         .stat-mini-link:hover .stat-card-mini { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(16,24,40,0.06); }
+        .stat-card { display:flex; flex-direction:column; justify-content:space-between; min-height:120px; padding:1rem; }
+        .stat-card-top { display:flex; align-items:center; gap:1rem; }
+        .stat-card .stat-icon { flex:0 0 auto; }
+        .stat-card .stat-content { flex:1 1 auto; }
+        .stat-card .stat-number { align-self:flex-end; margin:0; margin-top:0.5rem; font-size:1.75rem; font-weight:700; line-height:1; padding-top:0.5rem; border-top:1px solid rgba(0,0,0,0.06); }
     </style>
     <!-- Dashboard Header -->
     <div class="dashboard-header">
@@ -67,61 +72,69 @@
     <div class="stats-grid">
         <a class="stat-card-link" href="@Url.Action("Index", "User", new { area = "SuperAdmin" })">
             <div class="stat-card">
-            <div class="stat-icon primary">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@totalUsers</div>
-                <div class="stat-label">Total Users</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-shield-halved"></i> All roles
+                <div class="stat-card-top">
+                    <div class="stat-icon primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-shield-halved"></i> All roles
+                        </div>
+                    </div>
                 </div>
-            </div>
+                <div class="stat-number">@totalUsers</div>
             </div>
         </a>
 
         <a class="stat-card-link" href="@Url.Action("Index", "User", new { area = "SuperAdmin" })">
             <div class="stat-card">
-            <div class="stat-icon success">
-                <i class="fas fa-user-tie"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@totalEmployees</div>
-                <div class="stat-label">Employees</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> Active workforce
+                <div class="stat-card-top">
+                    <div class="stat-icon success">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Employees</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> Active workforce
+                        </div>
+                    </div>
                 </div>
-            </div>
+                <div class="stat-number">@totalEmployees</div>
             </div>
         </a>
 
         <a class="stat-card-link" href="@Url.Action("Index", "Project", new { area = "SuperAdmin" })">
             <div class="stat-card">
-            <div class="stat-icon warning">
-                <i class="fas fa-diagram-project"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@totalProjects</div>
-                <div class="stat-label">Total Projects</div>
-                <div class="stat-change neutral">
-                    <i class="fas fa-folder-open"></i> All projects
+                <div class="stat-card-top">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-diagram-project"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total Projects</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-folder-open"></i> All projects
+                        </div>
+                    </div>
                 </div>
-            </div>
+                <div class="stat-number">@totalProjects</div>
             </div>
         </a>
 
         <a class="stat-card-link" href="@Url.Action("Index", "Department", new { area = "SuperAdmin" })">
             <div class="stat-card">
-            <div class="stat-icon danger">
-                <i class="fas fa-building"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-number">@totalDepts</div>
-                <div class="stat-label">Departments</div>
-                <div class="stat-change neutral">
-                    <i class="fas fa-sitemap"></i> Organization
+                <div class="stat-card-top">
+                    <div class="stat-icon danger">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Departments</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-sitemap"></i> Organization
+                        </div>
+                    </div>
                 </div>
-            </div>
+                <div class="stat-number">@totalDepts</div>
             </div>
         </a>
     </div>

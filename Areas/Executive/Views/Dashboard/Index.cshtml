@@ -16,6 +16,13 @@
         .stat-card, .stat-card-mini { transition: transform .18s ease, box-shadow .18s ease; }
         .stat-card-link:hover .stat-card,
         .stat-mini-link:hover .stat-card-mini { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(16,24,40,0.06); }
+        .stat-card, .stat-card-mini { display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; padding: 0.9rem; }
+        .stat-card { min-height: 120px; }
+        .stat-card-mini { min-height: 84px; }
+        .stat-card-top { display:flex; align-items:center; gap:1rem; }
+        .stat-card .stat-icon, .stat-card-mini .stat-icon { flex: 0 0 auto; }
+        .stat-card .stat-content, .stat-card-mini .stat-content { flex: 1 1 auto; }
+        .stat-card .stat-number, .stat-card-mini .stat-number { align-self: flex-end; margin: 0; margin-top: 0.5rem; font-size: 1.4rem; font-weight: 700; line-height: 1; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.06); }
     </style>
     <!-- Dashboard Header -->
     <div class="dashboard-header">
@@ -35,61 +42,69 @@
     <div class="stats-grid">
         <a class="stat-card-link" href='@Url.Action("Index", "Project", new { area = "Executive" })'>
             <div class="stat-card">
-                <div class="stat-icon primary">
-                    <i class="fas fa-diagram-project"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["ActiveProjects"]</div>
-                    <div class="stat-label">Active Projects</div>
-                    <div class="stat-change neutral">
-                        <i class="fas fa-archive"></i> @ViewData["ArchivedProjects"] archived
+                <div class="stat-card-top">
+                    <div class="stat-icon primary">
+                        <i class="fas fa-diagram-project"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active Projects</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-archive"></i> @ViewData["ArchivedProjects"] archived
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@ViewData["ActiveProjects"]</div>
             </div>
         </a>
 
         <a class="stat-card-link" href='@Url.Action("Index", "User", new { area = "Executive" })'>
             <div class="stat-card">
-                <div class="stat-icon success">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["TotalEmployees"]</div>
-                    <div class="stat-label">Total Employees</div>
-                    <div class="stat-change neutral">
-                        <i class="fas fa-building"></i> @ViewData["TotalDepartments"] departments
+                <div class="stat-card-top">
+                    <div class="stat-icon success">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total Employees</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-building"></i> @ViewData["TotalDepartments"] departments
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@ViewData["TotalEmployees"]</div>
             </div>
         </a>
 
         <a class="stat-card-link" href='@Url.Action("Index", "Proposal", new { area = "Executive" })'>
             <div class="stat-card">
-                <div class="stat-icon warning">
-                    <i class="fas fa-file-lines"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["PendingProposals"]</div>
-                    <div class="stat-label">Pending Proposals</div>
-                    <div class="stat-change positive">
-                        <i class="fas fa-check"></i> @ViewData["ApprovedProposals"] approved
+                <div class="stat-card-top">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-file-lines"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Pending Proposals</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-check"></i> @ViewData["ApprovedProposals"] approved
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@ViewData["PendingProposals"]</div>
             </div>
         </a>
 
         <a class="stat-card-link" href='@Url.Action("Index", "Project", new { area = "Executive" })'>
             <div class="stat-card">
-                <div class="stat-icon danger">
-                    <i class="fas fa-list-check"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["TaskCompletionRate"]%</div>
-                    <div class="stat-label">Task Completion</div>
-                    <div class="stat-change neutral">
-                        <i class="fas fa-tasks"></i> @ViewData["TotalTasks"] total tasks
+                <div class="stat-card-top">
+                    <div class="stat-icon danger">
+                        <i class="fas fa-list-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Task Completion</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-tasks"></i> @ViewData["TotalTasks"] total tasks
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@ViewData["TaskCompletionRate"]%</div>
             </div>
         </a>
     </div>
@@ -98,49 +113,57 @@
     <div class="stats-grid-secondary">
         <a class="stat-mini-link" href='@Url.Action("Index", "Project", new { area = "Executive" })'>
             <div class="stat-card-mini">
-                <div class="stat-icon info">
-                    <i class="fas fa-clipboard-check"></i>
+                <div class="stat-card-top">
+                    <div class="stat-icon info">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Tasks Completed</div>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["CompletedTasks"]</div>
-                    <div class="stat-label">Tasks Completed</div>
-                </div>
+                <div class="stat-number">@ViewData["CompletedTasks"]</div>
             </div>
         </a>
 
         <a class="stat-mini-link" href='@Url.Action("Index", "Project", new { area = "Executive" })'>
             <div class="stat-card-mini">
-                <div class="stat-icon warning">
-                    <i class="fas fa-hourglass-half"></i>
+                <div class="stat-card-top">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Tasks Pending</div>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["PendingTasks"]</div>
-                    <div class="stat-label">Tasks Pending</div>
-                </div>
+                <div class="stat-number">@ViewData["PendingTasks"]</div>
             </div>
         </a>
 
         <a class="stat-mini-link" href='@Url.Action("Index", "User", new { area = "Executive" })'>
             <div class="stat-card-mini">
-                <div class="stat-icon purple">
-                    <i class="fas fa-user-tie"></i>
+                <div class="stat-card-top">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Project Managers</div>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["TotalProjectManagers"]</div>
-                    <div class="stat-label">Project Managers</div>
-                </div>
+                <div class="stat-number">@ViewData["TotalProjectManagers"]</div>
             </div>
         </a>
 
         <a class="stat-mini-link" href='@Url.Action("Index", "Project", new { area = "Executive" })'>
             <div class="stat-card-mini">
-                <div class="stat-icon success">
-                    <i class="fas fa-flag-checkered"></i>
+                <div class="stat-card-top">
+                    <div class="stat-icon success">
+                        <i class="fas fa-flag-checkered"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Milestones Done</div>
+                    </div>
                 </div>
-                <div class="stat-content">
-                    <div class="stat-number">@ViewData["MilestoneCompletionRate"]%</div>
-                    <div class="stat-label">Milestones Done</div>
-                </div>
+                <div class="stat-number">@ViewData["MilestoneCompletionRate"]%</div>
             </div>
         </a>
     </div>

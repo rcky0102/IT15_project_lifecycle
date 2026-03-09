@@ -21,6 +21,11 @@
         .stat-card-link:hover { text-decoration: none; }
         .stat-card-link .stat-card { transition: transform .12s ease, box-shadow .12s ease; }
         .stat-card-link:hover .stat-card { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(20,40,60,0.06); }
+        .stat-card { display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; min-height: 120px; padding: 1rem; }
+        .stat-card-top { display: flex; align-items: center; gap: 1rem; }
+        .stat-card .stat-icon { flex: 0 0 auto; }
+        .stat-card .stat-content { flex: 1 1 auto; }
+        .stat-card .stat-number { align-self: flex-end; margin: 0; margin-top: 0.5rem; font-size: 1.75rem; font-weight: 700; line-height: 1; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.06); }
     </style>
 
     <!-- Dashboard Header -->
@@ -45,61 +50,69 @@
     <div class="stats-grid">
         <a href='@Url.Action("Index", "User", new { area = "HumanResource" })' class="stat-card-link">
             <div class="stat-card">
-                <div class="stat-icon primary">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@totalEmployees</div>
-                    <div class="stat-label">Total Employees</div>
-                    <div class="stat-change @(newHiresMonth > 0 ? "positive" : "neutral")">
-                        <i class="fas fa-arrow-up"></i> @newHiresMonth hired this month
+                <div class="stat-card-top">
+                    <div class="stat-icon primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total Employees</div>
+                        <div class="stat-change @(newHiresMonth > 0 ? "positive" : "neutral")">
+                            <i class="fas fa-arrow-up"></i> @newHiresMonth hired this month
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@totalEmployees</div>
             </div>
         </a>
 
         <a href='@Url.Action("Index", "User", new { area = "HumanResource" })' class="stat-card-link">
             <div class="stat-card">
-                <div class="stat-icon success">
-                    <i class="fas fa-id-card"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@newHiresMonth</div>
-                    <div class="stat-label">New Hires (This Month)</div>
-                    <div class="stat-change @(newHiresQuarter > 0 ? "positive" : "neutral")">
-                        <i class="fas fa-arrow-up"></i> @newHiresQuarter this quarter
+                <div class="stat-card-top">
+                    <div class="stat-icon success">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">New Hires (This Month)</div>
+                        <div class="stat-change @(newHiresQuarter > 0 ? "positive" : "neutral")">
+                            <i class="fas fa-arrow-up"></i> @newHiresQuarter this quarter
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@newHiresMonth</div>
             </div>
         </a>
 
         <a href='@Url.Action("Index", "Department", new { area = "HumanResource" })' class="stat-card-link">
             <div class="stat-card">
-                <div class="stat-icon warning">
-                    <i class="fas fa-building"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@totalDepartments</div>
-                    <div class="stat-label">Active Departments</div>
-                    <div class="stat-change neutral">
-                        <i class="fas fa-sitemap"></i> Organization units
+                <div class="stat-card-top">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active Departments</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-sitemap"></i> Organization units
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@totalDepartments</div>
             </div>
         </a>
 
         <a href='@Url.Action("Index", "Position", new { area = "HumanResource" })' class="stat-card-link">
             <div class="stat-card">
-                <div class="stat-icon danger">
-                    <i class="fas fa-briefcase"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number">@totalPositions</div>
-                    <div class="stat-label">Active Positions</div>
-                    <div class="stat-change neutral">
-                        <i class="fas fa-clipboard-list"></i> Job positions
+                <div class="stat-card-top">
+                    <div class="stat-icon danger">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Active Positions</div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-clipboard-list"></i> Job positions
+                        </div>
                     </div>
                 </div>
+                <div class="stat-number">@totalPositions</div>
             </div>
         </a>
     </div>
