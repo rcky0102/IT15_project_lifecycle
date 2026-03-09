@@ -42,19 +42,19 @@
             <input id="posSearch" type="text" class="sa-search-input" placeholder="Search positions…" autocomplete="off" />
         </div>
         <div class="sa-select-group">
+            <select id="posArchiveFilter" class="sa-select">
+                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
+        </div>
+        <div class="sa-select-group">
             <label for="pageSizeSelect" style="font-size:.82rem;color:var(--sa-muted);margin-right:.4rem;">Show</label>
             <select id="pageSizeSelect" class="sa-select" style="width:92px;">
                 <option value="5">5</option>
                 <option value="10" selected>10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
-            </select>
-        </div>
-        <div class="sa-select-group">
-            <select id="posArchiveFilter" class="sa-select">
-                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
-                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
-                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
             </select>
         </div>
     </div>
