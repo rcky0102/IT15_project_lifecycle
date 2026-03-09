@@ -142,6 +142,9 @@
                                 </td>
                                 <td>
                                     <div class="sa-action-group">
+                                        <button type="button" class="sa-action-btn" title="View details" style="color:#6366f1;" onclick="viewUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))', '@user.Role', '@Html.Raw(user.FirstName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.MiddleName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.LastName?.Replace("'", "\\'") ?? "")', '@user.EmployeeNumber', '@Html.Raw(user.DepartmentName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.PositionName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.Contact?.Replace("'", "\\'") ?? "")', '@(user.DateHired.HasValue ? user.DateHired.Value.ToString("MMM dd, yyyy") : "N/A")', '@Html.Raw(user.ProfileImage?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.AddressLine?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.Region?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.Province?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.City?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.Barangay?.Replace("'", "\\'") ?? "")')">
+                                            <i class="fas fa-magnifying-glass"></i>
+                                        </button>
                                         <button type="button" class="sa-action-btn sa-action-edit" title="Edit user" onclick="editUser('@user.UserId', '@Html.Raw(user.Email.Replace("'", "\\'"))', '@user.Role', '@Html.Raw(user.FirstName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.MiddleName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.LastName?.Replace("'", "\\'") ?? "")', '@user.EmployeeNumber', '@Html.Raw(user.DepartmentName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.PositionName?.Replace("'", "\\'") ?? "")', '@Html.Raw(user.Contact?.Replace("'", "\\'") ?? "")')">
                                             <i class="fas fa-pen-to-square"></i>
                                         </button>
@@ -456,6 +459,26 @@
         <div class="emp-modal-actions">
             <button type="button" class="emp-btn emp-btn-cancel" id="cancelDeleteUserBtn">Cancel</button>
             <button type="button" class="emp-btn emp-btn-confirm" id="confirmDeleteUserBtn" style="background:linear-gradient(135deg,#ef4444,#f87171);"><i class="fas fa-trash"></i> Delete User</button>
+        </div>
+    </div>
+</div>
+
+<!-- View User Details Modal -->
+<div class="emp-modal-backdrop" id="viewUserModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+    <div class="emp-modal" role="document" style="max-width:600px;">
+        <h4><i class="fas fa-user-circle" style="color:#6366f1;"></i> User Details</h4>
+        <div style="text-align:center;margin:1rem 0;">
+            <img id="viewProfileImage" src="" alt="Profile" style="width:80px;height:80px;border-radius:50%;object-fit:cover;display:none;border:3px solid #e2e8f0;" />
+            <div id="viewProfilePlaceholder" style="width:80px;height:80px;border-radius:50%;background:#f1f5f9;display:inline-flex;align-items:center;justify-content:center;margin:0 auto;border:3px solid #e2e8f0;">
+                <i class="fas fa-user" style="font-size:2rem;color:#94a3b8;"></i>
+            </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;">
+            <tbody id="viewUserBody" style="font-size:.9rem;">
+            </tbody>
+        </table>
+        <div class="emp-modal-actions" style="margin-top:1.2rem;">
+            <button type="button" class="emp-btn emp-btn-cancel" onclick="hideViewUserModal()">Close</button>
         </div>
     </div>
 </div>
@@ -993,6 +1016,47 @@
                 var modal = document.getElementById('deleteUserModal');
                 if (modal) { modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); }
             };
+
+            // View user details function
+            window.viewUser = function(id, email, role, firstName, middleName, lastName, employeeNumber, departmentName, positionName, contact, dateHired, profileImage, addressLine, region, province, city, barangay) {
+                var fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
+                var address = [addressLine, barangay, city, province, region].filter(Boolean).join(', ');
+
+                if (profileImage) {
+                    $('#viewProfileImage').attr('src', profileImage).show();
+                    $('#viewProfilePlaceholder').hide();
+                } else {
+                    $('#viewProfileImage').hide();
+                    $('#viewProfilePlaceholder').show();
+                }
+
+                var rows = '';
+                var fields = [
+                    { label: 'Email', value: email },
+                    { label: 'Role', value: role },
+                    { label: 'Employee #', value: employeeNumber },
+                    { label: 'Name', value: fullName },
+                    { label: 'Contact', value: contact },
+                    { label: 'Department', value: departmentName },
+                    { label: 'Position', value: positionName },
+                    { label: 'Date Hired', value: dateHired },
+                    { label: 'Address', value: address }
+                ];
+                for (var i = 0; i < fields.length; i++) {
+                    var val = fields[i].value || '—';
+                    rows += '<tr><td style="padding:.45rem .6rem;font-weight:600;color:#475569;white-space:nowrap;width:120px;border-bottom:1px solid #f1f5f9;">' + fields[i].label + '</td><td style="padding:.45rem .6rem;color:#1e293b;border-bottom:1px solid #f1f5f9;">' + $('<span>').text(val).html() + '</td></tr>';
+                }
+                $('#viewUserBody').html(rows);
+
+                var modal = document.getElementById('viewUserModal');
+                if (modal) { modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); }
+            };
+
+            window.hideViewUserModal = function() {
+                var modal = document.getElementById('viewUserModal');
+                if (modal) { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); }
+            };
+            $(document).on('click', '#viewUserModal', function(e) { if (e.target === this) hideViewUserModal(); });
 
             window.editUser = function(id, email, role, firstName, middleName, lastName, employeeNumber, departmentName, positionName, contact) {
                 $('#createUserForm')[0].reset();

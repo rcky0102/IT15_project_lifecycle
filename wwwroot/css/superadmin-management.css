@@ -1179,3 +1179,103 @@
         animation: none !important;
     }
 }
+
+/* =============================================
+   emp-modal-backdrop – full-screen overlay modal
+   Used by Delete User and View User modals
+   ============================================= */
+.emp-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .48);
+    backdrop-filter: blur(3px);
+    z-index: 1060;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.emp-modal-backdrop .emp-modal {
+    background: #fff;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 1.75rem 1.75rem 1.5rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .22);
+    animation: empModalIn .22s cubic-bezier(.34, 1.3, .64, 1);
+}
+
+@keyframes empModalIn {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+
+.emp-modal-backdrop .emp-modal h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.emp-modal-backdrop .emp-modal p {
+    font-size: .9rem;
+    color: #475569;
+    margin: 0 0 .6rem;
+    line-height: 1.6;
+}
+
+.emp-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .65rem;
+    margin-top: 1.25rem;
+}
+
+.emp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .5rem 1.1rem;
+    border-radius: 8px;
+    font-size: .875rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: opacity .18s ease, box-shadow .18s ease;
+}
+
+.emp-btn:hover { opacity: .88; }
+
+.emp-btn-cancel {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1.5px solid #e2e8f0;
+}
+
+.emp-btn-cancel:hover {
+    background: #e2e8f0;
+    opacity: 1;
+}
+
+.emp-btn-confirm {
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(15, 118, 110, .3);
+}
+
+@media (max-width: 576px) {
+    .emp-modal-backdrop .emp-modal {
+        border-radius: 14px;
+        padding: 1.25rem 1rem;
+        max-height: 90vh;
+    }
+    .emp-modal-actions { flex-direction: column; align-items: stretch; }
+    .emp-modal-actions .emp-btn { justify-content: center; }
+}

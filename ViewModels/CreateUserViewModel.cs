@@ -59,6 +59,21 @@ namespace project_lifecycle.ViewModels
         [Display(Name = "Contact")]
         public string? Contact { get; set; }
 
+        [Display(Name = "Address Line")]
+        public string? AddressLine { get; set; }
+
+        [Display(Name = "Region")]
+        public string? Region { get; set; }
+
+        [Display(Name = "Province")]
+        public string? Province { get; set; }
+
+        [Display(Name = "City")]
+        public string? City { get; set; }
+
+        [Display(Name = "Barangay")]
+        public string? Barangay { get; set; }
+
         [Display(Name = "Profile Image")]
         public IFormFile? ProfileImageFile { get; set; }
 

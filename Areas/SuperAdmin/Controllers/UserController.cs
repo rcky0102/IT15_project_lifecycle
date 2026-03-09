@@ -77,6 +77,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.MiddleName = employee.MiddleName;
                             userDetail.LastName = employee.LastName;
                             userDetail.Contact = employee.Contact;
+                            userDetail.AddressLine = employee.AddressLine;
+                            userDetail.Region = employee.Region;
+                            userDetail.Province = employee.Province;
+                            userDetail.City = employee.City;
+                            userDetail.Barangay = employee.Barangay;
                             userDetail.DepartmentName = employee.Department?.Name;
                             userDetail.PositionName = employee.Position?.Name;
                             userDetail.DateHired = employee.DateHired;
@@ -100,6 +105,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.PositionName = humanResource.Position?.Name;
                             userDetail.DateHired = humanResource.CreatedDate;
                             userDetail.ProfileImage = humanResource.ProfileImage;
+                            userDetail.Contact = humanResource.Contact;
+                            userDetail.AddressLine = humanResource.AddressLine;
+                            userDetail.Region = humanResource.Region;
+                            userDetail.Province = humanResource.Province;
+                            userDetail.City = humanResource.City;
+                            userDetail.Barangay = humanResource.Barangay;
                         }
                     }
                     else if (roles.Contains(Roles.DepartmentHead.ToString()))
@@ -119,6 +130,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.PositionName = departmentHead.Position?.Name;
                             userDetail.DateHired = departmentHead.CreatedDate;
                             userDetail.ProfileImage = departmentHead.ProfileImage;
+                            userDetail.Contact = departmentHead.Contact;
+                            userDetail.AddressLine = departmentHead.AddressLine;
+                            userDetail.Region = departmentHead.Region;
+                            userDetail.Province = departmentHead.Province;
+                            userDetail.City = departmentHead.City;
+                            userDetail.Barangay = departmentHead.Barangay;
                         }
                     }
                     else if (roles.Contains(Roles.Executive.ToString()))
@@ -138,6 +155,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.PositionName = executive.Position?.Name;
                             userDetail.DateHired = executive.CreatedDate;
                             userDetail.ProfileImage = executive.ProfileImage;
+                            userDetail.Contact = executive.Contact;
+                            userDetail.AddressLine = executive.AddressLine;
+                            userDetail.Region = executive.Region;
+                            userDetail.Province = executive.Province;
+                            userDetail.City = executive.City;
+                            userDetail.Barangay = executive.Barangay;
                         }
                     }
                     else if (roles.Contains(Roles.ProjectManager.ToString()))
@@ -157,6 +180,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.PositionName = projectManager.Position?.Name;
                             userDetail.DateHired = projectManager.CreatedDate;
                             userDetail.ProfileImage = projectManager.ProfileImage;
+                            userDetail.Contact = projectManager.Contact;
+                            userDetail.AddressLine = projectManager.AddressLine;
+                            userDetail.Region = projectManager.Region;
+                            userDetail.Province = projectManager.Province;
+                            userDetail.City = projectManager.City;
+                            userDetail.Barangay = projectManager.Barangay;
                         }
                     }
 
@@ -297,6 +326,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                         MiddleName = model.MiddleName,
                         LastName = model.LastName,
                         Contact = model.Contact ?? "",
+                        AddressLine = model.AddressLine,
+                        Region = model.Region,
+                        Province = model.Province,
+                        City = model.City,
+                        Barangay = model.Barangay,
                         DepartmentId = model.DepartmentId ?? 0,
                         PositionId = model.PositionId ?? 0,
                         DateHired = model.DateHired
@@ -321,6 +355,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             MiddleName = model.MiddleName,
                             LastName = model.LastName,
                             Contact = model.Contact ?? "",
+                            AddressLine = model.AddressLine,
+                            Region = model.Region,
+                            Province = model.Province,
+                            City = model.City,
+                            Barangay = model.Barangay,
                             PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null
                         };
 
@@ -348,6 +387,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             MiddleName = model.MiddleName,
                             LastName = model.LastName,
                             Contact = model.Contact ?? "",
+                            AddressLine = model.AddressLine,
+                            Region = model.Region,
+                            Province = model.Province,
+                            City = model.City,
+                            Barangay = model.Barangay,
                             DepartmentId = (model.DepartmentId.HasValue && model.DepartmentId.Value > 0) ? model.DepartmentId.Value : (int?)null,
                             PositionId = (model.PositionId.HasValue && model.PositionId.Value > 0) ? model.PositionId.Value : (int?)null
                         };
@@ -376,6 +420,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             MiddleName = model.MiddleName,
                             LastName = model.LastName,
                             Contact = model.Contact ?? "",
+                            AddressLine = model.AddressLine,
+                            Region = model.Region,
+                            Province = model.Province,
+                            City = model.City,
+                            Barangay = model.Barangay,
                             DepartmentId = (model.DepartmentId.HasValue && model.DepartmentId.Value > 0) ? model.DepartmentId.Value : 0,
                             PositionId = (model.PositionId.HasValue && model.PositionId.Value > 0) ? model.PositionId.Value : (int?)null
                         };
@@ -404,6 +453,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             MiddleName = model.MiddleName,
                             LastName = model.LastName,
                             Contact = model.Contact ?? "",
+                            AddressLine = model.AddressLine,
+                            Region = model.Region,
+                            Province = model.Province,
+                            City = model.City,
+                            Barangay = model.Barangay,
                             DepartmentId = (model.DepartmentId.HasValue && model.DepartmentId.Value > 0) ? model.DepartmentId.Value : 0,
                             PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null
                         };
@@ -560,6 +614,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.MiddleName = employee.MiddleName;
                             userDetail.LastName = employee.LastName;
                             userDetail.Contact = employee.Contact;
+                            userDetail.AddressLine = employee.AddressLine;
+                            userDetail.Region = employee.Region;
+                            userDetail.Province = employee.Province;
+                            userDetail.City = employee.City;
+                            userDetail.Barangay = employee.Barangay;
                             userDetail.DepartmentName = employee.Department?.Name;
                             userDetail.PositionName = employee.Position?.Name;
                             userDetail.DateHired = employee.DateHired;
@@ -579,6 +638,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.LastName = humanResource.LastName;
                             userDetail.PositionName = humanResource.Position?.Name;
                             userDetail.ProfileImage = humanResource.ProfileImage;
+                            userDetail.Contact = humanResource.Contact;
+                            userDetail.AddressLine = humanResource.AddressLine;
+                            userDetail.Region = humanResource.Region;
+                            userDetail.Province = humanResource.Province;
+                            userDetail.City = humanResource.City;
+                            userDetail.Barangay = humanResource.Barangay;
                         }
                     }
                     else if (roles.Contains(Roles.DepartmentHead.ToString()))
@@ -596,6 +661,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.DepartmentName = departmentHead.Department?.Name;
                             userDetail.PositionName = departmentHead.Position?.Name;
                             userDetail.ProfileImage = departmentHead.ProfileImage;
+                            userDetail.Contact = departmentHead.Contact;
+                            userDetail.AddressLine = departmentHead.AddressLine;
+                            userDetail.Region = departmentHead.Region;
+                            userDetail.Province = departmentHead.Province;
+                            userDetail.City = departmentHead.City;
+                            userDetail.Barangay = departmentHead.Barangay;
                         }
                     }
                     else if (roles.Contains(Roles.Executive.ToString()))
@@ -611,6 +682,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.LastName = executive.LastName;
                             userDetail.PositionName = executive.Position?.Name;
                             userDetail.ProfileImage = executive.ProfileImage;
+                            userDetail.Contact = executive.Contact;
+                            userDetail.AddressLine = executive.AddressLine;
+                            userDetail.Region = executive.Region;
+                            userDetail.Province = executive.Province;
+                            userDetail.City = executive.City;
+                            userDetail.Barangay = executive.Barangay;
                         }
                     }
                     else if (roles.Contains(Roles.ProjectManager.ToString()))
@@ -628,6 +705,12 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                             userDetail.DepartmentName = projectManager.Department?.Name;
                             userDetail.PositionName = projectManager.Position?.Name;
                             userDetail.ProfileImage = projectManager.ProfileImage;
+                            userDetail.Contact = projectManager.Contact;
+                            userDetail.AddressLine = projectManager.AddressLine;
+                            userDetail.Region = projectManager.Region;
+                            userDetail.Province = projectManager.Province;
+                            userDetail.City = projectManager.City;
+                            userDetail.Barangay = projectManager.Barangay;
                         }
                     }
 
@@ -934,6 +1017,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     employee.MiddleName = model.MiddleName;
                     employee.LastName = model.LastName;
                     employee.Contact = model.Contact ?? string.Empty;
+                    employee.AddressLine = model.AddressLine;
+                    employee.Region = model.Region;
+                    employee.Province = model.Province;
+                    employee.City = model.City;
+                    employee.Barangay = model.Barangay;
                     employee.DepartmentId = model.DepartmentId ?? 0;
                     employee.PositionId = model.PositionId ?? 0;
                     employee.DateHired = model.DateHired;
@@ -967,6 +1055,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     hr.MiddleName = model.MiddleName;
                     hr.LastName = model.LastName;
                     hr.Contact = model.Contact ?? string.Empty;
+                    hr.AddressLine = model.AddressLine;
+                    hr.Region = model.Region;
+                    hr.Province = model.Province;
+                    hr.City = model.City;
+                    hr.Barangay = model.Barangay;
                     hr.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
 
                     if (model.ProfileImageFile != null)
@@ -997,6 +1090,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     dh.MiddleName = model.MiddleName;
                     dh.LastName = model.LastName;
                     dh.Contact = model.Contact ?? string.Empty;
+                    dh.AddressLine = model.AddressLine;
+                    dh.Region = model.Region;
+                    dh.Province = model.Province;
+                    dh.City = model.City;
+                    dh.Barangay = model.Barangay;
                     dh.DepartmentId = model.DepartmentId ?? 0;
                     dh.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
 
@@ -1028,6 +1126,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     ex.MiddleName = model.MiddleName;
                     ex.LastName = model.LastName;
                     ex.Contact = model.Contact ?? string.Empty;
+                    ex.AddressLine = model.AddressLine;
+                    ex.Region = model.Region;
+                    ex.Province = model.Province;
+                    ex.City = model.City;
+                    ex.Barangay = model.Barangay;
                     ex.DepartmentId = model.DepartmentId.HasValue && model.DepartmentId.Value > 0 ? model.DepartmentId.Value : (int?)null;
                     ex.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
 
@@ -1059,6 +1162,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     pm.MiddleName = model.MiddleName;
                     pm.LastName = model.LastName;
                     pm.Contact = model.Contact ?? string.Empty;
+                    pm.AddressLine = model.AddressLine;
+                    pm.Region = model.Region;
+                    pm.Province = model.Province;
+                    pm.City = model.City;
+                    pm.Barangay = model.Barangay;
                     pm.DepartmentId = model.DepartmentId ?? 0;
                     pm.PositionId = model.PositionId.HasValue && model.PositionId.Value > 0 ? model.PositionId.Value : (int?)null;
 
