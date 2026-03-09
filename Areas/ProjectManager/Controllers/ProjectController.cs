@@ -559,6 +559,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var taskMembers = await _context.TaskMembers
                 .Where(tm => tasks.Select(t => t.Id).Contains(tm.ProjectTaskId))
                 .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .Include(tm => tm.Member).ThenInclude(m => m.ProjectRole)
                 .ToListAsync();
 
             var members = await _context.Members
@@ -585,6 +586,19 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 StartDate = t.StartDate,
                 EndDate = t.EndDate,
                 AssignedMemberName = taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)?.Member?.Employee != null ? string.Join(" ", new[] { taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.FirstName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.MiddleName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null,
+                AssignedMembers = taskMembers
+                    .Where(tm => tm.ProjectTaskId == t.Id && tm.Member != null)
+                    .Select(tm => new project_lifecycle.ViewModels.ProjectManager.MemberViewModel
+                    {
+                        Id = tm.Member != null ? tm.Member.Id : 0,
+                        EmployeeId = tm.Member != null ? tm.Member.EmployeeId : 0,
+                        EmployeeName = tm.Member?.Employee != null ? string.Join(" ", new[] { tm.Member.Employee.FirstName, tm.Member.Employee.MiddleName, tm.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A",
+                        ProfileImage = tm.Member?.Employee?.ProfileImage,
+                        ProjectRoleId = tm.Member != null ? tm.Member.ProjectRoleId : 0,
+                        ProjectRoleName = tm.Member?.ProjectRole != null ? tm.Member.ProjectRole.Name : "N/A",
+                        IsArchived = tm.Member != null ? tm.Member.IsArchived : false
+                    })
+                    .ToList(),
                 IsArchived = t.IsArchived
             }).ToList();
 

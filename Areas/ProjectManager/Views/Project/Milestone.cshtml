@@ -196,10 +196,48 @@
                                         @t.StartDate.ToString("MMM dd") <text>&ndash;</text> @t.EndDate.ToString("MMM dd, yyyy")
                                     }
                                 </span>
-                                <span class="emp-task-meta-assignee">
-                                    <i class="fas fa-user" style="font-size:.65rem;"></i>
-                                    @(t.AssignedMemberName ?? "Unassigned")
-                                </span>
+                                @if (t.AssignedMembers != null && t.AssignedMembers.Count > 1)
+                                {
+                                    <span class="emp-task-meta-assignee">
+                                        <i class="fas fa-user" style="font-size:.65rem;"></i>
+                                        <span style="display:inline-flex;align-items:center;gap:.5rem;margin-left:.35rem;">
+                                            <div class="avatar-stack" aria-hidden="true" style="display:flex;align-items:center;">
+                                                @foreach (var m in t.AssignedMembers.Take(4))
+                                                {
+                                                    var name = (m.EmployeeName ?? "").ToString();
+                                                    var img = (m.ProfileImage ?? "")?.ToString() ?? "";
+                                                    var initials = string.Concat(name.Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s[0])).ToUpper();
+                                                    if (initials.Length > 2) { initials = initials.Substring(0, 2); }
+                                                    <div class="avatar" title="@name" style="width:32px;height:32px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff,#f3f7ff);color:#0f172a;font-weight:700;border:2px solid #fff;box-shadow:0 6px 12px rgba(2,6,23,0.06);margin-left:-10px;">
+                                                        @if (!string.IsNullOrEmpty(img))
+                                                        {
+                                                            <img src="@img" alt="@name" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="initials">@initials</span>
+                                                        }
+                                                    </div>
+                                                }
+                                                @if (t.AssignedMembers.Count > 4)
+                                                {
+                                                    <div class="avatar more" title="More" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef2ff;color:#1e293b;font-size:.85rem;margin-left:-10px;border:2px solid #fff;">+@(t.AssignedMembers.Count - 4)</div>
+                                                }
+                                            </div>
+                                            <span class="assigned-summary" style="font-size:.82rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                                <strong>@t.AssignedMembers[0].EmployeeName</strong>
+                                                <span style="opacity:.8;"> and @(t.AssignedMembers.Count - 1) others</span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="emp-task-meta-assignee">
+                                        <i class="fas fa-user" style="font-size:.65rem;"></i>
+                                        @(t.AssignedMemberName ?? "Unassigned")
+                                    </span>
+                                }
                             </div>
                         </div>
                         <div class="emp-task-row-right">
