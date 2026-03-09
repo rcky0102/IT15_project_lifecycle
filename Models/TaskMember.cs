@@ -19,6 +19,8 @@ namespace project_lifecycle.Models
         [ForeignKey("MemberId")]
         public Member? Member { get; set; }
 
+        public bool IsArchived { get; set; } = false;
+
         [Required]
         public DateTime DateCreated { get; set; } = DateTime.Now;
     }

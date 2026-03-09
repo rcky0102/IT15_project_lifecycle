@@ -5,6 +5,20 @@
     var projectEnd = ViewData["ProjectEnd"] as string ?? string.Empty;
 }
 
+<style>
+    .tm-member-card { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.65rem .85rem; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:.5rem; }
+    .tm-member-card.archived { background:#fff1f2; border-color:#fecdd3; opacity:.85; }
+    .tm-member-left { display:flex; align-items:center; gap:.7rem; min-width:0; }
+    .tm-member-avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.78rem; flex-shrink:0; background:linear-gradient(135deg,#eef2ff,#e0e7ff); color:#3730a3; overflow:hidden; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.07); }
+    .tm-member-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+    .tm-member-name { font-weight:600; font-size:.87rem; color:#1e293b; }
+    .tm-member-role { font-size:.76rem; color:#64748b; }
+    .tm-member-badge { display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:700; padding:.18rem .55rem; border-radius:20px; }
+    .tm-member-badge.active { background:#dcfce7; color:#16a34a; }
+    .tm-member-badge.archived { background:#fee2e2; color:#dc2626; }
+    .tm-add-section { margin-top:.75rem; padding-top:.75rem; border-top:1px dashed #cbd5e1; }
+</style>
+
 <div class="emp-page-hero">
     <div class="emp-page-hero-content">
         <div class="emp-page-hero-left">
@@ -23,7 +37,7 @@
     <div class="emp-form-section">
         <div class="emp-form-section-title"><i class="fas fa-list-check"></i> Task Details</div>
 
-        <form asp-area="ProjectManager" asp-controller="Project" asp-action="EditTask" method="post" class="emp-form">
+        <form asp-area="ProjectManager" asp-controller="Project" asp-action="EditTask" method="post" class="emp-form emp-edit-task-form">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@Model.Id" />
 
@@ -32,22 +46,85 @@
                 <input name="Name" id="taskName" class="emp-form-control" value="@Model.Name" required />
             </div>
 
+            <!-- ===== Assigned Members (redesigned with archive/unarchive) ===== -->
             <div class="emp-form-row">
-                <label class="emp-form-label">Assign To</label>
-                @if (!Model.AvailableMembers.Any())
+                <label class="emp-form-label">Assigned Members</label>
+
+                @if (!Model.CurrentTaskMembers.Any() && !Model.AvailableMembers.Any())
                 {
                     <div class="emp-form-control" style="color:#94a3b8;cursor:default;">No project members yet.</div>
                 }
                 else
                 {
-                    <div id="assignedMemberChips" style="display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.5rem;"></div>
-                    <div id="assignedMemberHiddenInputs">
-                        @foreach (var id in Model.AssignedMemberIds)
+                    <div id="currentMembersContainer">
+                        @foreach (var tm in Model.CurrentTaskMembers)
                         {
-                            <input type="hidden" name="assignedMemberIds" value="@id" />
+                            var initials = string.Concat((tm.EmployeeName ?? "").Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s[0])).ToUpper();
+                            if (initials.Length > 2) { initials = initials.Substring(0, 2); }
+                            <div class="tm-member-card @(tm.IsArchived ? "archived" : "")">
+                                <div class="tm-member-left">
+                                    <div class="tm-member-avatar">
+                                        @if (!string.IsNullOrWhiteSpace(tm.ProfileImage))
+                                        {
+                                            <img src="@tm.ProfileImage" alt="@tm.EmployeeName" />
+                                        }
+                                        else
+                                        {
+                                            @initials
+                                        }
+                                    </div>
+                                    <div>
+                                        <div class="tm-member-name">@tm.EmployeeName</div>
+                                        <div class="tm-member-role">@tm.ProjectRoleName</div>
+                                    </div>
+                                    @if (tm.IsArchived)
+                                    {
+                                        <span class="tm-member-badge archived"><i class="fas fa-lock" style="font-size:.65rem;"></i> Removed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tm-member-badge active"><i class="fas fa-check" style="font-size:.65rem;"></i> Active</span>
+                                    }
+                                </div>
+                                <div>
+                                    @if (tm.IsArchived)
+                                    {
+                                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="UnarchiveTaskMember" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="taskMemberId" value="@tm.TaskMemberId" />
+                                            <button type="button" class="emp-action-btn emp-action-unarchive" title="Restore to task"
+                                                    data-member-name="@tm.EmployeeName"
+                                                    onclick="openTmUnarchiveModal(this.form, this.getAttribute('data-member-name'))">
+                                                <i class="fas fa-box-open"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-area="ProjectManager" asp-controller="Project" asp-action="ArchiveTaskMember" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="taskMemberId" value="@tm.TaskMemberId" />
+                                            <button type="button" class="emp-action-btn emp-action-archive" title="Remove from task"
+                                                    data-member-name="@tm.EmployeeName"
+                                                    onclick="openTmArchiveModal(this.form, this.getAttribute('data-member-name'))">
+                                                <i class="fas fa-archive"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
                         }
                     </div>
-                    <input type="text" id="assignMemberInput" class="emp-form-control" placeholder="Click to pick from project members…" readonly />
+
+                    @if (Model.AvailableMembers.Any())
+                    {
+                        <div class="tm-add-section">
+                            <label class="emp-form-label" style="margin-bottom:.4rem;font-size:.83rem;">Add Members</label>
+                            <input type="text" id="assignMemberInput" class="emp-form-control" placeholder="Click to add project membersâ€¦" autocomplete="off" readonly style="cursor:pointer;" />
+                            <div id="assignedMemberChips" style="display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.5rem;"></div>
+                            <div id="assignedMemberHiddenInputs"></div>
+                        </div>
+                    }
                 }
             </div>
 
@@ -87,6 +164,42 @@
     </div>
 </div>
 
+<!-- Archive task member confirmation modal -->
+<div class="emp-modal-backdrop" id="tmArchiveModal" role="dialog" aria-modal="true" aria-hidden="true" onclick="if(event.target===this)closeTmArchiveModal()">
+    <div class="emp-modal" role="document">
+        <h4><i class="fas fa-archive"></i> Remove from Task</h4>
+        <p id="tmArchiveMessage">Remove this member from the task?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" onclick="closeTmArchiveModal()">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm emp-btn-danger" onclick="confirmTmArchive()">Remove</button>
+        </div>
+    </div>
+</div>
+
+<!-- Unarchive task member confirmation modal -->
+<div class="emp-modal-backdrop" id="tmUnarchiveModal" role="dialog" aria-modal="true" aria-hidden="true" onclick="if(event.target===this)closeTmUnarchiveModal()">
+    <div class="emp-modal" role="document">
+        <h4><i class="fas fa-box-open"></i> Restore to Task</h4>
+        <p id="tmUnarchiveMessage">Restore this member to the task?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" onclick="closeTmUnarchiveModal()">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm emp-btn-primary" onclick="confirmTmUnarchive()">Restore</button>
+        </div>
+    </div>
+</div>
+
+<!-- Submit confirmation modal -->
+<div class="emp-modal-backdrop" id="submitConfirmModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="emp-modal" role="document">
+        <h4 id="submitConfirmTitle"><i class="fas fa-check-circle"></i> Confirm</h4>
+        <p id="submitConfirmMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="submitCancelBtn">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm emp-btn-primary" id="submitConfirmBtn">Save</button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -99,14 +212,6 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
 
     const selectedMemberIds = new Set();
-    // restore assigned from server
-    @if (Model.AssignedMemberIds != null && Model.AssignedMemberIds.Any())
-    {
-        foreach (var id in Model.AssignedMemberIds)
-        {
-            <text>selectedMemberIds.add(@id);</text>
-        }
-    }
 
     const chipsContainer = document.getElementById('assignedMemberChips');
     const hiddenContainer = document.getElementById('assignedMemberHiddenInputs');
@@ -207,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         if (assignInputEl) {
             assignInputEl.placeholder = selectedMemberIds.size > 0
-                ? selectedMemberIds.size + ' member' + (selectedMemberIds.size !== 1 ? 's' : '') + ' selected — click to change'
+                ? selectedMemberIds.size + ' member' + (selectedMemberIds.size !== 1 ? 's' : '') + ' selected ï¿½ click to change'
                 : 'Click to pick from project members\u2026';
         }
     }
@@ -346,6 +451,75 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     renderChips();
+
+    // ===== Archive / Unarchive Task Member modal wiring =====
+    // Exposed on window so inline onclick attributes can reach them from global scope
+    let __tmArchiveForm = null;
+    window.openTmArchiveModal = function (form, name) {
+        __tmArchiveForm = form;
+        const msg = document.getElementById('tmArchiveMessage');
+        if (msg) msg.textContent = `Remove "${name}" from this task?`;
+        const modal = document.getElementById('tmArchiveModal');
+        if (modal) { modal.classList.add('active'); modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
+    };
+    window.closeTmArchiveModal = function () {
+        __tmArchiveForm = null;
+        const modal = document.getElementById('tmArchiveModal');
+        if (modal) { modal.classList.remove('active'); modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+    };
+    window.confirmTmArchive = function () { if (__tmArchiveForm) __tmArchiveForm.submit(); else window.closeTmArchiveModal(); };
+
+    let __tmUnarchiveForm = null;
+    window.openTmUnarchiveModal = function (form, name) {
+        __tmUnarchiveForm = form;
+        const msg = document.getElementById('tmUnarchiveMessage');
+        if (msg) msg.textContent = `Restore "${name}" to this task?`;
+        const modal = document.getElementById('tmUnarchiveModal');
+        if (modal) { modal.classList.add('active'); modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
+    };
+    window.closeTmUnarchiveModal = function () {
+        __tmUnarchiveForm = null;
+        const modal = document.getElementById('tmUnarchiveModal');
+        if (modal) { modal.classList.remove('active'); modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+    };
+    window.confirmTmUnarchive = function () { if (__tmUnarchiveForm) __tmUnarchiveForm.submit(); else window.closeTmUnarchiveModal(); };
+
+    // Wire backdrop-click close for tm modals
+    const tmArchiveModal = document.getElementById('tmArchiveModal');
+    const tmUnarchiveModal = document.getElementById('tmUnarchiveModal');
+    if (tmArchiveModal) tmArchiveModal.addEventListener('click', function (e) { if (e.target === tmArchiveModal) window.closeTmArchiveModal(); });
+    if (tmUnarchiveModal) tmUnarchiveModal.addEventListener('click', function (e) { if (e.target === tmUnarchiveModal) window.closeTmUnarchiveModal(); });
+
+    // ===== Submit confirmation modal wiring =====
+    const formElement = document.querySelector('form.emp-form');
+    const submitButton = document.getElementById('submitEditTaskBtn');
+    if (formElement) {
+        let __submitFormToSubmit = null;
+        const submitModal = document.getElementById('submitConfirmModal');
+        const submitCancelBtn = document.getElementById('submitCancelBtn');
+        const submitConfirmBtn = document.getElementById('submitConfirmBtn');
+
+        if (submitButton) {
+            submitButton.addEventListener('click', function (e) {
+                e.preventDefault();
+                __submitFormToSubmit = formElement;
+                const titleEl = document.getElementById('submitConfirmTitle');
+                const msgEl = document.getElementById('submitConfirmMessage');
+                if (titleEl) titleEl.textContent = 'Confirm Save';
+                if (msgEl) msgEl.textContent = 'Save changes to this task?';
+                if (submitModal) { submitModal.classList.add('active'); submitModal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
+            });
+        }
+
+        if (submitCancelBtn) submitCancelBtn.addEventListener('click', function () { __submitFormToSubmit = null; if (submitModal) { submitModal.classList.remove('active'); submitModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } });
+        if (submitConfirmBtn) submitConfirmBtn.addEventListener('click', function () {
+            if (!__submitFormToSubmit) { if (submitModal) { submitModal.classList.remove('active'); submitModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } return; }
+            if (pendingUploads > 0) { alert('Please wait for file upload to finish.'); return; }
+            __submitFormToSubmit.submit();
+        });
+
+        if (submitModal) submitModal.addEventListener('click', function (e) { if (e.target === submitModal) { __submitFormToSubmit = null; submitModal.classList.remove('active'); submitModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } });
+    }
 
     // Simple file upload + CKEditor similar to Create
     const editorSelector = '#EditTaskInstructions';

@@ -585,9 +585,9 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 Status = t.Status,
                 StartDate = t.StartDate,
                 EndDate = t.EndDate,
-                AssignedMemberName = taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)?.Member?.Employee != null ? string.Join(" ", new[] { taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.FirstName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.MiddleName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id)!.Member!.Employee!.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null,
+                AssignedMemberName = taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id && !tm.IsArchived)?.Member?.Employee != null ? string.Join(" ", new[] { taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id && !tm.IsArchived)!.Member!.Employee!.FirstName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id && !tm.IsArchived)!.Member!.Employee!.MiddleName, taskMembers.FirstOrDefault(tm => tm.ProjectTaskId == t.Id && !tm.IsArchived)!.Member!.Employee!.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null,
                 AssignedMembers = taskMembers
-                    .Where(tm => tm.ProjectTaskId == t.Id && tm.Member != null)
+                    .Where(tm => tm.ProjectTaskId == t.Id && !tm.IsArchived && tm.Member != null)
                     .Select(tm => new project_lifecycle.ViewModels.ProjectManager.MemberViewModel
                     {
                         Id = tm.Member != null ? tm.Member.Id : 0,
@@ -596,7 +596,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                         ProfileImage = tm.Member?.Employee?.ProfileImage,
                         ProjectRoleId = tm.Member != null ? tm.Member.ProjectRoleId : 0,
                         ProjectRoleName = tm.Member?.ProjectRole != null ? tm.Member.ProjectRole.Name : "N/A",
-                        IsArchived = tm.Member != null ? tm.Member.IsArchived : false
+                        IsArchived = tm.IsArchived
                     })
                     .ToList(),
                 IsArchived = t.IsArchived
@@ -630,13 +630,13 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
 
             var taskMember = await _context.TaskMembers
                 .Include(tm => tm.Member).ThenInclude(m => m.Employee)
-                .FirstOrDefaultAsync(tm => tm.ProjectTaskId == id);
+                .FirstOrDefaultAsync(tm => tm.ProjectTaskId == id && !tm.IsArchived);
 
             var assignedName = taskMember?.Member?.Employee != null ? string.Join(" ", new[] { taskMember.Member.Employee.FirstName, taskMember.Member.Employee.MiddleName, taskMember.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : null;
 
             // Load all assigned members for this task (for multi-member display)
             var assignedMembers = await _context.TaskMembers
-                .Where(tm => tm.ProjectTaskId == id)
+                .Where(tm => tm.ProjectTaskId == id && !tm.IsArchived)
                 .Include(tm => tm.Member).ThenInclude(m => m.Employee)
                 .Include(tm => tm.Member).ThenInclude(m => m.ProjectRole)
                 .ToListAsync();
@@ -652,7 +652,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                     ProfileImage = tm.Member?.Employee?.ProfileImage,
                     ProjectRoleId = tm.Member != null ? tm.Member.ProjectRoleId : 0,
                     ProjectRoleName = tm.Member?.ProjectRole != null ? tm.Member.ProjectRole.Name : string.Empty,
-                    IsArchived = tm.Member != null ? tm.Member.IsArchived : false
+                    IsArchived = tm.IsArchived
                 })
                 .ToList();
 
@@ -833,12 +833,19 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             var members = await _context.Members
                 .Where(m => m.ProjectId == projectId)
                 .Include(m => m.Employee)
+                .Include(m => m.ProjectRole)
                 .ToListAsync();
 
-            var assigned = await _context.TaskMembers
+            var currentTaskMembers = await _context.TaskMembers
                 .Where(tm => tm.ProjectTaskId == id)
-                .Select(tm => tm.MemberId)
+                .Include(tm => tm.Member).ThenInclude(m => m.Employee)
+                .Include(tm => tm.Member).ThenInclude(m => m.ProjectRole)
                 .ToListAsync();
+
+            var assignedMemberIds = currentTaskMembers.Select(tm => tm.MemberId).ToList();
+
+            // Members available to add = project members not already a task member
+            var existingMemberIds = currentTaskMembers.Select(tm => tm.MemberId).ToHashSet();
 
             var vm = new ProjectTaskEditViewModel
             {
@@ -850,11 +857,24 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
                 Instructions = task.Instructions ?? string.Empty,
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
-                AssignedMemberIds = assigned ?? new System.Collections.Generic.List<int>(),
-                AvailableMembers = members.Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                AssignedMemberIds = assignedMemberIds,
+                AvailableMembers = members
+                    .Where(m => !existingMemberIds.Contains(m.Id))
+                    .Select(m => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                    {
+                        Value = m.Id.ToString(),
+                        Text = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A"
+                    }).ToList(),
+                CurrentTaskMembers = currentTaskMembers.Select(tm => new TaskMemberItemViewModel
                 {
-                    Value = m.Id.ToString(),
-                    Text = m.Employee != null ? string.Join(" ", new[] { m.Employee.FirstName, m.Employee.MiddleName, m.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))) : "N/A"
+                    TaskMemberId = tm.Id,
+                    MemberId = tm.MemberId,
+                    EmployeeName = tm.Member?.Employee != null
+                        ? string.Join(" ", new[] { tm.Member.Employee.FirstName, tm.Member.Employee.MiddleName, tm.Member.Employee.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                        : "N/A",
+                    ProfileImage = tm.Member?.Employee?.ProfileImage,
+                    ProjectRoleName = tm.Member?.ProjectRole?.Name ?? string.Empty,
+                    IsArchived = tm.IsArchived
                 }).ToList()
             };
 
@@ -869,6 +889,50 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         {
             // Backwards-friendly route: forward to EditTask implementation
             return await EditTask(id);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveTaskMember(int taskMemberId)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var taskMember = await _context.TaskMembers
+                .Include(tm => tm.ProjectTask).ThenInclude(t => t.ProjectMilestone).ThenInclude(ms => ms.Project)
+                .FirstOrDefaultAsync(tm => tm.Id == taskMemberId);
+
+            if (taskMember == null) return NotFound();
+            if (taskMember.ProjectTask?.ProjectMilestone?.Project?.ProjectManagerId != pm.Id) return Forbid();
+
+            taskMember.IsArchived = true;
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Archive", "TaskMember", $"Archived task member (TaskMemberId: {taskMemberId}) from task '{taskMember.ProjectTask?.Name}'", "TaskMember", taskMemberId.ToString());
+            TempData["SuccessMessage"] = "Task member archived.";
+            return RedirectToAction(nameof(EditTask), new { id = taskMember.ProjectTaskId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchiveTaskMember(int taskMemberId)
+        {
+            var pm = await GetCurrentProjectManagerAsync();
+            if (pm == null) return Challenge();
+
+            var taskMember = await _context.TaskMembers
+                .Include(tm => tm.ProjectTask).ThenInclude(t => t.ProjectMilestone).ThenInclude(ms => ms.Project)
+                .FirstOrDefaultAsync(tm => tm.Id == taskMemberId);
+
+            if (taskMember == null) return NotFound();
+            if (taskMember.ProjectTask?.ProjectMilestone?.Project?.ProjectManagerId != pm.Id) return Forbid();
+
+            taskMember.IsArchived = false;
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(User, "Unarchive", "TaskMember", $"Unarchived task member (TaskMemberId: {taskMemberId}) from task '{taskMember.ProjectTask?.Name}'", "TaskMember", taskMemberId.ToString());
+            TempData["SuccessMessage"] = "Task member restored.";
+            return RedirectToAction(nameof(EditTask), new { id = taskMember.ProjectTaskId });
         }
 
         [HttpPost]
@@ -901,16 +965,13 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
             task.StartDate = input.StartDate;
             task.EndDate = input.EndDate;
 
-            // Update assigned members
+            // Update assigned members: only ADD newly selected ones; existing are managed via archive/unarchive
             var selectedIds = (assignedMemberIds ?? System.Array.Empty<int>()).Where(x => x > 0).Distinct().ToArray();
             var validMembers = await _context.Members.Where(m => m.ProjectId == task.ProjectMilestone.ProjectId && selectedIds.Contains(m.Id)).ToListAsync();
 
-            // Remove existing task members
-            var existing = await _context.TaskMembers.Where(tm => tm.ProjectTaskId == id).ToListAsync();
-            _context.TaskMembers.RemoveRange(existing);
-
-            // Add new task members
-            foreach (var m in validMembers)
+            // Only add members not already present (regardless of archive state)
+            var existingMemberIds = await _context.TaskMembers.Where(tm => tm.ProjectTaskId == id).Select(tm => tm.MemberId).ToListAsync();
+            foreach (var m in validMembers.Where(m => !existingMemberIds.Contains(m.Id)))
             {
                 _context.TaskMembers.Add(new Models.TaskMember { ProjectTaskId = task.Id, MemberId = m.Id, DateCreated = System.DateTime.Now });
             }

@@ -185,6 +185,18 @@
     </div>
 </div>
 
+<!-- Submit confirmation modal -->
+<div class="emp-modal-backdrop" id="submitConfirmModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="emp-modal" role="document">
+        <h4 id="submitConfirmTitle"><i class="fas fa-check-circle"></i> Confirm</h4>
+        <p id="submitConfirmMessage">Are you sure?</p>
+        <div class="emp-modal-actions">
+            <button type="button" class="emp-btn emp-btn-cancel" id="submitCancelBtn">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-confirm emp-btn-primary" id="submitConfirmBtn">Create</button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -564,17 +576,45 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function hasMeaningfulContent(html) { if(!html) return false; const doc=new DOMParser().parseFromString(html,'text/html'); return (doc.body.textContent||'').replace(/\u00A0/g,' ').trim().length>0||!!doc.body.querySelector('img,table,video,audio,iframe'); }
 
-    if(formElement){
-        if(submitButton) submitButton.addEventListener('click',()=>explicitSubmitRequested=true);
-        formElement.addEventListener('submit',function(e){
-            const isPrimary=e.submitter?e.submitter===submitButton:explicitSubmitRequested;
-            if(!isPrimary){e.preventDefault();return;}
-            if(pendingUploads>0){e.preventDefault();explicitSubmitRequested=false;alert('Please wait for file upload to finish.');return;}
-            const el=document.querySelector(editorSelector); const html=editorInstance?editorInstance.getData():(el?el.value:''); if(el) el.value=html;
-            if(!hasMeaningfulContent(html)){e.preventDefault();explicitSubmitRequested=false;alert('Instructions are required before creating the task.');if(editorInstance) editorInstance.editing.view.focus();return;}
-            isSubmitting=true; clearDraft();
+    if (formElement) {
+        // Confirmation modal flow: open a confirm dialog on primary submit
+        let __submitFormToSubmit = null;
+        const submitModal = document.getElementById('submitConfirmModal');
+        const submitCancelBtn = document.getElementById('submitCancelBtn');
+        const submitConfirmBtn = document.getElementById('submitConfirmBtn');
+
+        if (submitButton) {
+            submitButton.addEventListener('click', function (e) {
+                e.preventDefault();
+                __submitFormToSubmit = formElement;
+                const titleEl = document.getElementById('submitConfirmTitle');
+                const msgEl = document.getElementById('submitConfirmMessage');
+                if (titleEl) titleEl.textContent = 'Confirm Create';
+                if (msgEl) msgEl.textContent = 'Create this task?';
+                if (submitModal) { submitModal.classList.add('active'); submitModal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; }
+            });
+        }
+
+        if (submitCancelBtn) submitCancelBtn.addEventListener('click', function () { __submitFormToSubmit = null; if (submitModal) { submitModal.classList.remove('active'); submitModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } });
+        if (submitConfirmBtn) submitConfirmBtn.addEventListener('click', function () {
+            if (!__submitFormToSubmit) { if (submitModal) { submitModal.classList.remove('active'); submitModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } return; }
+            if (pendingUploads > 0) { alert('Please wait for file upload to finish.'); return; }
+            explicitSubmitRequested = true;
+            __submitFormToSubmit.submit();
         });
-        formElement.querySelectorAll('button').forEach(b=>{ if(b===submitButton) return; const t=(b.getAttribute('type')||'').toLowerCase(); if(t==='reset'||t==='button') return; b.setAttribute('type','button'); });
+
+        if (submitModal) submitModal.addEventListener('click', function (e) { if (e.target === submitModal) { __submitFormToSubmit = null; submitModal.classList.remove('active'); submitModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; } });
+
+        formElement.addEventListener('submit', function (e) {
+            const isPrimary = e.submitter ? e.submitter === submitButton : explicitSubmitRequested;
+            if (!isPrimary) { e.preventDefault(); return; }
+            if (pendingUploads > 0) { e.preventDefault(); explicitSubmitRequested = false; alert('Please wait for file upload to finish.'); return; }
+            const el = document.querySelector(editorSelector); const html = editorInstance ? editorInstance.getData() : (el ? el.value : ''); if (el) el.value = html;
+            if (!hasMeaningfulContent(html)) { e.preventDefault(); explicitSubmitRequested = false; alert('Instructions are required before creating the task.'); if (editorInstance) editorInstance.editing.view.focus(); return; }
+            isSubmitting = true; clearDraft();
+        });
+
+        formElement.querySelectorAll('button').forEach(b => { if (b === submitButton) return; const t = (b.getAttribute('type') || '').toLowerCase(); if (t === 'reset' || t === 'button') return; b.setAttribute('type', 'button'); });
     }
 
     if(taskNameInput) taskNameInput.addEventListener('input',saveDraft);

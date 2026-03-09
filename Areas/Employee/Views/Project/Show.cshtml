@@ -3,8 +3,8 @@
     ViewData["Title"] = "Project";
     var projectIsArchived = Model.Project.IsArchived;
     // Exclude archived tasks from counts/progress (same logic as PM Milestone page)
-    var totalTasks = Model.Tasks.Count(t => !t.IsArchived);
-    var doneTasks  = Model.Tasks.Count(t => !t.IsArchived && (
+    var totalTasks = Model.Tasks.Count(t => !t.IsArchived && !t.TaskMemberIsArchived);
+    var doneTasks  = Model.Tasks.Count(t => !t.IsArchived && !t.TaskMemberIsArchived && (
         string.Equals(t.Status, "Checked", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(t.Status, "Completed", StringComparison.OrdinalIgnoreCase)));
     var pct        = totalTasks > 0 ? (int)Math.Round(doneTasks * 100.0 / totalTasks) : 0;
@@ -109,12 +109,13 @@
         @if (Model.Tasks.Any())
         {
             <div class="emp-task-list" id="tasksList">
-                @foreach (var t in Model.Tasks.OrderBy(x => x.IsArchived).ThenBy(x => x.StartDate))
+                @foreach (var t in Model.Tasks.OrderBy(x => x.IsArchived || x.TaskMemberIsArchived).ThenBy(x => x.StartDate))
                 {
                     <div class="emp-task-row emp-task-row-item"
                          data-name="@t.Name.ToLower()"
                          data-status="@(t.Status?.ToLowerInvariant() ?? "")"
-                         data-archived="@(t.IsArchived ? "true" : "false")">
+                         data-archived="@(t.IsArchived ? "true" : "false")"
+                         data-member-archived="@(t.TaskMemberIsArchived ? "true" : "false")">
                         <div class="emp-task-row-left">
                             <span class="emp-task-status-dot @EmpTaskDotClass(t.Status)"></span>
                             <div class="emp-task-info">
@@ -131,6 +132,10 @@
                                     {
                                         <span style="font-size:.75rem;color:#94a3b8;">ARCHIVED</span>
                                     }
+                                    else if (t.TaskMemberIsArchived)
+                                    {
+                                        <span style="font-size:.75rem;color:#ef4444;font-weight:600;">REMOVED FROM TASK</span>
+                                    }
                                     else
                                     {
                                         <i class="far fa-calendar"></i>
@@ -146,7 +151,13 @@
                                     <span class="emp-status-text">@t.Status</span>
                                 </span>
                             </span>
-                            @if (t.IsArchived || projectIsArchived)
+                            @if (t.TaskMemberIsArchived)
+                            {
+                                <span class="emp-action-btn" title="You have been removed from this task" style="opacity:.4;cursor:not-allowed;">
+                                    <i class="fas fa-user-slash"></i>
+                                </span>
+                            }
+                            else if (t.IsArchived || projectIsArchived)
                             {
                                 <span class="emp-action-btn" title="@(projectIsArchived ? "Project archived — read only" : "Task archived — read only")" style="opacity:.4;cursor:not-allowed;">
                                     <i class="fas fa-lock"></i>
@@ -272,11 +283,13 @@
         filteredRows = allRows.filter(row => {
             const nameMatch    = !query || (row.dataset.name || '').includes(query);
             const status       = (row.dataset.status || '').toLowerCase();
-            const isArchived   = (row.dataset.archived || 'false') === 'true';
+            const isArchived      = (row.dataset.archived || 'false') === 'true';
+            const isMemberArchived = (row.dataset.memberArchived || 'false') === 'true';
+            const effectiveArchived = isArchived || isMemberArchived;
             const statusMatch  = statusFilter === 'all' || status === statusFilter;
             const archiveMatch = archiveFilter === 'all'
                 ? true
-                : archiveFilter === 'archived' ? isArchived : !isArchived;
+                : archiveFilter === 'archived' ? effectiveArchived : !effectiveArchived;
             return nameMatch && statusMatch && archiveMatch;
         });
         currentPage = 1;

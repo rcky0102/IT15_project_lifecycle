@@ -193,6 +193,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     tm.ProjectTask.StartDate,
                     tm.ProjectTask.EndDate,
                     tm.ProjectTask.IsArchived,
+                    TaskMemberIsArchived = tm.IsArchived,
                     MilestoneName = tm.ProjectTask.ProjectMilestone != null && tm.ProjectTask.ProjectMilestone.Milestone != null
                         ? tm.ProjectTask.ProjectMilestone.Milestone.Name
                         : string.Empty
@@ -210,7 +211,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     StartDate = t.StartDate,
                     EndDate = t.EndDate,
                     MilestoneName = t.MilestoneName ?? string.Empty,
-                    IsArchived = t.IsArchived
+                    IsArchived = t.IsArchived,
+                    TaskMemberIsArchived = t.TaskMemberIsArchived
                 }).ToList()
             };
 
@@ -237,8 +239,8 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 .FirstOrDefaultAsync(t => t.Id == id);
             if (task == null) return NotFound();
 
-            // If the parent project is archived, treat the task as archived too
-            var taskIsArchived = task.IsArchived || (task.ProjectMilestone?.Project?.IsArchived ?? false);
+            // If the parent project is archived or this member has been removed from the task, treat as archived
+            var taskIsArchived = task.IsArchived || (task.ProjectMilestone?.Project?.IsArchived ?? false) || taskMember.IsArchived;
 
             var versions = await _context.ProjectTaskVersions
                 .Where(v => v.ProjectTaskId == id)
@@ -252,7 +254,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
             // Load all members assigned to this task so the view can display them (include profile images for avatar rendering)
             var assignedTaskMembers = await _context.TaskMembers
-                .Where(tm => tm.ProjectTaskId == id)
+                .Where(tm => tm.ProjectTaskId == id && !tm.IsArchived)
                 .Include(tm => tm.Member).ThenInclude(m => m.Employee)
                 .ToListAsync();
 
@@ -267,7 +269,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     ProfileImage = tm.Member?.Employee?.ProfileImage,
                     ProjectRoleId = tm.Member != null ? tm.Member.ProjectRoleId : 0,
                     ProjectRoleName = tm.Member?.ProjectRole != null ? tm.Member.ProjectRole.Name : string.Empty,
-                    IsArchived = tm.Member != null ? tm.Member.IsArchived : false
+                    IsArchived = tm.IsArchived
                 })
                 .ToList();
 
@@ -285,6 +287,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
             ViewData["TaskStatus"] = task.Status;
             ViewData["TaskNotes"] = task.Notes ?? string.Empty;
             ViewData["IsArchived"] = taskIsArchived;
+            ViewData["TaskMemberIsArchived"] = taskMember.IsArchived;
             return View();
         }
 
@@ -307,7 +310,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
                 .FirstOrDefaultAsync(t => t.Id == id);
             if (task == null) return NotFound();
 
-            if (task.IsArchived || (task.ProjectMilestone?.Project?.IsArchived ?? false))
+            if (task.IsArchived || (task.ProjectMilestone?.Project?.IsArchived ?? false) || taskMember.IsArchived)
             {
                 TempData["ErrorMessage"] = "This task has been archived and can no longer be edited.";
                 return RedirectToAction(nameof(Task), new { id });

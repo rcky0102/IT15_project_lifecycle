@@ -6,6 +6,7 @@
     var taskStatus = ViewData["TaskStatus"]?.ToString() ?? "Pending";
     var taskNotes  = ViewData["TaskNotes"]?.ToString() ?? string.Empty;
     var isArchived = ViewData["IsArchived"] is bool b && b;
+    var taskMemberIsArchived = ViewData["TaskMemberIsArchived"] is bool tmb && tmb;
     var versions   = ViewBag.ProjectTaskVersions as List<project_lifecycle.Models.ProjectTaskVersion>   ?? new List<project_lifecycle.Models.ProjectTaskVersion>();
     var noteVersions = ViewBag.TaskNoteVersions  as List<project_lifecycle.Models.TaskNoteVersion>     ?? new List<project_lifecycle.Models.TaskNoteVersion>();
     var orderedNotes = noteVersions.OrderByDescending(n => n.VersionNumber).ToList();
@@ -90,7 +91,14 @@
 </div>
 
 <!-- ===== Archived Banner ===== -->
-@if (isArchived)
+@if (taskMemberIsArchived)
+{
+    <div class="emp-alert emp-alert-error" style="pointer-events:none;">
+        <div class="emp-alert-icon"><i class="fas fa-user-slash"></i></div>
+        <span>You have been <strong>removed from this task</strong> by the Project Manager. It is now read-only.</span>
+    </div>
+}
+else if (isArchived)
 {
     <div class="emp-alert emp-alert-error" style="pointer-events:none;">
         <div class="emp-alert-icon"><i class="fas fa-archive"></i></div>
