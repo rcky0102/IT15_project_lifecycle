@@ -44,13 +44,15 @@
         .stat-card, .stat-card-mini { transition: transform .18s ease, box-shadow .18s ease; }
         .stat-card-link:hover .stat-card,
         .stat-mini-link:hover .stat-card-mini { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(16,24,40,0.06); }
-        .stat-card, .stat-card-mini { display:flex; flex-direction:column; justify-content:space-between; align-items:stretch; padding:1rem; }
-        .stat-card { min-height:120px; }
-        .stat-card-mini { min-height:84px; }
+        .stat-card { display:flex; flex-direction:column; justify-content:space-between; align-items:stretch; min-height:120px; padding:1rem; }
+        .stat-card-mini { display:flex; flex-direction:row; align-items:center; gap:0.65rem; padding:0.65rem 0.9rem; }
         .stat-card-top { display:flex; align-items:center; gap:1rem; }
         .stat-card .stat-icon, .stat-card-mini .stat-icon { flex:0 0 auto; }
+        .stat-card-mini .stat-icon { width:32px; height:32px; min-width:32px; font-size:0.85rem; border-radius:8px; }
         .stat-card .stat-content, .stat-card-mini .stat-content { flex:1 1 auto; }
-        .stat-card .stat-number, .stat-card-mini .stat-number { align-self:flex-end; margin:0; margin-top:0.5rem; font-size:1.4rem; font-weight:700; line-height:1; padding-top:0.5rem; border-top:1px solid rgba(0,0,0,0.06); }
+        .stat-card-mini .stat-label { font-size:0.75rem; }
+        .stat-card .stat-number { align-self:flex-end; margin:0; margin-top:0.5rem; font-size:1.75rem; font-weight:700; line-height:1; padding-top:0.5rem; border-top:1px solid rgba(0,0,0,0.06); }
+        .stat-card-mini .stat-number { margin-left:auto; font-size:1rem; font-weight:700; line-height:1; }
     </style>
     <!-- Dashboard Header -->
     <div class="dashboard-header">
@@ -145,11 +147,9 @@
     <div class="stats-mini-grid">
         <a class="stat-mini-link" href="@Url.Action("Index", "Project", new { area = "SuperAdmin" })">
             <div class="stat-card-mini">
-                <div class="stat-card-top">
-                    <div class="stat-icon primary"><i class="fas fa-list-check"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Total Tasks</div>
-                    </div>
+                <div class="stat-icon primary"><i class="fas fa-list-check"></i></div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Tasks</div>
                 </div>
                 <div class="stat-number">@totalTasks</div>
             </div>
@@ -157,11 +157,9 @@
 
         <a class="stat-mini-link" href="@Url.Action("Index", "Project", new { area = "SuperAdmin" })">
             <div class="stat-card-mini">
-                <div class="stat-card-top">
-                    <div class="stat-icon success"><i class="fas fa-circle-check"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Completed Tasks</div>
-                    </div>
+                <div class="stat-icon success"><i class="fas fa-circle-check"></i></div>
+                <div class="stat-content">
+                    <div class="stat-label">Completed Tasks</div>
                 </div>
                 <div class="stat-number">@completedTasks</div>
             </div>
@@ -169,11 +167,9 @@
 
         <a class="stat-mini-link" href="@Url.Action("Index", "Proposal", new { area = "SuperAdmin" })">
             <div class="stat-card-mini">
-                <div class="stat-card-top">
-                    <div class="stat-icon warning"><i class="fas fa-clock"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Pending Proposals</div>
-                    </div>
+                <div class="stat-icon warning"><i class="fas fa-clock"></i></div>
+                <div class="stat-content">
+                    <div class="stat-label">Pending Proposals</div>
                 </div>
                 <div class="stat-number">@pendingProposals</div>
             </div>
@@ -181,11 +177,9 @@
 
         <a class="stat-mini-link" href="@Url.Action("Index", "Position", new { area = "SuperAdmin" })">
             <div class="stat-card-mini">
-                <div class="stat-card-top">
-                    <div class="stat-icon danger"><i class="fas fa-briefcase"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-label">Positions</div>
-                    </div>
+                <div class="stat-icon danger"><i class="fas fa-briefcase"></i></div>
+                <div class="stat-content">
+                    <div class="stat-label">Positions</div>
                 </div>
                 <div class="stat-number">@totalPositions</div>
             </div>
