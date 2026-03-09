@@ -91,4 +91,49 @@ namespace project_lifecycle.ViewModels.DepartmentHead
         public List<int> MemberEmployeeIds { get; set; } = new();
         public List<int> MemberProjectRoleIds { get; set; } = new();
     }
+
+    public class EditDepartmentHeadProjectViewModel
+    {
+        public int Id { get; set; }
+
+        [Required]
+        [Display(Name = "Project Name")]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Display(Name = "Description")]
+        public string? Description { get; set; }
+
+        [Required]
+        [Display(Name = "Project Proposal")]
+        public int ProjectProposalId { get; set; }
+
+        [Required]
+        [Display(Name = "Project Manager")]
+        public int ProjectManagerId { get; set; }
+
+        [Required]
+        [DataType(DataType.Date)]
+        [Display(Name = "Start Date")]
+        public DateTime StartDate { get; set; } = DateTime.Today;
+
+        [Required]
+        [DataType(DataType.Date)]
+        [Display(Name = "End Date")]
+        public DateTime EndDate { get; set; } = DateTime.Today.AddDays(30);
+
+        public List<int> MemberEmployeeIds { get; set; } = new();
+        public List<int> MemberProjectRoleIds { get; set; } = new();
+    }
+
+    public class DepartmentHeadProjectEditViewModel
+    {
+        public EditDepartmentHeadProjectViewModel EditProject { get; set; } = new();
+
+        public List<SelectListItem> AvailableProposals { get; set; } = new();
+        public List<SelectListItem> AvailableProjectManagers { get; set; } = new();
+        public List<PmPickerItem> AvailableProjectManagersPicker { get; set; } = new();
+        public List<SelectListItem> AvailableEmployees { get; set; } = new();
+        public List<SelectListItem> AvailableProjectRoles { get; set; } = new();
+    }
 }

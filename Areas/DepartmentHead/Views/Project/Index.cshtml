@@ -188,8 +188,13 @@
                                         </a>
                                         @if (!project.IsArchived)
                                         {
+                                            <a asp-area="DepartmentHead" asp-controller="Project" asp-action="Edit" asp-route-id="@project.Id"
+                                               class="emp-action-btn emp-action-edit" title="Edit project">
+                                                <i class="fas fa-pen-to-square"></i>
+                                            </a>
+
                                             <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
-                                                    data-action="@Url.Action("ArchiveProject", "Project", new { area = "DepartmentHead" })"
+                                                    data-action='@Url.Action("ArchiveProject", "Project", new { area = "DepartmentHead" })'
                                                     data-id="@project.Id"
                                                     data-message="Archive this project? It will be hidden from the Project Manager and employees.">
                                                 <i class="fas fa-box-archive"></i>
@@ -198,7 +203,7 @@
                                         else
                                         {
                                             <button type="button" class="emp-action-btn emp-action-unarchive" title="Unarchive"
-                                                    data-action="@Url.Action("UnarchiveProject", "Project", new { area = "DepartmentHead" })"
+                                                    data-action='@Url.Action("UnarchiveProject", "Project", new { area = "DepartmentHead" })'
                                                     data-id="@project.Id"
                                                     data-message="Unarchive this project? It will become visible again to the Project Manager and employees.">
                                                 <i class="fas fa-box-open"></i>

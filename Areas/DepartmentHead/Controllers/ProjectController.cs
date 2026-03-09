@@ -214,6 +214,192 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var project = await _context.Projects
+                .Where(p => p.Id == id && _context.ProjectProposals.Any(pp =>
+                    pp.Id == p.ProjectProposalId && pp.Employee != null && pp.Employee.DepartmentId == dh.DepartmentId))
+                .FirstOrDefaultAsync();
+
+            if (project == null) return NotFound();
+
+            var members = await _context.Members
+                .Where(m => m.ProjectId == id)
+                .OrderBy(m => m.Id)
+                .ToListAsync();
+
+            var editModel = new EditDepartmentHeadProjectViewModel
+            {
+                Id = project.Id,
+                Name = project.Name,
+                Description = project.Description,
+                ProjectProposalId = project.ProjectProposalId,
+                ProjectManagerId = project.ProjectManagerId,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                MemberEmployeeIds = members.Select(m => m.EmployeeId).ToList(),
+                MemberProjectRoleIds = members.Select(m => m.ProjectRoleId).ToList()
+            };
+
+            var vm = await BuildEditViewModelAsync(dh, id, editModel);
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind(Prefix = "EditProject")] EditDepartmentHeadProjectViewModel editModel)
+        {
+            var dh = await GetCurrentDepartmentHeadAsync();
+            if (dh == null) return Challenge();
+
+            var project = await _context.Projects
+                .Where(p => p.Id == id && _context.ProjectProposals.Any(pp =>
+                    pp.Id == p.ProjectProposalId && pp.Employee != null && pp.Employee.DepartmentId == dh.DepartmentId))
+                .FirstOrDefaultAsync();
+
+            if (project == null) return NotFound();
+
+            if (editModel.EndDate < editModel.StartDate)
+            {
+                ModelState.AddModelError("EditProject.EndDate", "End date must be on or after the start date.");
+            }
+
+            var availableProposalIds = await _context.ProjectProposals
+                .Include(p => p.Employee)
+                .Where(p => p.Status == "Approved"
+                    && p.Employee != null
+                    && p.Employee.DepartmentId == dh.DepartmentId
+                    && (!_context.Projects.Any(pr => pr.ProjectProposalId == p.Id) || p.Id == project.ProjectProposalId))
+                .Select(p => p.Id)
+                .ToListAsync();
+
+            if (!availableProposalIds.Contains(editModel.ProjectProposalId))
+            {
+                ModelState.AddModelError("EditProject.ProjectProposalId", "Please select a valid approved proposal.");
+            }
+
+            var availableProjectManagerIds = await _context.ProjectManagers
+                .Select(pm => pm.Id)
+                .ToListAsync();
+
+            if (!availableProjectManagerIds.Contains(editModel.ProjectManagerId))
+            {
+                ModelState.AddModelError("EditProject.ProjectManagerId", "Please select a valid project manager.");
+            }
+
+            var availableEmployeeIds = await _context.Employees
+                .Select(e => e.Id)
+                .ToListAsync();
+
+            var availableRoleIds = await _context.ProjectRoles
+                .Select(r => r.Id)
+                .ToListAsync();
+
+            var memberPairs = new List<(int EmployeeId, int RoleId)>();
+            var employeeIds = editModel.MemberEmployeeIds ?? new List<int>();
+            var roleIds = editModel.MemberProjectRoleIds ?? new List<int>();
+
+            if (employeeIds.Count != roleIds.Count)
+            {
+                ModelState.AddModelError(string.Empty, "Member selection is invalid. Please try again.");
+            }
+            else
+            {
+                for (var i = 0; i < employeeIds.Count; i++)
+                {
+                    var employeeId = employeeIds[i];
+                    var roleId = roleIds[i];
+
+                    if (employeeId <= 0 && roleId <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (employeeId <= 0 || roleId <= 0)
+                    {
+                        ModelState.AddModelError(string.Empty, "Each selected member must have both an employee and a project role.");
+                        continue;
+                    }
+
+                    if (!availableEmployeeIds.Contains(employeeId))
+                    {
+                        ModelState.AddModelError(string.Empty, "One or more selected members are not valid.");
+                        continue;
+                    }
+
+                    if (!availableRoleIds.Contains(roleId))
+                    {
+                        ModelState.AddModelError(string.Empty, "One or more selected project roles are invalid.");
+                        continue;
+                    }
+
+                    memberPairs.Add((employeeId, roleId));
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var invalidModel = await BuildEditViewModelAsync(dh, id, editModel);
+                return View(invalidModel);
+            }
+
+            var oldProjectManagerId = project.ProjectManagerId;
+
+            project.Name = editModel.Name.Trim();
+            project.Description = string.IsNullOrWhiteSpace(editModel.Description) ? null : editModel.Description.Trim();
+            project.ProjectProposalId = editModel.ProjectProposalId;
+            project.ProjectManagerId = editModel.ProjectManagerId;
+            project.StartDate = editModel.StartDate;
+            project.EndDate = editModel.EndDate;
+
+            var existingMembers = await _context.Members.Where(m => m.ProjectId == id).ToListAsync();
+            _context.Members.RemoveRange(existingMembers);
+
+            var uniqueMembers = memberPairs
+                .GroupBy(m => m.EmployeeId)
+                .Select(g => g.First())
+                .ToList();
+
+            if (uniqueMembers.Any())
+            {
+                var memberEntities = uniqueMembers.Select(m => new Member
+                {
+                    ProjectId = id,
+                    EmployeeId = m.EmployeeId,
+                    ProjectRoleId = m.RoleId,
+                    DateCreated = DateTime.Now
+                }).ToList();
+
+                _context.Members.AddRange(memberEntities);
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Project updated successfully.";
+            await _audit.LogAsync(User, "Edit", "Projects", $"Updated project '{project.Name}' (ID: {id})", "Project", id.ToString());
+
+            // Notify the new project manager if changed
+            if (editModel.ProjectManagerId != oldProjectManagerId)
+            {
+                var pmEntity = await _context.ProjectManagers.FirstOrDefaultAsync(p => p.Id == editModel.ProjectManagerId);
+                if (pmEntity != null && !string.IsNullOrEmpty(pmEntity.UserId))
+                {
+                    await _notif.CreateAsync(pmEntity.UserId,
+                        "New Project Assigned",
+                        $"You have been assigned as project manager for '{project.Name}'.",
+                        "Success", "fas fa-diagram-project",
+                        $"/ProjectManager/Project/Details/{id}",
+                        "Project");
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ArchiveProject(int id)
@@ -701,6 +887,99 @@ namespace project_lifecycle.DepartmentHeadArea.Controllers
             {
                 Projects = projects,
                 CreateProject = createModel ?? new CreateDepartmentHeadProjectViewModel(),
+                AvailableProposals = proposals,
+                AvailableProjectManagers = projectManagers,
+                AvailableProjectManagersPicker = availableProjectManagersPicker,
+                AvailableEmployees = employees,
+                AvailableProjectRoles = roles
+            };
+        }
+
+        private async Task<DepartmentHeadProjectEditViewModel> BuildEditViewModelAsync(DepartmentHead dh, int projectId, EditDepartmentHeadProjectViewModel? editModel = null)
+        {
+            var usedProposalIds = await _context.Projects
+                .Where(p => p.Id != projectId)
+                .Select(p => p.ProjectProposalId)
+                .ToListAsync();
+
+            var proposals = await _context.ProjectProposals
+                .Include(p => p.Employee)
+                .Where(p => p.Status == "Approved"
+                    && p.Employee != null
+                    && p.Employee.DepartmentId == dh.DepartmentId
+                    && !usedProposalIds.Contains(p.Id))
+                .OrderByDescending(p => p.DateCreated)
+                .Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Title
+                })
+                .ToListAsync();
+
+            var projectManagerRows = await _context.ProjectManagers
+                .OrderBy(pm => pm.LastName)
+                .ThenBy(pm => pm.FirstName)
+                .Select(pm => new
+                {
+                    pm.Id,
+                    pm.FirstName,
+                    pm.MiddleName,
+                    pm.LastName,
+                    pm.DepartmentId,
+                    DeptName = pm.Department != null ? pm.Department.Name : ""
+                })
+                .ToListAsync();
+
+            var projectManagers = projectManagerRows
+                .Select(pm => new SelectListItem
+                {
+                    Value = pm.Id.ToString(),
+                    Text = BuildFullName(pm.FirstName, pm.MiddleName, pm.LastName)
+                })
+                .ToList();
+
+            var availableProjectManagersPicker = projectManagerRows
+                .Select(pm => new PmPickerItem
+                {
+                    Id = pm.Id,
+                    Name = BuildFullName(pm.FirstName, pm.MiddleName, pm.LastName),
+                    DeptId = pm.DepartmentId,
+                    DeptName = pm.DeptName
+                })
+                .ToList();
+
+            var employeeRows = await _context.Employees
+                .OrderBy(e => e.LastName)
+                .ThenBy(e => e.FirstName)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.FirstName,
+                    e.MiddleName,
+                    e.LastName
+                })
+                .ToListAsync();
+
+            var employees = employeeRows
+                .Select(e => new SelectListItem
+                {
+                    Value = e.Id.ToString(),
+                    Text = BuildFullName(e.FirstName, e.MiddleName, e.LastName)
+                })
+                .ToList();
+
+            var roles = await _context.ProjectRoles
+                .OrderBy(r => r.Name)
+                .Select(r => new SelectListItem
+                {
+                    Value = r.Id.ToString(),
+                    Text = r.Name
+                })
+                .ToListAsync();
+
+            return new DepartmentHeadProjectEditViewModel
+            {
+                EditProject = editModel ?? new EditDepartmentHeadProjectViewModel(),
                 AvailableProposals = proposals,
                 AvailableProjectManagers = projectManagers,
                 AvailableProjectManagersPicker = availableProjectManagersPicker,

@@ -48,19 +48,19 @@
             <input id="milestonesSearch" type="text" class="emp-search-input" placeholder="Search milestones…" autocomplete="off" />
         </div>
         <div class="emp-select-group">
+            <select id="milestoneArchiveFilter" class="emp-select">
+                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
+                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
+                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
+            </select>
+        </div>
+        <div class="emp-select-group">
             <label for="milestonesPageSizeSelect" style="font-size:.82rem;color:var(--emp-muted);margin-right:.4rem;">Show</label>
             <select id="milestonesPageSizeSelect" class="emp-select" style="width:92px;">
                 <option value="5">5</option>
                 <option value="10" selected>10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
-            </select>
-        </div>
-        <div class="emp-select-group">
-            <select id="milestoneArchiveFilter" class="emp-select">
-                @if (archiveFilter == "active") { <option value="active" selected>Active</option> } else { <option value="active">Active</option> }
-                @if (archiveFilter == "inactive") { <option value="inactive" selected>Archived</option> } else { <option value="inactive">Archived</option> }
-                @if (archiveFilter == "all") { <option value="all" selected>All</option> } else { <option value="all">All</option> }
             </select>
         </div>
     </div>
@@ -125,12 +125,12 @@
                                                     else
                                                     {
                                                         <button type="button"
-                                                                class="emp-action-btn emp-action-restore"
+                                                                class="emp-action-btn emp-action-unarchive"
                                                                 title="Unarchive"
                                                                 data-action="@Url.Action("UnarchiveMilestone", "Management", new { area = "ProjectManager" })"
                                                                 data-id="@item.Id"
                                                                 data-message="Unarchive this milestone?">
-                                                            <i class="fas fa-arrow-up-from-bracket"></i>
+                                                            <i class="fas fa-box-open"></i>
                                                         </button>
                                                     }
                                                 </div>
@@ -248,11 +248,11 @@
         <h4 id="confirmActionTitle"><i class="fas fa-exclamation-triangle"></i> Confirm</h4>
         <p id="confirmActionMessage">Are you sure?</p>
         <div class="emp-modal-actions">
-            <button type="button" class="emp-btn-cancel" id="confirmActionCancel">Cancel</button>
+            <button type="button" class="emp-btn emp-btn-cancel" id="confirmActionCancel">Cancel</button>
             <form id="confirmActionForm" method="post" style="display:inline;">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" id="confirmActionId" value="" />
-                <button type="submit" class="emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
+                <button type="submit" class="emp-btn emp-btn-confirm" id="confirmActionConfirm">Confirm</button>
             </form>
         </div>
     </div>
@@ -496,7 +496,7 @@
             document.getElementById('confirmActionCancel').addEventListener('click', hideConfirmModal);
             confirmModal.addEventListener('click', function(e) { if (e.target === confirmModal) hideConfirmModal(); });
 
-            document.querySelectorAll('.emp-action-archive, .emp-action-restore').forEach(function (btn) {
+            document.querySelectorAll('.emp-action-archive, .emp-action-restore, .emp-action-unarchive').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     var action  = btn.getAttribute('data-action');
                     var id      = btn.getAttribute('data-id');

@@ -294,3 +294,4 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Release\net8.
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Release\net8.0\DocumentFormat.OpenXml.Framework.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Release\net8.0\HtmlToOpenXml.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Release\net8.0\System.IO.Packaging.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\staticwebassets.upToDateCheck.txt
