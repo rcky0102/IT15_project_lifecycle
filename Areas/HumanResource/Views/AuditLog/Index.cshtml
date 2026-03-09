@@ -41,7 +41,7 @@
             <div class="filter-row">
                 <div class="filter-group">
                     <label><i class="fas fa-search"></i> Search</label>
-                    <input type="text" name="search" value="@curSearch" placeholder="User, description, entity…" class="filter-input" />
+                    <input type="text" name="search" value="@curSearch" placeholder="User, description, entityï¿½" class="filter-input" />
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-user-shield"></i> Role</label>
@@ -123,7 +123,7 @@
                             <td><span class="badge-action badge-action-@log.Action.ToLower().Replace(" ", "")">@log.Action</span></td>
                             <td class="col-desc">@log.Description</td>
                             <td class="text-center">
-                                <button class="btn-details" data-id="@log.Id" title="View details"><i class="fas fa-eye"></i></button>
+                                <button class="btn-details" data-id="@log.Id" title="View details"><i class="fas fa-magnifying-glass"></i></button>
                             </td>
                         </tr>
                     }
@@ -227,9 +227,9 @@
                 document.getElementById('dAction').textContent   = d.action;
                 document.getElementById('dModule').textContent   = d.module;
                 document.getElementById('dDesc').textContent     = d.description;
-                document.getElementById('dEntity').textContent   = d.entityType || '–';
-                document.getElementById('dEntityId').textContent = d.entityId || '–';
-                document.getElementById('dIp').textContent       = d.ipAddress || '–';
+                document.getElementById('dEntity').textContent   = d.entityType || 'ï¿½';
+                document.getElementById('dEntityId').textContent = d.entityId || 'ï¿½';
+                document.getElementById('dIp').textContent       = d.ipAddress || 'ï¿½';
                 document.getElementById('dTime').textContent     = d.timestamp;
                 modal.classList.add('active');
             } catch (err) {
