@@ -99,9 +99,17 @@ namespace project_lifecycle.EmployeeArea.Controllers
             }
 
             var documents = await query.OrderByDescending(d => d.LastModified ?? d.DateCreated).ToListAsync();
+
+            // IDs of documents where the employee is an Editor collaborator (not owner)
+            var editableDocIds = (await _context.DocumentCollaborators
+                .Where(dc => dc.EmployeeId == employee.Id && dc.Role == "Editor")
+                .Select(dc => dc.DocumentId)
+                .ToListAsync()).ToHashSet();
+
             ViewData["Filter"] = filter;
             ViewData["ArchiveFilter"] = archiveFilter;
             ViewData["CurrentEmployeeId"] = employee.Id;
+            ViewData["EditableDocIds"] = editableDocIds;
 
             return View(documents);
         }

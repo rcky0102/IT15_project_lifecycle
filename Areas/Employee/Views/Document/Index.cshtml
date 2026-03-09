@@ -4,6 +4,7 @@
     var filter = ViewData["Filter"]?.ToString() ?? "my";
     var archiveFilter = ViewData["ArchiveFilter"]?.ToString() ?? "active";
     var currentEmployeeId = (int)(ViewData["CurrentEmployeeId"] ?? 0);
+    var editableDocIds = ViewData["EditableDocIds"] as HashSet<int> ?? new HashSet<int>();
 }
 
 <!-- ===== Page Title Hero ===== -->
@@ -175,12 +176,15 @@
                                 </td>
                                 <td>
                                     <div style="display:inline-flex;align-items:center;gap:.35rem;">
-                                        @if (isOwner)
+                                        @if (isOwner || editableDocIds.Contains(doc.Id))
                                         {
                                             <a asp-area="Employee" asp-controller="Document" asp-action="Edit" asp-route-id="@doc.Id"
                                                class="emp-action-btn emp-action-edit" title="Edit">
                                                 <i class="fas fa-pen-to-square"></i>
                                             </a>
+                                        }
+                                        @if (isOwner)
+                                        {
                                             if (!doc.IsArchived)
                                             {
                                                 <button type="button" class="emp-action-btn emp-action-archive" title="Archive"
@@ -216,15 +220,15 @@
 
             <div class="emp-pagination" id="docPagination"></div>
         }
-        else
+        else    
         {
             <div class="emp-empty-state">
                 <div class="emp-empty-icon"><i class="fas fa-file-alt"></i></div>
                 <h3>No documents found</h3>
                 <p>Create a new document to get started, or check the shared filter.</p>
-                <a asp-area="Employee" asp-controller="Document" asp-action="Create" class="emp-btn emp-btn-primary" style="margin-top:.5rem;">
+                @* <a asp-area="Employee" asp-controller="Document" asp-action="Create" class="emp-btn emp-btn-primary" style="margin-top:.5rem;">
                     <i class="fas fa-plus"></i> New Document
-                </a>
+                </a> *@
             </div>
         }
     </div>
