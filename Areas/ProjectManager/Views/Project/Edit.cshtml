@@ -56,7 +56,18 @@
                 }
                 else
                 {
-                    <div id="currentMembersContainer">
+                    @if (Model.CurrentTaskMembers.Any())
+                    {
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+                            <span style="font-size:.8rem;color:#64748b;">@Model.CurrentTaskMembers.Count member(s)</span>
+                            <select id="taskMemberFilter" class="emp-form-control" style="width:auto;padding:.25rem .65rem;font-size:.8rem;height:auto;">
+                                <option value="all">All</option>
+                                <option value="active" selected>Active only</option>
+                                <option value="archived">Removed only</option>
+                            </select>
+                        </div>
+                    }
+                <div id="currentMembersContainer">
                         @foreach (var tm in Model.CurrentTaskMembers)
                         {
                             var initials = string.Concat((tm.EmployeeName ?? "").Split(' ').Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s[0])).ToUpper();
@@ -447,6 +458,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     renderChips();
+
+    // ===== Task member filter dropdown =====
+    const memberFilterSelect = document.getElementById('taskMemberFilter');
+    if (memberFilterSelect) {
+        memberFilterSelect.addEventListener('change', function () {
+            const val = this.value;
+            document.querySelectorAll('#currentMembersContainer .tm-member-card').forEach(function (card) {
+                const isArchived = card.classList.contains('archived');
+                if (val === 'all') card.style.display = '';
+                else if (val === 'active') card.style.display = isArchived ? 'none' : '';
+                else if (val === 'archived') card.style.display = isArchived ? '' : 'none';
+            });
+        });
+        // default to active and apply filter immediately
+        memberFilterSelect.value = 'active';
+        memberFilterSelect.dispatchEvent(new Event('change'));
+    }
 
     // ===== Archive / Unarchive Task Member modal wiring =====
     // Cannot use nested <form> inside the main EditTask form (HTML forbids it),
