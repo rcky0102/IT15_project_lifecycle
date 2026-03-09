@@ -3,6 +3,13 @@
     ViewData["Title"] = "Edit Project";
 }
 
+<style>
+    /* Scoped tweaks for DepartmentHead forms: reduce vertical gaps between sections */
+    .depthead-form .emp-form-section { padding: 0.9rem 1rem; }
+    .depthead-form .emp-form-row { margin-bottom: 0.6rem; gap: 0.35rem; }
+    .depthead-form .emp-form-section-title { margin-bottom: 0.6rem; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(0,105,148,.05); }
+</style>
+
 <!-- ===== Hero ===== -->
 <div class="emp-page-hero">
     <div class="emp-page-hero-content">
@@ -41,7 +48,7 @@
 
 <!-- ===== Form Card ===== -->
 <div class="emp-form-card">
-    <form asp-area="DepartmentHead" asp-controller="Project" asp-action="Edit" asp-route-id="@Model.EditProject.Id" method="post" class="emp-form">
+    <form asp-area="DepartmentHead" asp-controller="Project" asp-action="Edit" asp-route-id="@Model.EditProject.Id" method="post" class="emp-form depthead-form">
         @Html.AntiForgeryToken()
         <input asp-for="EditProject.Id" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
