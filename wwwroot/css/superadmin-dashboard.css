@@ -352,6 +352,7 @@
     border: 1.5px solid rgba(0,105,148,.15);
     color: #006994;
     padding: .4rem .75rem;
+    min-width: 120px;
     transition: all .25s cubic-bezier(.4,0,.2,1);
 }
 
