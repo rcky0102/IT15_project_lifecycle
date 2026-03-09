@@ -10,6 +10,10 @@
     var pct        = totalTasks > 0 ? (int)Math.Round(doneTasks * 100.0 / totalTasks) : 0;
 }
 
+<style>
+    .emp-member-avatar { border-radius: 50% !important; }
+</style>
+
 <!-- ===== Page Hero ===== -->
 <div class="emp-page-hero">
     <div class="emp-page-hero-content">
@@ -211,7 +215,7 @@
                             <div class="emp-member-avatar">
                                 @if (!string.IsNullOrWhiteSpace(m.ProfileImage))
                                 {
-                                    <img src="@Url.Content(m.ProfileImage)" alt="@m.EmployeeName" style="width:100%;height:100%;border-radius:8px;object-fit:cover;display:block;" />
+                                    <img src="@Url.Content(m.ProfileImage)" alt="@m.EmployeeName" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" />
                                 }
                                 else
                                 {
