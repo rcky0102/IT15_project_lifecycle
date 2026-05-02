@@ -93,6 +93,14 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                     }
                     // If there's no external email claim, do nothing (preserve generic response)
                 }
+                else
+                {
+                    // No user linked to this external login: notify the forgot-password page
+                    TempData["ForgotPasswordError"] = "The selected Google account is not linked to any user account.";
+
+                    // Redirect back to the ForgotPassword page so the user sees the error and can try again
+                    return RedirectToPage("./ForgotPassword", new { area = "Identity" });
+                }
 
                 return LocalRedirect(Url.Page("./ForgotPasswordConfirmation", new { area = "Identity" }));
             }
