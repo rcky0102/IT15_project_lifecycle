@@ -38,6 +38,10 @@ builder.Services.AddHttpClient<INagerHolidayService, NagerHolidayService>();
 // AWS S3 storage service
 builder.Services.AddSingleton<IS3StorageService, S3StorageService>();
 
+// Email sender configuration
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, project_lifecycle.Services.EmailSender>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

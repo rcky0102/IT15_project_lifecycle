@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Text;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -16,11 +20,13 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IEmailSender _emailSender;
 
-        public ExternalLoginModel(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager)
+        public ExternalLoginModel(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager, IEmailSender emailSender)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _emailSender = emailSender;
         }
 
         public string Provider { get; set; }
@@ -46,6 +52,49 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
             if (info == null)
             {
                 return LocalRedirect(returnUrl);
+            }
+
+            // If this external login was initiated from the Forgot Password flow,
+            // send a password reset email to the account linked to this external login (if any).
+            var isForgotPasswordFlow = false;
+            if (!string.IsNullOrEmpty(returnUrl) && returnUrl.Contains("forgotPassword=1"))
+            {
+                isForgotPasswordFlow = true;
+            }
+            else if (Request?.Query != null && Request.Query.ContainsKey("forgotPassword"))
+            {
+                isForgotPasswordFlow = string.Equals(Request.Query["forgotPassword"], "1", StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (isForgotPasswordFlow)
+            {
+                // Find a user that has this external login
+                var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                if (user != null)
+                {
+                    // Prefer sending the reset link to the external Google account email claim
+                    var externalEmail = info.Principal?.FindFirstValue(ClaimTypes.Email)
+                                        ?? info.Principal?.FindFirst("email")?.Value;
+
+                    if (!string.IsNullOrEmpty(externalEmail))
+                    {
+                        var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+                        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                        var callbackUrl = Url.Page(
+                            "/Account/ResetPassword",
+                            pageHandler: null,
+                            values: new { area = "Identity", code },
+                            protocol: Request.Scheme);
+
+                        await _emailSender.SendEmailAsync(
+                            externalEmail,
+                            "Reset Password",
+                            $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>");
+                    }
+                    // If there's no external email claim, do nothing (preserve generic response)
+                }
+
+                return LocalRedirect(Url.Page("./ForgotPasswordConfirmation", new { area = "Identity" }));
             }
 
             // Sign in the user with this external login provider if the user already has a login.
