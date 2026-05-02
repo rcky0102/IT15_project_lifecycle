@@ -103,6 +103,10 @@
             "Microsoft.VisualStudio.Web.CodeGenerators.Mvc": {
               "target": "Package",
               "version": "[8.0.23, )"
+            },
+            "QRCoder": {
+              "target": "Package",
+              "version": "[1.4.4, )"
             }
           },
           "imports": [

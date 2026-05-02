@@ -19,7 +19,8 @@
           "Microsoft.EntityFrameworkCore.SqlServer": "8.0.23",
           "Microsoft.EntityFrameworkCore.Sqlite": "8.0.23",
           "Microsoft.VisualStudio.Web.CodeGeneration.Design": "8.0.23",
-          "Microsoft.VisualStudio.Web.CodeGenerators.Mvc": "8.0.23"
+          "Microsoft.VisualStudio.Web.CodeGenerators.Mvc": "8.0.23",
+          "QRCoder": "1.5.0"
         },
         "runtime": {
           "project_lifecycle.dll": {}
@@ -1752,6 +1753,14 @@
           }
         }
       },
+      "QRCoder/1.5.0": {
+        "runtime": {
+          "lib/net6.0/QRCoder.dll": {
+            "assemblyVersion": "1.5.0.0",
+            "fileVersion": "1.5.0.0"
+          }
+        }
+      },
       "SQLitePCLRaw.bundle_e_sqlite3/2.1.6": {
         "dependencies": {
           "SQLitePCLRaw.lib.e_sqlite3": "2.1.6",
@@ -2943,6 +2952,13 @@
       "sha512": "sha512-v/GGlIj2dd7svplFmASWEueu62veKW0MrMtBaZ7QG8aJTSGv2yE+pgUGhXRcQ4nxNOEq/wLBrz1vkth/1SND7A==",
       "path": "nuget.versioning/6.11.0",
       "hashPath": "nuget.versioning.6.11.0.nupkg.sha512"
+    },
+    "QRCoder/1.5.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-z1xaJ1BsYdSstpuKWgT3ND9Ryt7gd9RdBvcLemP3Dz8CrPPeuyhn2KlD8J1x1V4OhuAsAFcZRmxB7vte7CQkfQ==",
+      "path": "qrcoder/1.5.0",
+      "hashPath": "qrcoder.1.5.0.nupkg.sha512"
     },
     "SQLitePCLRaw.bundle_e_sqlite3/2.1.6": {
       "type": "package",

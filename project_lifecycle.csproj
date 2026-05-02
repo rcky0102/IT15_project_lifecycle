@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGenerators.Mvc" Version="8.0.23" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.23" />
+    <PackageReference Include="QRCoder" Version="1.4.4" />
   </ItemGroup>
 
   <ItemGroup>

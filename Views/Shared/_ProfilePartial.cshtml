@@ -374,7 +374,7 @@
                                     .then(r => r.json()).then(j => {
                                         if (!j) { alert('Failed to start enrollment'); mfaBtn.disabled = false; return; }
                                         // Populate modal
-                                        document.getElementById('mfaQr').src = j.qrUrl;
+                                        document.getElementById('mfaQr').src = j.qrDataUrl || j.qrUrl || '';
                                         document.getElementById('mfaSharedKey').textContent = j.sharedKey || '';
                                         document.getElementById('mfaCode').value = '';
                                         document.getElementById('mfaRecovery').style.display = 'none';

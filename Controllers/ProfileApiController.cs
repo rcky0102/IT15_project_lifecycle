@@ -312,15 +312,29 @@ namespace project_lifecycle.Controllers
                 key = await _userManager.GetAuthenticatorKeyAsync(user);
             }
 
-            // Build otpauth URI for authenticator apps
-            var issuer = Uri.EscapeDataString("ProjectLifecycle");
-            var email = Uri.EscapeDataString(user.Email ?? user.UserName ?? "user");
-            var otpauth = $"otpauth://totp/{issuer}:{email}?secret={key}&issuer={issuer}&digits=6";
+            var issuer = "ProjectLifecycle";
+            var email = user.Email ?? user.UserName ?? "user";
+            var otpauth = $"otpauth://totp/{Uri.EscapeDataString(issuer)}:{Uri.EscapeDataString(email)}?secret={key}&issuer={Uri.EscapeDataString(issuer)}&digits=6";
 
-            // Use Google Chart API to produce QR image URL (no server-side library required)
-            var qrUrl = "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=" + System.Net.WebUtility.UrlEncode(otpauth);
-
-            return Ok(new { sharedKey = key, otpauthUri = otpauth, qrUrl });
+            // Generate QR image as data URL using QRCoder
+            try
+            {
+                using (var qrGenerator = new QRCoder.QRCodeGenerator())
+                using (var qrData = qrGenerator.CreateQrCode(otpauth, QRCoder.QRCodeGenerator.ECCLevel.Q))
+                using (var qrCode = new QRCoder.PngByteQRCode(qrData))
+                {
+                    var pngBytes = qrCode.GetGraphic(20);
+                    var base64 = Convert.ToBase64String(pngBytes);
+                    var dataUrl = $"data:image/png;base64,{base64}";
+                    return Ok(new { sharedKey = key, otpauthUri = otpauth, qrDataUrl = dataUrl });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Fallback to Google Charts URL if QR generation fails
+                var qrUrl = "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=" + System.Net.WebUtility.UrlEncode(otpauth);
+                return Ok(new { sharedKey = key, otpauthUri = otpauth, qrUrl });
+            }
         }
 
         public class VerifyMfaDto

@@ -2335,6 +2335,15 @@
           "lib/netstandard2.0/NuGet.Versioning.dll": {}
         }
       },
+      "QRCoder/1.5.0": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/QRCoder.dll": {}
+        },
+        "runtime": {
+          "lib/net6.0/QRCoder.dll": {}
+        }
+      },
       "SQLitePCLRaw.bundle_e_sqlite3/2.1.6": {
         "type": "package",
         "dependencies": {
@@ -7089,6 +7098,27 @@
         "nuget.versioning.nuspec"
       ]
     },
+    "QRCoder/1.5.0": {
+      "sha512": "z1xaJ1BsYdSstpuKWgT3ND9Ryt7gd9RdBvcLemP3Dz8CrPPeuyhn2KlD8J1x1V4OhuAsAFcZRmxB7vte7CQkfQ==",
+      "type": "package",
+      "path": "qrcoder/1.5.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net35/QRCoder.dll",
+        "lib/net40/QRCoder.dll",
+        "lib/net5.0-windows7.0/QRCoder.dll",
+        "lib/net5.0/QRCoder.dll",
+        "lib/net6.0-windows7.0/QRCoder.dll",
+        "lib/net6.0/QRCoder.dll",
+        "lib/netstandard1.3/QRCoder.dll",
+        "lib/netstandard2.0/QRCoder.dll",
+        "nuget-icon.png",
+        "nuget-readme.md",
+        "qrcoder.1.5.0.nupkg.sha512",
+        "qrcoder.nuspec"
+      ]
+    },
     "SQLitePCLRaw.bundle_e_sqlite3/2.1.6": {
       "sha512": "BmAf6XWt4TqtowmiWe4/5rRot6GerAeklmOPfviOvwLoF5WwgxcJHAxZtySuyW9r9w+HLILnm8VfJFLCUJYW8A==",
       "type": "package",
@@ -8430,7 +8460,8 @@
       "Microsoft.EntityFrameworkCore.Sqlite >= 8.0.23",
       "Microsoft.EntityFrameworkCore.Tools >= 8.0.23",
       "Microsoft.VisualStudio.Web.CodeGeneration.Design >= 8.0.23",
-      "Microsoft.VisualStudio.Web.CodeGenerators.Mvc >= 8.0.23"
+      "Microsoft.VisualStudio.Web.CodeGenerators.Mvc >= 8.0.23",
+      "QRCoder >= 1.4.4"
     ]
   },
   "packageFolders": {
@@ -8536,6 +8567,10 @@
           "Microsoft.VisualStudio.Web.CodeGenerators.Mvc": {
             "target": "Package",
             "version": "[8.0.23, )"
+          },
+          "QRCoder": {
+            "target": "Package",
+            "version": "[1.4.4, )"
           }
         },
         "imports": [
@@ -8560,5 +8595,17 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "project_lifecycle depends on QRCoder (>= 1.4.4) but QRCoder 1.4.4 was not found. QRCoder 1.5.0 was resolved instead.",
+      "libraryId": "QRCoder",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
 }

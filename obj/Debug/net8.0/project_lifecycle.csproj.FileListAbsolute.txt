@@ -561,3 +561,4 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Debug\net8.0\
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\AWSSDK.Core.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\AWSSDK.S3.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.Google.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\QRCoder.dll
