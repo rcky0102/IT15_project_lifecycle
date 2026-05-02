@@ -79,10 +79,14 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                 return LocalRedirect(returnUrl);
             }
 
-            // If the account requires two-factor, redirect to the 2FA page
+            // If the account requires two-factor, redirect to the 2FA page.
+            // Instead of asking the 2FA page to perform final redirect directly, point
+            // the 2FA page back to this ExternalLogin callback so the external-signin
+            // can be finalized here and redirect to the role dashboard.
             if (result.RequiresTwoFactor)
             {
-                return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = false });
+                var callbackPage = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
+                return RedirectToPage("./LoginWith2fa", new { ReturnUrl = callbackPage, RememberMe = false });
             }
 
             // If the user does not have an account, the ExternalLogin flow in this app
