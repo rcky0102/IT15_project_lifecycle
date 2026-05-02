@@ -13,6 +13,7 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\DocumentFormat.OpenXml.Framework.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\HtmlToOpenXml.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Humanizer.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.AspNetCore.Authentication.Google.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.AspNetCore.Cryptography.Internal.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore.dll

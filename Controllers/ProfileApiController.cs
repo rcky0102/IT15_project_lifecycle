@@ -27,6 +27,114 @@ namespace project_lifecycle.Controllers
             _audit = audit;
         }
 
+        // GET: api/profileapi/logins
+        [HttpGet("logins")]
+        public async Task<IActionResult> GetExternalLogins()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var logins = await _userManager.GetLoginsAsync(user);
+            var result = logins.Select(l => new { loginProvider = l.LoginProvider, providerKey = l.ProviderKey });
+            return Ok(result);
+        }
+
+        // GET: api/profileapi/external-link
+        // Initiates external provider flow to link provider to current user
+        [HttpGet("external-link")]
+        public IActionResult ExternalLink(string provider)
+        {
+            if (string.IsNullOrEmpty(provider)) return BadRequest(new { success = false, message = "Provider is required" });
+
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+
+            var redirectUrl = Url.Action(nameof(ExternalLinkCallback));
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            // Protect against CSRF for linking
+            properties.Items["XsrfId"] = userId;
+            // Preserve return URL (profile page) so we can redirect back after callback
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer)) properties.Items["returnUrl"] = referer;
+
+            return Challenge(properties, provider);
+        }
+
+        // GET: api/profileapi/external-link-callback
+        [HttpGet("external-link-callback")]
+        public async Task<IActionResult> ExternalLinkCallback()
+        {
+            var userId = _userManager.GetUserId(User);
+            // When linking, GetExternalLoginInfoAsync expects the XSRF id
+            var info = await _signInManager.GetExternalLoginInfoAsync(userId);
+            if (info == null)
+            {
+                return BadRequest(new { success = false, message = "External login information could not be loaded." });
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            // Add external login to the user
+            var result = await _userManager.AddLoginAsync(user, info);
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.Select(e => e.Description).ToArray();
+                return BadRequest(new { success = false, errors });
+            }
+
+            await _audit.LogAsync(User, "Link", "ExternalLogin", $"Linked {info.LoginProvider} to user {user.Email}", "User", user.Id);
+
+            // If the original linking request preserved a returnUrl, use it only if it's safe (local)
+            var returnUrl = "/";
+            if (info.AuthenticationProperties != null && info.AuthenticationProperties.Items.TryGetValue("returnUrl", out var candidate) && !string.IsNullOrEmpty(candidate))
+            {
+                // Accept local URLs directly
+                if (Url.IsLocalUrl(candidate))
+                {
+                    returnUrl = candidate;
+                }
+                else
+                {
+                    // If an absolute URL was provided and it matches our host, use its path+query
+                    if (System.Uri.TryCreate(candidate, System.UriKind.Absolute, out var u))
+                    {
+                        var host = Request.Host.Host;
+                        if (!string.IsNullOrEmpty(host) && string.Equals(u.Host, host, StringComparison.OrdinalIgnoreCase))
+                        {
+                            returnUrl = u.PathAndQuery;
+                        }
+                    }
+                }
+            }
+
+            return Redirect(returnUrl);
+        }
+
+        // POST: api/profileapi/unlink-external
+        [HttpPost("unlink-external")]
+        public async Task<IActionResult> UnlinkExternal([FromQuery] string provider)
+        {
+            if (string.IsNullOrEmpty(provider)) return BadRequest(new { success = false, message = "Provider is required" });
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var logins = await _userManager.GetLoginsAsync(user);
+            var login = logins.FirstOrDefault(l => l.LoginProvider.Equals(provider, StringComparison.OrdinalIgnoreCase));
+            if (login == null) return BadRequest(new { success = false, message = "External login not found" });
+
+            var result = await _userManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { success = false, errors = result.Errors.Select(e => e.Description) });
+            }
+
+            await _audit.LogAsync(User, "Unlink", "ExternalLogin", $"Unlinked {provider} from user {user.Email}", "User", user.Id);
+
+            return Ok(new { success = true, message = $"{provider} unlinked successfully." });
+        }
+
         // ─── GET api/profileapi/me ───
         [HttpGet("me")]
         public async Task<IActionResult> GetProfile()

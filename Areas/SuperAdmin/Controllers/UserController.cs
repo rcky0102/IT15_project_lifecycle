@@ -7,6 +7,7 @@ using project_lifecycle.Data;
 using project_lifecycle.Models;
 using project_lifecycle.Services;
 using project_lifecycle.ViewModels;
+using System.Security.Claims;
 
 namespace project_lifecycle.Areas.SuperAdmin.Controllers
 {
@@ -15,6 +16,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
     public class UserController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogService _audit;
@@ -23,6 +25,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
         public UserController(
             UserManager<IdentityUser> userManager,
+            SignInManager<IdentityUser> signInManager,
             RoleManager<IdentityRole> roleManager,
             ApplicationDbContext context,
             IAuditLogService audit,
@@ -30,6 +33,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             IWebHostEnvironment env)
         {
             _userManager = userManager;
+            _signInManager = signInManager;
             _roleManager = roleManager;
             _context = context;
             _audit = audit;
@@ -576,6 +580,207 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             }
 
             return $"/uploads/profiles/{fileName}";
+        }
+
+        // GET: /SuperAdmin/User/ExternalCreate
+        [HttpGet]
+        public IActionResult ExternalCreate(string provider, string role)
+        {
+            if (string.IsNullOrEmpty(provider))
+            {
+                TempData["Error"] = "Provider is required.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var redirectUrl = Url.Action(nameof(ExternalCreateCallback));
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            if (!string.IsNullOrEmpty(role))
+            {
+                properties.Items["role"] = role;
+            }
+
+            return Challenge(properties, provider);
+        }
+
+        // GET: /SuperAdmin/User/ExternalCreateCallback
+        [HttpGet]
+        public async Task<IActionResult> ExternalCreateCallback()
+        {
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                TempData["Error"] = "External login information could not be loaded.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email) ?? info.Principal.FindFirstValue("email");
+            if (string.IsNullOrEmpty(email))
+            {
+                TempData["Error"] = "External provider did not return an email address.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            var isNew = false;
+            if (user == null)
+            {
+                user = new IdentityUser
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true
+                };
+
+                var createRes = await _userManager.CreateAsync(user);
+                if (!createRes.Succeeded)
+                {
+                    TempData["Error"] = "Failed to create user from external provider.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                isNew = true;
+            }
+
+            // Link external login (ignore failure if already linked)
+            try
+            {
+                await _userManager.AddLoginAsync(user, info);
+            }
+            catch { }
+
+            // Assign role if provided by the initiating request
+            var role = info.AuthenticationProperties?.Items != null && info.AuthenticationProperties.Items.ContainsKey("role")
+                ? info.AuthenticationProperties.Items["role"]
+                : null;
+
+            if (!string.IsNullOrEmpty(role))
+            {
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(role));
+                }
+
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (!currentRoles.Contains(role))
+                {
+                    await _userManager.AddToRoleAsync(user, role);
+                }
+
+                // Create minimal role-specific record if missing
+                var givenName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? info.Principal.FindFirstValue("given_name");
+                var familyName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? info.Principal.FindFirstValue("family_name");
+                var picture = info.Principal.FindFirstValue("picture");
+
+                if (role.Equals("Employee", StringComparison.OrdinalIgnoreCase))
+                {
+                    var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
+                    if (employee == null)
+                    {
+                        employee = new global::project_lifecycle.Models.Employee
+                        {
+                            UserId = user.Id,
+                            FirstName = givenName ?? string.Empty,
+                            LastName = familyName ?? string.Empty,
+                            Contact = string.Empty
+                        };
+
+                        if (!string.IsNullOrEmpty(picture))
+                        {
+                            employee.ProfileImage = picture;
+                        }
+
+                        _context.Employees.Add(employee);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                // For other roles, create minimal records as needed
+                if (role.Equals("HumanResource", StringComparison.OrdinalIgnoreCase))
+                {
+                    var hr = await _context.HumanResources.FirstOrDefaultAsync(h => h.UserId == user.Id);
+                    if (hr == null)
+                    {
+                        hr = new global::project_lifecycle.Models.HumanResource
+                        {
+                            UserId = user.Id,
+                            FirstName = givenName ?? string.Empty,
+                            LastName = familyName ?? string.Empty,
+                            Contact = string.Empty
+                        };
+                        if (!string.IsNullOrEmpty(picture)) hr.ProfileImage = picture;
+                        _context.HumanResources.Add(hr);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (role.Equals("DepartmentHead", StringComparison.OrdinalIgnoreCase))
+                {
+                    var dh = await _context.DepartmentHeads.FirstOrDefaultAsync(d => d.UserId == user.Id);
+                    if (dh == null)
+                    {
+                        dh = new global::project_lifecycle.Models.DepartmentHead
+                        {
+                            UserId = user.Id,
+                            FirstName = givenName ?? string.Empty,
+                            LastName = familyName ?? string.Empty,
+                            Contact = string.Empty
+                        };
+                        if (!string.IsNullOrEmpty(picture)) dh.ProfileImage = picture;
+                        _context.DepartmentHeads.Add(dh);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (role.Equals("Executive", StringComparison.OrdinalIgnoreCase))
+                {
+                    var ex = await _context.Executives.FirstOrDefaultAsync(e => e.UserId == user.Id);
+                    if (ex == null)
+                    {
+                        ex = new global::project_lifecycle.Models.Executive
+                        {
+                            UserId = user.Id,
+                            FirstName = givenName ?? string.Empty,
+                            LastName = familyName ?? string.Empty,
+                            Contact = string.Empty
+                        };
+                        if (!string.IsNullOrEmpty(picture)) ex.ProfileImage = picture;
+                        _context.Executives.Add(ex);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (role.Equals("ProjectManager", StringComparison.OrdinalIgnoreCase))
+                {
+                    var pm = await _context.ProjectManagers.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                    if (pm == null)
+                    {
+                        pm = new global::project_lifecycle.Models.ProjectManager
+                        {
+                            UserId = user.Id,
+                            FirstName = givenName ?? string.Empty,
+                            LastName = familyName ?? string.Empty,
+                            Contact = string.Empty
+                        };
+                        if (!string.IsNullOrEmpty(picture)) pm.ProfileImage = picture;
+                        _context.ProjectManagers.Add(pm);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
+            await _audit.LogAsync(User, "Create", "User Management", $"Imported user '{email}' via {info.LoginProvider}", "User", user.Id);
+
+            await _notif.CreateAsync(
+                recipientId: user.Id,
+                title: "Welcome!",
+                message: $"Your account has been created via {info.LoginProvider}.",
+                type: "Success",
+                link: "/",
+                module: "User Management"
+            );
+
+            TempData["Success"] = isNew ? "User imported successfully via external provider." : "External login linked to existing user.";
+            return RedirectToAction(nameof(Index));
         }
 
         private async Task<List<UserDetailsViewModel>> GetUserListAsync()

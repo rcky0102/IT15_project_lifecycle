@@ -28,6 +28,9 @@
                     <span class="prof-hero-badge" id="heroBadge"><i class="fas fa-id-badge"></i> <span id="heroRole">--</span></span>
                     <span class="prof-hero-email"><i class="fas fa-envelope"></i> <span id="heroEmail">--</span></span>
                     <span class="prof-hero-emp-no"><i class="fas fa-hashtag"></i> <span id="heroEmpNo">--</span></span>
+                    <span id="externalLogins" style="margin-left:.6rem;display:inline-block">
+                        <!-- External login status will be inserted here -->
+                    </span>
                 </div>
             </div>
             <div class="prof-hero-actions">
@@ -282,3 +285,56 @@
 
 <script src="~/js/psgc.js" asp-append-version="true"></script>
 <script src="~/js/profile.js" asp-append-version="true"></script>
+<script>
+    (function () {
+        // Render link/unlink buttons and wire actions
+        function updateExternalButtons(logins) {
+            var container = document.getElementById('externalLogins');
+            if (!container) return;
+            container.innerHTML = '';
+
+            var hasGoogle = logins && logins.some(function (l) { return l.loginProvider === 'Google'; });
+
+            if (hasGoogle) {
+                var btn = document.createElement('button');
+                btn.className = 'prof-btn prof-btn-outline';
+                btn.textContent = 'Unlink Google';
+                btn.onclick = function () {
+                    btn.disabled = true;
+                    fetch('/api/ProfileApi/unlink-external?provider=Google', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(r => r.json()).then(j => {
+                            if (j.success) {
+                                location.reload();
+                            } else {
+                                alert(j.message || 'Failed to unlink Google');
+                                btn.disabled = false;
+                            }
+                        }).catch(e => { alert('Error unlinking provider'); btn.disabled = false; });
+                };
+                container.appendChild(btn);
+            } else {
+                var linkBtn = document.createElement('button');
+                linkBtn.className = 'prof-btn prof-btn-outline';
+                linkBtn.innerHTML = '<i class="fab fa-google" style="color:#db4437;margin-right:.4rem;"></i> Link Google';
+                linkBtn.onclick = function () {
+                    // Start external linking flow
+                    window.location = '/api/ProfileApi/external-link?provider=Google';
+                };
+                container.appendChild(linkBtn);
+            }
+        }
+
+        // Fetch current external logins for the user and render buttons
+        fetch('/api/ProfileApi/me', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(function (data) {
+                // The /me endpoint returns profile; it doesn't include logins, so call a small helper endpoint
+                // Try calling GetLogins via a new endpoint; fallback: render link button
+                fetch('/api/ProfileApi/logins', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(r => r.json()).then(j => {
+                        if (j && Array.isArray(j)) updateExternalButtons(j);
+                        else updateExternalButtons([]);
+                    }).catch(() => updateExternalButtons([]));
+            }).catch(() => updateExternalButtons([]));
+    })();
+</script>
