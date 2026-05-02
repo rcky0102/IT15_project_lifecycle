@@ -129,7 +129,7 @@ wwwroot\css\user-management.css
 wwwroot\css\superadmin-responsive.css
 wwwroot\css\superadmin-management.css
 wwwroot\css\superadmin-layout.css
-wwwroot\css\superadmin-dashboard.css
+wwwroot\css\employee-dashboard.css
 wwwroot\css\site.css
 wwwroot\css\proposal.css
 wwwroot\css\notifications.css
@@ -137,16 +137,16 @@ wwwroot\css\messenger.css
 wwwroot\css\login.css
 wwwroot\css\layout.css
 wwwroot\css\Images\LOGO (final).png
-wwwroot\css\hr-dashboard.css
+wwwroot\css\employee-document.css
 wwwroot\css\hr-auditlog.css
 wwwroot\css\home.css
 wwwroot\css\executive-reports.css
 wwwroot\css\executive-layout.css
-wwwroot\css\executive-dashboard.css
 wwwroot\css\employee-project.css
+wwwroot\css\executive-dashboard.css
 wwwroot\css\employee-news.css
-wwwroot\css\employee-document.css
-wwwroot\css\employee-dashboard.css
+wwwroot\css\hr-dashboard.css
+wwwroot\css\superadmin-dashboard.css
 wwwroot\css\depthead-project.css
 wwwroot\css\depthead-layout.css
 wwwroot\css\components.css
@@ -163,3 +163,12 @@ wwwroot\css\employee-proposal.css
 wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css.map
 wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css.map
 wwwroot\css\employee-layout.css
+wwwroot\uploads\editor\09bca39b-56be-4abe-b559-3c42b16157ae_sm.gif
+wwwroot\uploads\editor\38683c8b-4b2d-41c1-8a01-92ddde542fc0_ADAYA-2.docx
+wwwroot\uploads\editor\39b4f573-5a00-48db-b8e5-e7eb847d3a6c_screencapture-localhost-5143-ProjectManager-Project-Create-4-2026-03-08-16_06_08.png
+wwwroot\uploads\editor\79223d67-91cc-4bb7-a2a9-67b5c36782b4_sm.gif
+wwwroot\uploads\editor\81607f51-7219-4f7a-be1e-5e73453fd656_My-Hero-Academia-Finale-Deku-Timeskip.webp
+wwwroot\uploads\editor\be07637c-8687-488a-8652-5a049944b8b6_ADAYA-2.docx
+wwwroot\uploads\editor\c40ff1ce-aa6d-4a3e-a659-af8a73285dea_ADAYA-2.docx
+wwwroot\uploads\editor\fb90d96d-9847-4ff1-8ea6-70b5b25844c4_ADAYA-2.docx
+wwwroot\uploads\profiles\31148675-6133-40c3-bb86-8a6f583b5f3c.gif

@@ -62,6 +62,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcUHJvamVjdFxDcmVhdGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/DepartmentHead/Views/Project/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcUHJvamVjdFxFZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Asus/source/repos/project_lifecycle/project_lifecycle/Areas/DepartmentHead/Views/Project/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGVwYXJ0bWVudEhlYWRcVmlld3NcUHJvamVjdFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
