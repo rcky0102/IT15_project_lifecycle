@@ -288,7 +288,7 @@
 
 <!-- MFA Modal -->
 <div id="mfaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center"> 
-    <div style="background:#fff;padding:1.25rem;border-radius:.5rem;max-width:420px;margin:auto;">
+    <div style="background:#fff;padding:1.25rem;border-radius:.5rem;max-width:420px;margin:auto;max-height:90vh;overflow:auto;display:flex;flex-direction:column;">
         <h5>Set up Authenticator App</h5>
         <p style="font-size:.9rem;margin-top:0">Scan the QR code below with your authenticator app, then enter the 6-digit code to verify.</p>
         <div style="text-align:center;margin:0.75rem 0">
@@ -302,10 +302,10 @@
             <input id="mfaCode" placeholder="Enter 6-digit code" class="prof-form-input" style="flex:1" />
             <button id="verifyMfaBtn" class="prof-btn">Verify</button>
         </div>
-        <div id="mfaRecovery" style="display:none;margin-top:.5rem">
+        <div id="mfaRecovery" style="display:none;margin-top:.5rem;display:flex;flex-direction:column;gap:.5rem;">
             <label class="prof-form-label">Recovery Codes</label>
-            <pre id="mfaRecoveryCodes" style="white-space:pre-wrap;background:#f7f7f7;padding:.5rem;border-radius:.25rem"></pre>
-            <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.5rem">
+            <pre id="mfaRecoveryCodes" style="white-space:pre-wrap;background:#f7f7f7;padding:.5rem;border-radius:.25rem;max-height:160px;overflow:auto"></pre>
+            <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.5rem;flex-wrap:wrap">
                 <button id="copyRecoveryBtn" class="prof-btn" style="display:none">Copy</button>
                 <button id="downloadRecoveryBtn" class="prof-btn" style="display:none">Download</button>
                 <button id="printRecoveryBtn" class="prof-btn prof-btn-outline" style="display:none">Print</button>
