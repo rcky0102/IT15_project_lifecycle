@@ -183,12 +183,51 @@
     cancelEditBtn?.addEventListener('click', exitEdit);
 
     /* ── save profile ──────────────────────────── */
+    // Track email availability state
+    let emailAvailable = true;
+
+    // Check email on blur
+    $('#eEmail')?.addEventListener('blur', async function () {
+        const email = (this.value || '').trim();
+        const errEl = document.getElementById('eEmailError');
+        if (!email) {
+            errEl.style.display = 'none';
+            emailAvailable = true;
+            return;
+        }
+        try {
+            const resp = await fetch('/api/ProfileApi/check-email?email=' + encodeURIComponent(email));
+            if (resp.ok) {
+                const j = await resp.json();
+                if (!j.available) {
+                    errEl.textContent = 'This email is already used by another account.';
+                    errEl.style.display = 'block';
+                    emailAvailable = false;
+                } else {
+                    errEl.style.display = 'none';
+                    emailAvailable = true;
+                }
+            } else {
+                errEl.style.display = 'none';
+                emailAvailable = true;
+            }
+        } catch (e) {
+            errEl.style.display = 'none';
+            emailAvailable = true;
+        }
+    });
+
     saveProfileBtn?.addEventListener('click', async () => {
         const firstName = val($('#eFirstName')?.value).trim();
         const lastName = val($('#eLastName')?.value).trim();
 
         if (!firstName || !lastName) {
             showError('First name and last name are required.');
+            return;
+        }
+
+        if (!emailAvailable) {
+            showError('Please fix the email address before saving.');
             return;
         }
 

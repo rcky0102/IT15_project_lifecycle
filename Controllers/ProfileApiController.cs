@@ -274,6 +274,17 @@ namespace project_lifecycle.Controllers
             return Ok(new { email = user.Email, role, twoFactorEnabled, profile });
         }
 
+        // GET: api/profileapi/check-email?email=...
+        [HttpGet("check-email")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CheckEmail([FromQuery] string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return BadRequest(new { available = false, message = "Email is required" });
+            var found = await _userManager.FindByEmailAsync(email.Trim());
+            var available = found == null;
+            return Ok(new { available, message = available ? "Available" : "Taken" });
+        }
+
         public class MfaDto
         {
             public bool Enabled { get; set; }
@@ -406,6 +417,14 @@ namespace project_lifecycle.Controllers
             // ── Update email if changed ──
             if (!string.IsNullOrEmpty(newEmail) && newEmail != user.Email)
             {
+                // Ensure the email isn't used by another account
+                var existing = await _userManager.FindByEmailAsync(newEmail);
+                if (existing != null && existing.Id != user.Id)
+                {
+                    errors.Add("The provided email address is already in use.");
+                }
+                else
+                {
                 var setEmailResult = await _userManager.SetEmailAsync(user, newEmail);
                 if (!setEmailResult.Succeeded)
                 {
@@ -419,6 +438,7 @@ namespace project_lifecycle.Controllers
                     await _userManager.ConfirmEmailAsync(user, token);
                     // Refresh the auth cookie so the current session stays valid
                     await _signInManager.RefreshSignInAsync(user);
+                }
                 }
             }
 
