@@ -9,10 +9,12 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\AWSSDK.S3.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Azure.Core.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Azure.Identity.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\BouncyCastle.Cryptography.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\DocumentFormat.OpenXml.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\DocumentFormat.OpenXml.Framework.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\HtmlToOpenXml.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Humanizer.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\MailKit.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.AspNetCore.Authentication.Google.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.AspNetCore.Cryptography.Internal.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
@@ -69,6 +71,7 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.VisualStudio.Web.CodeGeneration.Templating.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.VisualStudio.Web.CodeGeneration.Utils.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Microsoft.VisualStudio.Web.CodeGenerators.Mvc.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\MimeKit.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Mono.TextTemplating.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\Newtonsoft.Json.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\NuGet.Common.dll
@@ -80,6 +83,7 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\NuGet.ProjectModel.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\NuGet.Protocol.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\NuGet.Versioning.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\QRCoder.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\SQLitePCLRaw.batteries_v2.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\SQLitePCLRaw.core.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\SQLitePCLRaw.provider.e_sqlite3.dll
@@ -96,6 +100,7 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\System.Memory.Data.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\System.Reflection.MetadataLoadContext.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\System.Runtime.Caching.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\System.Security.Cryptography.Pkcs.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\System.Security.Cryptography.ProtectedData.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\af\Humanizer.resources.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\ar\Humanizer.resources.dll
@@ -263,4 +268,5 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\obj\Release\net8.0\PubTmp\Out\project_lifecycle.deps.json
