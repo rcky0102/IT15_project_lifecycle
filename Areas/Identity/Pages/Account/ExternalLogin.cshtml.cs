@@ -49,7 +49,8 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
             }
 
             // Sign in the user with this external login provider if the user already has a login.
-            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+            // Do not bypass two-factor here so users with 2FA will be challenged.
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: false);
             if (result.Succeeded)
             {
                 // Get the user and determine role
@@ -76,6 +77,12 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                 }
 
                 return LocalRedirect(returnUrl);
+            }
+
+            // If the account requires two-factor, redirect to the 2FA page
+            if (result.RequiresTwoFactor)
+            {
+                return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = false });
             }
 
             // If the user does not have an account, the ExternalLogin flow in this app
