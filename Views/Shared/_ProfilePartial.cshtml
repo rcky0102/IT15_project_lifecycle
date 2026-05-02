@@ -31,6 +31,9 @@
                     <span id="externalLogins" style="margin-left:.6rem;display:inline-block">
                         <!-- External login status will be inserted here -->
                     </span>
+                    <span id="mfaStatus" style="margin-left:.6rem;display:inline-block">
+                        <!-- MFA status will be inserted here -->
+                    </span>
                 </div>
             </div>
             <div class="prof-hero-actions">
@@ -283,6 +286,32 @@
     </div>
 </div>
 
+<!-- MFA Modal -->
+<div id="mfaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center"> 
+    <div style="background:#fff;padding:1.25rem;border-radius:.5rem;max-width:420px;margin:auto;">
+        <h5>Set up Authenticator App</h5>
+        <p style="font-size:.9rem;margin-top:0">Scan the QR code below with your authenticator app, then enter the 6-digit code to verify.</p>
+        <div style="text-align:center;margin:0.75rem 0">
+            <img id="mfaQr" src="" alt="QR" style="width:200px;height:200px;border:1px solid #eee" />
+        </div>
+        <div style="margin-bottom:.5rem">
+            <label class="prof-form-label">Shared Key</label>
+            <div id="mfaSharedKey" style="font-family:monospace;background:#f7f7f7;padding:.5rem;border-radius:.25rem"></div>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+            <input id="mfaCode" placeholder="Enter 6-digit code" class="prof-form-input" style="flex:1" />
+            <button id="verifyMfaBtn" class="prof-btn">Verify</button>
+        </div>
+        <div id="mfaRecovery" style="display:none;margin-top:.5rem">
+            <label class="prof-form-label">Recovery Codes</label>
+            <pre id="mfaRecoveryCodes" style="white-space:pre-wrap;background:#f7f7f7;padding:.5rem;border-radius:.25rem"></pre>
+        </div>
+        <div style="text-align:right;margin-top:.75rem">
+            <button id="closeMfaModal" class="prof-btn prof-btn-outline">Close</button>
+        </div>
+    </div>
+</div>
+
 <script src="~/js/psgc.js" asp-append-version="true"></script>
 <script src="~/js/profile.js" asp-append-version="true"></script>
 <script>
@@ -328,6 +357,78 @@
         fetch('/api/ProfileApi/me', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.json())
             .then(function (data) {
+                // Render MFA status toggle
+                try {
+                    var mfaContainer = document.getElementById('mfaStatus');
+                    if (mfaContainer) {
+                        mfaContainer.innerHTML = '';
+                        var enabled = !!data.twoFactorEnabled;
+                        var mfaBtn = document.createElement('button');
+                        mfaBtn.className = 'prof-btn prof-btn-outline';
+                        mfaBtn.textContent = enabled ? 'Disable MFA' : 'Enable MFA';
+                        mfaBtn.onclick = function () {
+                            mfaBtn.disabled = true;
+                            if (!enabled) {
+                                // Start enrollment flow (get QR + key)
+                                fetch('/api/ProfileApi/mfa/enroll', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                                    .then(r => r.json()).then(j => {
+                                        if (!j) { alert('Failed to start enrollment'); mfaBtn.disabled = false; return; }
+                                        // Populate modal
+                                        document.getElementById('mfaQr').src = j.qrUrl;
+                                        document.getElementById('mfaSharedKey').textContent = j.sharedKey || '';
+                                        document.getElementById('mfaCode').value = '';
+                                        document.getElementById('mfaRecovery').style.display = 'none';
+                                        document.getElementById('mfaModal').style.display = 'flex';
+
+                                        // Wire verify button
+                                        var verifyBtn = document.getElementById('verifyMfaBtn');
+                                        verifyBtn.disabled = false;
+                                        verifyBtn.onclick = function () {
+                                            var code = (document.getElementById('mfaCode').value || '').trim();
+                                            if (!code) { alert('Enter the 6-digit code'); return; }
+                                            verifyBtn.disabled = true;
+                                            fetch('/api/ProfileApi/mfa/verify', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                                body: JSON.stringify({ code: code })
+                                            }).then(r => r.json()).then(resp => {
+                                                if (resp && resp.success) {
+                                                    // Show recovery codes
+                                                    if (resp.recoveryCodes) {
+                                                        document.getElementById('mfaRecoveryCodes').textContent = resp.recoveryCodes.join('\n');
+                                                        document.getElementById('mfaRecovery').style.display = 'block';
+                                                    }
+                                                    setTimeout(function () { location.reload(); }, 1500);
+                                                } else {
+                                                    alert(resp?.message || 'Verification failed');
+                                                    verifyBtn.disabled = false;
+                                                }
+                                            }).catch(() => { alert('Error verifying code'); verifyBtn.disabled = false; });
+                                        };
+
+                                        // Wire close
+                                        document.getElementById('closeMfaModal').onclick = function () { document.getElementById('mfaModal').style.display = 'none'; mfaBtn.disabled = false; };
+                                    }).catch(() => { alert('Error starting enrollment'); mfaBtn.disabled = false; });
+                            } else {
+                                // Disable MFA directly
+                                fetch('/api/ProfileApi/mfa', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                    body: JSON.stringify({ enabled: false })
+                                }).then(r => r.json()).then(j => {
+                                    if (j && j.success) {
+                                        location.reload();
+                                    } else {
+                                        alert('Failed to update MFA');
+                                        mfaBtn.disabled = false;
+                                    }
+                                }).catch(() => { alert('Error updating MFA'); mfaBtn.disabled = false; });
+                            }
+                        };
+                        mfaContainer.appendChild(mfaBtn);
+                    }
+                } catch (e) { console.error(e); }
+
                 // The /me endpoint returns profile; it doesn't include logins, so call a small helper endpoint
                 // Try calling GetLogins via a new endpoint; fallback: render link button
                 fetch('/api/ProfileApi/logins', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })

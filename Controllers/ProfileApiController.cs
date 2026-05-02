@@ -238,6 +238,8 @@ namespace project_lifecycle.Controllers
                     break;
             }
 
+            var twoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
+
             if (profile == null)
             {
                 // SuperAdmin or unlinked user – return minimal info
@@ -245,6 +247,7 @@ namespace project_lifecycle.Controllers
                 {
                     email = user.Email,
                     role = string.IsNullOrEmpty(role) ? "SuperAdmin" : role,
+                    twoFactorEnabled,
                     profile = new
                     {
                         Id = 0,
@@ -268,7 +271,91 @@ namespace project_lifecycle.Controllers
                 });
             }
 
-            return Ok(new { email = user.Email, role, profile });
+            return Ok(new { email = user.Email, role, twoFactorEnabled, profile });
+        }
+
+        public class MfaDto
+        {
+            public bool Enabled { get; set; }
+        }
+
+        // POST: api/profileapi/mfa
+        [HttpPost("mfa")]
+        public async Task<IActionResult> SetMfa([FromBody] MfaDto dto)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var result = await _userManager.SetTwoFactorEnabledAsync(user, dto?.Enabled == true);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { success = false, errors = result.Errors.Select(e => e.Description) });
+            }
+
+            await _audit.LogAsync(User, "Update", "Security", $"Set MFA {(dto.Enabled ? "enabled" : "disabled")}", "User", user.Id);
+
+            return Ok(new { success = true, twoFactorEnabled = dto.Enabled });
+        }
+
+        // GET: api/profileapi/mfa/enroll
+        [HttpGet("mfa/enroll")]
+        public async Task<IActionResult> EnrollMfa()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            // Ensure authenticator key exists
+            var key = await _userManager.GetAuthenticatorKeyAsync(user);
+            if (string.IsNullOrEmpty(key))
+            {
+                await _userManager.ResetAuthenticatorKeyAsync(user);
+                key = await _userManager.GetAuthenticatorKeyAsync(user);
+            }
+
+            // Build otpauth URI for authenticator apps
+            var issuer = Uri.EscapeDataString("ProjectLifecycle");
+            var email = Uri.EscapeDataString(user.Email ?? user.UserName ?? "user");
+            var otpauth = $"otpauth://totp/{issuer}:{email}?secret={key}&issuer={issuer}&digits=6";
+
+            // Use Google Chart API to produce QR image URL (no server-side library required)
+            var qrUrl = "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=" + System.Net.WebUtility.UrlEncode(otpauth);
+
+            return Ok(new { sharedKey = key, otpauthUri = otpauth, qrUrl });
+        }
+
+        public class VerifyMfaDto
+        {
+            public string? Code { get; set; }
+        }
+
+        // POST: api/profileapi/mfa/verify
+        [HttpPost("mfa/verify")]
+        public async Task<IActionResult> VerifyMfa([FromBody] VerifyMfaDto dto)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            if (dto == null || string.IsNullOrEmpty(dto.Code)) return BadRequest(new { success = false, message = "Code is required" });
+
+            // Verify the code using the authenticator provider
+            var isValid = await _userManager.VerifyTwoFactorTokenAsync(user, _userManager.Options.Tokens.AuthenticatorTokenProvider, dto.Code.Replace(" ", ""));
+            if (!isValid)
+            {
+                return BadRequest(new { success = false, message = "Invalid verification code." });
+            }
+
+            // Enable two-factor and generate recovery codes
+            var setResult = await _userManager.SetTwoFactorEnabledAsync(user, true);
+            if (!setResult.Succeeded)
+            {
+                return BadRequest(new { success = false, errors = setResult.Errors.Select(e => e.Description) });
+            }
+
+            var recovery = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+
+            await _audit.LogAsync(User, "Update", "Security", "Enabled authenticator app MFA", "User", user.Id);
+
+            return Ok(new { success = true, recoveryCodes = recovery });
         }
 
         // ─── POST api/profileapi/update ───
