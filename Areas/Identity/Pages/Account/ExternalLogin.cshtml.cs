@@ -146,9 +146,9 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                 return RedirectToPage("./LoginWith2fa", new { ReturnUrl = callbackPage, RememberMe = false });
             }
 
-            // If the user does not have an account, the ExternalLogin flow in this app
-            // may rely on other flows (register/import). For now redirect to returnUrl.
-            return LocalRedirect(returnUrl);
+            // If the user does not have an account, notify the user.
+            TempData["ExternalLoginError"] = "The selected Google account is not linked to any user account. Please sign in with your email and password first, then link your Google account in your profile.";
+            return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
         }
     }
 }
