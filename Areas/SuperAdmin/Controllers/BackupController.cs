@@ -61,6 +61,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 {
                     await connection.OpenAsync();
 
+                    // Disable all constraints to allow clearing and re-populating tables
+                    sqlScript.AppendLine("EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';");
+                    sqlScript.AppendLine("GO");
+                    sqlScript.AppendLine();
+
                     // Get all user tables
                     var tables = new List<string>();
                     using (var cmd = new SqlCommand("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME NOT LIKE '__EFMigrationsHistory'", connection))
@@ -74,7 +79,18 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                     foreach (var table in tables)
                     {
-                        sqlScript.AppendLine($"-- Data for table {table}");
+                        // Check if table has an identity column
+                        bool hasIdentity = false;
+                        using (var cmdIdentity = new SqlCommand($"SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('[{table}]') AND is_identity = 1", connection))
+                        {
+                            hasIdentity = (int)await cmdIdentity.ExecuteScalarAsync() > 0;
+                        }
+
+                        sqlScript.AppendLine($"-- Processing table: {table}");
+                        sqlScript.AppendLine($"DELETE FROM [{table}];");
+                        
+                        if (hasIdentity) sqlScript.AppendLine($"SET IDENTITY_INSERT [{table}] ON;");
+                        
                         using (var cmd = new SqlCommand($"SELECT * FROM [{table}]", connection))
                         using (var reader = await cmd.ExecuteReaderAsync())
                         {
@@ -98,15 +114,21 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                                         else if (val is byte[] bin)
                                             values.Add("0x" + BitConverter.ToString(bin).Replace("-", ""));
                                         else
-                                            values.Add(val.ToString().Replace(",", ".")); // Handle decimal points
+                                            values.Add(val.ToString().Replace(",", ".")); 
                                     }
                                 }
                                 sqlScript.AppendLine($"INSERT INTO [{table}] ({columnList}) VALUES ({string.Join(", ", values)});");
                             }
                         }
+
+                        if (hasIdentity) sqlScript.AppendLine($"SET IDENTITY_INSERT [{table}] OFF;");
                         sqlScript.AppendLine("GO");
                         sqlScript.AppendLine();
                     }
+
+                    // Re-enable all constraints
+                    sqlScript.AppendLine("EXEC sp_MSforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL';");
+                    sqlScript.AppendLine("GO");
                 }
 
                 await System.IO.File.WriteAllTextAsync(filePath, sqlScript.ToString());
