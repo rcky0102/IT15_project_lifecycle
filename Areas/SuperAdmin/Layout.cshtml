@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = null;
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
 }
@@ -122,6 +122,15 @@
                            class="sa-nav-link @(currentController == "AuditLog" ? "active" : "")">
                             <i class="fas fa-clipboard-list sa-nav-icon"></i>
                             <span class="sa-nav-text">Audit Logs</span>
+                        </a>
+                    </li>
+
+                    <!-- Database Backup -->
+                    <li class="sa-nav-item">
+                        <a href="@Url.Action("Index", "Backup", new { area = "SuperAdmin" })"
+                           class="sa-nav-link @(currentController == "Backup" ? "active" : "")">
+                            <i class="fas fa-database sa-nav-icon"></i>
+                            <span class="sa-nav-text">Backup</span>
                         </a>
                     </li>
                 </ul>
