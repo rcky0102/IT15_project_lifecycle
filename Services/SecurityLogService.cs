@@ -333,12 +333,13 @@ namespace project_lifecycle.Services
             
             var currentAttempts = _failedLoginAttempts[trackingKey].Count;
             
-            if (currentAttempts >= threshold)
+            // Only trigger when attempts exceed the threshold (after 5 attempts, so trigger on 6th+)
+            if (currentAttempts > threshold)
             {
                 // Only log when threshold is exceeded
                 await LogSecurityEventAsync(
                     "Suspicious Login Activity",
-                    $"Threshold exceeded: {currentAttempts} failed login attempts detected for user '{userName}' from IP {ipAddress}",
+                    $"Threshold exceeded: {threshold} failed login attempts detected for user '{userName}' from IP {ipAddress}",
                     true,
                     null,
                     userName,
