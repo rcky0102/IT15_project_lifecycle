@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model LoginModel
 
 @{
@@ -7,6 +7,7 @@
 }
 
 <link rel="stylesheet" href="~/css/home.css" />
+<link rel="stylesheet" href="~/css/identity.css" />
 
 <style>
     .login-card {
@@ -83,12 +84,19 @@
 
             @if ((Model.ExternalLogins?.Count ?? 0) > 0)
             {
-                <hr class="my-4" />
+                <div class="mt-4 position-relative">
+                    <hr class="my-4" />
+                    <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted" style="font-size: 0.85rem;">or continue with</span>
+                </div>
 
                 <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="d-grid gap-2 external-login-form">
                     @foreach (var provider in Model.ExternalLogins!)
                     {
-                        <button type="submit" class="btn btn-outline-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
+                        <button type="submit" class="google-btn w-100" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
+                            @if (provider.DisplayName == "Google")
+                            {
+                                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" />
+                            }
                             Continue with @provider.DisplayName
                         </button>
                     }

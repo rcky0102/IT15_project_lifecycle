@@ -1,47 +1,81 @@
 @page
 @model project_lifecycle.Areas.Identity.Pages.Account.LoginWith2faModel
 @{
-    ViewData["Title"] = "Two-factor authentication";
+    ViewData["Title"] = "Security Verification";
+    Layout = "/Views/Shared/_Layout.cshtml";
 }
 
-<h2>@ViewData["Title"]</h2>
+<link rel="stylesheet" href="~/css/home.css" />
+<link rel="stylesheet" href="~/css/identity.css" />
 
-<div class="row">
-    <div class="col-md-6">
+<div class="animated-bg">
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+    </div>
+</div>
+
+<section class="identity-section">
+    <div class="identity-card">
+        <div class="two-factor-icon">
+            <i class="bi bi-shield-lock"></i>
+        </div>
+        <h2 class="identity-title">Two-Factor Auth</h2>
+        <p class="identity-subtitle">Your account is protected with an extra layer of security. Please enter your verification code.</p>
+
         <form id="twofa-form" method="post">
             @Html.AntiForgeryToken()
-            <div asp-validation-summary="All" class="text-danger mb-3"></div>
-            <div class="form-group">
-                <label asp-for="Input.TwoFactorCode"></label>
-                <input asp-for="Input.TwoFactorCode" class="form-control" autocomplete="one-time-code" />
-                <span asp-validation-for="Input.TwoFactorCode" class="text-danger"></span>
+            <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+
+            <div class="form-floating mb-4">
+                <input asp-for="Input.TwoFactorCode" class="form-control rounded-3" autocomplete="one-time-code" placeholder="000 000" />
+                <label asp-for="Input.TwoFactorCode">Verification Code</label>
+                <span asp-validation-for="Input.TwoFactorCode" class="text-danger small"></span>
             </div>
 
-            <div class="form-group form-check">
+            <div class="form-check mb-4 text-start">
                 <input asp-for="Input.RememberMachine" class="form-check-input" />
-                <label asp-for="Input.RememberMachine" class="form-check-label"></label>
+                <label asp-for="Input.RememberMachine" class="form-check-label text-muted">
+                    Remember this device
+                </label>
             </div>
 
             <input type="hidden" name="rememberMe" value="@(Model.RememberMe ? "true" : "false")" />
             <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
 
-            <button id="verify-btn" type="submit" class="btn btn-primary">Verify</button>
-            <a asp-page="./Login" class="btn btn-link">Back to login</a>
+            <button id="verify-btn" type="submit" class="btn btn-primary w-100 justify-content-center py-3">
+                Verify Identity
+            </button>
         </form>
+
+        <div class="mt-4 text-center d-flex flex-column gap-2">
+            <p class="text-muted small mb-0">Don't have access to your device?</p>
+            <a asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" class="feature-link text-decoration-none">
+                Use a recovery code
+            </a>
+            <hr class="my-3" />
+            <a asp-page="./Login" class="text-muted text-decoration-none small">
+                <i class="bi bi-arrow-left me-1"></i> Back to Sign In
+            </a>
+        </div>
     </div>
-</div>
+</section>
 
-<partial name="_ValidationScriptsPartial" />
-
-<script>
-    (function(){
-        var form = document.getElementById('twofa-form');
-        var btn = document.getElementById('verify-btn');
-        if (form && btn) {
-            form.addEventListener('submit', function () {
-                btn.disabled = true;
-                btn.textContent = 'Verifying...';
-            });
-        }
-    })();
-</script>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function(){
+            var form = document.getElementById('twofa-form');
+            var btn = document.getElementById('verify-btn');
+            if (form && btn) {
+                form.addEventListener('submit', function () {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Verifying...';
+                });
+            }
+        })();
+    </script>
+}
