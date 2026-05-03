@@ -79,23 +79,27 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
                     foreach (var table in tables)
                     {
-                        // Check if table has an identity column
+                        // Use parameters for the metadata check
                         bool hasIdentity = false;
-                        using (var cmdIdentity = new SqlCommand($"SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('[{table}]') AND is_identity = 1", connection))
+                        using (var cmdIdentity = new SqlCommand("SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID(@tableName) AND is_identity = 1", connection))
                         {
+                            cmdIdentity.Parameters.AddWithValue("@tableName", $"[{table}]");
                             hasIdentity = (int)await cmdIdentity.ExecuteScalarAsync() > 0;
                         }
 
-                        sqlScript.AppendLine($"-- Processing table: {table}");
-                        sqlScript.AppendLine($"DELETE FROM [{table}];");
+                        // Safely escape table name for the script
+                        string safeTableName = $"[{table.Replace("]", "]]")}]";
+
+                        sqlScript.AppendLine($"-- Processing table: {safeTableName}");
+                        sqlScript.AppendLine($"DELETE FROM {safeTableName};");
                         
-                        if (hasIdentity) sqlScript.AppendLine($"SET IDENTITY_INSERT [{table}] ON;");
+                        if (hasIdentity) sqlScript.AppendLine($"SET IDENTITY_INSERT {safeTableName} ON;");
                         
-                        using (var cmd = new SqlCommand($"SELECT * FROM [{table}]", connection))
+                        using (var cmd = new SqlCommand($"SELECT * FROM {safeTableName}", connection))
                         using (var reader = await cmd.ExecuteReaderAsync())
                         {
                             var columns = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToList();
-                            var columnList = string.Join(", ", columns.Select(c => $"[{c}]"));
+                            var columnList = string.Join(", ", columns.Select(c => $"[{c.Replace("]", "]]")}]"));
 
                             while (await reader.ReadAsync())
                             {
@@ -108,7 +112,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                                     {
                                         var val = reader.GetValue(i);
                                         if (val is string || val is DateTime || val is Guid)
-                                            values.Add($"'{val.ToString().Replace("'", "''")}'");
+                                            values.Add($"N'{val.ToString().Replace("'", "''")}'"); // Using N'' for unicode safety
                                         else if (val is bool b)
                                             values.Add(b ? "1" : "0");
                                         else if (val is byte[] bin)
@@ -117,11 +121,11 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                                             values.Add(val.ToString().Replace(",", ".")); 
                                     }
                                 }
-                                sqlScript.AppendLine($"INSERT INTO [{table}] ({columnList}) VALUES ({string.Join(", ", values)});");
+                                sqlScript.AppendLine($"INSERT INTO {safeTableName} ({columnList}) VALUES ({string.Join(", ", values)});");
                             }
                         }
 
-                        if (hasIdentity) sqlScript.AppendLine($"SET IDENTITY_INSERT [{table}] OFF;");
+                        if (hasIdentity) sqlScript.AppendLine($"SET IDENTITY_INSERT {safeTableName} OFF;");
                         sqlScript.AppendLine("GO");
                         sqlScript.AppendLine();
                     }
