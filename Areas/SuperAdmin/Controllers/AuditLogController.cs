@@ -48,10 +48,14 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     (a.EntityType != null && a.EntityType.Contains(search)));
 
             if (from.HasValue)
-                query = query.Where(a => a.Timestamp >= from.Value.ToUniversalTime());
+            {
+                query = query.Where(a => a.Timestamp >= from.Value);
+            }
 
             if (to.HasValue)
-                query = query.Where(a => a.Timestamp <= to.Value.Date.AddDays(1).ToUniversalTime());
+            {
+                query = query.Where(a => a.Timestamp <= to.Value.Date.AddDays(1));
+            }
 
             // Totals for the filtered set
             var totalCount = await query.CountAsync();
@@ -101,7 +105,7 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                 entityType = log.EntityType,
                 entityId = log.EntityId,
                 ipAddress = log.IpAddress,
-                timestamp = log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") + " UTC"
+                timestamp = log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")
             });
         }
 
@@ -129,9 +133,13 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     a.UserName.Contains(search) ||
                     a.Description.Contains(search));
             if (from.HasValue)
-                query = query.Where(a => a.Timestamp >= from.Value.ToUniversalTime());
+            {
+                query = query.Where(a => a.Timestamp >= from.Value);
+            }
             if (to.HasValue)
-                query = query.Where(a => a.Timestamp <= to.Value.Date.AddDays(1).ToUniversalTime());
+            {
+                query = query.Where(a => a.Timestamp <= to.Value.Date.AddDays(1));
+            }
 
             var logs = await query.OrderByDescending(a => a.Timestamp).ToListAsync();
 

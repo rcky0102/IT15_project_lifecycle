@@ -90,7 +90,7 @@ namespace project_lifecycle.Services
                 EntityType = entityType,
                 EntityId = entityId,
                 IpAddress = ipAddress ?? _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow.AddHours(8)
             };
 
             _db.AuditLogs.Add(entry);
