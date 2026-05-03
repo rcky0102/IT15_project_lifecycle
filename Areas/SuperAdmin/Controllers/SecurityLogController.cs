@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
 using project_lifecycle.Services;
+using System.Text.Json;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace project_lifecycle.Areas.SuperAdmin.Controllers
 {
@@ -194,6 +198,67 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             return Json(new { isLockedOut });
         }
 
+        // POST: /SuperAdmin/SecurityLog/LockoutAccount
+        [HttpPost]
+        public async Task<IActionResult> LockoutAccount([FromBody] dynamic data)
+        {
+            try
+            {
+                var userId = data.userId?.ToString();
+                var reason = data.reason?.ToString();
+                
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "User ID is required" });
+                }
+
+                var result = await _securityLogService.LockoutAccountAsync(userId, reason);
+                
+                if (result)
+                {
+                    return Json(new { success = true, message = "Account locked out successfully" });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Failed to lockout account" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        // POST: /SuperAdmin/SecurityLog/UnlockAccount
+        [HttpPost]
+        public async Task<IActionResult> UnlockAccount([FromBody] dynamic data)
+        {
+            try
+            {
+                var userId = data.userId?.ToString();
+                
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "User ID is required" });
+                }
+
+                var result = await _securityLogService.UnlockAccountAsync(userId);
+                
+                if (result)
+                {
+                    return Json(new { success = true, message = "Account unlocked successfully" });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Failed to unlock account" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
         // GET: /SuperAdmin/SecurityLog/Test
         public async Task<IActionResult> Test()
         {
@@ -229,6 +294,118 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
                     stackTrace = ex.StackTrace
                 });
             }
+        }
+
+        // POST: /SuperAdmin/SecurityLog/ExportToPdf
+        [HttpPost]
+        public async Task<IActionResult> ExportToPdf([FromBody] dynamic data)
+        {
+            try
+            {
+                var fromDate = data.from?.ToString();
+                var toDate = data.to?.ToString();
+
+                if (string.IsNullOrEmpty(fromDate) || string.IsNullOrEmpty(toDate))
+                {
+                    return Json(new { success = false, message = "Date range is required" });
+                }
+
+                var logs = await _securityLogService.GetSecurityLogsAsync(
+                    null, null, null, null, 
+                    DateTime.Parse(fromDate), 
+                    DateTime.Parse(toDate));
+
+                if (!logs.Any())
+                {
+                    return Json(new { success = false, message = "No security events found in the specified date range" });
+                }
+
+                // Generate PDF content
+                var pdfBytes = GeneratePdfReport(logs, fromDate, toDate);
+                
+                return File(pdfBytes, "application/pdf", $"security-threat-report-{DateTime.Now:yyyyMMdd-HHmmss}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error generating PDF: {ex.Message}" });
+            }
+        }
+
+        private byte[] GeneratePdfReport(List<SecurityLog> logs, string fromDate, string toDate)
+        {
+            var html = new StringBuilder();
+            
+            // Build HTML content
+            html.AppendLine("<!DOCTYPE html>");
+            html.AppendLine("<html>");
+            html.AppendLine("<head>");
+            html.AppendLine("<title>Security Threat Report</title>");
+            html.AppendLine("<style>");
+            html.AppendLine("body { font-family: Arial, sans-serif; margin: 20px; }");
+            html.AppendLine("h1 { color: #333; text-align: center; }");
+            html.AppendLine("h2 { color: #666; margin-top: 30px; }");
+            html.AppendLine("table { border-collapse: collapse; width: 100%; margin-top: 20px; }");
+            html.AppendLine("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }");
+            html.AppendLine("</style>");
+            html.AppendLine("</head>");
+            html.AppendLine("<body>");
+            html.AppendLine("<h1>Security Threat Report</h1>");
+            html.AppendLine($"<h2>Report Period: {fromDate} to {toDate}</h2>");
+            html.AppendLine($"<p><strong>Generated:</strong> {DateTime.Now:MMM dd, yyyy HH:mm}</p>");
+            
+            // Summary statistics
+            var eventGroups = logs.GroupBy(l => l.EventType).ToList();
+            html.AppendLine("<h2>Summary Statistics</h2>");
+            html.AppendLine("<table>");
+            html.AppendLine("<tr><th>Event Type</th><th>Count</th><th>Percentage</th></tr>");
+            
+            foreach (var group in eventGroups)
+            {
+                var count = group.Count();
+                var percentage = (count * 100.0 / logs.Count).ToString("F1");
+                html.AppendLine($"<tr><td>{group.Key}</td><td>{count}</td><td>{percentage}%</td></tr>");
+            }
+            
+            html.AppendLine("</table>");
+            
+            // Detailed events
+            html.AppendLine("<h2>Detailed Security Events</h2>");
+            html.AppendLine("<table>");
+            html.AppendLine("<tr><th>Timestamp</th><th>Event Type</th><th>Description</th><th>User</th><th>IP Address</th><th>Threat Level</th><th>Suspicious</th></tr>");
+            
+            foreach (var log in logs.OrderByDescending(l => l.Timestamp))
+            {
+                html.AppendLine($"<tr>");
+                html.AppendLine($"<td>{log.Timestamp:MMM dd, yyyy HH:mm}</td>");
+                html.AppendLine($"<td>{log.EventType}</td>");
+                html.AppendLine($"<td>{log.Description}</td>");
+                html.AppendLine($"<td>{log.UserName ?? "N/A"}</td>");
+                html.AppendLine($"<td>{log.IpAddress ?? "N/A"}</td>");
+                html.AppendLine($"<td>Level {log.ThreatLevel}</td>");
+                html.AppendLine($"<td>{(log.IsSuspicious ? "Yes" : "No")}</td>");
+                html.AppendLine("</tr>");
+            }
+            
+            html.AppendLine("</table>");
+            
+            // Recommendations
+            html.AppendLine("<h2>Mitigation & Containment Strategies</h2>");
+            var suspiciousLogs = logs.Where(l => l.IsSuspicious).ToList();
+            if (suspiciousLogs.Any())
+            {
+                html.AppendLine("<ul>");
+                html.AppendLine("<li>• Monitor user accounts with repeated failed login attempts</li>");
+                html.AppendLine("<li>• Consider implementing multi-factor authentication</li>");
+                html.AppendLine("<li>• Review IP addresses and user agents for suspicious patterns</li>");
+                html.AppendLine("</ul>");
+            }
+            
+            html.AppendLine("</body>");
+            html.AppendLine("</html>");
+            
+            // Convert HTML to bytes
+            var bytes = Encoding.UTF8.GetBytes(html.ToString());
+            return bytes;
         }
 
         private static string Escape(string? value)

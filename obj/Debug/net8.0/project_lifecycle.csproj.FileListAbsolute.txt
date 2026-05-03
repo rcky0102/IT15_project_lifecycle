@@ -567,3 +567,8 @@ C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\MimeKit.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\System.Security.Cryptography.Pkcs.dll
 C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\PdfSharpCore.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\ICSharpCode.SharpZipLib.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\SixLabors.Fonts.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\SixLabors.ImageSharp.dll
+C:\Users\Asus\source\repos\project_lifecycle\project_lifecycle\bin\Debug\net8.0\de\PdfSharpCore.resources.dll

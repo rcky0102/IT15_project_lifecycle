@@ -22,6 +22,22 @@
         max-width: 420px;
         margin: 0 auto;
     }
+
+    .cooldown-timer {
+        background: #dc3545;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .login-button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
 </style>
 
 <div class="animated-bg">
@@ -48,6 +64,12 @@
                 <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-outline-light btn-lg">
                     Back to Home
                 </a>
+            </div>
+
+            <!-- Cooldown Timer -->
+            <div id="cooldownTimer" class="cooldown-timer" style="display: none;">
+                <i class="fas fa-clock"></i>
+                <span id="cooldownText">Please wait <span id="cooldownCount">30</span> seconds before next login attempt</span>
             </div>
         </div>
 
@@ -123,6 +145,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('account');
     const submitBtn = document.getElementById('login-submit');
+    const cooldownTimer = document.getElementById('cooldownTimer');
+    
+    // Check for cooldown state on page load
+    if (cooldownTimer && cooldownTimer.style.display !== 'none') {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Signing in...';
+        startCooldown();
+    }
     
     if (form && submitBtn) {
         form.addEventListener('submit', function(e) {
@@ -138,9 +168,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Check if cooldown is active
+            if (cooldownTimer && cooldownTimer.style.display !== 'none') {
+                e.preventDefault();
+                return;
+            }
+
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Signing in...';
         });
+    }
+    
+    // Cooldown timer function
+    function startCooldown() {
+        let timeLeft = 30;
+        cooldownTimer.style.display = 'block';
+        if (document.getElementById('cooldownCount')) {
+            document.getElementById('cooldownCount').textContent = timeLeft;
+        }
+        
+        const interval = setInterval(() => {
+            timeLeft--;
+            if (document.getElementById('cooldownCount')) {
+                document.getElementById('cooldownCount').textContent = timeLeft;
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                cooldownTimer.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Sign In';
+            }
+        }, 1000);
     }
 });
 </script>

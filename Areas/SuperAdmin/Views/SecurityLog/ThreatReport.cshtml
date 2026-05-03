@@ -29,6 +29,82 @@
 .level-2 { background: #fff3cd; color: #856404; }
 .level-3 { background: #f8d7da; color: #721c24; }
 .level-4 { background: #d1ecf1; color: #0c5460; }
+
+/* Consistent styling with AuditLog */
+.audit-container { max-width: 1200px; margin: 0 auto; }
+.audit-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 0.5rem; margin-bottom: 2rem; }
+.audit-header-content { display: flex; justify-content: space-between; align-items: center; }
+.audit-title { font-size: 2rem; font-weight: bold; margin: 0; }
+.audit-subtitle { margin: 0; opacity: 0.8; }
+.audit-header-actions { display: flex; gap: 0.5rem; }
+.audit-count-badge { background: #007bff; color: white; padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.875rem; }
+.audit-table-wrap { background: white; border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.audit-table { width: 100%; border-collapse: collapse; }
+.audit-table th { background: #f8f9fa; color: #343a40; padding: 0.75rem; text-align: left; font-weight: 600; }
+.audit-table td { padding: 0.75rem; border-bottom: 1px solid #dee2e6; }
+.audit-row:hover { background: #f8f9fa; }
+.audit-row.suspicious-row { background: #fff3cd; }
+.audit-empty { text-align: center; padding: 3rem; }
+.audit-empty h3 { color: #6c757d; margin-bottom: 1rem; }
+.audit-pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem; }
+.audit-filter-panel { background: #e3f2fd; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem; }
+.audit-filter-form { display: flex; flex-wrap: wrap; gap: 1rem; }
+.audit-filter-group { flex: 1; min-width: 200px; }
+.audit-filter-label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.audit-filter-input { flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-size: 0.875rem; }
+.audit-filter-select { flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-size: 0.875rem; }
+.audit-filter-buttons { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.audit-filter-btn { background: #007bff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer; }
+.audit-filter-btn:hover { background: #0056b3; }
+.audit-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+.audit-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 0.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.2); max-width: 600px; width: 90%; }
+.audit-modal-header { background: #343a40; color: white; padding: 1rem; border-radius: 0.5rem 0.5rem 0 0; }
+.audit-modal-header { display: flex; justify-content: space-between; align-items: center; }
+.audit-modal-header h4 { margin: 0; font-size: 1.25rem; }
+.audit-modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d; }
+.audit-modal-body { padding: 1.5rem; }
+.audit-modal-footer { display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 1rem; }
+.audit-modal-footer button { padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; }
+.audit-modal-footer .btn-secondary { background: #6c757d; color: white; }
+.audit-modal-footer .btn-danger { background: #dc3545; color: white; }
+.audit-modal-footer .btn-secondary:hover { background: #545b62; }
+.audit-modal-footer .btn-danger:hover { background: #c82333; }
+.detail-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; }
+.detail-item { display: flex; flex-direction: column; }
+.detail-item label { font-weight: 500; margin-bottom: 0.25rem; }
+.detail-item span { flex: 1; }
+.page-btns { display: flex; justify-content: center; gap: 0.5rem; }
+.page-btn { padding: 0.5rem 1rem; border: 1px solid #dee2e6; border-radius: 0.25rem; cursor: pointer; background: white; }
+.page-btn:hover { background: #e9ecef; }
+.page-btn.active { background: #007bff; color: white; }
+.user-cell { display: flex; align-items: center; }
+.user-avatar-sm { width: 30px; height: 30px; border-radius: 50%; font-weight: bold; display: flex; align-items: center; justify-content: center; background: #007bff; color: white; font-size: 0.75rem; }
+.user-name-text { margin-left: 0.5rem; }
+.ip-address { font-family: monospace; }
+.timestamp-date { display: block; font-weight: 500; }
+.timestamp-time { display: block; opacity: 0.7; }
+.badge-safe { background: #28a745; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
+.badge-role { background: #007bff; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
+.badge-action { background: #ffc107; color: #212529; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
+.badge-entity { background: #6c757d; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
+.event-type { color: #007bff; }
+.suspicious-badge { background: #dc3545; color: white; }
+.security-actions { display: flex; gap: 0.5rem; }
+.btn-lockout { background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; cursor: pointer; }
+.btn-unlock { background: #28a745; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; cursor: pointer; }
+.btn-details { background: #007bff; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; cursor: pointer; }
+.btn-details:hover { background: #0056b3; }
+.report-period { background: #e3f2fd; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; }
+.export-buttons { display: flex; gap: 1rem; margin-top: 1rem; }
+.btn-export, .btn-print { background: #007bff; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.25rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.btn-export:hover, .btn-print:hover { background: #0056b3; }
+.btn-back { background: #6c757d; color: white; padding: 0.5rem 1rem; border-radius: 0.25rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.btn-back:hover { background: #545b62; }
+@@media print {
+    .audit-header-actions, .export-section {
+        display: none;
+    }
+}
 </style>
 }
 
@@ -181,7 +257,7 @@
                 <input type="hidden" name="to" value="@toDate" />
                 <button type="submit" class="btn-export"><i class="fas fa-file-csv"></i> Export Full Report (CSV)</button>
             </form>
-            <button type="button" class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
+            <button type="button" class="btn-export" onclick="exportToPdf()"><i class="fas fa-file-pdf"></i> Export to PDF</button>
         </div>
     </div>
 </div>
@@ -244,4 +320,61 @@
         display: none;
     }
 }
-</style>
+
+@@section Scripts {
+<script>
+    /* ── Export Functions ── */
+    function exportToCsv() {
+        document.getElementById('exportForm')?.submit();
+    }
+
+    function exportToPdf() {
+        // Show loading indicator
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+        btn.disabled = true;
+
+        // Get current filter values
+        const fromDate = document.querySelector('input[name="from"]')?.value || '';
+        const toDate = document.querySelector('input[name="to"]')?.value || '';
+
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '@Url.Action("ExportToPdf")';
+        form.style.display = 'none';
+
+        // Add hidden inputs
+        const fromInput = document.createElement('input');
+        fromInput.type = 'hidden';
+        fromInput.name = 'from';
+        fromInput.value = fromDate;
+        form.appendChild(fromInput);
+
+        const toInput = document.createElement('input');
+        toInput.type = 'hidden';
+        toInput.name = 'to';
+        toInput.value = toDate;
+        form.appendChild(toInput);
+
+        // Add anti-forgery token
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = '__RequestVerificationToken';
+        tokenInput.value = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        form.appendChild(tokenInput);
+
+        // Submit form
+        document.body.appendChild(form);
+        form.submit();
+
+        // Restore button
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            document.body.removeChild(form);
+        }, 2000);
+    }
+</script>
+}

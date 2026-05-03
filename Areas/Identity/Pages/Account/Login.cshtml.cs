@@ -139,13 +139,22 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                     var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
                     var userAgent = Request.Headers["User-Agent"].ToString();
                     
-                    await _securityLogService.LogFailedLoginAndCheckThresholdAsync(
+                    var thresholdExceeded = await _securityLogService.LogFailedLoginAndCheckThresholdAsync(
                         Input.Email, 
                         ipAddress ?? "Unknown", 
                         userAgent ?? "Unknown");
 
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return Page();
+                    if (thresholdExceeded)
+                    {
+                        // Implement 30-second cooldown
+                        ModelState.AddModelError(string.Empty, "Too many failed login attempts. Please wait 30 seconds before trying again.");
+                        return Page();
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                        return Page();
+                    }
                 }
             }
 

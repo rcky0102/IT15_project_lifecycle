@@ -303,16 +303,91 @@
                 document.getElementById('dMitigation').textContent = d.mitigationPlan || '–';
                 document.getElementById('dContainment').textContent = d.containmentStrategy || '–';
                 document.getElementById('dAccountLocked').textContent = d.accountLockedOut ? 'Yes' : 'No';
-                document.getElementById('dTime').textContent = d.timestamp;
-                modal.classList.add('active');
-            } catch (err) {
-                console.error(err);
+                document.getElementById('dTime').textContent = new Date(d.timestamp).toLocaleString();
+                modal.style.display = 'flex';
+            } catch (error) {
+                console.error('Error loading details:', error);
+                alert('Error loading security event details');
             }
         });
     });
 
-    closeBtn?.addEventListener('click', function () { modal.classList.remove('active'); });
-    modal?.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('active'); });
+    closeBtn.addEventListener('click', function () {
+        modal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    /* ── Account Lockout/Unlock Handlers ── */
+    document.querySelectorAll('.btn-lockout-account').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const userId = this.dataset.userId;
+            const username = this.dataset.username;
+            
+            if (confirm(`Are you sure you want to lockout the account for ${username}?`)) {
+                try {
+                    const res = await fetch('@Url.Action("LockoutAccount")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({
+                            userId: userId,
+                            reason: prompt('Enter reason for account lockout (optional):') || ''
+                        })
+                    });
+
+                    if (res.ok) {
+                        alert('Account locked out successfully');
+                        location.reload();
+                    } else {
+                        alert('Error locking out account');
+                    }
+                } catch (error) {
+                    console.error('Lockout error:', error);
+                    alert('Error locking out account');
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-unlock-account').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const userId = this.dataset.userId;
+            const username = this.dataset.username;
+            
+            if (confirm(`Are you sure you want to unlock the account for ${username}?`)) {
+                try {
+                    const res = await fetch('@Url.Action("UnlockAccount")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({
+                            userId: userId
+                        })
+                    });
+
+                    if (res.ok) {
+                        alert('Account unlocked successfully');
+                        location.reload();
+                    } else {
+                        alert('Error unlocking account');
+                    }
+                } catch (error) {
+                    console.error('Unlock error:', error);
+                    alert('Error unlocking account');
+                }
+            }
+        });
+    });
 
     /* ── Account Lockout ── */
     const lockoutModal = document.getElementById('lockoutModal');
