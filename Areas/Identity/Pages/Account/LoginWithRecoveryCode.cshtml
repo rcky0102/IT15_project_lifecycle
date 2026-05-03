@@ -1,0 +1,56 @@
+@page
+@model LoginWithRecoveryCodeModel
+@{
+    ViewData["Title"] = "Recovery Code Verification";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/home.css" />
+<link rel="stylesheet" href="~/css/identity.css" />
+
+<div class="animated-bg">
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+    </div>
+</div>
+
+<section class="identity-section">
+    <div class="identity-card">
+        <div class="two-factor-icon">
+            <i class="bi bi-key-fill"></i>
+        </div>
+        <h2 class="identity-title">Recovery Code</h2>
+        <p class="identity-subtitle">
+            You've requested to log in with a recovery code. This login will not be remembered until you provide an authenticator code at log in or disable 2FA and log in again.
+        </p>
+
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+            <div class="form-floating mb-4">
+                <input asp-for="Input.RecoveryCode" class="form-control rounded-3" autocomplete="off" placeholder="XXXXX-XXXXX" />
+                <label asp-for="Input.RecoveryCode">Recovery Code</label>
+                <span asp-validation-for="Input.RecoveryCode" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 justify-content-center py-3">
+                Verify & Sign In
+            </button>
+        </form>
+
+        <div class="mt-4 text-center">
+            <p class="text-muted small mb-3">Forgot your recovery codes?</p>
+            <a asp-page="./Login" class="text-muted text-decoration-none small">
+                <i class="bi bi-arrow-left me-1"></i> Back to Sign In
+            </a>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

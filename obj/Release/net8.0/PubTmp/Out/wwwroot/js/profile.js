@@ -107,6 +107,35 @@
         } else {
             if ($('#vDateHiredRow')) $('#vDateHiredRow').style.display = 'none';
         }
+
+        // Handle SuperAdmin specific visibility
+        if (data.role === 'SuperAdmin') {
+            // Hide Address section in View Mode
+            const addressCard = $('#vRegion')?.closest('.col-12');
+            if (addressCard) addressCard.style.display = 'none';
+
+            // Hide Organization section in View Mode
+            const orgCard = $('#vEmpNo')?.closest('.col-lg-6');
+            if (orgCard) orgCard.style.display = 'none';
+
+            // Hide Address section in Edit Mode
+            const editAddressCard = $('#psgcRegion')?.closest('.col-12');
+            if (editAddressCard) editAddressCard.style.display = 'none';
+
+            // Hide Hero Employee Number
+            const heroEmpNo = $('.prof-hero-emp-no');
+            if (heroEmpNo) heroEmpNo.style.display = 'none';
+        } else {
+            // Show them if they were hidden (e.g. if switching accounts without refresh, though unlikely)
+            const addressCard = $('#vRegion')?.closest('.col-12');
+            if (addressCard) addressCard.style.display = '';
+            const orgCard = $('#vEmpNo')?.closest('.col-lg-6');
+            if (orgCard) orgCard.style.display = '';
+            const editAddressCard = $('#psgcRegion')?.closest('.col-12');
+            if (editAddressCard) editAddressCard.style.display = '';
+            const heroEmpNo = $('.prof-hero-emp-no');
+            if (heroEmpNo) heroEmpNo.style.display = '';
+        }
     }
 
     function setText(id, v) {

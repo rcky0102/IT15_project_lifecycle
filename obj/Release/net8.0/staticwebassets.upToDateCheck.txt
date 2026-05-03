@@ -121,7 +121,7 @@ wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 wwwroot\js\site.js
 wwwroot\js\psgc.js
-wwwroot\js\profile.js
+wwwroot\css\identity.css
 wwwroot\js\notifications.js
 wwwroot\js\messenger.js
 wwwroot\favicon.ico
@@ -172,3 +172,4 @@ wwwroot\uploads\editor\be07637c-8687-488a-8652-5a049944b8b6_ADAYA-2.docx
 wwwroot\uploads\editor\c40ff1ce-aa6d-4a3e-a659-af8a73285dea_ADAYA-2.docx
 wwwroot\uploads\editor\fb90d96d-9847-4ff1-8ea6-70b5b25844c4_ADAYA-2.docx
 wwwroot\uploads\profiles\31148675-6133-40c3-bb86-8a6f583b5f3c.gif
+wwwroot\js\profile.js

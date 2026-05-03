@@ -1,0 +1,99 @@
+/* Identity Specific Styles */
+
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #ffffff;
+    color: #444;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.google-btn:hover {
+    background: #f8f9fa;
+    border-color: #d2d4d7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    transform: translateY(-1px);
+}
+
+.google-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Reusing Home Section Layouts for Identity Pages */
+.identity-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    background: var(--ocean-gradient);
+    position: relative;
+    overflow: hidden;
+}
+
+.identity-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.05"><circle cx="30" cy="30" r="4"/></g></svg>');
+    animation: slide 20s linear infinite;
+}
+
+.identity-card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-white);
+    border-radius: var(--border-radius-lg);
+    padding: 3rem;
+    box-shadow: var(--shadow-xl);
+    position: relative;
+    z-index: 2;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.identity-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    text-align: center;
+    background: var(--ocean-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.identity-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.form-floating > label {
+    padding-left: 1rem;
+}
+
+.form-control:focus {
+    border-color: var(--ocean-accent);
+    box-shadow: 0 0 0 4px rgba(0, 168, 204, 0.15);
+}
+
+/* 2FA Specific */
+.two-factor-icon {
+    font-size: 3rem;
+    color: var(--ocean-accent);
+    margin-bottom: 1.5rem;
+    display: block;
+    text-align: center;
+}
