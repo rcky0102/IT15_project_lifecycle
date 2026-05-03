@@ -236,13 +236,37 @@ namespace project_lifecycle.Controllers
                             DateHired = (string?)null
                         };
                     break;
+                case "SuperAdmin":
+                    var sa = await _context.SuperAdmins.FirstOrDefaultAsync(s => s.UserId == userId);
+                    if (sa != null)
+                        profile = new
+                        {
+                            sa.Id,
+                            EmployeeNumber = "",
+                            sa.FirstName,
+                            sa.MiddleName,
+                            sa.LastName,
+                            sa.Contact,
+                            DepartmentName = (string?)null,
+                            PositionName = (string?)null,
+                            DepartmentId = (int?)null,
+                            PositionId = (int?)null,
+                            AddressLine = "",
+                            Region = "",
+                            Province = "",
+                            City = "",
+                            Barangay = "",
+                            sa.ProfileImage,
+                            DateHired = (string?)null
+                        };
+                    break;
             }
 
             var twoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
 
             if (profile == null)
             {
-                // SuperAdmin or unlinked user – return minimal info
+                // Fallback for SuperAdmin if no record exists or unlinked user – return minimal info
                 return Ok(new
                 {
                     email = user.Email,
@@ -648,6 +672,32 @@ namespace project_lifecycle.Controllers
                         {
                             var desc = $"{ex.FirstName} {ex.LastName} updated profile: {string.Join(", ", exChanges)}";
                             await _audit.LogAsync(User, "Update", "Profile", desc, "Executive", ex.Id.ToString());
+                        }
+                    }
+                    break;
+                case "SuperAdmin":
+                    var sa = await _context.SuperAdmins.FirstOrDefaultAsync(s => s.UserId == userId);
+                    if (sa != null)
+                    {
+                        var saChanges = new List<string>();
+                        if (!string.IsNullOrEmpty(firstName) && firstName != sa.FirstName) saChanges.Add("First Name");
+                        if (!string.IsNullOrEmpty(lastName) && lastName != sa.LastName) saChanges.Add("Last Name");
+                        if (middleName != (sa.MiddleName ?? "")) saChanges.Add("Middle Name");
+                        if (!string.IsNullOrEmpty(contact) && contact != sa.Contact) saChanges.Add("Contact");
+                        if (imagePath != null) saChanges.Add("Profile Image");
+                        if (!string.IsNullOrEmpty(newEmail) && newEmail != user.Email) saChanges.Add("Email");
+                        if (!string.IsNullOrEmpty(newPassword)) saChanges.Add("Password");
+
+                        if (!string.IsNullOrEmpty(firstName)) sa.FirstName = firstName;
+                        if (!string.IsNullOrEmpty(lastName)) sa.LastName = lastName;
+                        sa.MiddleName = string.IsNullOrEmpty(middleName) ? null : middleName;
+                        sa.Contact = string.IsNullOrEmpty(contact) ? sa.Contact : contact;
+                        if (imagePath != null) sa.ProfileImage = imagePath;
+
+                        if (saChanges.Any())
+                        {
+                            var desc = $"{sa.FirstName} {sa.LastName} updated profile: {string.Join(", ", saChanges)}";
+                            await _audit.LogAsync(User, "Update", "Profile", desc, "SuperAdmin", sa.Id.ToString());
                         }
                     }
                     break;

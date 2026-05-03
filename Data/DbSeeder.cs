@@ -86,6 +86,25 @@ namespace project_lifecycle.Data
                 }
             }
 
+            // Ensure SuperAdmin record exists in the SuperAdmins table
+            var seededUser = await userManager.FindByEmailAsync(superAdmin.Email);
+            if (seededUser != null)
+            {
+                var saRecord = await context.SuperAdmins.FirstOrDefaultAsync(s => s.UserId == seededUser.Id);
+                if (saRecord == null)
+                {
+                    await context.SuperAdmins.AddAsync(new SuperAdmin
+                    {
+                        UserId = seededUser.Id,
+                        FirstName = "Super",
+                        LastName = "Admin",
+                        MiddleName = "",
+                        Contact = "09123456789"
+                    });
+                    await context.SaveChangesAsync();
+                }
+            }
+
             // Fix existing projects that have an empty Status
             var emptyStatusProjects = await context.Projects
                 .Where(p => p.Status == null || p.Status == "")

@@ -186,6 +186,10 @@
                         </div>
                         <i class="fas fa-chevron-down" style="font-size:.7rem;color:#64748b;margin-left:.25rem"></i>
                         <div class="sa-user-dropdown" id="userDropdown">
+                            <a href="@Url.Action("Index", "Profile", new { area = "SuperAdmin" })" class="sa-user-dropdown-item">
+                                <i class="fas fa-user-circle"></i>
+                                <span>My Profile</span>
+                            </a>
                             <button type="button" class="sa-user-dropdown-item sa-user-dropdown-logout" id="logoutBtn">
                                 <i class="fas fa-arrow-right-from-bracket"></i>
                                 <span>Logout</span>
