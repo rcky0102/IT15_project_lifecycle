@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using project_lifecycle.Data;
 using project_lifecycle.Models;
 using System.Text.Json;
+using System.Collections.Generic;
 
 namespace project_lifecycle.Services
 {
@@ -11,6 +12,7 @@ namespace project_lifecycle.Services
         private readonly ApplicationDbContext _db;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly INotificationService _notificationService;
+        private static readonly Dictionary<string, List<DateTime>> _failedLoginAttempts = new();
 
         public SecurityLogService(
             ApplicationDbContext db,
@@ -310,28 +312,33 @@ namespace project_lifecycle.Services
             int threshold = 5,
             TimeSpan? timeWindow = null)
         {
-            // Log the failed login attempt
-            await LogSecurityEventAsync(
-                "Failed Login",
-                $"Failed login attempt for user: {userName}",
-                false,
-                null,
-                userName,
-                ipAddress,
-                userAgent,
-                "/Account/Login",
-                1,
-                JsonSerializer.Serialize(new { UserName = userName, IpAddress = ipAddress }));
-
-            // Check if threshold is exceeded
-            var attempts = await GetFailedLoginAttemptsAsync(ipAddress, userName, timeWindow);
+            var trackingKey = $"{userName}_{ipAddress}";
+            var window = timeWindow ?? TimeSpan.FromMinutes(15);
+            var now = DateTime.Now;
             
-            if (attempts >= threshold)
+            // Clean up old attempts from memory
+            if (_failedLoginAttempts.ContainsKey(trackingKey))
             {
-                // Log as suspicious activity
+                _failedLoginAttempts[trackingKey] = _failedLoginAttempts[trackingKey]
+                    .Where(dt => dt >= now.Subtract(window))
+                    .ToList();
+            }
+            
+            // Add current failed attempt
+            if (!_failedLoginAttempts.ContainsKey(trackingKey))
+            {
+                _failedLoginAttempts[trackingKey] = new List<DateTime>();
+            }
+            _failedLoginAttempts[trackingKey].Add(now);
+            
+            var currentAttempts = _failedLoginAttempts[trackingKey].Count;
+            
+            if (currentAttempts >= threshold)
+            {
+                // Only log when threshold is exceeded
                 await LogSecurityEventAsync(
                     "Suspicious Login Activity",
-                    $"Threshold exceeded: {attempts} failed login attempts detected for user '{userName}' from IP {ipAddress}",
+                    $"Threshold exceeded: {currentAttempts} failed login attempts detected for user '{userName}' from IP {ipAddress}",
                     true,
                     null,
                     userName,
@@ -342,15 +349,15 @@ namespace project_lifecycle.Services
                     JsonSerializer.Serialize(new { 
                         UserName = userName, 
                         IpAddress = ipAddress, 
-                        AttemptCount = attempts,
+                        AttemptCount = currentAttempts,
                         Threshold = threshold,
-                        TimeWindow = timeWindow?.ToString() ?? "15 minutes"
+                        TimeWindow = window.ToString()
                     }));
 
                 return true; // Threshold exceeded
             }
 
-            return false; // Threshold not exceeded
+            return false; // Threshold not exceeded, no logging
         }
 
         private async Task NotifySuperAdminsAsync(SecurityLog securityLog)
