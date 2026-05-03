@@ -34,29 +34,40 @@ namespace project_lifecycle.Services
             int threatLevel = 1,
             string? eventProperties = null)
         {
-            var securityLog = new SecurityLog
+            try
             {
-                EventType = eventType,
-                Description = description,
-                IsSuspicious = isSuspicious,
-                UserId = userId,
-                UserName = userName,
-                IpAddress = ipAddress,
-                UserAgent = userAgent,
-                RequestPath = requestPath,
-                ThreatLevel = threatLevel,
-                EventProperties = eventProperties,
-                MitigationPlan = GenerateMitigationPlan(eventType, threatLevel),
-                ContainmentStrategy = GenerateContainmentStrategy(eventType, threatLevel)
-            };
+                var securityLog = new SecurityLog
+                {
+                    EventType = eventType,
+                    Description = description,
+                    IsSuspicious = isSuspicious,
+                    UserId = userId,
+                    UserName = userName,
+                    IpAddress = ipAddress,
+                    UserAgent = userAgent,
+                    RequestPath = requestPath,
+                    ThreatLevel = threatLevel,
+                    EventProperties = eventProperties,
+                    MitigationPlan = GenerateMitigationPlan(eventType, threatLevel),
+                    ContainmentStrategy = GenerateContainmentStrategy(eventType, threatLevel)
+                };
 
-            _db.SecurityLogs.Add(securityLog);
-            await _db.SaveChangesAsync();
+                _db.SecurityLogs.Add(securityLog);
+                var result = await _db.SaveChangesAsync();
+                
+                // Debug: Log the result
+                Console.WriteLine($"SecurityLogService: Saved {result} security log entries. Event: {eventType}, Suspicious: {isSuspicious}");
 
-            // Notify SuperAdmins if this is a suspicious event
-            if (isSuspicious && threatLevel >= 3)
+                // Notify SuperAdmins if this is a suspicious event
+                if (isSuspicious && threatLevel >= 3)
+                {
+                    await NotifySuperAdminsAsync(securityLog);
+                }
+            }
+            catch (Exception ex)
             {
-                await NotifySuperAdminsAsync(securityLog);
+                Console.WriteLine($"SecurityLogService ERROR: {ex.Message}");
+                throw;
             }
         }
 
@@ -70,34 +81,45 @@ namespace project_lifecycle.Services
             int page = 1,
             int pageSize = 25)
         {
-            var query = _db.SecurityLogs.AsQueryable();
+            try
+            {
+                var query = _db.SecurityLogs.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(eventType))
-                query = query.Where(l => l.EventType == eventType);
+                if (!string.IsNullOrWhiteSpace(eventType))
+                    query = query.Where(l => l.EventType == eventType);
 
-            if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(l =>
-                    (l.UserName != null && l.UserName.Contains(search)) ||
-                    l.Description.Contains(search) ||
-                    (l.IpAddress != null && l.IpAddress.Contains(search)));
+                if (!string.IsNullOrWhiteSpace(search))
+                    query = query.Where(l =>
+                        (l.UserName != null && l.UserName.Contains(search)) ||
+                        l.Description.Contains(search) ||
+                        (l.IpAddress != null && l.IpAddress.Contains(search)));
 
-            if (isSuspicious.HasValue)
-                query = query.Where(l => l.IsSuspicious == isSuspicious.Value);
+                if (isSuspicious.HasValue)
+                    query = query.Where(l => l.IsSuspicious == isSuspicious.Value);
 
-            if (threatLevel.HasValue)
-                query = query.Where(l => l.ThreatLevel == threatLevel.Value);
+                if (threatLevel.HasValue)
+                    query = query.Where(l => l.ThreatLevel == threatLevel.Value);
 
-            if (from.HasValue)
-                query = query.Where(l => l.Timestamp >= from.Value);
+                if (from.HasValue)
+                    query = query.Where(l => l.Timestamp >= from.Value);
 
-            if (to.HasValue)
-                query = query.Where(l => l.Timestamp <= to.Value.Date.AddDays(1));
+                if (to.HasValue)
+                    query = query.Where(l => l.Timestamp <= to.Value.Date.AddDays(1));
 
-            return await query
-                .OrderByDescending(l => l.Timestamp)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+                var result = await query
+                    .OrderByDescending(l => l.Timestamp)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                Console.WriteLine($"SecurityLogService: Retrieved {result.Count} security logs for display");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SecurityLogService GetSecurityLogsAsync ERROR: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<int> GetSecurityLogsCountAsync(
@@ -200,7 +222,7 @@ namespace project_lifecycle.Services
             if (user == null) return false;
 
             // Lock the account using Identity's built-in lockout
-            var result = await _userManager.SetLockoutEndDateAsync(user, DateTime.UtcNow.AddYears(100));
+            var result = await _userManager.SetLockoutEndDateAsync(user, DateTime.Now.AddYears(100));
             
             if (result.Succeeded)
             {
@@ -258,7 +280,7 @@ namespace project_lifecycle.Services
             if (user == null) return false;
 
             var lockoutEnd = await _userManager.GetLockoutEndDateAsync(user);
-            return lockoutEnd.HasValue && lockoutEnd.Value > DateTime.UtcNow;
+            return lockoutEnd.HasValue && lockoutEnd.Value > DateTime.Now;
         }
 
         public async Task<int> GetFailedLoginAttemptsAsync(
@@ -267,7 +289,7 @@ namespace project_lifecycle.Services
             TimeSpan? timeWindow = null)
         {
             var window = timeWindow ?? TimeSpan.FromMinutes(15);
-            var since = DateTime.UtcNow.Subtract(window);
+            var since = DateTime.Now.Subtract(window);
 
             var query = _db.SecurityLogs
                 .Where(l => l.EventType == "Failed Login" && l.Timestamp >= since);

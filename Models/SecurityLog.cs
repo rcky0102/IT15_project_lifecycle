@@ -60,7 +60,7 @@ namespace project_lifecycle.Models
         public DateTime? AccountLockoutTime { get; set; }
 
         /// <summary>When the event occurred</summary>
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public DateTime Timestamp { get; set; } = DateTime.Now;
 
         /// <summary>Additional event properties stored as JSON</summary>
         [MaxLength(2000)]

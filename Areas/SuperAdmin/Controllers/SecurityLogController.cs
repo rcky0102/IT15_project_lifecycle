@@ -194,6 +194,43 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             return Json(new { isLockedOut });
         }
 
+        // GET: /SuperAdmin/SecurityLog/Test
+        public async Task<IActionResult> Test()
+        {
+            try
+            {
+                // Test logging a security event
+                await _securityLogService.LogSecurityEventAsync(
+                    "Test Event",
+                    "This is a test security event to verify logging is working",
+                    false,
+                    null,
+                    "testuser",
+                    "127.0.0.1",
+                    "Test Browser",
+                    "/SuperAdmin/SecurityLog/Test",
+                    1);
+
+                // Test retrieving logs
+                var logs = await _securityLogService.GetSecurityLogsAsync();
+                
+                return Json(new { 
+                    success = true, 
+                    message = $"Test event logged. Total logs retrieved: {logs.Count}",
+                    logCount = logs.Count,
+                    lastLog = logs.FirstOrDefault()?.Description
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { 
+                    success = false, 
+                    message = $"Error: {ex.Message}",
+                    stackTrace = ex.StackTrace
+                });
+            }
+        }
+
         private static string Escape(string? value)
             => (value ?? string.Empty).Replace("\"", "\"\"");
     }
