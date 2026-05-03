@@ -1,0 +1,398 @@
+@model List<project_lifecycle.Models.SecurityLog>
+@{
+    ViewData["Title"] = "Security Logs";
+
+    var eventTypes = (ViewData["EventTypes"] as List<string>) ?? new();
+    var curEventType = ViewData["CurrentEventType"]?.ToString();
+    var curSearch = ViewData["CurrentSearch"]?.ToString();
+    var curIsSuspicious = ViewData["CurrentIsSuspicious"] as bool?;
+    var curThreatLevel = ViewData["CurrentThreatLevel"] as int?;
+    var curFrom = ViewData["CurrentFrom"]?.ToString();
+    var curTo = ViewData["CurrentTo"]?.ToString();
+    var page = (int)(ViewData["Page"] ?? 1);
+    var pageSize = (int)(ViewData["PageSize"] ?? 25);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var totalCount = (int)(ViewData["TotalCount"] ?? 0);
+}
+
+@section Styles {
+<link rel="stylesheet" href="~/css/superadmin-auditlog.css" asp-append-version="true" />
+<style>
+.threat-level-1 { background: #e8f5e8; color: #2e7d32; }
+.threat-level-2 { background: #fff3cd; color: #856404; }
+.threat-level-3 { background: #f8d7da; color: #721c24; }
+.threat-level-4 { background: #d1ecf1; color: #0c5460; }
+.suspicious-badge { background: #dc3545; color: white; }
+.security-actions { display: flex; gap: 0.5rem; }
+.btn-lockout { background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; cursor: pointer; }
+.btn-unlock { background: #28a745; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; cursor: pointer; }
+</style>
+}
+
+<div class="audit-container">
+
+    <!-- ── Header ── -->
+    <div class="audit-header">
+        <div class="audit-header-content">
+            <div>
+                <h1 class="audit-title"><i class="fas fa-shield-alt"></i> Security Logs</h1>
+                <p class="audit-subtitle">Monitor suspicious activities and security threats across the system</p>
+            </div>
+            <div class="audit-header-actions">
+                <span class="audit-count-badge"><i class="fas fa-exclamation-triangle"></i> @totalCount security events</span>
+                <a href="@Url.Action("ThreatReport")" class="btn-report"><i class="fas fa-chart-line"></i> Threat Report</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filter Panel ── -->
+    <div class="audit-filter-panel">
+        <form method="get" asp-action="Index" class="audit-filter-form" id="filterForm">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label><i class="fas fa-search"></i> Search</label>
+                    <input type="text" name="search" value="@curSearch" placeholder="User, description, IP…" class="filter-input" />
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-tag"></i> Event Type</label>
+                    <select name="eventType" class="filter-select">
+                        <option value="">All Events</option>
+                        @foreach (var et in eventTypes)
+                        {
+                            <option value="@et" selected="@(curEventType == et)">@et</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-exclamation-triangle"></i> Suspicious</label>
+                    <select name="isSuspicious" class="filter-select">
+                        <option value="">All</option>
+                        <option value="true" selected="@(curIsSuspicious == true)">Suspicious Only</option>
+                        <option value="false" selected="@(curIsSuspicious == false)">Non-Suspicious</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-signal"></i> Threat Level</label>
+                    <select name="threatLevel" class="filter-select">
+                        <option value="">All Levels</option>
+                        <option value="1" selected="@(curThreatLevel == 1)">1 - Low</option>
+                        <option value="2" selected="@(curThreatLevel == 2)">2 - Medium</option>
+                        <option value="3" selected="@(curThreatLevel == 3)">3 - High</option>
+                        <option value="4" selected="@(curThreatLevel == 4)">4 - Critical</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar"></i> From</label>
+                    <input type="date" name="from" value="@curFrom" class="filter-input" />
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-check"></i> To</label>
+                    <input type="date" name="to" value="@curTo" class="filter-input" />
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter"><i class="fas fa-filter"></i> Apply Filters</button>
+                <a href="@Url.Action("Index")" class="btn-filter-reset"><i class="fas fa-rotate-left"></i> Reset</a>
+                <button type="button" class="btn-filter-export" id="exportCsvBtn"><i class="fas fa-file-csv"></i> Export CSV</button>
+            </div>
+        </form>
+
+        <!-- Hidden CSV export form -->
+        <form method="post" asp-action="Export" id="exportForm" style="display:none;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="eventType" value="@curEventType" />
+            <input type="hidden" name="search" value="@curSearch" />
+            <input type="hidden" name="isSuspicious" value="@curIsSuspicious" />
+            <input type="hidden" name="threatLevel" value="@curThreatLevel" />
+            <input type="hidden" name="from" value="@curFrom" />
+            <input type="hidden" name="to" value="@curTo" />
+        </form>
+    </div>
+
+    <!-- ── Table ── -->
+    <div class="audit-table-wrap">
+        @if (Model.Any())
+        {
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Event Type</th>
+                        <th>Description</th>
+                        <th>User</th>
+                        <th>IP Address</th>
+                        <th>Threat Level</th>
+                        <th>Suspicious</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        <tr class="audit-row @(log.IsSuspicious ? "suspicious-row" : "")" data-id="@log.Id">
+                            <td class="col-timestamp">
+                                <span class="timestamp-date">@log.Timestamp.ToString("MMM dd, yyyy")</span>
+                                <span class="timestamp-time">@log.Timestamp.ToString("hh:mm tt")</span>
+                            </td>
+                            <td>
+                                <span class="event-type">@log.EventType</span>
+                            </td>
+                            <td class="col-desc">@log.Description</td>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar-sm">@(log.UserName?.Length > 0 ? log.UserName[0].ToString().ToUpper() : "?")</div>
+                                    <span class="user-name-text">@log.UserName</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="ip-address">@log.IpAddress</span>
+                            </td>
+                            <td>
+                                <span class="threat-badge threat-level-@log.ThreatLevel">Level @log.ThreatLevel</span>
+                            </td>
+                            <td>
+                                @if (log.IsSuspicious)
+                                {
+                                    <span class="suspicious-badge"><i class="fas fa-exclamation-triangle"></i> Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-safe">No</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="security-actions">
+                                    <button class="btn-details" data-id="@log.Id" title="View details"><i class="fas fa-magnifying-glass"></i></button>
+                                    @if (!string.IsNullOrEmpty(log.UserId) && log.ThreatLevel >= 3)
+                                    {
+                                        <button class="btn-lockout-account" data-user-id="@log.UserId" data-username="@log.UserName" title="Lockout account"><i class="fas fa-lock"></i></button>
+                                        <button class="btn-unlock-account" data-user-id="@log.UserId" data-username="@log.UserName" title="Unlock account"><i class="fas fa-lock-open"></i></button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="audit-empty">
+                <i class="fas fa-shield-alt"></i>
+                <h3>No security events found</h3>
+                <p>Try adjusting your filters or wait for new security events to be recorded.</p>
+            </div>
+        }
+    </div>
+
+    <!-- ── Pagination ── -->
+    @if (totalPages > 1)
+    {
+        <nav class="audit-pagination">
+            <span class="page-info">Page @(page) of @totalPages</span>
+            <div class="page-btns">
+                @if (page > 1)
+                {
+                    <a href="@BuildPageUrl(page - 1)" class="page-btn"><i class="fas fa-chevron-left"></i></a>
+                }
+                @for (int p = Math.Max(1, page - 2); p <= Math.Min(totalPages, page + 2); p++)
+                {
+                    <a href="@BuildPageUrl(p)" class="page-btn @(p == page ? "active" : "")">@p</a>
+                }
+                @if (page < totalPages)
+                {
+                    <a href="@BuildPageUrl(page + 1)" class="page-btn"><i class="fas fa-chevron-right"></i></a>
+                }
+            </div>
+        </nav>
+    }
+</div>
+
+<!-- ── Details Modal ── -->
+<div class="audit-modal-backdrop" id="detailsModal">
+    <div class="audit-modal">
+        <div class="audit-modal-header">
+            <h4><i class="fas fa-shield-alt"></i> Security Event Details</h4>
+            <button class="audit-modal-close" id="closeModal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="audit-modal-body" id="modalBody">
+            <div class="detail-grid">
+                <div class="detail-item"><label>Event Type</label><span id="dEventType">-</span></div>
+                <div class="detail-item"><label>Description</label><span id="dDescription">-</span></div>
+                <div class="detail-item"><label>User</label><span id="dUser">-</span></div>
+                <div class="detail-item"><label>IP Address</label><span id="dIp">-</span></div>
+                <div class="detail-item"><label>Threat Level</label><span id="dThreatLevel">-</span></div>
+                <div class="detail-item"><label>Suspicious</label><span id="dSuspicious">-</span></div>
+                <div class="detail-item full"><label>User Agent</label><span id="dUserAgent">-</span></div>
+                <div class="detail-item full"><label>Request Path</label><span id="dRequestPath">-</span></div>
+                <div class="detail-item full"><label>Mitigation Plan</label><span id="dMitigation">-</span></div>
+                <div class="detail-item full"><label>Containment Strategy</label><span id="dContainment">-</span></div>
+                <div class="detail-item"><label>Account Locked</label><span id="dAccountLocked">-</span></div>
+                <div class="detail-item"><label>Timestamp</label><span id="dTime">-</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Account Lockout Confirmation Modal ── -->
+<div class="audit-modal-backdrop" id="lockoutModal">
+    <div class="audit-modal">
+        <div class="audit-modal-header">
+            <h4><i class="fas fa-lock"></i> Confirm Account Lockout</h4>
+            <button class="audit-modal-close" id="closeLockoutModal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="audit-modal-body">
+            <p>Are you sure you want to lockout the account for <strong id="lockoutUsername"></strong>?</p>
+            <div class="form-group">
+                <label for="lockoutReason">Reason (optional):</label>
+                <textarea id="lockoutReason" class="form-control" rows="3" placeholder="Enter reason for account lockout..."></textarea>
+            </div>
+        </div>
+        <div class="audit-modal-footer">
+            <button type="button" class="btn-secondary" id="cancelLockout">Cancel</button>
+            <button type="button" class="btn-danger" id="confirmLockout">Lockout Account</button>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string BuildPageUrl(int p)
+    {
+        var qs = new Dictionary<string, string?>
+        {
+            ["page"] = p.ToString(),
+            ["eventType"] = ViewData["CurrentEventType"]?.ToString(),
+            ["search"] = ViewData["CurrentSearch"]?.ToString(),
+            ["isSuspicious"] = ViewData["CurrentIsSuspicious"]?.ToString(),
+            ["threatLevel"] = ViewData["CurrentThreatLevel"]?.ToString(),
+            ["from"] = ViewData["CurrentFrom"]?.ToString(),
+            ["to"] = ViewData["CurrentTo"]?.ToString()
+        };
+        var pairs = qs.Where(kv => !string.IsNullOrEmpty(kv.Value)).Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value!)}");
+        return Url.Action("Index") + "?" + string.Join("&", pairs);
+    }
+}
+
+@section Scripts {
+<script>
+(function () {
+    /* ── CSV Export ── */
+    document.getElementById('exportCsvBtn')?.addEventListener('click', function () {
+        document.getElementById('exportForm')?.submit();
+    });
+
+    /* ── Details Modal ── */
+    const modal = document.getElementById('detailsModal');
+    const closeBtn = document.getElementById('closeModal');
+
+    document.querySelectorAll('.btn-details').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const id = this.dataset.id;
+            try {
+                const res = await fetch('@Url.Action("Details")/' + id);
+                if (!res.ok) throw new Error('Not found');
+                const d = await res.json();
+                document.getElementById('dEventType').textContent = d.eventType;
+                document.getElementById('dDescription').textContent = d.description;
+                document.getElementById('dUser').textContent = d.userName || '–';
+                document.getElementById('dIp').textContent = d.ipAddress || '–';
+                document.getElementById('dThreatLevel').textContent = 'Level ' + d.threatLevel;
+                document.getElementById('dSuspicious').textContent = d.isSuspicious ? 'Yes' : 'No';
+                document.getElementById('dUserAgent').textContent = d.userAgent || '–';
+                document.getElementById('dRequestPath').textContent = d.requestPath || '–';
+                document.getElementById('dMitigation').textContent = d.mitigationPlan || '–';
+                document.getElementById('dContainment').textContent = d.containmentStrategy || '–';
+                document.getElementById('dAccountLocked').textContent = d.accountLockedOut ? 'Yes' : 'No';
+                document.getElementById('dTime').textContent = d.timestamp;
+                modal.classList.add('active');
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    });
+
+    closeBtn?.addEventListener('click', function () { modal.classList.remove('active'); });
+    modal?.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('active'); });
+
+    /* ── Account Lockout ── */
+    const lockoutModal = document.getElementById('lockoutModal');
+    const closeLockoutBtn = document.getElementById('closeLockoutModal');
+    let currentUserId = '';
+    let currentUsername = '';
+
+    document.querySelectorAll('.btn-lockout-account').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            currentUserId = this.dataset.userId;
+            currentUsername = this.dataset.username;
+            document.getElementById('lockoutUsername').textContent = currentUsername;
+            document.getElementById('lockoutReason').value = '';
+            lockoutModal.classList.add('active');
+        });
+    });
+
+    document.getElementById('confirmLockout')?.addEventListener('click', async function () {
+        const reason = document.getElementById('lockoutReason').value;
+        try {
+            const formData = new FormData();
+            formData.append('userId', currentUserId);
+            formData.append('reason', reason);
+            formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+            const res = await fetch('@Url.Action("LockoutAccount")', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                lockoutModal.classList.remove('active');
+                location.reload(); // Refresh to show updated status
+            } else {
+                alert('Failed to lockout account. Please try again.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred. Please try again.');
+        }
+    });
+
+    document.getElementById('cancelLockout')?.addEventListener('click', function () {
+        lockoutModal.classList.remove('active');
+    });
+
+    closeLockoutBtn?.addEventListener('click', function () { lockoutModal.classList.remove('active'); });
+    lockoutModal?.addEventListener('click', function (e) { if (e.target === lockoutModal) lockoutModal.classList.remove('active'); });
+
+    /* ── Account Unlock ── */
+    document.querySelectorAll('.btn-unlock-account').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const userId = this.dataset.userId;
+            const username = this.dataset.username;
+            
+            if (!confirm(`Are you sure you want to unlock the account for ${username}?`)) {
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('userId', userId);
+                formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+                const res = await fetch('@Url.Action("UnlockAccount")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    location.reload(); // Refresh to show updated status
+                } else {
+                    alert('Failed to unlock account. Please try again.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+})();
+</script>
+}

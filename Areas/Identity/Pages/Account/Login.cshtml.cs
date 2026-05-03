@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using project_lifecycle.Services;
 
 namespace project_lifecycle.Areas.Identity.Pages.Account
 {
@@ -22,12 +23,14 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly ISecurityLogService _securityLogService;
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger, UserManager<IdentityUser> userManager)
+        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger, UserManager<IdentityUser> userManager, ISecurityLogService securityLogService)
         {
             _signInManager = signInManager;
             _logger = logger;
             _userManager = userManager;
+            _securityLogService = securityLogService;
         }
 
         [BindProperty]
@@ -132,6 +135,15 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                 }
                 else
                 {
+                    // Log failed login attempt and check for suspicious activity
+                    var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                    var userAgent = Request.Headers["User-Agent"].ToString();
+                    
+                    await _securityLogService.LogFailedLoginAndCheckThresholdAsync(
+                        Input.Email, 
+                        ipAddress ?? "Unknown", 
+                        userAgent ?? "Unknown");
+
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }

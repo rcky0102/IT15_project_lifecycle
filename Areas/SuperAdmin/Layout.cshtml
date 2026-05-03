@@ -125,6 +125,15 @@
                         </a>
                     </li>
 
+                    <!-- Security Logs -->
+                    <li class="sa-nav-item">
+                        <a href="@Url.Action("Index", "SecurityLog", new { area = "SuperAdmin" })"
+                           class="sa-nav-link @(currentController == "SecurityLog" ? "active" : "")">
+                            <i class="fas fa-shield-alt sa-nav-icon"></i>
+                            <span class="sa-nav-text">Security Logs</span>
+                        </a>
+                    </li>
+
                     <!-- Database Backup -->
                     <li class="sa-nav-item">
                         <a href="@Url.Action("Index", "Backup", new { area = "SuperAdmin" })"

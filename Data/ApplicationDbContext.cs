@@ -34,6 +34,7 @@ namespace project_lifecycle.Data
         public DbSet<ConversationParticipant> ConversationParticipants { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<SuperAdmin> SuperAdmins { get; set; }
+        public DbSet<SecurityLog> SecurityLogs { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

@@ -1,0 +1,247 @@
+@model project_lifecycle.Services.ThreatReport
+@{
+    ViewData["Title"] = "Security Threat Report";
+    var fromDate = ViewData["FromDate"]?.ToString();
+    var toDate = ViewData["ToDate"]?.ToString();
+}
+
+@section Styles {
+<link rel="stylesheet" href="~/css/superadmin-auditlog.css" asp-append-version="true" />
+<style>
+.threat-summary { margin-bottom: 2rem; }
+.threat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.threat-card { background: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+.threat-card.critical { border-left: 4px solid #dc3545; }
+.threat-card.high { border-left: 4px solid #fd7e14; }
+.threat-card.medium { border-left: 4px solid #ffc107; }
+.threat-card.low { border-left: 4px solid #28a745; }
+.threat-number { font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; }
+.threat-label { color: #6c757d; font-size: 0.875rem; }
+.recommendations { background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+.recommendations h4 { color: #495057; margin-bottom: 1rem; }
+.recommendations ul { margin: 0; padding-left: 1.5rem; }
+.recommendations li { margin-bottom: 0.5rem; }
+.top-threats-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.top-threats-table th, .top-threats-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #dee2e6; }
+.top-threats-table th { background: #f8f9fa; font-weight: 600; }
+.threat-level-badge { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold; }
+.level-1 { background: #d4edda; color: #155724; }
+.level-2 { background: #fff3cd; color: #856404; }
+.level-3 { background: #f8d7da; color: #721c24; }
+.level-4 { background: #d1ecf1; color: #0c5460; }
+</style>
+}
+
+<div class="audit-container">
+    <!-- ── Header ── -->
+    <div class="audit-header">
+        <div class="audit-header-content">
+            <div>
+                <h1 class="audit-title"><i class="fas fa-chart-line"></i> Security Threat Report</h1>
+                <p class="audit-subtitle">Comprehensive analysis of security threats and recommendations</p>
+            </div>
+            <div class="audit-header-actions">
+                <span class="audit-count-badge"><i class="fas fa-calendar"></i> Generated @Model.ReportGenerated.ToString("MMM dd, yyyy HH:mm")</span>
+                <a href="@Url.Action("Index")" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Security Logs</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Report Period ── -->
+    @if (!string.IsNullOrEmpty(fromDate) || !string.IsNullOrEmpty(toDate))
+    {
+        <div class="report-period">
+            <strong>Report Period:</strong>
+            @if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate))
+            {
+                <span>@fromDate to @toDate</span>
+            }
+            else if (!string.IsNullOrEmpty(fromDate))
+            {
+                <span>From @fromDate to present</span>
+            }
+            else if (!string.IsNullOrEmpty(toDate))
+            {
+                <span>Up to @toDate</span>
+            }
+        </div>
+    }
+
+    <!-- ── Threat Overview ── -->
+    <div class="threat-summary">
+        <h2><i class="fas fa-shield-alt"></i> Threat Overview</h2>
+        <div class="threat-grid">
+            <div class="threat-card critical">
+                <div class="threat-number">@Model.CriticalThreats</div>
+                <div class="threat-label">Critical Threats</div>
+            </div>
+            <div class="threat-card high">
+                <div class="threat-number">@Model.HighThreats</div>
+                <div class="threat-label">High Threats</div>
+            </div>
+            <div class="threat-card medium">
+                <div class="threat-number">@Model.MediumThreats</div>
+                <div class="threat-label">Medium Threats</div>
+            </div>
+            <div class="threat-card low">
+                <div class="threat-number">@Model.LowThreats</div>
+                <div class="threat-label">Low Threats</div>
+            </div>
+            <div class="threat-card">
+                <div class="threat-number">@Model.SuspiciousEvents</div>
+                <div class="threat-label">Suspicious Events</div>
+            </div>
+            <div class="threat-card">
+                <div class="threat-number">@Model.TotalSecurityEvents</div>
+                <div class="threat-label">Total Events</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Top Threats ── -->
+    @if (Model.TopThreats.Any())
+    {
+        <div class="threat-summary">
+            <h2><i class="fas fa-exclamation-triangle"></i> Top Threats by Event Type</h2>
+            <table class="top-threats-table">
+                <thead>
+                    <tr>
+                        <th>Event Type</th>
+                        <th>Count</th>
+                        <th>Threat Level</th>
+                        <th>Top IP Address</th>
+                        <th>Top Username</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var threat in Model.TopThreats)
+                    {
+                        <tr>
+                            <td><strong>@threat.EventType</strong></td>
+                            <td>@threat.Count</td>
+                            <td>
+                                <span class="threat-level-badge level-@threat.ThreatLevel">
+                                    Level @threat.ThreatLevel
+                                </span>
+                            </td>
+                            <td>@threat.TopIpAddress</td>
+                            <td>@threat.TopUserName</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- ── Mitigation Recommendations ── -->
+    @if (Model.MitigationRecommendations.Any())
+    {
+        <div class="recommendations">
+            <h4><i class="fas fa-lightbulb"></i> Mitigation Recommendations</h4>
+            <ul>
+                @foreach (var recommendation in Model.MitigationRecommendations)
+                {
+                    <li>@recommendation</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- ── Containment Strategies ── -->
+    @if (Model.ContainmentStrategies.Any())
+    {
+        <div class="recommendations">
+            <h4><i class="fas fa-shield-virus"></i> Containment Strategies</h4>
+            <ul>
+                @foreach (var strategy in Model.ContainmentStrategies)
+                {
+                    <li>@strategy</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- ── No Data Message ── -->
+    @if (!Model.TopThreats.Any() && !Model.MitigationRecommendations.Any() && !Model.ContainmentStrategies.Any())
+    {
+        <div class="audit-empty">
+            <i class="fas fa-shield-alt"></i>
+            <h3>No Threat Data Available</h3>
+            <p>There are no security threats or suspicious activities in the selected time period.</p>
+        </div>
+    }
+
+    <!-- ── Export Options ── -->
+    <div class="export-section">
+        <h3><i class="fas fa-download"></i> Export Options</h3>
+        <div class="export-buttons">
+            <form method="post" asp-action="Export" style="display: inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="from" value="@fromDate" />
+                <input type="hidden" name="to" value="@toDate" />
+                <button type="submit" class="btn-export"><i class="fas fa-file-csv"></i> Export Full Report (CSV)</button>
+            </form>
+            <button type="button" class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.report-period {
+    background: #e3f2fd;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    border-left: 4px solid #2196f3;
+}
+
+.export-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-export, .btn-print {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-export:hover, .btn-print:hover {
+    background: #0056b3;
+}
+
+.btn-back {
+    background: #6c757d;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-back:hover {
+    background: #545b62;
+}
+
+@@media print {
+    .audit-header-actions, .export-section {
+        display: none;
+    }
+}
+</style>

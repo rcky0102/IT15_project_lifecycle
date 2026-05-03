@@ -31,6 +31,7 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ISecurityLogService, SecurityLogService>();
 
 // Nager.Date holiday API service
 builder.Services.AddHttpClient<INagerHolidayService, NagerHolidayService>();
