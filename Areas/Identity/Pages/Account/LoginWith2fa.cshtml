@@ -51,12 +51,12 @@
             </button>
         </form>
 
-        <div class="mt-4 text-center d-flex flex-column gap-2">
+        <div class="mt-4 text-center d-flex flex-column align-items-center gap-2">
             <p class="text-muted small mb-0">Don't have access to your device?</p>
-            <a asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" class="feature-link text-decoration-none">
+            <a asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" class="feature-link text-decoration-none justify-content-center">
                 Use a recovery code
             </a>
-            <hr class="my-3" />
+            <hr class="my-3 w-100" />
             <a asp-page="./Login" class="text-muted text-decoration-none small">
                 <i class="bi bi-arrow-left me-1"></i> Back to Sign In
             </a>

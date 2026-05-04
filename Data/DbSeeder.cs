@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using project_lifecycle.Constants;
 using project_lifecycle.Models;
 
@@ -13,6 +14,7 @@ namespace project_lifecycle.Data
             var userManager = service.GetService<UserManager<IdentityUser>>();
             var roleManager = service.GetService<RoleManager<IdentityRole>>();
             var context = service.GetService<ApplicationDbContext>();
+            var config = service.GetService<IConfiguration>();
 
             if (!await roleManager.RoleExistsAsync(Roles.HumanResource.ToString()))
                 await roleManager.CreateAsync(new IdentityRole(Roles.HumanResource.ToString()));
@@ -68,10 +70,19 @@ namespace project_lifecycle.Data
             }
 
             // Seed SuperAdmin User
+            var saEmail = config["SeedData:SuperAdmin:Email"];
+            var saPass = config["SeedData:SuperAdmin:Password"];
+
+            if (string.IsNullOrEmpty(saEmail) || string.IsNullOrEmpty(saPass))
+            {
+                // Seeding skipped: SuperAdmin credentials must be provided via User Secrets or Environment Variables
+                return;
+            }
+
             var superAdmin = new IdentityUser
             {
-                UserName = "superadmin@gmail.com",
-                Email = "superadmin@gmail.com",
+                UserName = saEmail,
+                Email = saEmail,
                 EmailConfirmed = true,
                 PhoneNumberConfirmed = true
             };
@@ -79,7 +90,7 @@ namespace project_lifecycle.Data
             var superAdminInDb = await userManager.FindByEmailAsync(superAdmin.Email);
             if (superAdminInDb == null)
             {
-                var result = await userManager.CreateAsync(superAdmin, "@Admin123");
+                var result = await userManager.CreateAsync(superAdmin, saPass);
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(superAdmin, Roles.SuperAdmin.ToString());
@@ -96,10 +107,10 @@ namespace project_lifecycle.Data
                     await context.SuperAdmins.AddAsync(new SuperAdmin
                     {
                         UserId = seededUser.Id,
-                        FirstName = "Super",
-                        LastName = "Admin",
-                        MiddleName = "",
-                        Contact = "09123456789"
+                        FirstName = config["SeedData:SuperAdmin:FirstName"] ?? "Super",
+                        LastName = config["SeedData:SuperAdmin:LastName"] ?? "Admin",
+                        MiddleName = config["SeedData:SuperAdmin:MiddleName"] ?? "",
+                        Contact = config["SeedData:SuperAdmin:Contact"] ?? "N/A"
                     });
                     await context.SaveChangesAsync();
                 }
