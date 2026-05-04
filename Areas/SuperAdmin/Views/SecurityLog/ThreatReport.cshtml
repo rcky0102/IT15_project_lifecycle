@@ -18,9 +18,10 @@
     }
 
     .report-container {
-        max-width: 1400px;
+        max-width: 1300px;
         margin: 0 auto;
         animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 0 1rem;
     }
 
     @@keyframes fadeIn {
@@ -28,13 +29,13 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Premium Header */
+    /* Premium Compact Header */
     .premium-header {
         background: var(--primary-gradient);
         color: white;
-        padding: 3rem 2.5rem;
-        border-radius: 20px;
-        margin-bottom: 2rem;
+        padding: 1.5rem 2rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
         position: relative;
         overflow: hidden;
         box-shadow: 0 10px 30px rgba(0, 105, 148, 0.2);
@@ -45,8 +46,8 @@
         position: absolute;
         top: -50%;
         right: -10%;
-        width: 400px;
-        height: 400px;
+        width: 300px;
+        height: 300px;
         background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
         border-radius: 50%;
     }
@@ -56,47 +57,40 @@
         z-index: 1;
         display: flex;
         justify-content: space-between;
-        align-items: flex-end;
+        align-items: center;
     }
 
     .header-info h1 {
-        font-size: 2.5rem;
+        font-size: 1.75rem;
         font-weight: 800;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
         letter-spacing: -0.5px;
     }
 
     .header-info p {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         opacity: 0.9;
         margin: 0;
     }
 
-    .header-meta {
-        text-align: right;
-    }
-
-    .timestamp-badge {
-        background: rgba(255, 255, 255, 0.15);
-        padding: 0.6rem 1.2rem;
-        border-radius: 50px;
-        font-size: 0.9rem;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
     }
 
     /* Summary Grid */
     .summary-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 3rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
     }
 
     .summary-card {
         background: var(--glass-bg);
-        padding: 2rem;
-        border-radius: 18px;
+        padding: 1.25rem 1rem;
+        border-radius: 14px;
         border: 1px solid #eef2f5;
         box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -106,8 +100,8 @@
     }
 
     .summary-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
     }
 
     .summary-card::before {
@@ -125,8 +119,8 @@
     .summary-card.low::before { background: var(--threat-low); }
 
     .card-icon {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
         opacity: 0.8;
     }
 
@@ -136,14 +130,14 @@
     .low .card-icon { color: var(--threat-low); }
 
     .summary-number {
-        font-size: 2.5rem;
+        font-size: 1.75rem;
         font-weight: 800;
         color: #1a3a52;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.1rem;
     }
 
     .summary-label {
-        font-size: 0.9rem;
+        font-size: 0.75rem;
         color: #7c97ac;
         font-weight: 600;
         text-transform: uppercase;
@@ -153,9 +147,9 @@
     /* Section Styling */
     .report-section {
         background: white;
-        padding: 2.5rem;
-        border-radius: 20px;
-        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
         border: 1px solid #eef2f5;
         box-shadow: 0 4px 20px rgba(0,0,0,0.02);
     }
@@ -163,169 +157,95 @@
     .section-title {
         display: flex;
         align-items: center;
-        gap: 1rem;
-        margin-bottom: 2rem;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
         color: #1a3a52;
     }
 
     .section-title i {
         background: #f0f8fc;
         color: #006994;
-        width: 45px;
-        height: 45px;
+        width: 38px;
+        height: 38px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 12px;
-        font-size: 1.25rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
     }
 
     .section-title h2 {
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         font-weight: 700;
     }
 
     /* Table Styling */
-    .threat-table-wrap {
-        overflow-x: auto;
-    }
-
-    .threat-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0 10px;
-    }
-
     .threat-table th {
-        padding: 1rem 1.5rem;
+        padding: 0.75rem 1rem;
         color: #7c97ac;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        text-align: left;
-    }
-
-    .threat-row {
-        background: #fcfdfe;
-        transition: all 0.2s;
-    }
-
-    .threat-row:hover {
-        background: #f5faff;
-        transform: scale(1.005);
     }
 
     .threat-row td {
-        padding: 1.25rem 1.5rem;
-        border-top: 1px solid #eef2f5;
-        border-bottom: 1px solid #eef2f5;
+        padding: 0.75rem 1rem;
     }
-
-    .threat-row td:first-child { border-left: 1px solid #eef2f5; border-radius: 12px 0 0 12px; }
-    .threat-row td:last-child { border-right: 1px solid #eef2f5; border-radius: 0 12px 12px 0; }
 
     .level-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.4rem 0.8rem;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        font-weight: 700;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
     }
-
-    .level-badge.l4 { background: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
-    .level-badge.l3 { background: #fffaf0; color: #dd6b20; border: 1px solid #fbd38d; }
-    .level-badge.l2 { background: #fffff0; color: #d69e2e; border: 1px solid #faf089; }
-    .level-badge.l1 { background: #f0fff4; color: #38a169; border: 1px solid #9ae6b4; }
 
     /* Recommendations */
     .advice-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
+        gap: 1.5rem;
     }
 
     .advice-card {
-        padding: 1.5rem;
-        border-radius: 16px;
-        height: 100%;
+        padding: 1.25rem;
+        border-radius: 14px;
     }
-
-    .advice-card.mitigation { background: #f0fdf4; border: 1px solid #dcfce7; }
-    .advice-card.containment { background: #eff6ff; border: 1px solid #dbeafe; }
 
     .advice-card h4 {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1.25rem;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1a3a52;
-    }
-
-    .advice-card ul {
-        margin: 0;
-        padding-left: 1.25rem;
-        list-style-type: none;
+        margin-bottom: 1rem;
+        font-size: 1rem;
     }
 
     .advice-card li {
-        position: relative;
-        margin-bottom: 0.75rem;
-        font-size: 0.95rem;
-        line-height: 1.5;
-        color: #4a5568;
-    }
-
-    .advice-card li::before {
-        content: '→';
-        position: absolute;
-        left: -1.25rem;
-        color: #006994;
-        font-weight: bold;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
     }
 
     /* Buttons */
-    .action-bar {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 3rem;
-        padding: 2rem 0;
-        border-top: 1px solid #eef2f5;
-    }
-
     .btn-premium {
         display: inline-flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.8rem 1.5rem;
-        border-radius: 12px;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         transition: all 0.2s;
         cursor: pointer;
         text-decoration: none;
-        border: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .btn-pdf { background: #e53e3e; color: white; }
+    .btn-pdf { background: #e53e3e; color: white; border: none; }
     .btn-pdf:hover { background: #c53030; transform: translateY(-2px); }
-    
-    .btn-csv { background: #2f855a; color: white; }
-    .btn-csv:hover { background: #276749; transform: translateY(-2px); }
 
-    .btn-back { background: #edf2f7; color: #4a5568; }
-    .btn-back:hover { background: #e2e8f0; }
+    .btn-back { background: rgba(255, 255, 255, 0.1); color: white; backdrop-filter: blur(5px); }
+    .btn-back:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
 
     @@media print {
-        .action-bar, .btn-back { display: none; }
+        .header-actions { display: none; }
         .premium-header { background: white !important; color: black !important; border: 1px solid #ccc; box-shadow: none; }
-        .report-section { box-shadow: none; border: 1px solid #eee; }
     }
 </style>
 }
@@ -334,21 +254,24 @@
     <div class="premium-header">
         <div class="header-content">
             <div class="header-info">
-                <h1><i class="fas fa-shield-virus"></i> Threat Intelligence</h1>
-                <p>Security Analysis & Risk Assessment Report</p>
+                <h1><i class="fas fa-shield-virus"></i> Intelligence</h1>
+                <p>Generated: @Model.ReportGenerated.ToString("MMM dd, yyyy HH:mm")</p>
             </div>
-            <div class="header-meta">
-                <div class="timestamp-badge">
-                    <i class="far fa-clock"></i> Generated: @Model.ReportGenerated.ToString("MMM dd, yyyy HH:mm")
-                </div>
+            <div class="header-actions">
+                <a href="@Url.Action("Index")" class="btn-premium btn-back">
+                    <i class="fas fa-arrow-left"></i> Back to Logs
+                </a>
+                <button type="button" class="btn-premium btn-pdf" onclick="exportToPdf()">
+                    <i class="fas fa-file-pdf"></i> Generate PDF
+                </button>
             </div>
         </div>
     </div>
 
     @if (!string.IsNullOrEmpty(fromDate) || !string.IsNullOrEmpty(toDate))
     {
-        <div style="margin-bottom: 2rem; padding: 0 0.5rem; color: #7c97ac; font-weight: 500;">
-            <i class="far fa-calendar-alt"></i> Analysis Period: 
+        <div style="margin-bottom: 1.5rem; padding: 0 0.5rem; color: #7c97ac; font-weight: 500; font-size: 0.85rem;">
+            <i class="far fa-calendar-alt"></i> Period: 
             <span style="color: #1a3a52;">
                 @(fromDate ?? "Beginning") — @(toDate ?? "Present")
             </span>
@@ -369,29 +292,24 @@
         <div class="summary-card medium">
             <div class="card-icon"><i class="fas fa-bolt"></i></div>
             <div class="summary-number">@Model.MediumThreats</div>
-            <div class="summary-label">Medium Risk</div>
+            <div class="summary-label">Medium</div>
         </div>
         <div class="summary-card low">
             <div class="card-icon"><i class="fas fa-check-shield"></i></div>
             <div class="summary-number">@Model.LowThreats</div>
             <div class="summary-label">Low Risk</div>
         </div>
-        <div class="summary-card">
-            <div class="card-icon"><i class="fas fa-eye"></i></div>
-            <div class="summary-number">@Model.SuspiciousEvents</div>
-            <div class="summary-label">Suspicious</div>
-        </div>
         <div class="summary-card" style="background: var(--primary-gradient); color: white;">
             <div class="card-icon"><i class="fas fa-database" style="color: white;"></i></div>
             <div class="summary-number" style="color: white;">@Model.TotalSecurityEvents</div>
-            <div class="summary-label" style="color: rgba(255,255,255,0.8);">Total Analyzed</div>
+            <div class="summary-label" style="color: rgba(255,255,255,0.8);">Analyzed</div>
         </div>
     </div>
 
     <div class="report-section">
         <div class="section-title">
             <i class="fas fa-list-ul"></i>
-            <h2>Top Security Vulnerabilities</h2>
+            <h2>Top Vulnerabilities</h2>
         </div>
         
         @if (Model.TopThreats.Any())
@@ -400,38 +318,30 @@
                 <table class="threat-table">
                     <thead>
                         <tr>
-                            <th>Event Type</th>
-                            <th>Incidents</th>
-                            <th>Threat Level</th>
-                            <th>Originating IP</th>
-                            <th>Target Username</th>
+                            <th>Event</th>
+                            <th>Count</th>
+                            <th>Level</th>
+                            <th>Top IP</th>
+                            <th>Top User</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var threat in Model.TopThreats)
                         {
                             <tr class="threat-row">
-                                <td><strong style="color: #1a3a52;">@threat.EventType</strong></td>
-                                <td>@threat.Count</td>
+                                <td><strong style="color: #1a3a52; font-size: 0.9rem;">@threat.EventType</strong></td>
+                                <td style="font-size: 0.9rem;">@threat.Count</td>
                                 <td>
                                     <span class="level-badge l@threat.ThreatLevel">
-                                        <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
                                         Level @threat.ThreatLevel
                                     </span>
                                 </td>
-                                <td><code style="background: #f0f4f8; padding: 0.2rem 0.5rem; border-radius: 4px; color: #006994;">@threat.TopIpAddress</code></td>
-                                <td><span style="font-weight: 600;">@threat.TopUserName</span></td>
+                                <td><code style="background: #f0f4f8; padding: 0.2rem 0.5rem; border-radius: 4px; color: #006994; font-size: 0.8rem;">@threat.TopIpAddress</code></td>
+                                <td style="font-size: 0.9rem; font-weight: 600;">@threat.TopUserName</td>
                             </tr>
                         }
                     </tbody>
                 </table>
-            </div>
-        }
-        else
-        {
-            <div style="text-align: center; padding: 3rem; color: #7c97ac;">
-                <i class="fas fa-shield-check" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
-                <p>No major threats detected during this period.</p>
             </div>
         }
     </div>
@@ -439,7 +349,7 @@
     <div class="advice-grid">
         <div class="report-section" style="margin-bottom: 0;">
             <div class="advice-card mitigation">
-                <h4><i class="fas fa-lightbulb"></i> Mitigation Recommendations</h4>
+                <h4><i class="fas fa-lightbulb"></i> Mitigation</h4>
                 @if (Model.MitigationRecommendations.Any())
                 {
                     <ul>
@@ -451,14 +361,14 @@
                 }
                 else
                 {
-                    <p style="font-size: 0.9rem; color: #718096;">Continue existing security protocols.</p>
+                    <p style="font-size: 0.85rem; color: #718096;">Continue existing protocols.</p>
                 }
             </div>
         </div>
 
         <div class="report-section" style="margin-bottom: 0;">
             <div class="advice-card containment">
-                <h4><i class="fas fa-shield-alt"></i> Containment Strategies</h4>
+                <h4><i class="fas fa-shield-alt"></i> Containment</h4>
                 @if (Model.ContainmentStrategies.Any())
                 {
                     <ul>
@@ -470,27 +380,10 @@
                 }
                 else
                 {
-                    <p style="font-size: 0.9rem; color: #718096;">Monitor for new anomalies.</p>
+                    <p style="font-size: 0.85rem; color: #718096;">Monitor for anomalies.</p>
                 }
             </div>
         </div>
-    </div>
-
-    <div class="action-bar">
-        <a href="@Url.Action("Index")" class="btn-premium btn-back">
-            <i class="fas fa-arrow-left"></i> Return to Logs
-        </a>
-        <form method="post" asp-action="Export" style="display: inline;">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="from" value="@fromDate" />
-            <input type="hidden" name="to" value="@toDate" />
-            <button type="submit" class="btn-premium btn-csv">
-                <i class="fas fa-file-csv"></i> Export Data (CSV)
-            </button>
-        </form>
-        <button type="button" class="btn-premium btn-pdf" onclick="exportToPdf()">
-            <i class="fas fa-file-pdf"></i> Generate PDF
-        </button>
     </div>
 </div>
 
