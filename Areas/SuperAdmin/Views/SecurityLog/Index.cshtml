@@ -22,10 +22,25 @@
 .threat-level-2 { background: #fff3cd; color: #856404; }
 .threat-level-3 { background: #f8d7da; color: #721c24; }
 .threat-level-4 { background: #d1ecf1; color: #0c5460; }
-.suspicious-badge { background: #dc3545; color: white; }
-.security-actions { display: flex; gap: 0.5rem; }
-.btn-lockout { background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; cursor: pointer; }
-.btn-unlock { background: #28a745; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; cursor: pointer; }
+.suspicious-badge { background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
+.security-actions { display: flex; gap: 0.4rem; justify-content: center; }
+.btn-lockout-account, .btn-unlock-account, .btn-details { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 8px; 
+    border: none; 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer; 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-details { background: #e8f4fd; color: #006994; }
+.btn-details:hover { background: #006994; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 105, 148, 0.2); }
+.btn-lockout-account { background: #fff5f5; color: #e53e3e; }
+.btn-lockout-account:hover { background: #e53e3e; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(229, 62, 62, 0.2); }
+.btn-unlock-account { background: #f0fff4; color: #38a169; }
+.btn-unlock-account:hover { background: #38a169; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(56, 161, 105, 0.2); }
 </style>
 }
 
@@ -162,11 +177,17 @@
                             </td>
                             <td class="text-center">
                                 <div class="security-actions">
-                                    <button class="btn-details" data-id="@log.Id" title="View details"><i class="fas fa-magnifying-glass"></i></button>
-                                    @if (!string.IsNullOrEmpty(log.UserId) && log.ThreatLevel >= 3)
+                                    <button class="btn-details" data-id="@log.Id" title="View details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    @if (!string.IsNullOrEmpty(log.UserId))
                                     {
-                                        <button class="btn-lockout-account" data-user-id="@log.UserId" data-username="@log.UserName" title="Lockout account"><i class="fas fa-lock"></i></button>
-                                        <button class="btn-unlock-account" data-user-id="@log.UserId" data-username="@log.UserName" title="Unlock account"><i class="fas fa-lock-open"></i></button>
+                                        <button class="btn-lockout-account" data-user-id="@log.UserId" data-username="@log.UserName" title="Lockout account">
+                                            <i class="fas fa-user-lock"></i>
+                                        </button>
+                                        <button class="btn-unlock-account" data-user-id="@log.UserId" data-username="@log.UserName" title="Unlock account">
+                                            <i class="fas fa-user-check"></i>
+                                        </button>
                                     }
                                 </div>
                             </td>
@@ -316,77 +337,8 @@
         modal.style.display = 'none';
     });
 
-    // Close modal when clicking outside
     modal.addEventListener('click', function (e) {
-        if (e.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
-
-    /* ── Account Lockout/Unlock Handlers ── */
-    document.querySelectorAll('.btn-lockout-account').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-            const userId = this.dataset.userId;
-            const username = this.dataset.username;
-            
-            if (confirm(`Are you sure you want to lockout the account for ${username}?`)) {
-                try {
-                    const res = await fetch('@Url.Action("LockoutAccount")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        },
-                        body: JSON.stringify({
-                            userId: userId,
-                            reason: prompt('Enter reason for account lockout (optional):') || ''
-                        })
-                    });
-
-                    if (res.ok) {
-                        alert('Account locked out successfully');
-                        location.reload();
-                    } else {
-                        alert('Error locking out account');
-                    }
-                } catch (error) {
-                    console.error('Lockout error:', error);
-                    alert('Error locking out account');
-                }
-            }
-        });
-    });
-
-    document.querySelectorAll('.btn-unlock-account').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-            const userId = this.dataset.userId;
-            const username = this.dataset.username;
-            
-            if (confirm(`Are you sure you want to unlock the account for ${username}?`)) {
-                try {
-                    const res = await fetch('@Url.Action("UnlockAccount")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        },
-                        body: JSON.stringify({
-                            userId: userId
-                        })
-                    });
-
-                    if (res.ok) {
-                        alert('Account unlocked successfully');
-                        location.reload();
-                    } else {
-                        alert('Error unlocking account');
-                    }
-                } catch (error) {
-                    console.error('Unlock error:', error);
-                    alert('Error unlocking account');
-                }
-            }
-        });
+        if (e.target === modal) modal.style.display = 'none';
     });
 
     /* ── Account Lockout ── */
@@ -407,6 +359,11 @@
 
     document.getElementById('confirmLockout')?.addEventListener('click', async function () {
         const reason = document.getElementById('lockoutReason').value;
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        btn.disabled = true;
+
         try {
             const formData = new FormData();
             formData.append('userId', currentUserId);
@@ -419,23 +376,23 @@
             });
 
             if (res.ok) {
-                lockoutModal.classList.remove('active');
-                location.reload(); // Refresh to show updated status
+                location.reload();
             } else {
                 alert('Failed to lockout account. Please try again.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         } catch (err) {
             console.error(err);
             alert('An error occurred. Please try again.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     });
 
-    document.getElementById('cancelLockout')?.addEventListener('click', function () {
-        lockoutModal.classList.remove('active');
-    });
-
-    closeLockoutBtn?.addEventListener('click', function () { lockoutModal.classList.remove('active'); });
-    lockoutModal?.addEventListener('click', function (e) { if (e.target === lockoutModal) lockoutModal.classList.remove('active'); });
+    document.getElementById('cancelLockout')?.addEventListener('click', () => lockoutModal.classList.remove('active'));
+    closeLockoutBtn?.addEventListener('click', () => lockoutModal.classList.remove('active'));
+    lockoutModal?.addEventListener('click', (e) => { if (e.target === lockoutModal) lockoutModal.classList.remove('active'); });
 
     /* ── Account Unlock ── */
     document.querySelectorAll('.btn-unlock-account').forEach(function (btn) {
@@ -443,9 +400,7 @@
             const userId = this.dataset.userId;
             const username = this.dataset.username;
             
-            if (!confirm(`Are you sure you want to unlock the account for ${username}?`)) {
-                return;
-            }
+            if (!confirm(`Are you sure you want to unlock the account for ${username}?`)) return;
 
             try {
                 const formData = new FormData();
@@ -458,7 +413,7 @@
                 });
 
                 if (res.ok) {
-                    location.reload(); // Refresh to show updated status
+                    location.reload();
                 } else {
                     alert('Failed to unlock account. Please try again.');
                 }
