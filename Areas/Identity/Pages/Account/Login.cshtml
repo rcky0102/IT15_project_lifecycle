@@ -149,9 +149,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for cooldown state on page load
     const showCooldown = @(Model.ShowCooldown ? "true" : "false");
+    const initialTime = @Model.CooldownSeconds;
     
     if (showCooldown) {
-        startCooldown();
+        startCooldown(initialTime);
     }
     
     if (form && submitBtn) {
@@ -172,10 +173,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function startCooldown() {
-        let timeLeft = 30;
+    function startCooldown(seconds) {
+        let timeLeft = seconds || 30;
+        const externalBtns = document.querySelectorAll('.google-btn');
+        
         submitBtn.disabled = true;
         submitBtn.setAttribute('data-cooldown', 'true');
+        externalBtns.forEach(btn => btn.disabled = true);
+        
         cooldownTimer.style.display = 'block';
         
         const updateBtnText = () => {
@@ -197,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitBtn.disabled = false;
                 submitBtn.removeAttribute('data-cooldown');
                 submitBtn.innerHTML = 'Sign In';
+                externalBtns.forEach(btn => btn.disabled = false);
             }
         }, 1000);
     }

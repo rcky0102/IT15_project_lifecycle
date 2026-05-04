@@ -58,6 +58,7 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
         }
 
         public bool ShowCooldown { get; set; } = false;
+        public int CooldownSeconds { get; set; } = 0;
 
         public async Task OnGetAsync(string returnUrl = null)
         {
@@ -67,6 +68,21 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
             }
 
             returnUrl ??= Url.Content("~/");
+
+            // Check for active cooldown from PRG redirect
+            if (TempData.ContainsKey("CooldownEndTime"))
+            {
+                var endTime = (DateTime)TempData["CooldownEndTime"];
+                var remaining = (int)(endTime - DateTime.Now).TotalSeconds;
+                if (remaining > 0)
+                {
+                    ShowCooldown = true;
+                    CooldownSeconds = remaining;
+                    ModelState.AddModelError(string.Empty, $"Too many failed login attempts. Please wait {remaining} seconds before trying again.");
+                    // Re-persist for next potential reload
+                    TempData.Keep("CooldownEndTime");
+                }
+            }
 
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
@@ -148,10 +164,9 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
 
                     if (thresholdExceeded)
                     {
-                        // Implement 30-second cooldown
-                        ShowCooldown = true;
-                        ModelState.AddModelError(string.Empty, "Too many failed login attempts. Please wait 30 seconds before trying again.");
-                        return Page();
+                        // Implement 30-second cooldown using PRG pattern
+                        TempData["CooldownEndTime"] = DateTime.Now.AddSeconds(30);
+                        return RedirectToPage(new { returnUrl });
                     }
                     else
                     {

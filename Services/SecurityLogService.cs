@@ -4,6 +4,7 @@ using project_lifecycle.Data;
 using project_lifecycle.Models;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace project_lifecycle.Services
 {
@@ -12,7 +13,7 @@ namespace project_lifecycle.Services
         private readonly ApplicationDbContext _db;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly INotificationService _notificationService;
-        private static readonly Dictionary<string, List<DateTime>> _failedLoginAttempts = new();
+        private static readonly ConcurrentDictionary<string, List<DateTime>> _failedLoginAttempts = new();
 
         public SecurityLogService(
             ApplicationDbContext db,
@@ -305,6 +306,8 @@ namespace project_lifecycle.Services
             return await query.CountAsync();
         }
 
+        private readonly ConcurrentDictionary<string, DateTime> _lockoutPeriods = new();
+
         public async Task<bool> LogFailedLoginAndCheckThresholdAsync(
             string userName,
             string ipAddress,
@@ -313,10 +316,25 @@ namespace project_lifecycle.Services
             TimeSpan? timeWindow = null)
         {
             var trackingKey = $"{userName}_{ipAddress}";
-            var window = timeWindow ?? TimeSpan.FromMinutes(15);
             var now = DateTime.Now;
+
+            // 1. Check if user is currently in a server-side lockout period
+            if (_lockoutPeriods.TryGetValue(trackingKey, out var lockoutEnd))
+            {
+                if (now < lockoutEnd)
+                {
+                    return true; // Still in lockout
+                }
+                else
+                {
+                    _lockoutPeriods.TryRemove(trackingKey, out _);
+                    // Lockout expired, we can proceed
+                }
+            }
+
+            var window = timeWindow ?? TimeSpan.FromMinutes(15);
             
-            // Clean up old attempts from memory
+            // 2. Clean up and add current failed attempt
             if (_failedLoginAttempts.ContainsKey(trackingKey))
             {
                 _failedLoginAttempts[trackingKey] = _failedLoginAttempts[trackingKey]
@@ -324,7 +342,6 @@ namespace project_lifecycle.Services
                     .ToList();
             }
             
-            // Add current failed attempt
             if (!_failedLoginAttempts.ContainsKey(trackingKey))
             {
                 _failedLoginAttempts[trackingKey] = new List<DateTime>();
@@ -333,13 +350,18 @@ namespace project_lifecycle.Services
             
             var currentAttempts = _failedLoginAttempts[trackingKey].Count;
             
-            // Only trigger when attempts exceed the threshold (after 5 attempts, so trigger on 6th+)
+            // 3. Check threshold
             if (currentAttempts > threshold)
             {
-                // Only log when threshold is exceeded
+                // Set server-side lockout for 30 seconds
+                _lockoutPeriods[trackingKey] = now.AddSeconds(30);
+
+                // Reset attempts for this user/IP so they get a fresh start after 30s
+                _failedLoginAttempts.TryRemove(trackingKey, out _);
+
                 await LogSecurityEventAsync(
                     "Suspicious Login Activity",
-                    $"Threshold exceeded: {threshold} failed login attempts detected for user '{userName}' from IP {ipAddress}",
+                    $"Threshold exceeded: {threshold} failed login attempts detected for user '{userName}' from IP {ipAddress}. Account restricted for 30 seconds.",
                     true,
                     null,
                     userName,
@@ -352,13 +374,13 @@ namespace project_lifecycle.Services
                         IpAddress = ipAddress, 
                         AttemptCount = currentAttempts,
                         Threshold = threshold,
-                        TimeWindow = window.ToString()
+                        LockoutDuration = "30s"
                     }));
 
-                return true; // Threshold exceeded
+                return true;
             }
 
-            return false; // Threshold not exceeded, no logging
+            return false;
         }
 
         private async Task NotifySuperAdminsAsync(SecurityLog securityLog)
