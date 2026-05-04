@@ -9,6 +9,8 @@ using System.Text.Json;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using PdfSharpCore.Pdf;
+using PdfSharpCore.Drawing;
 
 namespace project_lifecycle.Areas.SuperAdmin.Controllers
 {
@@ -315,114 +317,168 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
         // POST: /SuperAdmin/SecurityLog/ExportToPdf
         [HttpPost]
-        public async Task<IActionResult> ExportToPdf([FromBody] dynamic data)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExportToPdf(string? from, string? to)
         {
             try
             {
-                var fromDate = data.from?.ToString();
-                var toDate = data.to?.ToString();
-
-                if (string.IsNullOrEmpty(fromDate) || string.IsNullOrEmpty(toDate))
+                if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
                 {
-                    return Json(new { success = false, message = "Date range is required" });
+                    return BadRequest("Date range is required");
                 }
+
+                var fromDate = DateTime.Parse(from);
+                var toDate = DateTime.Parse(to);
 
                 var logs = await _securityLogService.GetSecurityLogsAsync(
                     null, null, null, null, 
-                    DateTime.Parse(fromDate), 
-                    DateTime.Parse(toDate));
+                    fromDate, toDate);
 
                 if (!logs.Any())
                 {
-                    return Json(new { success = false, message = "No security events found in the specified date range" });
+                    return NotFound("No security events found in the specified date range");
                 }
 
-                // Generate PDF content
-                var pdfBytes = GeneratePdfReport(logs, fromDate, toDate);
+                // Generate PDF content using PdfSharpCore
+                var pdfBytes = GeneratePdfReport(logs, from, to);
                 
                 return File(pdfBytes, "application/pdf", $"security-threat-report-{DateTime.Now:yyyyMMdd-HHmmss}.pdf");
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error generating PDF: {ex.Message}" });
+                return StatusCode(500, $"Error generating PDF: {ex.Message}");
             }
         }
 
         private byte[] GeneratePdfReport(List<SecurityLog> logs, string fromDate, string toDate)
         {
-            var html = new StringBuilder();
-            
-            // Build HTML content
-            html.AppendLine("<!DOCTYPE html>");
-            html.AppendLine("<html>");
-            html.AppendLine("<head>");
-            html.AppendLine("<title>Security Threat Report</title>");
-            html.AppendLine("<style>");
-            html.AppendLine("body { font-family: Arial, sans-serif; margin: 20px; }");
-            html.AppendLine("h1 { color: #333; text-align: center; }");
-            html.AppendLine("h2 { color: #666; margin-top: 30px; }");
-            html.AppendLine("table { border-collapse: collapse; width: 100%; margin-top: 20px; }");
-            html.AppendLine("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }");
-            html.AppendLine("</style>");
-            html.AppendLine("</head>");
-            html.AppendLine("<body>");
-            html.AppendLine("<h1>Security Threat Report</h1>");
-            html.AppendLine($"<h2>Report Period: {fromDate} to {toDate}</h2>");
-            html.AppendLine($"<p><strong>Generated:</strong> {DateTime.Now:MMM dd, yyyy HH:mm}</p>");
-            
-            // Summary statistics
-            var eventGroups = logs.GroupBy(l => l.EventType).ToList();
-            html.AppendLine("<h2>Summary Statistics</h2>");
-            html.AppendLine("<table>");
-            html.AppendLine("<tr><th>Event Type</th><th>Count</th><th>Percentage</th></tr>");
-            
-            foreach (var group in eventGroups)
+            using (var ms = new MemoryStream())
             {
-                var count = group.Count();
-                var percentage = (count * 100.0 / logs.Count).ToString("F1");
-                html.AppendLine($"<tr><td>{group.Key}</td><td>{count}</td><td>{percentage}%</td></tr>");
+                var document = new PdfDocument();
+                document.Info.Title = "Security Threat Intelligence Report";
+                var page = document.AddPage();
+                var gfx = XGraphics.FromPdfPage(page);
+                
+                // Professional Fonts
+                var fontTitle = new XFont("Arial", 22, XFontStyle.Bold);
+                var fontHeader = new XFont("Arial", 14, XFontStyle.Bold);
+                var fontBody = new XFont("Arial", 10, XFontStyle.Regular);
+                var fontSmall = new XFont("Arial", 8, XFontStyle.Regular);
+                var fontBold = new XFont("Arial", 10, XFontStyle.Bold);
+
+                // Professional Header Background (Navy)
+                gfx.DrawRectangle(XBrushes.MidnightBlue, 0, 0, page.Width, 100);
+                gfx.DrawString("SECURITY INTELLIGENCE REPORT", fontTitle, XBrushes.White, 
+                    new XRect(0, 30, page.Width, 40), XStringFormats.Center);
+                gfx.DrawString("PROJECT LIFECYCLE MANAGEMENT SYSTEM", fontSmall, XBrushes.LightGray,
+                    new XRect(0, 65, page.Width, 20), XStringFormats.Center);
+
+                int yPos = 130;
+
+                // Document Information Section
+                gfx.DrawString("REPORT METADATA", fontHeader, XBrushes.MidnightBlue, 40, yPos);
+                yPos += 10;
+                gfx.DrawLine(XPens.LightGray, 40, yPos, page.Width - 40, yPos);
+                yPos += 20;
+
+                gfx.DrawString($"Document ID:", fontBold, XBrushes.Black, 40, yPos);
+                gfx.DrawString($"SEC-REP-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0,8).ToUpper()}", fontBody, XBrushes.Black, 140, yPos);
+                yPos += 15;
+                gfx.DrawString($"Generated At:", fontBold, XBrushes.Black, 40, yPos);
+                gfx.DrawString($"{DateTime.Now:MMM dd, yyyy HH:mm:ss} UTC", fontBody, XBrushes.Black, 140, yPos);
+                yPos += 15;
+                gfx.DrawString($"Analysis Period:", fontBold, XBrushes.Black, 40, yPos);
+                gfx.DrawString($"{fromDate} to {toDate}", fontBody, XBrushes.Black, 140, yPos);
+                yPos += 40;
+
+                // Executive Summary Section
+                gfx.DrawString("EXECUTIVE SUMMARY", fontHeader, XBrushes.MidnightBlue, 40, yPos);
+                yPos += 10;
+                gfx.DrawLine(XPens.LightGray, 40, yPos, page.Width - 40, yPos);
+                yPos += 20;
+
+                var criticalCount = logs.Count(l => l.ThreatLevel >= 4);
+                var suspiciousCount = logs.Count(l => l.IsSuspicious);
+                
+                gfx.DrawString($"Total Security Events Analyzed:", fontBold, XBrushes.Black, 60, yPos);
+                gfx.DrawString($"{logs.Count}", fontBody, XBrushes.Black, 280, yPos);
+                yPos += 18;
+                gfx.DrawString($"Identified Suspicious Activities:", fontBold, XBrushes.Black, 60, yPos);
+                gfx.DrawString($"{suspiciousCount}", fontBody, XBrushes.Black, 280, yPos);
+                yPos += 18;
+                gfx.DrawString($"Critical Threats (Level 4+):", fontBold, XBrushes.Red, 60, yPos);
+                gfx.DrawString($"{criticalCount}", fontBold, XBrushes.Red, 280, yPos);
+                yPos += 40;
+
+                // Detailed Findings Table
+                gfx.DrawString("DETAILED SECURITY FINDINGS", fontHeader, XBrushes.MidnightBlue, 40, yPos);
+                yPos += 10;
+                gfx.DrawLine(XPens.LightGray, 40, yPos, page.Width - 40, yPos);
+                yPos += 20;
+
+                // Table Header
+                gfx.DrawRectangle(XBrushes.GhostWhite, 40, yPos, page.Width - 80, 25);
+                gfx.DrawRectangle(XPens.LightGray, 40, yPos, page.Width - 80, 25);
+                gfx.DrawString("TIMESTAMP", fontBold, XBrushes.MidnightBlue, 45, yPos + 17);
+                gfx.DrawString("EVENT TYPE", fontBold, XBrushes.MidnightBlue, 150, yPos + 17);
+                gfx.DrawString("RISK", fontBold, XBrushes.MidnightBlue, 300, yPos + 17);
+                gfx.DrawString("ORIGIN IP", fontBold, XBrushes.MidnightBlue, 360, yPos + 17);
+                gfx.DrawString("USER IDENTITY", fontBold, XBrushes.MidnightBlue, 470, yPos + 17);
+                yPos += 30;
+
+                // Table Rows (Show top incidents)
+                foreach (var log in logs.OrderByDescending(l => l.ThreatLevel).ThenByDescending(l => l.Timestamp).Take(15))
+                {
+                    if (yPos > page.Height - 100)
+                    {
+                        page = document.AddPage();
+                        gfx = XGraphics.FromPdfPage(page);
+                        yPos = 50;
+                    }
+
+                    XBrush rowColor = log.ThreatLevel >= 4 ? XBrushes.DarkRed : (log.ThreatLevel >= 3 ? XBrushes.DarkOrange : XBrushes.Black);
+                    
+                    gfx.DrawString(log.Timestamp.ToString("MM/dd HH:mm"), fontSmall, XBrushes.Black, 45, yPos);
+                    gfx.DrawString(log.EventType.Length > 25 ? log.EventType.Substring(0, 22) + "..." : log.EventType, fontSmall, XBrushes.Black, 150, yPos);
+                    gfx.DrawString($"LEVEL {log.ThreatLevel}", fontSmall, rowColor, 300, yPos);
+                    gfx.DrawString(log.IpAddress ?? "EXTERNAL", fontSmall, XBrushes.Black, 360, yPos);
+                    gfx.DrawString(log.UserName ?? "ANONYMOUS", fontSmall, XBrushes.Black, 470, yPos);
+                    
+                    gfx.DrawLine(XPens.GhostWhite, 40, yPos + 4, page.Width - 40, yPos + 4);
+                    yPos += 20;
+                }
+
+                // Mitigation & Recommendations
+                yPos += 20;
+                if (yPos > page.Height - 180) { page = document.AddPage(); gfx = XGraphics.FromPdfPage(page); yPos = 50; }
+
+                gfx.DrawString("MITIGATION & STRATEGIC RECOMMENDATIONS", fontHeader, XBrushes.MidnightBlue, 40, yPos);
+                yPos += 10;
+                gfx.DrawLine(XPens.LightGray, 40, yPos, page.Width - 40, yPos);
+                yPos += 25;
+
+                string[] strategies = {
+                    "1. IMMEDIATE REMEDIATION: Review and revoke sessions for accounts identified with high-level threats.",
+                    "2. ACCESS CONTROL: Implement mandatory MFA for administrative and privileged user roles.",
+                    "3. NETWORK HYGIENE: Blacklist originating IP addresses associated with persistent suspicious patterns.",
+                    "4. MONITORING: Increase auditing frequency for specific endpoints identified in the table above.",
+                    "5. POLICY ENFORCEMENT: Trigger automated password resets for accounts with high failed-login velocity."
+                };
+
+                foreach (var strategy in strategies)
+                {
+                    gfx.DrawString(strategy, fontBody, XBrushes.DarkSlateGray, 50, yPos);
+                    yPos += 22;
+                }
+
+                // Footer
+                var footerText = "CONFIDENTIAL - SYSTEM ADMINISTRATOR USE ONLY";
+                gfx.DrawString(footerText, fontSmall, XBrushes.Gray, new XRect(0, page.Height - 40, page.Width, 20), XStringFormats.Center);
+                gfx.DrawString($"Page {document.PageCount}", fontSmall, XBrushes.Gray, new XRect(0, page.Height - 40, page.Width - 40, 20), XStringFormats.BottomRight);
+
+                document.Save(ms);
+                return ms.ToArray();
             }
-            
-            html.AppendLine("</table>");
-            
-            // Detailed events
-            html.AppendLine("<h2>Detailed Security Events</h2>");
-            html.AppendLine("<table>");
-            html.AppendLine("<tr><th>Timestamp</th><th>Event Type</th><th>Description</th><th>User</th><th>IP Address</th><th>Threat Level</th><th>Suspicious</th></tr>");
-            
-            foreach (var log in logs.OrderByDescending(l => l.Timestamp))
-            {
-                html.AppendLine($"<tr>");
-                html.AppendLine($"<td>{log.Timestamp:MMM dd, yyyy HH:mm}</td>");
-                html.AppendLine($"<td>{log.EventType}</td>");
-                html.AppendLine($"<td>{log.Description}</td>");
-                html.AppendLine($"<td>{log.UserName ?? "N/A"}</td>");
-                html.AppendLine($"<td>{log.IpAddress ?? "N/A"}</td>");
-                html.AppendLine($"<td>Level {log.ThreatLevel}</td>");
-                html.AppendLine($"<td>{(log.IsSuspicious ? "Yes" : "No")}</td>");
-                html.AppendLine("</tr>");
-            }
-            
-            html.AppendLine("</table>");
-            
-            // Recommendations
-            html.AppendLine("<h2>Mitigation & Containment Strategies</h2>");
-            var suspiciousLogs = logs.Where(l => l.IsSuspicious).ToList();
-            if (suspiciousLogs.Any())
-            {
-                html.AppendLine("<ul>");
-                html.AppendLine("<li>• Monitor user accounts with repeated failed login attempts</li>");
-                html.AppendLine("<li>• Consider implementing multi-factor authentication</li>");
-                html.AppendLine("<li>• Review IP addresses and user agents for suspicious patterns</li>");
-                html.AppendLine("</ul>");
-            }
-            
-            html.AppendLine("</body>");
-            html.AppendLine("</html>");
-            
-            // Convert HTML to bytes
-            var bytes = Encoding.UTF8.GetBytes(html.ToString());
-            return bytes;
         }
 
         private static string Escape(string? value)

@@ -243,8 +243,45 @@
     .btn-back { background: rgba(255, 255, 255, 0.1); color: white; backdrop-filter: blur(5px); }
     .btn-back:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
 
+    .header-filters {
+        display: flex;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .filter-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .filter-item label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; opacity: 0.8; letter-spacing: 0.5px; }
+    .filter-item input {
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        padding: 0.3rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1a3a52;
+        outline: none;
+    }
+
+    .btn-update {
+        align-self: flex-end;
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-update:hover { background: #00a080; transform: translateY(-1px); }
+
     @@media print {
-        .header-actions { display: none; }
+        .header-actions, .header-filters { display: none; }
         .premium-header { background: white !important; color: black !important; border: 1px solid #ccc; box-shadow: none; }
     }
 </style>
@@ -257,12 +294,25 @@
                 <h1><i class="fas fa-shield-virus"></i> Intelligence</h1>
                 <p>Generated: @Model.ReportGenerated.ToString("MMM dd, yyyy HH:mm")</p>
             </div>
+            <form method="get" class="header-filters">
+                <div class="filter-item">
+                    <label>From</label>
+                    <input type="date" name="from" value="@fromDate" />
+                </div>
+                <div class="filter-item">
+                    <label>To</label>
+                    <input type="date" name="to" value="@toDate" />
+                </div>
+                <button type="submit" class="btn-update">
+                    <i class="fas fa-sync-alt"></i> Update
+                </button>
+            </form>
             <div class="header-actions">
                 <a href="@Url.Action("Index")" class="btn-premium btn-back">
-                    <i class="fas fa-arrow-left"></i> Back to Logs
+                    <i class="fas fa-arrow-left"></i> Logs
                 </a>
                 <button type="button" class="btn-premium btn-pdf" onclick="exportToPdf()">
-                    <i class="fas fa-file-pdf"></i> Generate PDF
+                    <i class="fas fa-file-pdf"></i> PDF
                 </button>
             </div>
         </div>
@@ -389,47 +439,50 @@
 
 @section Scripts {
 <script>
-    function exportToPdf() {
+    async function exportToPdf() {
         const btn = event.currentTarget;
         const originalContent = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
         btn.disabled = true;
 
-        // Using print for a premium look or backend export
-        // For this demo, we'll try to trigger the existing backend export if it exists
-        // but since we want it to look "WOW", we can also trigger window.print() 
-        // with specific print styles.
-        
         const fromDate = '@fromDate';
         const toDate = '@toDate';
 
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '@Url.Action("ExportToPdf")';
-        form.style.display = 'none';
+        try {
+            // First, verify if data exists and get token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            
+            const formData = new FormData();
+            formData.append('from', fromDate);
+            formData.append('to', toDate);
+            formData.append('__RequestVerificationToken', token);
 
-        const fields = {
-            'from': fromDate,
-            'to': toDate,
-            '__RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-        };
+            const response = await fetch('@Url.Action("ExportToPdf")', {
+                method: 'POST',
+                body: formData
+            });
 
-        for (const [key, value] of Object.entries(fields)) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = value;
-            form.appendChild(input);
-        }
-
-        document.body.appendChild(form);
-        form.submit();
-
-        setTimeout(() => {
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `security-threat-report-${new Date().toISOString().slice(0,10)}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } else {
+                const errorText = await response.text();
+                alert('Report Error: ' + (errorText || 'No data found for this period.'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Failed to generate report. Please try again.');
+        } finally {
             btn.innerHTML = originalContent;
             btn.disabled = false;
-            document.body.removeChild(form);
-        }, 3000);
+        }
     }
 </script>
 }

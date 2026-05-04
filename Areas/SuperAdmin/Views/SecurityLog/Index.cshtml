@@ -149,6 +149,40 @@
 .btn-lockout-account:hover { background: #e53e3e; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(229, 62, 62, 0.2); }
 .btn-unlock-account { background: #f0fff4; color: #38a169; }
 .btn-unlock-account:hover { background: #38a169; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(56, 161, 105, 0.2); }
+
+.btn-report {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.btn-report:hover {
+    background: white;
+    color: #006994;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+}
+
+.btn-report i {
+    font-size: 1rem;
+    transition: transform 0.3s;
+}
+
+.btn-report:hover i {
+    transform: rotate(15deg) scale(1.1);
+}
 </style>
 }
 
