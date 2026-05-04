@@ -1,0 +1,144 @@
+@page
+@model LockoutModel
+@{
+    ViewData["Title"] = "Locked Out";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/home.css" />
+<link rel="stylesheet" href="~/css/identity.css" />
+
+<style>
+    .hero-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .hero-content {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .lockout-card {
+        width: 100%;
+        max-width: 560px;
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+
+    .lock-icon-container {
+        width: 100px;
+        height: 100px;
+        background: rgba(220, 53, 69, 0.1);
+        border: 2px solid rgba(220, 53, 69, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        position: relative;
+        animation: pulse-red 2s infinite;
+    }
+
+    .lock-icon-container i {
+        font-size: 3rem;
+        color: #dc3545;
+    }
+
+    @@keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        70% { box-shadow: 0 0 0 20px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+
+    .lockout-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .lockout-message {
+        color: #4a5568;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 2.5rem;
+    }
+
+    .lockout-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .btn-return-login {
+        background: linear-gradient(135deg, #0061ff 0%, #60efff 100%);
+        color: white;
+        border: none;
+        padding: 0.8rem 2.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 97, 255, 0.3);
+    }
+
+    .btn-return-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 97, 255, 0.4);
+        color: white;
+    }
+
+    .support-link {
+        color: #718096;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .support-link:hover {
+        color: #1a202c;
+        text-decoration: underline;
+    }
+</style>
+
+<div class="animated-bg">
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+    </div>
+</div>
+
+<section class="hero-section">
+    <div class="hero-content">
+        <div class="feature-card lockout-card">
+            <div class="lock-icon-container">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            
+            <h1 class="lockout-title">Account Locked</h1>
+            
+            <p class="lockout-message">
+                For security reasons, your account has been temporarily disabled due to multiple failed login attempts. 
+                This protective measure helps safeguard your personal information from unauthorized access.
+            </p>
+
+            <div class="lockout-actions">
+                <a asp-page="./Login" class="btn-return-login">
+                    <i class="fas fa-arrow-left me-2"></i> Return to Sign In
+                </a>
+                <a href="#" class="support-link">Contact system administrator if you believe this is an error</a>
+            </div>
+        </div>
+    </div>
+</section>
