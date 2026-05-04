@@ -22,6 +22,113 @@
 .threat-level-1 { background: #e8f5e8; color: #2e7d32; }
 .threat-level-2 { background: #fff3cd; color: #856404; }
 .threat-level-3 { background: #f8d7da; color: #721c24; }
+
+/* Premium Modal Design */
+.premium-modal {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@@keyframes modalSlideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.premium-modal-header {
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    position: relative;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.premium-modal-header.danger { background: #fff5f5; border-bottom: 2px solid #feb2b2; }
+.premium-modal-header.danger .header-icon { background: #f56565; color: white; }
+
+.header-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.header-text h4 { margin: 0; color: #1a202c; font-weight: 700; font-size: 1.25rem; }
+.header-text p { margin: 0.25rem 0 0; color: #718096; font-size: 0.95rem; }
+.header-text .highlight { color: #f56565; font-weight: 600; }
+
+.premium-modal-body { padding: 2rem; }
+
+.alert-box {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.alert-box.warning { background: #fffaf0; border: 1px solid #fbd38d; color: #7b341e; }
+.alert-box.warning i { color: #dd6b20; margin-top: 0.25rem; }
+
+.premium-form-group { display: flex; flex-column: column; gap: 0.75rem; }
+.premium-form-group label { font-weight: 600; color: #4a5568; font-size: 0.9rem; margin-bottom: 0.5rem; display: block; }
+.premium-form-group textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.2s;
+}
+.premium-form-group textarea:focus { outline: none; border-color: #f56565; box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1); }
+
+.premium-modal-footer {
+    padding: 1.5rem 2rem;
+    background: #f7fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn-premium-secondary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #4a5568;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-premium-secondary:hover { background: #edf2f7; }
+
+.btn-premium-danger {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    background: #f56565;
+    color: white;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+.btn-premium-danger:hover { background: #e53e3e; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.btn-premium-danger:disabled { opacity: 0.7; cursor: not-allowed; }
 .threat-level-4 { background: #d1ecf1; color: #0c5460; }
 .suspicious-badge { background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; }
 .security-actions { display: flex; gap: 0.4rem; justify-content: center; }
@@ -266,21 +373,30 @@
 
 <!-- ── Account Lockout Confirmation Modal ── -->
 <div class="audit-modal-backdrop" id="lockoutModal">
-    <div class="audit-modal">
-        <div class="audit-modal-header">
-            <h4><i class="fas fa-lock"></i> Confirm Account Lockout</h4>
+    <div class="premium-modal">
+        <div class="premium-modal-header danger">
+            <div class="header-icon"><i class="fas fa-user-lock"></i></div>
+            <div class="header-text">
+                <h4>Confirm Account Lockout</h4>
+                <p>Restrict access for <span id="lockoutUsername" class="highlight"></span></p>
+            </div>
             <button class="audit-modal-close" id="closeLockoutModal"><i class="fas fa-times"></i></button>
         </div>
-        <div class="audit-modal-body">
-            <p>Are you sure you want to lockout the account for <strong id="lockoutUsername"></strong>?</p>
-            <div class="form-group">
-                <label for="lockoutReason">Reason (optional):</label>
-                <textarea id="lockoutReason" class="form-control" rows="3" placeholder="Enter reason for account lockout..."></textarea>
+        <div class="premium-modal-body">
+            <div class="alert-box warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>This will immediately suspend all active sessions and prevent new login attempts for this user.</p>
+            </div>
+            <div class="premium-form-group">
+                <label for="lockoutReason">Administrative Reason</label>
+                <textarea id="lockoutReason" placeholder="Enter reason for account lockout (e.g., suspicious activity detected)..."></textarea>
             </div>
         </div>
-        <div class="audit-modal-footer">
-            <button type="button" class="btn-secondary" id="cancelLockout">Cancel</button>
-            <button type="button" class="btn-danger" id="confirmLockout">Lockout Account</button>
+        <div class="premium-modal-footer">
+            <button type="button" class="btn-premium-secondary" id="cancelLockout">Cancel</button>
+            <button type="button" class="btn-premium-danger" id="confirmLockout">
+                <i class="fas fa-lock"></i> Lockout Account
+            </button>
         </div>
     </div>
 </div>
@@ -382,13 +498,18 @@
 
             const res = await fetch('@Url.Action("LockoutAccount")', {
                 method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             });
 
-            if (res.ok) {
+            const data = await res.json();
+
+            if (data.success) {
                 location.reload();
             } else {
-                alert('Failed to lockout account. Please try again.');
+                alert(data.message || 'Failed to lockout account. Please try again.');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
@@ -420,13 +541,18 @@
 
                 const res = await fetch('@Url.Action("UnlockAccount")', {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     body: formData
                 });
 
-                if (res.ok) {
+                const data = await res.json();
+
+                if (data.success) {
                     location.reload();
                 } else {
-                    alert('Failed to unlock account. Please try again.');
+                    alert(data.message || 'Failed to unlock account. Please try again.');
                 }
             } catch (err) {
                 console.error(err);

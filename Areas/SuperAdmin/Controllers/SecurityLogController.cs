@@ -153,6 +153,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LockoutAccount(string? userId, string? userName, string? reason = null)
         {
+            // If called via AJAX with JSON, parameters might be null if not using [FromBody]
+            // But since we use FormData in JS, they should be populated.
+            
             if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(userName))
             {
                 var user = await _userManager.FindByNameAsync(userName) ?? await _userManager.FindByEmailAsync(userName);
@@ -161,7 +164,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
             if (string.IsNullOrEmpty(userId))
             {
-                TempData["Error"] = "Could not identify user for lockout.";
+                var msg = "Could not identify user for lockout.";
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = false, message = msg });
+                TempData["Error"] = msg;
                 return RedirectToAction("Index");
             }
 
@@ -170,11 +175,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             if (result)
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                TempData["Success"] = $"Account {user?.Email} has been locked out successfully.";
+                var msg = $"Account {user?.Email} has been locked out successfully.";
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = true, message = msg });
+                TempData["Success"] = msg;
             }
             else
             {
-                TempData["Error"] = "Failed to lock out account. Please try again.";
+                var msg = "Failed to lock out account. Please try again.";
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = false, message = msg });
+                TempData["Error"] = msg;
             }
 
             return RedirectToAction("Index");
@@ -193,7 +202,9 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
             if (string.IsNullOrEmpty(userId))
             {
-                TempData["Error"] = "Could not identify user for unlock.";
+                var msg = "Could not identify user for unlock.";
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = false, message = msg });
+                TempData["Error"] = msg;
                 return RedirectToAction("Index");
             }
 
@@ -202,11 +213,15 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             if (result)
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                TempData["Success"] = $"Account {user?.Email} has been unlocked successfully.";
+                var msg = $"Account {user?.Email} has been unlocked successfully.";
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = true, message = msg });
+                TempData["Success"] = msg;
             }
             else
             {
-                TempData["Error"] = "Failed to unlock account. Please try again.";
+                var msg = "Failed to unlock account. Please try again.";
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = false, message = msg });
+                TempData["Error"] = msg;
             }
 
             return RedirectToAction("Index");
@@ -260,82 +275,8 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             return Json(new { isLockedOut });
         }
 
-        // POST: /SuperAdmin/SecurityLog/LockoutAccount
-        [HttpPost]
-        public async Task<IActionResult> LockoutAccount([FromBody] dynamic data)
-        {
-            try
-            {
-                string? userId = data.userId?.ToString();
-                string? userName = data.userName?.ToString();
-                string? reason = data.reason?.ToString();
-                
-                if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(userName))
-                {
-                    var user = await _userManager.FindByNameAsync(userName) ?? await _userManager.FindByEmailAsync(userName);
-                    userId = user?.Id;
-                }
-
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Json(new { success = false, message = "Could not identify user for lockout." });
-                }
-
-                var result = await _securityLogService.LockoutAccountAsync(userId, reason);
-                
-                if (result)
-                {
-                    return Json(new { success = true, message = "Account locked out successfully" });
-                }
-                else
-                {
-                    return Json(new { success = false, message = "Failed to lockout account" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
-            }
-        }
-
-        // POST: /SuperAdmin/SecurityLog/UnlockAccount
-        [HttpPost]
-        public async Task<IActionResult> UnlockAccount([FromBody] dynamic data)
-        {
-            try
-            {
-                string? userId = data.userId?.ToString();
-                string? userName = data.userName?.ToString();
-                
-                if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(userName))
-                {
-                    var user = await _userManager.FindByNameAsync(userName) ?? await _userManager.FindByEmailAsync(userName);
-                    userId = user?.Id;
-                }
-
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Json(new { success = false, message = "Could not identify user for unlock." });
-                }
-
-                var result = await _securityLogService.UnlockAccountAsync(userId);
-                
-                if (result)
-                {
-                    return Json(new { success = true, message = "Account unlocked successfully" });
-                }
-                else
-                {
-                    return Json(new { success = false, message = "Failed to unlock account" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
-            }
-        }
-
         // GET: /SuperAdmin/SecurityLog/Test
+        [HttpGet]
         public async Task<IActionResult> Test()
         {
             try
