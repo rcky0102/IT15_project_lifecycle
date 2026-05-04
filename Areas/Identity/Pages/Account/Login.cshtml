@@ -66,11 +66,6 @@
                 </a>
             </div>
 
-            <!-- Cooldown Timer -->
-            <div id="cooldownTimer" class="cooldown-timer" style="display: none;">
-                <i class="fas fa-clock"></i>
-                <span id="cooldownText">Please wait <span id="cooldownCount">30</span> seconds before next login attempt</span>
-            </div>
         </div>
 
         <div class="feature-card login-card">
@@ -145,7 +140,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('account');
     const submitBtn = document.getElementById('login-submit');
-    const cooldownTimer = document.getElementById('cooldownTimer');
     
     // Check for cooldown state on page load
     const showCooldown = @(Model.ShowCooldown ? "true" : "false");
@@ -181,13 +175,8 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.setAttribute('data-cooldown', 'true');
         externalBtns.forEach(btn => btn.disabled = true);
         
-        cooldownTimer.style.display = 'block';
-        
         const updateBtnText = () => {
             submitBtn.innerHTML = `<i class="fas fa-lock me-2"></i> Wait ${timeLeft}s`;
-            if (document.getElementById('cooldownCount')) {
-                document.getElementById('cooldownCount').textContent = timeLeft;
-            }
         };
 
         updateBtnText();
@@ -198,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (timeLeft <= 0) {
                 clearInterval(interval);
-                cooldownTimer.style.display = 'none';
                 submitBtn.disabled = false;
                 submitBtn.removeAttribute('data-cooldown');
                 submitBtn.innerHTML = 'Sign In';

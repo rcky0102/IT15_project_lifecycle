@@ -351,7 +351,7 @@ namespace project_lifecycle.Services
             var currentAttempts = _failedLoginAttempts[trackingKey].Count;
             
             // 3. Check threshold
-            if (currentAttempts > threshold)
+            if (currentAttempts >= threshold)
             {
                 // Set server-side lockout for 30 seconds
                 _lockoutPeriods[trackingKey] = now.AddSeconds(30);
@@ -361,7 +361,7 @@ namespace project_lifecycle.Services
 
                 await LogSecurityEventAsync(
                     "Suspicious Login Activity",
-                    $"Threshold exceeded: {threshold} failed login attempts detected for user '{userName}' from IP {ipAddress}. Account restricted for 30 seconds.",
+                    $"Reached {threshold} failed login attempts for user '{userName}' from IP {ipAddress}. Account restricted for 30 seconds.",
                     true,
                     null,
                     userName,
@@ -437,7 +437,7 @@ namespace project_lifecycle.Services
             if (suspiciousIps.Any())
                 recommendations.Add($"Consider blocking {suspiciousIps.Count} suspicious IP addresses");
 
-            if (logs.Count(l => l.EventType == "Suspicious Login Activity") > 5)
+            if (logs.Count(l => l.EventType == "Suspicious Login Activity") >= 5)
                 recommendations.Add("Review and strengthen account lockout policies");
 
             return recommendations;
@@ -453,7 +453,7 @@ namespace project_lifecycle.Services
             var repeatedFailedLogins = logs
                 .Where(l => l.EventType == "Failed Login")
                 .GroupBy(l => new { l.IpAddress, l.UserName })
-                .Where(g => g.Count() > 5)
+                .Where(g => g.Count() >= 5)
                 .ToList();
 
             if (repeatedFailedLogins.Any())
