@@ -148,28 +148,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const cooldownTimer = document.getElementById('cooldownTimer');
     
     // Check for cooldown state on page load
-    if (cooldownTimer && cooldownTimer.style.display !== 'none') {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Signing in...';
+    const showCooldown = @(Model.ShowCooldown ? "true" : "false");
+    
+    if (showCooldown) {
         startCooldown();
     }
     
     if (form && submitBtn) {
         form.addEventListener('submit', function(e) {
-            // Check if jQuery validation is present and if the form is valid
             if (typeof $ !== 'undefined' && $(form).length > 0) {
-                if (!$(form).valid()) {
-                    return; // Don't disable if invalid
-                }
+                if (!$(form).valid()) return;
             }
-            
-            // Additional check for HTML5 validation if jQuery is missing
-            if (!form.checkValidity()) {
-                return;
-            }
+            if (!form.checkValidity()) return;
 
             // Check if cooldown is active
-            if (cooldownTimer && cooldownTimer.style.display !== 'none') {
+            if (submitBtn.disabled && submitBtn.getAttribute('data-cooldown') === 'true') {
                 e.preventDefault();
                 return;
             }
@@ -179,24 +172,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Cooldown timer function
     function startCooldown() {
         let timeLeft = 30;
+        submitBtn.disabled = true;
+        submitBtn.setAttribute('data-cooldown', 'true');
         cooldownTimer.style.display = 'block';
-        if (document.getElementById('cooldownCount')) {
-            document.getElementById('cooldownCount').textContent = timeLeft;
-        }
         
-        const interval = setInterval(() => {
-            timeLeft--;
+        const updateBtnText = () => {
+            submitBtn.innerHTML = `<i class="fas fa-lock me-2"></i> Wait ${timeLeft}s`;
             if (document.getElementById('cooldownCount')) {
                 document.getElementById('cooldownCount').textContent = timeLeft;
             }
+        };
+
+        updateBtnText();
+        
+        const interval = setInterval(() => {
+            timeLeft--;
+            updateBtnText();
             
             if (timeLeft <= 0) {
                 clearInterval(interval);
                 cooldownTimer.style.display = 'none';
                 submitBtn.disabled = false;
+                submitBtn.removeAttribute('data-cooldown');
                 submitBtn.innerHTML = 'Sign In';
             }
         }, 1000);

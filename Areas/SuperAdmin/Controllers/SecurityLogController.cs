@@ -46,6 +46,44 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             var logs = await _securityLogService.GetSecurityLogsAsync(
                 eventType, search, isSuspicious, threatLevel, from, to, page, pageSize);
 
+            // Populate missing UserIds if possible (e.g. for logs created before UserId was tracked)
+            foreach (var log in logs.Where(l => string.IsNullOrEmpty(l.UserId) && !string.IsNullOrEmpty(l.UserName)))
+            {
+                var user = await _userManager.FindByNameAsync(log.UserName);
+                if (user != null)
+                {
+                    log.UserId = user.Id;
+                }
+                else
+                {
+                    // Try by email if username is an email
+                    user = await _userManager.FindByEmailAsync(log.UserName);
+                    if (user != null) log.UserId = user.Id;
+                }
+            }
+
+            // Pre-fetch lockout status for the current page of users
+            var lockoutStatus = new Dictionary<string, bool>();
+            foreach (var log in logs.Where(l => !string.IsNullOrEmpty(l.UserId) || !string.IsNullOrEmpty(l.UserName)))
+            {
+                var targetId = !string.IsNullOrEmpty(log.UserId) ? log.UserId : log.UserName!;
+                if (lockoutStatus.ContainsKey(targetId)) continue;
+
+                var user = !string.IsNullOrEmpty(log.UserId) 
+                    ? await _userManager.FindByIdAsync(log.UserId)
+                    : await _userManager.FindByNameAsync(log.UserName!) ?? await _userManager.FindByEmailAsync(log.UserName!);
+
+                if (user != null)
+                {
+                    var lockoutEnd = await _userManager.GetLockoutEndDateAsync(user);
+                    var isLocked = lockoutEnd.HasValue && lockoutEnd.Value > DateTime.Now;
+                    
+                    if (!string.IsNullOrEmpty(log.UserId)) lockoutStatus[log.UserId] = isLocked;
+                    if (!string.IsNullOrEmpty(log.UserName)) lockoutStatus[log.UserName] = isLocked;
+                }
+            }
+            ViewData["LockoutStatus"] = lockoutStatus;
+
             var totalCount = await _securityLogService.GetSecurityLogsCountAsync(
                 eventType, search, isSuspicious, threatLevel, from, to);
 
@@ -113,8 +151,20 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         // POST: /SuperAdmin/SecurityLog/LockoutAccount
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> LockoutAccount(string userId, string? reason = null)
+        public async Task<IActionResult> LockoutAccount(string? userId, string? userName, string? reason = null)
         {
+            if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(userName))
+            {
+                var user = await _userManager.FindByNameAsync(userName) ?? await _userManager.FindByEmailAsync(userName);
+                userId = user?.Id;
+            }
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Could not identify user for lockout.";
+                return RedirectToAction("Index");
+            }
+
             var result = await _securityLogService.LockoutAccountAsync(userId, reason);
             
             if (result)
@@ -133,8 +183,20 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         // POST: /SuperAdmin/SecurityLog/UnlockAccount
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UnlockAccount(string userId)
+        public async Task<IActionResult> UnlockAccount(string? userId, string? userName)
         {
+            if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(userName))
+            {
+                var user = await _userManager.FindByNameAsync(userName) ?? await _userManager.FindByEmailAsync(userName);
+                userId = user?.Id;
+            }
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["Error"] = "Could not identify user for unlock.";
+                return RedirectToAction("Index");
+            }
+
             var result = await _securityLogService.UnlockAccountAsync(userId);
             
             if (result)
@@ -204,12 +266,19 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         {
             try
             {
-                var userId = data.userId?.ToString();
-                var reason = data.reason?.ToString();
+                string? userId = data.userId?.ToString();
+                string? userName = data.userName?.ToString();
+                string? reason = data.reason?.ToString();
                 
+                if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(userName))
+                {
+                    var user = await _userManager.FindByNameAsync(userName) ?? await _userManager.FindByEmailAsync(userName);
+                    userId = user?.Id;
+                }
+
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Json(new { success = false, message = "User ID is required" });
+                    return Json(new { success = false, message = "Could not identify user for lockout." });
                 }
 
                 var result = await _securityLogService.LockoutAccountAsync(userId, reason);
@@ -235,11 +304,18 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
         {
             try
             {
-                var userId = data.userId?.ToString();
+                string? userId = data.userId?.ToString();
+                string? userName = data.userName?.ToString();
                 
+                if (string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(userName))
+                {
+                    var user = await _userManager.FindByNameAsync(userName) ?? await _userManager.FindByEmailAsync(userName);
+                    userId = user?.Id;
+                }
+
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Json(new { success = false, message = "User ID is required" });
+                    return Json(new { success = false, message = "Could not identify user for unlock." });
                 }
 
                 var result = await _securityLogService.UnlockAccountAsync(userId);

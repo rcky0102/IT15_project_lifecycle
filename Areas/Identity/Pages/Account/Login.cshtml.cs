@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
@@ -56,6 +56,8 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
             [Display(Name = "Remember me?")]
             public bool RememberMe { get; set; }
         }
+
+        public bool ShowCooldown { get; set; } = false;
 
         public async Task OnGetAsync(string returnUrl = null)
         {
@@ -147,6 +149,7 @@ namespace project_lifecycle.Areas.Identity.Pages.Account
                     if (thresholdExceeded)
                     {
                         // Implement 30-second cooldown
+                        ShowCooldown = true;
                         ModelState.AddModelError(string.Empty, "Too many failed login attempts. Please wait 30 seconds before trying again.");
                         return Page();
                     }
