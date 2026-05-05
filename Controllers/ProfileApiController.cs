@@ -409,6 +409,7 @@ namespace project_lifecycle.Controllers
 
         // ─── POST api/profileapi/update ───
         [HttpPost("update")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateProfile()
         {
             var userId = _userManager.GetUserId(User);
