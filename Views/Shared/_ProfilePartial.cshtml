@@ -459,6 +459,42 @@
 <script src="~/js/profile.js" asp-append-version="true"></script>
 <script>
     (function () {
+        // --- Check for external login errors in URL ---
+        function checkExternalLoginErrors() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            const errorMsg = urlParams.get('message');
+            
+            if (error) {
+                const alertError = document.getElementById('profAlertError');
+                const alertErrorText = document.getElementById('profAlertErrorText');
+                
+                if (alertError && alertErrorText) {
+                    let displayMessage = 'An error occurred while linking your account.';
+                    
+                    if (errorMsg) {
+                        displayMessage = decodeURIComponent(errorMsg);
+                    } else if (error === 'ExternalLoginExists') {
+                        displayMessage = 'This Google account is already linked to another user account.';
+                    } else if (error === 'ExternalLoginFailed') {
+                        displayMessage = 'Failed to link Google account. Please try again.';
+                    }
+                    
+                    alertErrorText.textContent = displayMessage;
+                    alertError.style.display = 'flex';
+                    
+                    // Scroll to alert
+                    alertError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Clean URL without reloading
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+            }
+        }
+        
+        // Check for errors on page load
+        checkExternalLoginErrors();
         // --- Premium Confirmation Utility ---
         function profConfirm(options) {
             const modal = document.getElementById('confirmModal');
@@ -519,15 +555,39 @@
                         iconClass: 'fab fa-google'
                     })) {
                         btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Unlinking...';
                         fetch('/api/ProfileApi/unlink-external?provider=Google', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                             .then(r => r.json()).then(j => {
                                 if (j.success) {
                                     location.reload();
                                 } else {
-                                    alert(j.message || 'Failed to unlink Google');
+                                    const alertError = document.getElementById('profAlertError');
+                                    const alertErrorText = document.getElementById('profAlertErrorText');
+                                    let errorMessage = 'Failed to unlink Google account.';
+                                    
+                                    if (j.errors && Array.isArray(j.errors) && j.errors.length > 0) {
+                                        errorMessage = j.errors.join(' ');
+                                    } else if (j.message) {
+                                        errorMessage = j.message;
+                                    }
+                                    
+                                    alertErrorText.textContent = errorMessage;
+                                    alertError.style.display = 'flex';
+                                    alertError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    
                                     btn.disabled = false;
+                                    btn.innerHTML = '<i class="fab fa-google me-2" style="color:#db4437;"></i> Unlink Google';
                                 }
-                            }).catch(e => { alert('Error unlinking provider'); btn.disabled = false; });
+                            }).catch(e => { 
+                                const alertError = document.getElementById('profAlertError');
+                                const alertErrorText = document.getElementById('profAlertErrorText');
+                                alertErrorText.textContent = 'Network error while unlinking account. Please try again.';
+                                alertError.style.display = 'flex';
+                                alertError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fab fa-google me-2" style="color:#db4437;"></i> Unlink Google';
+                            });
                     }
                 };
                 container.appendChild(btn);
@@ -542,6 +602,8 @@
                         confirmText: 'Link Account',
                         iconClass: 'fab fa-google'
                     })) {
+                        linkBtn.disabled = true;
+                        linkBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Linking...';
                         window.location = '/api/ProfileApi/external-link?provider=Google';
                     }
                 };

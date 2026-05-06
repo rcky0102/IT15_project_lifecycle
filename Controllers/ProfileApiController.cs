@@ -67,27 +67,10 @@ namespace project_lifecycle.Controllers
             var userId = _userManager.GetUserId(User);
             // When linking, GetExternalLoginInfoAsync expects the XSRF id
             var info = await _signInManager.GetExternalLoginInfoAsync(userId);
-            if (info == null)
-            {
-                return BadRequest(new { success = false, message = "External login information could not be loaded." });
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Unauthorized();
-
-            // Add external login to the user
-            var result = await _userManager.AddLoginAsync(user, info);
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description).ToArray();
-                return BadRequest(new { success = false, errors });
-            }
-
-            await _audit.LogAsync(User, "Link", "ExternalLogin", $"Linked {info.LoginProvider} to user {user.Email}", "User", user.Id);
-
-            // If the original linking request preserved a returnUrl, use it only if it's safe (local)
+            
+            // Determine return URL first
             var returnUrl = "/";
-            if (info.AuthenticationProperties != null && info.AuthenticationProperties.Items.TryGetValue("returnUrl", out var candidate) && !string.IsNullOrEmpty(candidate))
+            if (info?.AuthenticationProperties != null && info.AuthenticationProperties.Items.TryGetValue("returnUrl", out var candidate) && !string.IsNullOrEmpty(candidate))
             {
                 // Accept local URLs directly
                 if (Url.IsLocalUrl(candidate))
@@ -107,6 +90,38 @@ namespace project_lifecycle.Controllers
                     }
                 }
             }
+            
+            if (info == null)
+            {
+                var errorUrl = $"{returnUrl}{(returnUrl.Contains('?') ? "&" : "?")}error=ExternalLoginFailed&message={Uri.EscapeDataString("External login information could not be loaded.")}";
+                return Redirect(errorUrl);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                var errorUrl = $"{returnUrl}{(returnUrl.Contains('?') ? "&" : "?")}error=Unauthorized&message={Uri.EscapeDataString("User not found.")}";
+                return Redirect(errorUrl);
+            }
+
+            // Add external login to the user
+            var result = await _userManager.AddLoginAsync(user, info);
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.Select(e => e.Description).ToArray();
+                var errorMessage = string.Join(" ", errors);
+                
+                // Check if it's the "already exists" error
+                if (errorMessage.Contains("already exists", StringComparison.OrdinalIgnoreCase))
+                {
+                    errorMessage = "This Google account is already linked to another user account.";
+                }
+                
+                var errorUrl = $"{returnUrl}{(returnUrl.Contains('?') ? "&" : "?")}error=ExternalLoginExists&message={Uri.EscapeDataString(errorMessage)}";
+                return Redirect(errorUrl);
+            }
+
+            await _audit.LogAsync(User, "Link", "ExternalLogin", $"Linked {info.LoginProvider} to user {user.Email}", "User", user.Id);
 
             return Redirect(returnUrl);
         }
