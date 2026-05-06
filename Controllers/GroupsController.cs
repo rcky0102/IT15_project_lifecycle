@@ -53,6 +53,7 @@ namespace project_lifecycle.Controllers
         public class MemberChangeRequest { public string MemberId { get; set; } = string.Empty; }
 
         [HttpPost("create")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([FromBody] CreateGroupRequest req)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -77,6 +78,7 @@ namespace project_lifecycle.Controllers
         }
 
         [HttpPost("{id}/members/add")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddMember(int id, [FromBody] MemberChangeRequest req)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -98,6 +100,7 @@ namespace project_lifecycle.Controllers
         }
 
         [HttpPost("{id}/members/remove")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveMember(int id, [FromBody] MemberChangeRequest req)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -119,6 +122,7 @@ namespace project_lifecycle.Controllers
         }
 
         [HttpPost("{id}/rename")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Rename(int id, [FromBody] RenameRequest req)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -140,6 +144,7 @@ namespace project_lifecycle.Controllers
         }
 
         [HttpPost("{id}/leave")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Leave(int id)
         {
             var currentUserId = _userManager.GetUserId(User);

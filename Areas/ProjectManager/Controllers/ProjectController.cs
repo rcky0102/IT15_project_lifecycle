@@ -1112,7 +1112,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddMember([FromForm] Member input)
         {
             var resolvedProjectId = GetPostedInt("ProjectId", "projectId") ?? input.ProjectId;
@@ -1246,7 +1246,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddMembersBatch([FromBody] List<BatchMemberDto> members)
         {
             var pm = await GetCurrentProjectManagerAsync();
@@ -1346,7 +1346,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddMilestone([FromForm] ProjectMilestone input)
         {
             var resolvedProjectId = GetPostedInt("ProjectId", "projectId") ?? input.ProjectId;
@@ -1694,7 +1694,7 @@ namespace project_lifecycle.ProjectManagerArea.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadRichText(IFormFile upload)
         {
             try
