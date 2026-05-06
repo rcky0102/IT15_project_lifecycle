@@ -219,6 +219,7 @@ namespace project_lifecycle.Controllers
         // ───────── GET OR CREATE 1-on-1 CONVERSATION ─────────
 
         [HttpPost("conversations/direct")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GetOrCreateDirectConversation([FromBody] DirectConversationRequest request)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -258,6 +259,7 @@ namespace project_lifecycle.Controllers
         // ───────── CREATE GROUP CONVERSATION ─────────
 
         [HttpPost("conversations/group")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateGroupConversation([FromBody] GroupConversationRequest request)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -376,6 +378,7 @@ namespace project_lifecycle.Controllers
         // ───────── SEND MESSAGE ─────────
 
         [HttpPost("conversations/{conversationId}/messages")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendMessage(int conversationId, [FromBody] SendMessageRequest request)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -487,6 +490,7 @@ namespace project_lifecycle.Controllers
         // ───────── LEAVE GROUP ─────────
 
         [HttpPost("conversations/{conversationId}/leave")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> LeaveGroup(int conversationId)
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -600,6 +604,7 @@ namespace project_lifecycle.Controllers
         // ───────── MARK CONVERSATION AS READ ─────────
 
         [HttpPost("conversations/{conversationId}/read")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsRead(int conversationId)
         {
             var currentUserId = _userManager.GetUserId(User);

@@ -57,6 +57,7 @@ namespace project_lifecycle.Controllers
 
         /// <summary>POST api/notifications/{id}/read</summary>
         [HttpPost("{id}/read")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsRead(int id)
         {
             var userId = _userManager.GetUserId(User);
@@ -68,6 +69,7 @@ namespace project_lifecycle.Controllers
 
         /// <summary>POST api/notifications/read-all</summary>
         [HttpPost("read-all")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAllAsRead()
         {
             var userId = _userManager.GetUserId(User);

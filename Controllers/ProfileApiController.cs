@@ -113,6 +113,7 @@ namespace project_lifecycle.Controllers
 
         // POST: api/profileapi/unlink-external
         [HttpPost("unlink-external")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UnlinkExternal([FromQuery] string provider)
         {
             if (string.IsNullOrEmpty(provider)) return BadRequest(new { success = false, message = "Provider is required" });
