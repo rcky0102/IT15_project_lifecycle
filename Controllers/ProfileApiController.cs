@@ -320,6 +320,7 @@ namespace project_lifecycle.Controllers
 
         // POST: api/profileapi/mfa
         [HttpPost("mfa")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetMfa([FromBody] MfaDto dto)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -383,6 +384,7 @@ namespace project_lifecycle.Controllers
 
         // POST: api/profileapi/mfa/verify
         [HttpPost("mfa/verify")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyMfa([FromBody] VerifyMfaDto dto)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -413,6 +415,7 @@ namespace project_lifecycle.Controllers
 
         // ─── POST api/profileapi/update ───
         [HttpPost("update")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateProfile()
         {
             var userId = _userManager.GetUserId(User);
