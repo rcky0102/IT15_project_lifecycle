@@ -492,7 +492,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
 
         // ─── Upload file for editor (AJAX) ──────────────────────────
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadFile(IFormFile upload)
         {
             try

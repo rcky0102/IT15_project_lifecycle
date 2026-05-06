@@ -199,7 +199,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadRichText(IFormFile upload)
         {
             try
@@ -258,7 +258,7 @@ namespace project_lifecycle.EmployeeArea.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile upload, string CKEditorFuncNum)
         {
             try
