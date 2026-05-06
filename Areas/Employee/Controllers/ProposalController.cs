@@ -142,13 +142,16 @@ namespace project_lifecycle.EmployeeArea.Controllers
                     return RedirectToAction("Index");
                 }
 
-                _logger.LogInformation($"Proposal validation passed. Title: {proposal.Title}");
+                // Sanitize title for logging to prevent log injection
+                var sanitizedTitle = (proposal.Title ?? string.Empty).Replace("\r", "").Replace("\n", "");
+
+                _logger.LogInformation($"Proposal validation passed. Title: {sanitizedTitle}");
 
                 proposal.EmployeeId = employee.Id;
                 proposal.DateCreated = DateTime.Now;
                 proposal.Status = "Pending";
 
-                _logger.LogInformation($"Adding proposal to context. EmployeeId: {proposal.EmployeeId}, Title: {proposal.Title}");
+                _logger.LogInformation($"Adding proposal to context. EmployeeId: {proposal.EmployeeId}, Title: {sanitizedTitle}");
 
                 _context.ProjectProposals.Add(proposal);
                 int saved = _context.SaveChanges();

@@ -148,21 +148,25 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
 
         public IActionResult Download(string fileName)
         {
-            if (string.IsNullOrEmpty(fileName)) return NotFound();
+            if (!TryGetSafeBackupFilePath(fileName, out string filePath))
+            {
+                return NotFound();
+            }
 
-            string filePath = Path.Combine(_backupFolder, fileName);
             if (!System.IO.File.Exists(filePath)) return NotFound();
 
-            return PhysicalFile(filePath, "application/sql", fileName);
+            return PhysicalFile(filePath, "application/sql", Path.GetFileName(filePath));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string fileName)
         {
-            if (string.IsNullOrEmpty(fileName)) return NotFound();
+            if (!TryGetSafeBackupFilePath(fileName, out string filePath))
+            {
+                return NotFound();
+            }
 
-            string filePath = Path.Combine(_backupFolder, fileName);
             if (System.IO.File.Exists(filePath))
             {
                 System.IO.File.Delete(filePath);
@@ -170,6 +174,51 @@ namespace project_lifecycle.Areas.SuperAdmin.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// Validates fileName and returns a safe full path within the backup folder.
+        /// Prevents path traversal attacks by ensuring the file is a simple filename
+        /// and the resolved path stays within the backup directory.
+        /// </summary>
+        private bool TryGetSafeBackupFilePath(string fileName, out string safePath)
+        {
+            safePath = null;
+
+            // Reject null, empty, or whitespace-only names
+            if (string.IsNullOrWhiteSpace(fileName))
+                return false;
+
+            // Reject rooted paths (e.g., C:\, /etc/)
+            if (Path.IsPathRooted(fileName))
+                return false;
+
+            // Reject any path separators or parent directory traversal
+            if (fileName.Contains(Path.DirectorySeparatorChar) ||
+                fileName.Contains(Path.AltDirectorySeparatorChar) ||
+                fileName.Contains(".."))
+                return false;
+
+            // Ensure fileName is just a filename (no directory components)
+            if (fileName != Path.GetFileName(fileName))
+                return false;
+
+            // Build the full path
+            string candidatePath = Path.Combine(_backupFolder, fileName);
+
+            // Canonicalize both paths to resolve any remaining tricks
+            string canonicalBackupFolder = Path.GetFullPath(_backupFolder);
+            string canonicalFilePath = Path.GetFullPath(candidatePath);
+
+            // Ensure the canonical file path is still under the backup folder
+            if (!canonicalFilePath.StartsWith(canonicalBackupFolder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) &&
+                !canonicalFilePath.Equals(canonicalBackupFolder, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            safePath = canonicalFilePath;
+            return true;
         }
 
         [HttpPost]

@@ -886,7 +886,9 @@ namespace project_lifecycle.EmployeeArea.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting cloud file {Key}", key);
+                // Sanitize key for logging to prevent log injection
+                var sanitizedKey = (key ?? string.Empty).Replace("\r", "").Replace("\n", "");
+                _logger.LogError(ex, "Error getting cloud file {Key}", sanitizedKey);
                 return Json(new { success = false, message = "An error occurred while retrieving the file." });
             }
         }

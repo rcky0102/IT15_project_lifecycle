@@ -82,6 +82,38 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+// Add security headers
+app.Use(async (context, next) =>
+{
+    // Protect against clickjacking attacks
+    context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    
+    // Prevent MIME type sniffing
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    
+    // Enable XSS protection in browsers
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    
+    // Control referrer information
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    // Content Security Policy (adjust as needed for your application)
+    context.Response.Headers.Append("Content-Security-Policy", 
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com https://cdn.ckeditor.com https://accounts.google.com https://www.gstatic.com; " +
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
+        "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; " +
+        "img-src 'self' data: https: blob:; " +
+        "connect-src 'self' https://accounts.google.com; " +
+        "frame-src 'self' https://accounts.google.com; " +
+        "object-src 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'self'; " +
+        "frame-ancestors 'self';");
+    
+    await next();
+});
+
 app.UseRouting();
 
 app.UseAuthentication();
