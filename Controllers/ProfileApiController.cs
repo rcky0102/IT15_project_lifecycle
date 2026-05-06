@@ -300,12 +300,16 @@ namespace project_lifecycle.Controllers
 
         // GET: api/profileapi/check-email?email=...
         [HttpGet("check-email")]
-        [AllowAnonymous]
         public async Task<IActionResult> CheckEmail([FromQuery] string email)
         {
             if (string.IsNullOrWhiteSpace(email)) return BadRequest(new { available = false, message = "Email is required" });
+            
+            var currentUser = await _userManager.GetUserAsync(User);
             var found = await _userManager.FindByEmailAsync(email.Trim());
-            var available = found == null;
+            
+            // Email is available if not found, or if it belongs to the current user
+            var available = found == null || (currentUser != null && found.Id == currentUser.Id);
+            
             return Ok(new { available, message = available ? "Available" : "Taken" });
         }
 
