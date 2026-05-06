@@ -85,8 +85,8 @@ app.UseStaticFiles();
 // Add security headers
 app.Use(async (context, next) =>
 {
-    // Protect against clickjacking attacks
-    context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    // Protect against clickjacking attacks (DENY = no framing allowed at all)
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
     
     // Prevent MIME type sniffing
     context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
